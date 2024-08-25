@@ -1,6 +1,5 @@
 "use server"
 
-import Stripe from 'stripe';
 import { CheckoutOrderParams, CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams } from "@/types"
 import { redirect } from 'next/navigation';
 import { handleError } from '../utils';
@@ -11,36 +10,18 @@ import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
 
 export const checkoutOrder = async (order: CheckoutOrderParams) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-  const price = order.isFree ? 0 : Number(order.price) * 100;
-
   try {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: price,
-            product_data: {
-              name: order.eventTitle
-            }
-          },
-          quantity: 1
-        },
-      ],
-      metadata: {
-        eventId: order.eventId,
-        buyerId: order.buyerId,
-      },
-      mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/`,
+    // Create the order directly without Stripe
+    await createOrder({
+      eventId: order.eventId,
+      buyerId: order.buyerId,
+      totalAmount: "0", // All events are free
     });
 
-    redirect(session.url!)
+    // Redirect to the profile page after successful registration
+    redirect(`${process.env.NEXT_PUBLIC_SERVER_URL}/profile`);
   } catch (error) {
-    throw error;
+    handleError(error);
   }
 }
 
@@ -135,7 +116,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
         populate: {
           path: 'organizer',
           model: User,
-          select: '_id firstName lastName',
+          select: '_id',
         },
       })
 
