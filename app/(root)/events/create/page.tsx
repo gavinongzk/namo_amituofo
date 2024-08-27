@@ -6,6 +6,8 @@ const CreateEvent = async () => {
   const user = await currentUser();
   const userId = user?.publicMetadata.userId as string;
 
+  console.log("userId from CreateEvent", userId)
+
   if (!userId) {
     return <div>Please sign in to create an event.</div>;
   }
