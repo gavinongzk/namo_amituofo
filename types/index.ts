@@ -82,8 +82,6 @@ export type Event = {
   url: string
   organizer: {
     _id: string
-    firstName: string
-    lastName: string
   }
   category: {
     _id: string
