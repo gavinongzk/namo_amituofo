@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
       <section className="bg-primary-50 bg-dotted-pattern bg-contain py-5 md:py-10">
         <div className="wrapper grid grid-cols-1 gap-5 md:grid-cols-2 2xl:gap-0">
           <div className="flex flex-col justify-center gap-8">
-            <h1 className="h1-bold">阿弥陀佛是我们的救主，是我们真正平安、喜乐、希望的来源；在人世间有苦难，在佛怀中有平安。</h1>
+            <h2 className="h2-medium">阿弥陀佛是我们的救主，是我们真正平安、喜乐、希望的来源；在人世间有苦难，在佛怀中有平安。</h2>
             <p className="p-regular-20 md:p-regular-24">南无阿弥陀佛</p>
             <Button size="lg" asChild className="button w-full sm:w-fit">
               <Link href="#events">
