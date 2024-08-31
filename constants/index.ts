@@ -21,7 +21,5 @@ export const eventDefaultValues = {
   startDateTime: new Date(),
   endDateTime: new Date(),
   categoryId: '',
-  price: '',
-  isFree: false,
   url: '',
 }
