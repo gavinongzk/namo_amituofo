@@ -33,14 +33,15 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
           {field.type === 'boolean' ? (
             <Checkbox
               id={field.id.toString()}
-              checked={!!customFieldValues[field.id]}
-              onCheckedChange={(checked) => handleCustomFieldChange(field.id, checked)}
+              checked={!!customFieldValues[field.id.toString()]}
+              onCheckedChange={(checked) => handleCustomFieldChange(field.id.toString(), checked)}
             />
           ) : (
             <Input
               type={field.type}
               id={field.id.toString()}
-              onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+              value={customFieldValues[field.id.toString()] || ''}
+              onChange={(e) => handleCustomFieldChange(field.id.toString(), e.target.value)}
               required
             />
           )}
