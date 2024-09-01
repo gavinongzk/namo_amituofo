@@ -22,7 +22,7 @@ const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave }) => {
     { id: '4', label: '（第2位）参加者名字 Participant\'s Name', type: 'text' },
     { id: '5', label: '（第2位）联系号码 Contact number', type: 'text' },
     { id: '6', label: '请问【第2位】要参加绕佛吗？Does the second person want to participate in walking and reciting section?', type: 'boolean' },
-    { id: '7', label: '（第3位）参加者字 Participant\'s Name', type: 'text' },
+    { id: '7', label: '（第3位）参加者名字 Participant\'s Name', type: 'text' },
     { id: '8', label: '（第3位）联系号码 Contact number', type: 'text' },
     { id: '9', label: '请问【第3位】要参加绕佛吗？Does the third person want to participate in walking and reciting section?', type: 'boolean' },
   ]);
@@ -31,7 +31,27 @@ const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave }) => {
     onSave(fields);
   };
 
-  return "test";
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Define Custom Fields</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Custom Fields</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {fields.map((field) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <Input value={field.label} readOnly />
+              <span>{field.type}</span>
+            </div>
+          ))}
+        </div>
+        <Button onClick={handleSave}>Save Custom Fields</Button>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 export default CustomFieldsPopup;
