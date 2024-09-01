@@ -4,6 +4,7 @@ interface CustomField {
   id: string;
   label: string;
   type: string;
+  value: string;
 }
 
 export interface IEvent extends Document {

@@ -13,6 +13,7 @@ import { CustomField } from '@/types';
 type CustomFieldsPopupProps = {
   onSave: (fields: CustomField[]) => void;
   initialFields?: CustomField[];
+  onClose: () => void;
 };
 
 const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave, initialFields }) => {

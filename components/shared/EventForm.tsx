@@ -299,6 +299,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 <CustomFieldsPopup
                   onSave={(fields) => field.onChange(fields)}
                   initialFields={field.value}
+                  onClose={() => {}}
                 />
               </FormControl>
               <FormMessage />

@@ -135,5 +135,6 @@ export type SearchParamProps = {
 export type CustomField = {
   id: string;
   label: string;
-  type: 'text' | 'boolean';
+  type: "text" | "boolean"
+  value?: string | boolean;
 };
