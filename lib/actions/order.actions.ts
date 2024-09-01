@@ -15,7 +15,7 @@ export const createOrder = async (order: CreateOrderParams) => {
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
-      buyer: order.buyerId, // This should already be an ObjectId
+      buyer: new ObjectId(order.buyerId), // Convert buyerId to ObjectId
       customFieldValues: order.customFieldValues,
     });
 
