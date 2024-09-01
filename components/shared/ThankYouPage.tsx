@@ -1,6 +1,12 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 
+interface CustomFieldValue {
+  id: string;
+  label: string;
+  value: string;
+}
+
 const ThankYouPage = async ({ params: { id } }: { params: { id: string } }) => {
   const order = await getOrderById(id);
 
@@ -22,7 +28,7 @@ const ThankYouPage = async ({ params: { id } }: { params: { id: string } }) => {
           <p><strong>Buyer:</strong> {order.buyer.firstName} {order.buyer.lastName}</p>
           <h5 className="text-lg font-bold mt-4">Custom Fields</h5>
           <ul>
-            {order.customFieldValues.map((field) => (
+            {order.customFieldValues.map((field: CustomFieldValue) => (
               <li key={field.id}>
                 <strong>{field.label}:</strong> {field.value}
               </li>
