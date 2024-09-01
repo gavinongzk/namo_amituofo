@@ -1,17 +1,24 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import { createOrder } from '@/lib/actions/order.actions';
 import { CreateOrderParams } from '@/types';
+import { getAuth } from '@clerk/nextjs/server';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    try {
-      const order: CreateOrderParams = req.body;
-      const newOrder = await createOrder(order);
-      res.status(200).json(newOrder);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
+export async function POST(req: NextRequest) {
+  const { userId } = getAuth(req);
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  try {
+    const order: CreateOrderParams = await req.json();
+    const newOrder = await createOrder(order);
+    return NextResponse.json(newOrder, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export function OPTIONS() {
+  return NextResponse.json({ status: 'OK' }, { status: 200 });
 }
