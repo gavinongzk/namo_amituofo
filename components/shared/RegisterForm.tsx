@@ -15,9 +15,6 @@ import { createOrder } from '@/lib/actions/order.actions'
 import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 
-
-
-
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter()
   const { user } = useUser()
