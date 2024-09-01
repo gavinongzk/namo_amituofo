@@ -22,8 +22,6 @@ import { Checkbox } from "../ui/checkbox"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
-import CustomFieldsPopup from "./CustomFieldsPopup"
-
 
 type EventFormProps = {
   userId: string
@@ -299,12 +297,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         <div className="flex flex-col gap-5">
           <h3 className="text-lg font-medium">Custom Questions</h3>
           {customFields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
+            <div key={field.id} className="flex flex-col gap-5 md:flex-row">
               <FormField
                 control={form.control}
                 name={`customFields.${index}.label`}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-full">
                     <FormControl>
                       <Input placeholder="Question" {...field} />
                     </FormControl>
@@ -316,7 +314,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 control={form.control}
                 name={`customFields.${index}.type`}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-full">
                     <FormControl>
                       <select {...field} className="input-field">
                         <option value="text">Text</option>
