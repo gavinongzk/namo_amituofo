@@ -11,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { createOrder } from '@/lib/actions/order.actions'
 import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 
@@ -42,20 +41,34 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
     setIsSubmitting(true)
     try {
       const customFieldValues = Object.entries(values).map(([key, value]) => ({
+        id: key, // Add this line
         label: key,
         type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text', // Type assertion
         value: String(value),
       }));
-  
+
       const order: CreateOrderParams = {
         eventId: event._id,
-        buyerId: user?.id || '', // Ensure buyerId is always a string
+        buyerId: user?.id || '', // Send buyerId as a string
         createdAt: new Date(),
         customFieldValues,
       };
 
-      await createOrder(order)
-      router.push('/thank-you')
+      // Call the server-side function
+      const response = await fetch('/api/createOrder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      await response.json();
+      router.push('/thank-you');
     } catch (error) {
       console.error(error)
     } finally {

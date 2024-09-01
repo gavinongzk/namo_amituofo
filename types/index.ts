@@ -1,3 +1,6 @@
+import { ObjectId } from 'mongodb'; // Add this import
+
+
 // ====== USER PARAMS
 export type CreateUserParams = {
   clerkId: string
@@ -100,9 +103,9 @@ export type CheckoutOrderParams = {
 
 export type CreateOrderParams = {
   eventId: string;
-  buyerId: string;
+  buyerId: string; // Change this to ObjectId
   createdAt: Date;
-  customFieldValues: Omit<CustomField, 'id'>[];
+  customFieldValues: CustomField[];
 };
 
 export type GetOrdersByEventParams = {
