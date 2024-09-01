@@ -22,7 +22,6 @@ export type CreateEventParams = {
     startDateTime: Date
     endDateTime: Date
     categoryId: string
-    url: string
     customFields: CustomField[]
   }
   path: string
@@ -39,7 +38,6 @@ export type UpdateEventParams = {
     startDateTime: Date
     endDateTime: Date
     categoryId: string
-    url: string
     customFields?: CustomField[]
   }
   path: string
@@ -78,7 +76,6 @@ export type Event = {
   location: string
   startDateTime: Date
   endDateTime: Date
-  url: string
   organizer: {
     _id: string
   }
