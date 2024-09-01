@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createOrder } from '@/lib/actions/server/createOrder';
+import { createOrder } from '@/lib/actions/order.actions';
 import { CreateOrderParams } from '@/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

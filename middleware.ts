@@ -5,7 +5,8 @@ export default authMiddleware({
     '/',
     '/events/:id',
     '/api/webhook/clerk',
-    '/api/uploadthing'
+    '/api/uploadthing',
+    '/api/createOrder' // Add this line
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
@@ -16,4 +17,3 @@ export default authMiddleware({
 export const config = {
   matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
- 
