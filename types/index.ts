@@ -20,7 +20,6 @@ export type CreateEventParams = {
     endDateTime: Date
     categoryId: string
     url: string
-    customFields: CustomField[]
   }
   path: string
 }
@@ -37,7 +36,6 @@ export type UpdateEventParams = {
     endDateTime: Date
     categoryId: string
     url: string
-    customFields: CustomField[]
   }
   path: string
 }
@@ -83,7 +81,6 @@ export type Event = {
     _id: string
     name: string
   }
-  customFields: CustomField[]
 }
 
 // ====== CATEGORY PARAMS

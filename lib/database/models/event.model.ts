@@ -18,7 +18,6 @@ export interface IEvent extends Document {
   url?: string;
   category: { _id: string, name: string }
   organizer: { _id: string }
-  customFields?: CustomField[];
 }
 
 const EventSchema = new Schema({
