@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { getEventsByUser } from '@/lib/actions/event.actions'
 import { getOrdersByUser } from '@/lib/actions/order.actions'
 import { IOrder } from '@/lib/database/models/order.model'
+import { IEvent } from '@/lib/database/models/event.model'
 import { SearchParamProps } from '@/types'
 import { auth, currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
@@ -12,14 +13,14 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
   const user = await currentUser();
   const userId = user?.publicMetadata.userId as string;
 
-
   const ordersPage = Number(searchParams?.ordersPage) || 1;
   const eventsPage = Number(searchParams?.eventsPage) || 1;
 
-  const orders = await getOrdersByUser({ userId, page: ordersPage})
+  const orders = await getOrdersByUser({ userId, page: ordersPage });
 
-  const orderedEvents = orders?.data.map((order: IOrder) => order.event) || [];
-  const organizedEvents = await getEventsByUser({ userId, page: eventsPage })
+  // Filter out null values from orderedEvents
+  const orderedEvents = orders?.data.map((order: IOrder) => order.event).filter((event: IEvent | null) => event !== null) || [];
+  const organizedEvents = await getEventsByUser({ userId, page: eventsPage });
 
   return (
     <>
