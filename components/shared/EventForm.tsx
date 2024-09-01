@@ -33,12 +33,18 @@ type EventFormProps = {
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
-  const initialValues = event && type === 'Update' 
-    ? { 
-      ...event, 
-      startDateTime: new Date(event.startDateTime), 
-      endDateTime: new Date(event.endDateTime) 
-    }
+  const initialValues = event && type === 'Update'
+    ? {
+        ...event,
+        startDateTime: new Date(event.startDateTime),
+        endDateTime: new Date(event.endDateTime),
+        categoryId: event.category._id,
+        customFields: event.customFields?.map(field => ({
+          type: field.type as "boolean" | "text",
+          id: field.id.toString(),
+          label: field.label
+        })) || []
+      }
     : eventDefaultValues;
   const router = useRouter();
 
@@ -90,7 +96,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       try {
         const updatedEvent = await updateEvent({
           userId,
-          event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
+          event: { 
+            ...values, 
+            imageUrl: uploadedImageUrl, 
+            _id: eventId,
+            customFields: values.customFields ?? []
+          },
           path: `/events/${eventId}`
         })
 

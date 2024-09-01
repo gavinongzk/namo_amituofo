@@ -40,7 +40,7 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
             <Input
               type={field.type.toString() as React.HTMLInputTypeAttribute}
               id={field.id.toString()}
-              value={String(customFieldValues[field.id.toString()] || '')}
+              value={customFieldValues[field.id.toString()]?.toString() || ''}
               onChange={(e) => handleCustomFieldChange(field.id.toString(), e.target.value)}
               required
             />

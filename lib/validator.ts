@@ -1,8 +1,9 @@
 import * as z from "zod"
 
 const customFieldSchema = z.object({
-  name: z.string(),
-  value: z.string()
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(['text', 'boolean'])
 })
 
 export const eventFormSchema = z.object({
@@ -14,5 +15,9 @@ export const eventFormSchema = z.object({
   endDateTime: z.date(),
   categoryId: z.string(),
   url: z.string().url(),
-  customFields: z.array(customFieldSchema).optional()
+  customFields: z.array(z.object({
+    type: z.enum(["boolean", "text"]),
+    id: z.string(),
+    label: z.string()
+  })).optional()
 })

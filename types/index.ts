@@ -37,7 +37,7 @@ export type UpdateEventParams = {
     endDateTime: Date
     categoryId: string
     url: string
-    customFields: CustomField[]
+    customFields?: CustomField[]
   }
   path: string
 }

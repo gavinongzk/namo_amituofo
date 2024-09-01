@@ -12,10 +12,11 @@ import { CustomField } from '@/types';
 
 type CustomFieldsPopupProps = {
   onSave: (fields: CustomField[]) => void;
+  initialFields?: CustomField[];
 };
 
-const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave }) => {
-  const [fields, setFields] = useState<CustomField[]>([
+const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave, initialFields }) => {
+  const [fields, setFields] = useState<CustomField[]>(initialFields || [
     { id: '1', label: '（第1位）参加者名字 Participant\'s Name', type: 'text' },
     { id: '2', label: '（第1位）联系号码 Contact number', type: 'text' },
     { id: '3', label: '请问【第1位】要参加绕佛吗？Does the first person want to participate in walking and reciting section?', type: 'boolean' },
