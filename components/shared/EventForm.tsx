@@ -270,31 +270,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row">
-           <FormField
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                      <Image
-                        src="/assets/icons/link.svg"
-                        alt="link"
-                        width={24}
-                        height={24}
-                      />
-
-                      <Input placeholder="URL" {...field} className="input-field" />
-                    </div>
-
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
-
-        <div className="flex flex-col gap-5">
           <h3 className="text-lg font-medium">Custom Questions</h3>
           {customFields.map((field, index) => (
             <div key={field.id} className="flex flex-col gap-5 md:flex-row">
@@ -304,7 +279,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
-                      <Input placeholder="Question" {...field} />
+                      <Input placeholder="Question" {...field} className="input-field" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -316,7 +291,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
-                      <select {...field} className="input-field">
+                      <select {...field} className="input-field rounded-full bg-grey-50 px-4 py-2">
                         <option value="text">Text</option>
                         <option value="boolean">Boolean</option>
                       </select>
@@ -325,10 +300,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   </FormItem>
                 )}
               />
-              <Button type="button" onClick={() => remove(index)}>Remove</Button>
+              <Button type="button" onClick={() => remove(index)} className="button">Remove</Button>
             </div>
           ))}
-          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })}>
+          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="button">
             Add Question
           </Button>
         </div>
