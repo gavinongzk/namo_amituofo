@@ -38,23 +38,25 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const customFieldValues = Object.entries(values).map(([key, value]) => ({
-        id: key, // Add this line
-        label: key,
-        type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text', // Type assertion
-        value: String(value),
-      }));
+      const customFieldValues = Object.entries(values).map(([key, value]) => {
+        const field = event.customFields?.find(f => f.id === key);
+        return {
+          id: key,
+          label: field?.label || key, // Use the question text as the label
+          type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text',
+          value: String(value),
+        };
+      });
 
       const order: CreateOrderParams = {
         eventId: event._id,
-        buyerId: user?.id || '', // Send buyerId as a string
+        buyerId: user?.id || '',
         createdAt: new Date(),
         customFieldValues,
       };
 
-      // Call the server-side function
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
@@ -67,12 +69,12 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         throw new Error('Failed to create order');
       }
 
-      await response.json();
-      router.push('/thank-you');
+      const newOrder = await response.json();
+      router.push(`/events/${event._id}/thank-you?id=${newOrder._id}`);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 

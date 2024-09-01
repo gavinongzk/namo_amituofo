@@ -20,10 +20,6 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
       throw new Error('Invalid userId');
     }
 
-    console.log("eventId", order.eventId)
-
-    console.log("buyerId", userId)
-
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
@@ -124,3 +120,14 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
     handleError(error)
   }
 }
+
+export const getOrderById = async (orderId: string) => {
+  try {
+    await connectToDatabase();
+    const order = await Order.findById(orderId).populate('event').populate('buyer');
+    if (!order) throw new Error('Order not found');
+    return JSON.parse(JSON.stringify(order));
+  } catch (error) {
+    handleError(error);
+  }
+};
