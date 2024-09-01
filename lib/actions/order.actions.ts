@@ -8,7 +8,7 @@ import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
 
-export const createOrder = async (order: CreateOrderParams) => {
+export const createOrder = async (order: CreateOrderParams, userId: string) => {
   try {
     await connectToDatabase();
     
@@ -16,18 +16,18 @@ export const createOrder = async (order: CreateOrderParams) => {
       throw new Error('Invalid eventId');
     }
 
-    console.log("eventId", order.eventId)
-
-    if (!ObjectId.isValid(order.buyerId)) {
-      throw new Error('Invalid buyerId');
+    if (!ObjectId.isValid(userId)) {
+      throw new Error('Invalid userId');
     }
 
-    console.log("buyerId", order.buyerId)
+    console.log("eventId", order.eventId)
+
+    console.log("buyerId", userId)
 
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
-      buyer: new ObjectId(order.buyerId), // Convert buyerId to ObjectId
+      buyer: new ObjectId(userId), // Convert buyerId to ObjectId
       customFieldValues: order.customFieldValues,
     });
 

@@ -2,15 +2,20 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { CreateOrderParams } from '@/types';
 import { ObjectId } from 'mongodb';
+import { currentUser } from '@clerk/nextjs'
+
 
 export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
 
+    const user = await currentUser();
+    const userId = user?.publicMetadata.userId as string;
+
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId),
-      buyer: new ObjectId(order.buyerId), // Convert buyerId to ObjectId
+      buyer: new ObjectId(userId), // Convert buyerId to ObjectId
       customFieldValues: order.customFieldValues,
     });
 
