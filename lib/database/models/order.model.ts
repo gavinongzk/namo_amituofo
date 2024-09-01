@@ -1,5 +1,12 @@
 import { Schema, model, models, Document } from 'mongoose'
 
+export interface CustomField {
+  id: string
+  label: string
+  type: string
+  value: string
+}
+
 export interface IOrder extends Document {
   createdAt: Date
   event: {
@@ -11,6 +18,7 @@ export interface IOrder extends Document {
     firstName: string
     lastName: string
   }
+  customFieldValues: CustomField[]
 }
 
 export type IOrderItem = {
@@ -19,6 +27,7 @@ export type IOrderItem = {
   eventTitle: string
   eventId: string
   buyer: string
+  customFieldValues: CustomField[]
 }
 
 const OrderSchema = new Schema({
@@ -34,6 +43,14 @@ const OrderSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User',
   },
+  customFieldValues: [
+    {
+      id: { type: String, required: true },
+      label: { type: String, required: true },
+      type: { type: String, required: true },
+      value: { type: String, required: true },
+    },
+  ],
 })
 
 const Order = models.Order || model('Order', OrderSchema)
