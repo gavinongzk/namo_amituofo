@@ -1,5 +1,11 @@
 import { Document, Schema, model, models } from "mongoose";
 
+interface CustomField {
+  id: string;
+  label: string;
+  type: string;
+}
+
 export interface IEvent extends Document {
   _id: string;
   title: string;
@@ -12,11 +18,7 @@ export interface IEvent extends Document {
   url?: string;
   category: { _id: string, name: string }
   organizer: { _id: string }
-  customFields: [{
-    id: String,
-    label: String,
-    type: String
-  }]
+  customFields?: CustomField[];
 }
 
 const EventSchema = new Schema({
