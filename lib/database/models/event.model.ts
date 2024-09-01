@@ -17,8 +17,8 @@ export interface IEvent extends Document {
   startDateTime: Date;
   endDateTime: Date;
   url?: string;
-  category: { _id: string, name: string }
-  organizer: { _id: string }
+  category: { _id: string, name: string };
+  organizer: { _id: string };
   customFields?: CustomField[];
 }
 

@@ -30,18 +30,22 @@ const populateEvent = (query: any) => {
 // CREATE
 export async function createEvent({ userId, event, path }: CreateEventParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const organizer = await User.findById(userId)
-    
-    if (!organizer) throw new Error('Organizer not found')
+    const organizer = await User.findById(userId);
+    if (!organizer) throw new Error('Organizer not found');
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: userId })
-    revalidatePath(path)
+    const newEvent = await Event.create({ 
+      ...event, 
+      category: event.categoryId, 
+      organizer: userId,
+      customFields: event.customFields // Ensure customFields are saved
+    });
+    revalidatePath(path);
 
-    return JSON.parse(JSON.stringify(newEvent))
+    return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
@@ -63,23 +67,27 @@ export async function getEventById(eventId: string) {
 // UPDATE
 export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const eventToUpdate = await Event.findById(event._id)
+    const eventToUpdate = await Event.findById(event._id);
     if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
-      throw new Error('Unauthorized or event not found')
+      throw new Error('Unauthorized or event not found');
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
-      { ...event, category: event.categoryId },
+      { 
+        ...event, 
+        category: event.categoryId,
+        customFields: event.customFields // Ensure customFields are updated
+      },
       { new: true }
-    )
-    revalidatePath(path)
+    );
+    revalidatePath(path);
 
-    return JSON.parse(JSON.stringify(updatedEvent))
+    return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
