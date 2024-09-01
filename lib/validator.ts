@@ -14,6 +14,5 @@ export const eventFormSchema = z.object({
   startDateTime: z.date(),
   endDateTime: z.date(),
   categoryId: z.string(),
-  url: z.string().url(),
   customFields: z.array(customFieldSchema).optional(),
 })
