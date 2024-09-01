@@ -15,6 +15,7 @@ import { useState } from "react"
 import Image from "next/image"
 import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
+import { useFieldArray } from "react-hook-form";
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox"
@@ -55,6 +56,11 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     defaultValues: initialValues
   })
  
+  const { fields: customFields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "customFields",
+  });
+
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
     let uploadedImageUrl = values.imageUrl;
 
@@ -290,22 +296,44 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             />
         </div>
 
-        <FormField
-          control={form.control}
-          name="customFields"
-          render={({ field }) => (
-            <FormItem className="w-full">
-              <FormControl>
-                <CustomFieldsPopup
-                  onSave={(fields) => field.onChange(fields)}
-                  initialFields={field.value}
-                  onClose={() => {}}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex flex-col gap-5">
+          <h3 className="text-lg font-medium">Custom Questions</h3>
+          {customFields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <FormField
+                control={form.control}
+                name={`customFields.${index}.label`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Question" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`customFields.${index}.type`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <select {...field} className="input-field">
+                        <option value="text">Text</option>
+                        <option value="boolean">Boolean</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="button" onClick={() => remove(index)}>Remove</Button>
+            </div>
+          ))}
+          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })}>
+            Add Question
+          </Button>
+        </div>
 
         <Button 
           type="submit"

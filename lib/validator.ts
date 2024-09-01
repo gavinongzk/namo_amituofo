@@ -15,9 +15,5 @@ export const eventFormSchema = z.object({
   endDateTime: z.date(),
   categoryId: z.string(),
   url: z.string().url(),
-  customFields: z.array(z.object({
-    type: z.enum(["boolean", "text"]),
-    id: z.string(),
-    label: z.string()
-  })).optional()
+  customFields: z.array(customFieldSchema).optional(),
 })
