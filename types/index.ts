@@ -99,10 +99,11 @@ export type CheckoutOrderParams = {
 }
 
 export type CreateOrderParams = {
-  eventId: string
-  buyerId: string
-  createdAt: Date
-}
+  eventId: string;
+  buyerId: string;
+  createdAt: Date;
+  customFieldValues: Omit<CustomField, 'id'>[];
+};
 
 export type GetOrdersByEventParams = {
   eventId: string
@@ -135,6 +136,6 @@ export type SearchParamProps = {
 export type CustomField = {
   id: string;
   label: string;
-  type: "text" | "boolean"
+  type: "text" | "boolean";
   value?: string | boolean;
 };

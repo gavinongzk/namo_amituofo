@@ -16,6 +16,7 @@ export const createOrder = async (order: CreateOrderParams) => {
       ...order,
       event: order.eventId,
       buyer: order.buyerId,
+      customFieldValues: order.customFieldValues,
     });
 
     return JSON.parse(JSON.stringify(newOrder));
@@ -23,7 +24,6 @@ export const createOrder = async (order: CreateOrderParams) => {
     handleError(error);
   }
 }
-
 
 // GET ORDERS BY EVENT
 export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEventParams) {
@@ -66,6 +66,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
           buyer: {
             $concat: ['$buyer.firstName', ' ', '$buyer.lastName'],
           },
+          customFieldValues: 1,
         },
       },
       {
@@ -100,7 +101,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
         populate: {
           path: 'organizer',
           model: User,
-          select: '_id',
+          select: '_id firstName lastName',
         },
       })
 
