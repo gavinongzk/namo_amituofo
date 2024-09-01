@@ -30,7 +30,7 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
           <label htmlFor={field.id.toString()} className="block text-sm font-medium text-gray-700">
             {field.label}
           </label>
-          {field.type === 'boolean' ? (
+          {field.type.toString() === 'boolean' ? (
             <Checkbox
               id={field.id.toString()}
               checked={!!customFieldValues[field.id.toString()]}
@@ -38,7 +38,7 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
             />
           ) : (
             <Input
-              type={field.type}
+              type={field.type.toString() as React.HTMLInputTypeAttribute}
               id={field.id.toString()}
               value={customFieldValues[field.id.toString()] || ''}
               onChange={(e) => handleCustomFieldChange(field.id.toString(), e.target.value)}
