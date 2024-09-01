@@ -19,7 +19,10 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
   const orders = await getOrdersByUser({ userId, page: ordersPage });
 
   // Filter out null values from orderedEvents
-  const orderedEvents = orders?.data.map((order: IOrder) => order.event).filter((event: IEvent | null) => event !== null) || [];
+  const orderedEvents = orders?.data.map((order: IOrder) => ({
+    ...order.event,
+    orderId: order._id, // Add orderId to the event object
+  })).filter((event: IEvent | null) => event !== null) || [];
   const organizedEvents = await getEventsByUser({ userId, page: eventsPage });
 
   return (

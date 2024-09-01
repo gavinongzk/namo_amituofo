@@ -7,7 +7,7 @@ import React from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 
 type CardProps = {
-  event: IEvent,
+  event: IEvent & { orderId?: string }, // Add orderId to the event type
   hasOrderLink?: boolean,
   isMyTicket?: boolean, // Add this prop
 }
@@ -21,7 +21,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event._id}` : `/events/${event._id}`} // Conditional redirect
+        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`} // Conditional redirect
         style={{backgroundImage: `url(${event.imageUrl})`}}
         className="flex-center flex-grow bg-gray-50 bg-cover bg-center text-grey-500"
       />

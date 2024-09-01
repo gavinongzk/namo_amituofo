@@ -4,7 +4,7 @@ import Card from './Card'
 import Pagination from './Pagination'
 
 type CollectionProps = {
-  data: IEvent[],
+  data: (IEvent & { orderId?: string })[], // Add orderId to the event type
   emptyTitle: string,
   emptyStateSubtext: string,
   limit: number,
