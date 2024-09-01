@@ -16,7 +16,6 @@ export interface IEvent extends Document {
   imageUrl: string;
   startDateTime: Date;
   endDateTime: Date;
-  url?: string;
   category: { _id: string, name: string }
   organizer: { _id: string }
   customFields?: CustomField[];
@@ -30,7 +29,6 @@ const EventSchema = new Schema({
   imageUrl: { type: String, required: true },
   startDateTime: { type: Date, default: Date.now },
   endDateTime: { type: Date, default: Date.now },
-  url: { type: String },
   category: { type: Schema.Types.ObjectId, ref: 'Category' },
   organizer: { type: Schema.Types.ObjectId, ref: 'User' },
   customFields: [{ // Add this field

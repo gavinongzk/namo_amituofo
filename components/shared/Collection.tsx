@@ -30,10 +30,11 @@ const Collection = ({
           <ul className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
             {data.filter(event => event !== null).map((event) => {
               const hasOrderLink = collectionType === 'Events_Organized';
+              const isMyTicket = collectionType === 'My_Tickets'; // Add this line
 
               return (
                 <li key={event._id} className="flex justify-center">
-                  <Card event={event} hasOrderLink={hasOrderLink} />
+                  <Card event={event} hasOrderLink={hasOrderLink} isMyTicket={isMyTicket} /> {/* Pass the new prop */}
                 </li>
               )
             })}
