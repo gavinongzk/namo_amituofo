@@ -21,6 +21,8 @@ import { Checkbox } from "../ui/checkbox"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
+import CustomFieldsPopup from './CustomFieldsPopup';
+import { CustomField } from '@/types';
 
 
 type EventFormProps = {
@@ -47,7 +49,9 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     resolver: zodResolver(eventFormSchema),
     defaultValues: initialValues
   })
- 
+
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
     let uploadedImageUrl = values.imageUrl;
 
@@ -64,7 +68,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     if(type === 'Create') {
       try {
         const newEvent = await createEvent({
-          event: { ...values, imageUrl: uploadedImageUrl },
+          event: { ...values, imageUrl: uploadedImageUrl, customFields },
           userId,
           path: '/profile'
         })
@@ -89,7 +93,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       try {
         const updatedEvent = await updateEvent({
           userId,
-          event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
+          event: { ...values, imageUrl: uploadedImageUrl, _id: eventId, customFields },
           path: `/events/${eventId}`
         })
 
@@ -278,6 +282,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             />
         </div>
 
+        <CustomFieldsPopup onSave={setCustomFields} />
 
         <Button 
           type="submit"
