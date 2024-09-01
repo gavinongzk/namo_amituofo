@@ -12,6 +12,18 @@ export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
     
+    if (!ObjectId.isValid(order.eventId)) {
+      throw new Error('Invalid eventId');
+    }
+
+    console.log("eventId", order.eventId)
+
+    if (!ObjectId.isValid(order.buyerId)) {
+      throw new Error('Invalid buyerId');
+    }
+
+    console.log("buyerId", order.buyerId)
+
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
