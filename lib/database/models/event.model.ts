@@ -17,8 +17,8 @@ export interface IEvent extends Document {
   startDateTime: Date;
   endDateTime: Date;
   url?: string;
-  category: { _id: string, name: string };
-  organizer: { _id: string };
+  category: { _id: string, name: string }
+  organizer: { _id: string }
   customFields?: CustomField[];
 }
 
@@ -33,6 +33,12 @@ const EventSchema = new Schema({
   url: { type: String },
   category: { type: Schema.Types.ObjectId, ref: 'Category' },
   organizer: { type: Schema.Types.ObjectId, ref: 'User' },
+  customFields: [{ // Add this field
+    id: { type: String, required: true },
+    label: { type: String, required: true },
+    type: { type: String, required: true },
+    value: { type: String, required: false }
+  }]
 })
 
 const Event = models.Event || model('Event', EventSchema);
