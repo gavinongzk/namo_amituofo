@@ -7,8 +7,8 @@ interface CustomFieldValue {
   value: string;
 }
 
-const ThankYouPage = async ({ params: { id } }: { params: { id: string } }) => {
-  const order = await getOrderById(id);
+const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: string }, searchParams: { orderId: string } }) => {
+  const order = await getOrderById(searchParams.orderId);
 
   if (!order) {
     return <div>Order not found</div>;

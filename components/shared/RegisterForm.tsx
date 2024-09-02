@@ -70,6 +70,8 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
       }
 
       const newOrder = await response.json();
+
+      console.log("newOrder_Id", newOrder._id)
       router.push(`/events/${event._id}/thank-you?orderId=${newOrder._id}`);
     } catch (error) {
       console.error(error);
