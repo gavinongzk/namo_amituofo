@@ -18,17 +18,13 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
 
   const orders = await getOrdersByUser({ userId, page: ordersPage });
 
-  // Group orders by event
-  const groupedOrders = orders?.data.reduce((acc: { [key: string]: IOrder[] }, order: IOrder) => {
-    if (order && order.event) {
-      if (!acc[order.event._id]) {
-        acc[order.event._id] = [];
-      }
-      acc[order.event._id].push(order);
-    }
-    return acc;
-  }, {});
-
+  // Filter out null values from orderedEvents
+  const orderedEvents = orders?.data
+    .filter((order: IOrder) => order && order.event) // Ensure order and order.event are defined
+    .map((order: IOrder) => ({
+      ...order.event,
+      orderId: order._id, // Add orderId to the event object
+    })) || [];
   const organizedEvents = await getEventsByUser({ userId, page: eventsPage });
 
   return (
@@ -46,32 +42,16 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
       </section>
 
       <section className="wrapper my-8">
-        {groupedOrders && Object.keys(groupedOrders).length > 0 ? (
-          Object.keys(groupedOrders).map(eventId => {
-            const eventOrders = groupedOrders[eventId];
-            const event = eventOrders[0].event; // Assuming all orders have the same event details
-            return (
-              <div key={eventId} className="mb-8">
-                <h4 className="h4-bold">{event.title}</h4>
-                <Collection 
-                  data={eventOrders.map((order: IOrder) => ({ ...order.event, orderId: order._id }))}
-                  emptyTitle="No tickets found"
-                  emptyStateSubtext="No worries - plenty of exciting events to explore!"
-                  collectionType="My_Tickets"
-                  limit={3}
-                  page={ordersPage}
-                  urlParamName="ordersPage"
-                  totalPages={orders?.totalPages}
-                />
-              </div>
-            );
-          })
-        ) : (
-          <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28 text-center">
-            <h3 className="p-bold-20 md:h5-bold">No event tickets purchased yet</h3>
-            <p className="p-regular-14">No worries - plenty of exciting events to explore!</p>
-          </div>
-        )}
+        <Collection 
+          data={orderedEvents}
+          emptyTitle="No event tickets purchased yet"
+          emptyStateSubtext="No worries - plenty of exciting events to explore!"
+          collectionType="My_Tickets"
+          limit={3}
+          page={ordersPage}
+          urlParamName="ordersPage"
+          totalPages={orders?.totalPages}
+        />
       </section>
 
       {/* Events Organized */}

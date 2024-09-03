@@ -41,6 +41,9 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     if (!eventId) throw new Error('Event ID is required')
     const eventObjectId = new ObjectId(eventId)
 
+    console.log("Event ID:", eventId); // Debugging log
+    console.log("Search String:", searchString); // Debugging log
+
     const orders = await Order.aggregate([
       {
         $lookup: {
@@ -124,7 +127,6 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
 export const getOrderById = async (orderId: string) => {
   try {
     await connectToDatabase();
-    console.log("orderId", orderId)
     const order = await Order.findById(orderId).populate('event').populate('buyer');
     if (!order) throw new Error('Order not found');
     return JSON.parse(JSON.stringify(order));
