@@ -1,6 +1,5 @@
 import Search  from '@/components/shared/Search'
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
-import { formatDateTime, formatPrice } from '@/lib/utils'
 import { SearchParamProps } from '@/types'
 import { IOrderItem } from '@/lib/database/models/order.model'
 
@@ -9,6 +8,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
   const searchText = (searchParams?.query as string) || ''
 
   const orders = await getOrdersByEvent({ eventId, searchString: searchText })
+
+  // Extract custom field labels for table headers
+  const customFieldLabels = orders.length > 0 ? orders[0].customFieldValues.map((field: any) => field.label) : []
 
   return (
     <>
@@ -24,17 +26,16 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
         <table className="w-full border-collapse border-t">
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
-              <th className="min-w-[250px] py-3 text-left">Order ID</th>
               <th className="min-w-[200px] flex-1 py-3 pr-4 text-left">Event Title</th>
-              <th className="min-w-[150px] py-3 text-left">Buyer</th>
-              <th className="min-w-[100px] py-3 text-left">Created</th>
-              <th className="min-w-[100px] py-3 text-right">Amount</th>
+              {customFieldLabels.map((label: string, index: number) => (
+                <th key={index} className="min-w-[150px] py-3 text-left">{label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {orders && orders.length === 0 ? (
               <tr className="border-b">
-                <td colSpan={5} className="py-4 text-center text-gray-500">
+                <td colSpan={customFieldLabels.length + 1} className="py-4 text-center text-gray-500">
                   No orders found.
                 </td>
               </tr>
@@ -46,12 +47,10 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                       key={row._id}
                       className="p-regular-14 lg:p-regular-16 border-b "
                       style={{ boxSizing: 'border-box' }}>
-                      <td className="min-w-[250px] py-4 text-primary-500">{row._id}</td>
                       <td className="min-w-[200px] flex-1 py-4 pr-4">{row.eventTitle}</td>
-                      <td className="min-w-[150px] py-4">{row.buyer}</td>
-                      <td className="min-w-[100px] py-4">
-                        {formatDateTime(row.createdAt).dateTime}
-                      </td>
+                      {row.customFieldValues.map((field: any, index: number) => (
+                        <td key={index} className="min-w-[150px] py-4">{field.value}</td>
+                      ))}
                     </tr>
                   ))}
               </>
