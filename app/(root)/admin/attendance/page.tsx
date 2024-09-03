@@ -1,14 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { currentUser } from '@clerk/nextjs'
 
 const AttendancePage = () => {
   const [queueNumber, setQueueNumber] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await currentUser()
+      if (user?.publicMetadata?.isAdmin) {
+        setIsAdmin(true)
+      } else {
+        router.push('/') // Redirect non-admin users to the home page
+      }
+    }
+    fetchUser()
+  }, [router])
+
+  if (!isAdmin) {
+    return <div>Loading...</div>
+  }
 
   const handleMarkAttendance = async () => {
     const res = await fetch('/api/attendance', {

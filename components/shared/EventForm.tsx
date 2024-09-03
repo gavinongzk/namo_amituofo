@@ -53,7 +53,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     resolver: zodResolver(eventFormSchema),
     defaultValues: initialValues
   })
- 
+
   const { fields: customFields, append, remove } = useFieldArray({
     control: form.control,
     name: "customFields",
@@ -121,7 +121,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
             control={form.control}
@@ -270,9 +270,30 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row">
+          <FormField
+            control={form.control}
+            name="maxSeats"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Input
+                    placeholder="Maximum Seats"
+                    type="number"
+                    {...field}
+                    className="input-field"
+                    onChange={(e) => field.onChange(Number(e.target.value))} // Convert to number
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex flex-col gap-5">
           <h3 className="text-lg font-medium">Custom Questions</h3>
           {customFields.map((field, index) => (
-            <div key={field.id} className="flex flex-col gap-5 md:flex-row">
+            <div key={field.id} className="flex flex-col gap-5">
               <FormField
                 control={form.control}
                 name={`customFields.${index}.label`}
@@ -306,21 +327,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="button">
             Add Question
           </Button>
-        </div>
-
-        <div className="flex flex-col gap-5 md:flex-row">
-          <FormField
-            control={form.control}
-            name="maxSeats"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormControl>
-                  <Input placeholder="Maximum Seats" type="number" {...field} className="input-field" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <Button 
