@@ -70,19 +70,18 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
       {
         $project: {
           _id: 1,
-          totalAmount: 1,
           createdAt: 1,
           eventTitle: '$event.title',
-          eventId: '$event._id',
+          eventId: '$event',
           buyer: {
-            $concat: ['$buyer.firstName', ' ', '$buyer.lastName'],
+            $concat: ['$buyer'],
           },
           customFieldValues: 1,
         },
       },
       {
         $match: {
-          $and: [{ event: eventObjectId }, { buyer: { $regex: RegExp(searchString, 'i') } }],
+          $and: [{ event: eventObjectId }],
         },
       },
     ]);
@@ -118,7 +117,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
         },
       });
 
-    const ordersCount = await Order.distinct('event._id').countDocuments(conditions);
+    const ordersCount = await Order.distinct('event').countDocuments(conditions);
 
     return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) };
   } catch (error) {
