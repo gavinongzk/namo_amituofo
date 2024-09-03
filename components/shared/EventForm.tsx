@@ -308,6 +308,21 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           </Button>
         </div>
 
+        <div className="flex flex-col gap-5 md:flex-row">
+          <FormField
+            control={form.control}
+            name="maxSeats"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Input placeholder="Maximum Seats" type="number" {...field} className="input-field" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <Button 
           type="submit"
           size="lg"

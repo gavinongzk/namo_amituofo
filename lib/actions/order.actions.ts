@@ -20,11 +20,26 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
       throw new Error('Invalid userId');
     }
 
+    const event = await Event.findById(order.eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const currentRegistrations = await Order.countDocuments({ event: order.eventId });
+    if (currentRegistrations >= event.maxSeats) {
+      throw new Error('Event is fully booked');
+    }
+
+    const lastOrder = await Order.findOne().sort({ createdAt: -1 })
+    const lastQueueNumber = lastOrder ? parseInt(lastOrder.queueNumber.slice(1)) : 0
+    const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`
+
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
       buyer: new ObjectId(userId), // Convert buyerId to ObjectId
       customFieldValues: order.customFieldValues,
+      queueNumber: newQueueNumber,
     });
 
     return JSON.parse(JSON.stringify(newOrder));
@@ -97,3 +112,21 @@ export const getOrderById = async (orderId: string) => {
     handleError(error);
   }
 };
+
+export async function getOrderCountByEvent(eventId: string) {
+  try {
+    await connectToDatabase();
+
+    if (!ObjectId.isValid(eventId)) {
+      throw new Error('Invalid eventId');
+    }
+
+    const eventObjectId = new ObjectId(eventId);
+    const orderCount = await Order.countDocuments({ event: eventObjectId });
+
+    return orderCount;
+  } catch (error) {
+    handleError(error);
+  }
+}
+

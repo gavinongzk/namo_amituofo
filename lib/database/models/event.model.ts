@@ -19,6 +19,7 @@ export interface IEvent extends Document {
   category: { _id: string, name: string }
   organizer: { _id: string }
   customFields?: CustomField[];
+  maxSeats: number; // Add this line
 }
 
 const EventSchema = new Schema({
@@ -36,7 +37,8 @@ const EventSchema = new Schema({
     label: { type: String, required: true },
     type: { type: String, required: true },
     value: { type: String, required: false }
-  }]
+  }],
+  maxSeats: { type: Number, required: true } // Add this line
 })
 
 const Event = models.Event || model('Event', EventSchema);
