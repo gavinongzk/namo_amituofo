@@ -54,7 +54,7 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
               <div key={eventId} className="mb-8">
                 <h4 className="h4-bold">{event.title}</h4>
                 <Collection 
-                  data={eventOrders.map(order => ({ ...order.event, orderId: order._id }))}
+                  data={eventOrders.map((order: IOrder) => ({ ...order.event, orderId: order._id }))}
                   emptyTitle="No tickets found"
                   emptyStateSubtext="No worries - plenty of exciting events to explore!"
                   collectionType="My_Tickets"
