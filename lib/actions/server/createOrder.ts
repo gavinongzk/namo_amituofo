@@ -4,12 +4,14 @@ import { CreateOrderParams } from '@/types';
 import { ObjectId } from 'mongodb';
 import { currentUser } from '@clerk/nextjs'
 
-
 export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
 
     const user = await currentUser();
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
     const userId = user?.publicMetadata.userId as string;
 
     const newOrder = await Order.create({

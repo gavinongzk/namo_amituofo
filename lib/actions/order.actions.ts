@@ -44,45 +44,9 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     console.log("Event ID:", eventId); // Debugging log
     console.log("Search String:", searchString); // Debugging log
 
-    const orders = await Order.aggregate([
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'buyer',
-          foreignField: '_id',
-          as: 'buyer',
-        },
-      },
-      {
-        $unwind: '$buyer',
-      },
-      {
-        $lookup: {
-          from: 'events',
-          localField: 'event',
-          foreignField: '_id',
-          as: 'event',
-        },
-      },
-      {
-        $unwind: '$event',
-      },
-      {
-        $project: {
-          _id: 1,
-          createdAt: 1,
-          eventTitle: '$event.title',
-          eventId: '$event._id',
-          buyer: '$buyer._id', // Project the buyer's ObjectId
-          customFieldValues: 1,
-        },
-      },
-      {
-        $match: {
-          $and: [{ event: eventObjectId }],
-        },
-      },
-    ]);
+    const orders = await Order.find({
+      event: eventObjectId,
+    }).select('_id createdAt event buyer customFieldValues');
 
     console.log("Orders Found:", orders); // Debugging log
 
