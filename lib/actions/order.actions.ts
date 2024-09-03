@@ -72,10 +72,8 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
           _id: 1,
           createdAt: 1,
           eventTitle: '$event.title',
-          eventId: '$event',
-          buyer: {
-            $concat: ['$buyer'],
-          },
+          eventId: '$event._id',
+          buyer: '$buyer._id', // Project the buyer's ObjectId
           customFieldValues: 1,
         },
       },
