@@ -36,10 +36,10 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
 // GET ORDERS BY EVENT
 export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEventParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    if (!eventId) throw new Error('Event ID is required')
-    const eventObjectId = new ObjectId(eventId)
+    if (!eventId) throw new Error('Event ID is required');
+    const eventObjectId = new ObjectId(eventId);
 
     console.log("Event ID:", eventId); // Debugging log
     console.log("Search String:", searchString); // Debugging log
@@ -82,24 +82,26 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
       },
       {
         $match: {
-          $and: [{ eventId: eventObjectId }, { buyer: { $regex: RegExp(searchString, 'i') } }],
+          $and: [{ event: eventObjectId }, { buyer: { $regex: RegExp(searchString, 'i') } }],
         },
       },
-    ])
+    ]);
 
-    return JSON.parse(JSON.stringify(orders))
+    console.log("Orders Found:", orders); // Debugging log
+
+    return JSON.parse(JSON.stringify(orders));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
 // GET ORDERS BY USER
 export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUserParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const skipAmount = (Number(page) - 1) * limit
-    const conditions = { buyer: userId }
+    const skipAmount = (Number(page) - 1) * limit;
+    const conditions = { buyer: userId };
 
     const orders = await Order.distinct('event._id')
       .find(conditions)
@@ -114,13 +116,13 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
           model: User,
           select: '_id firstName lastName',
         },
-      })
+      });
 
-    const ordersCount = await Order.distinct('event._id').countDocuments(conditions)
+    const ordersCount = await Order.distinct('event._id').countDocuments(conditions);
 
-    return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) }
+    return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) };
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
