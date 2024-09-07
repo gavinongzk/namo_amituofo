@@ -11,22 +11,33 @@ const AttendancePage = () => {
   const [message, setMessage] = useState('')
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
-
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await currentUser()
-      if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
-        setIsAdmin(true)
-      } else {
-        router.push('/') // Redirect non-admin users to the home page
+      try {
+        const user = await currentUser()
+        if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
+          setIsAdmin(true)
+        } else {
+          router.push('/') // Redirect non-admin users to the home page
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+        router.push('/') // Redirect on error
+      } finally {
+        setLoading(false)
       }
     }
     fetchUser()
   }, [router])
 
-  if (!isAdmin) {
+  if (loading) {
     return <div>Loading...</div>
+  }
+
+  if (!isAdmin) {
+    return <div>You do not have access to this page.</div>
   }
 
   const handleMarkAttendance = async () => {
