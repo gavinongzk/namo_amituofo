@@ -20,6 +20,12 @@ const AdminDashboard = async () => {
           <a className="button">Take Attendance</a>
         </Link>
       </div>
+
+      <div className="wrapper my-8">
+        <Link href="/admin/users">
+          <a className="button">Manage Users</a>
+        </Link>
+      </div>
     </div>
   );
 };

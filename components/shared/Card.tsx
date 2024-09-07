@@ -5,9 +5,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
+import { CustomField } from '@/types';
+
 
 type CardProps = {
-  event: IEvent & { orderId?: string }, // Add orderId to the event type
+  event: IEvent & { orderId?: string, customFieldValues?: CustomField[], queueNumber?: string, attendeeCount?: number }, // Add customFieldValues, queueNumber, and attendeeCount to the event type
   hasOrderLink?: boolean,
   isMyTicket?: boolean, // Add this prop
 }
@@ -37,10 +39,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         </div>
       )}
 
-      <div
-        className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"
-      > 
-
+      <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
         <p className="p-medium-16 p-medium-18 text-grey-500">
           {formatDateTime(event.startDateTime).dateTime}
         </p>
@@ -49,11 +48,23 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
         </Link>
 
-        <div className="flex-between w-full">
-          {/* <p className="p-medium-14 md:p-medium-16 text-grey-600">
-            {event.organizer.firstName} {event.organizer.lastName}
-          </p> */}
+        {isMyTicket && (
+          <div className="flex flex-col gap-2">
+            <p className="p-medium-16 text-grey-500">Queue Number: {event.queueNumber}</p>
+            {event.customFieldValues?.map((field) => (
+              <p key={field.id} className="p-medium-16 text-grey-500">{field.label}: {field.value}</p>
+            ))}
+          </div>
+        )}
 
+        {isEventCreator && (
+          <div className="flex flex-col gap-2">
+            <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount}</p>
+            <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
+          </div>
+        )}
+
+        <div className="flex-between w-full">
           {hasOrderLink && (
             <Link href={`/orders?eventId=${event._id}`} className="flex gap-2">
               <p className="text-primary-500">Order Details</p>

@@ -79,3 +79,24 @@ export async function deleteUser(clerkId: string) {
     handleError(error)
   }
 }
+
+export async function updateUserRole(userId: string, newRole: 'user' | 'admin' | 'superadmin') {
+  try {
+    const response = await fetch('/api/users/update-role', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, newRole }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update user role');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    throw error;
+  }
+}

@@ -1,10 +1,11 @@
 import { IEvent } from '@/lib/database/models/event.model'
+import { CustomField } from '@/types';
 import React from 'react'
 import Card from './Card'
 import Pagination from './Pagination'
 
 type CollectionProps = {
-  data: (IEvent & { orderId?: string })[], // Add orderId to the event type
+  data: (IEvent & { orderId?: string, customFieldValues?: CustomField[], queueNumber?: string, attendeeCount?: number })[], // Add customFieldValues, queueNumber, and attendeeCount to the event type
   emptyTitle: string,
   emptyStateSubtext: string,
   limit: number,

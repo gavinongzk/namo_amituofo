@@ -1,13 +1,14 @@
 import EventForm from "@/components/shared/EventForm"
 import { auth, currentUser } from "@clerk/nextjs";
+import { redirect } from 'next/navigation';
 
 const CreateEvent = async () => {
-
   const user = await currentUser();
+  const role = user?.publicMetadata.role as string;
   const userId = user?.publicMetadata.userId as string;
 
-  if (!userId) {
-    return <div>Please sign in to create an event.</div>;
+  if (!userId || role !== 'superadmin') {
+    redirect('/');
   }
 
   return (

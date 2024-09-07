@@ -59,6 +59,7 @@ export async function POST(req: Request) {
     const user = {
       clerkId: id,
       phoneNumber: phone_numbers[0]?.phone_number,
+      role: 'user' // Default role
     }
   
     const newUser = await createUser(user);
@@ -66,7 +67,8 @@ export async function POST(req: Request) {
     if(newUser) {
       await clerkClient.users.updateUserMetadata(id, {
         publicMetadata: {
-          userId: newUser._id
+          userId: newUser._id,
+          role: newUser.role
         }
       })
     }

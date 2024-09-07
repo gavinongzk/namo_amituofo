@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { connectToDatabase } from '@/lib/database'
 import Order from '@/lib/database/models/order.model'
+import { withAuth } from '@/middleware/auth'
 
-export async function POST(req: Request) {
+async function handler(req: NextRequest) {
   try {
     await connectToDatabase()
     const { queueNumber } = await req.json()
@@ -20,3 +21,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Error marking attendance', error }, { status: 500 })
   }
 }
+
+export const POST = (req: NextRequest) => withAuth(req, ['superadmin', 'admin'], handler);
