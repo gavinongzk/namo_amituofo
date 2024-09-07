@@ -1,15 +1,10 @@
 'use client';
 
-import { headerLinks } from '@/constants'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import React from 'react'
-import { currentUser } from '@clerk/nextjs';
+import { headerLinks } from '@/constants';
+import Link from 'next/link';
+import React from 'react';
 
-const NavItems = async () => { // Declare as async
-  const user = await currentUser(); // Await the Promise
-  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-
+const NavItems: React.FC<{ isSuperAdmin: boolean }> = ({ isSuperAdmin }) => {
   return (
     <ul className="flex gap-4">
       <li>

@@ -2,7 +2,7 @@ import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "../ui/button"
-import NavItems from "./NavItems"
+import NavWrapper from "./NavWrapper"; // Import the new NavWrapper
 import MobileNav from "./MobileNav"
 
 const Header = () => {
@@ -18,7 +18,7 @@ const Header = () => {
 
         <SignedIn>
           <nav className="md:flex-between hidden w-full max-w-xs">
-            <NavItems />
+            <NavWrapper /> {/* Use NavWrapper here */}
           </nav>
         </SignedIn>
 
