@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs';
 
 const AdminDashboard = async () => {
   const user = await currentUser();
-  const isAdmin = user?.publicMetadata?.isAdmin;
+  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin';
 
   if (!isAdmin) {
     return <div>You do not have access to this page.</div>;

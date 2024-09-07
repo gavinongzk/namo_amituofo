@@ -12,10 +12,11 @@ const AttendancePage = () => {
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
 
+
   useEffect(() => {
     const fetchUser = async () => {
       const user = await currentUser()
-      if (user?.publicMetadata?.isAdmin) {
+      if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
         setIsAdmin(true)
       } else {
         router.push('/') // Redirect non-admin users to the home page
