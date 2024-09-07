@@ -43,7 +43,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
     fetchOrderCount();
   }, [fetchOrderCount]);
 
-  const formSchema = createFormSchema(event.customFields);
+  const formSchema = createFormSchema(event.customFields ?? []); // Provide default value
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
