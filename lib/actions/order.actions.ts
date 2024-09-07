@@ -31,7 +31,7 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
     }
 
     const lastOrder = await Order.findOne().sort({ createdAt: -1 });
-    const lastQueueNumber = lastOrder ? parseInt(lastOrder.queueNumber.slice(1)) : 0;
+    const lastQueueNumber = lastOrder && lastOrder.queueNumber ? parseInt(lastOrder.queueNumber.slice(1)) : 0;
     const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`;
 
     const newOrder = await Order.create({

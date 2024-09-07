@@ -282,3 +282,7 @@ body {
   }
 }
 
+.small-button {
+  @apply h-[40px] p-regular-14;
+}
+
