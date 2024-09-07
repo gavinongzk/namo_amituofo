@@ -16,9 +16,9 @@ import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 
 // Define the form schema outside the component
-const createFormSchema = (customFields) => z.object({
+const createFormSchema = (customFields: { id: string; type: 'boolean' | 'text'; label?: string }[]) => z.object({
   ...Object.fromEntries(
-    (customFields ?? []).map(field => [
+    (customFields ?? []).map((field: { id: string; type: 'boolean' | 'text' }) => [ // Specify type here
       field.id,
       field.type === 'boolean'
         ? z.boolean()
