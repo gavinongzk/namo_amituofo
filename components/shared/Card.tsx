@@ -67,7 +67,6 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         <div className="flex-between w-full">
           {hasOrderLink && (
             <Link href={`/orders?eventId=${event._id}`} className="flex gap-2">
-              <p className="text-primary-500">Order Details</p>
               <Image src="/assets/icons/arrow.svg" alt="search" width={10} height={10} />
             </Link>
           )}
