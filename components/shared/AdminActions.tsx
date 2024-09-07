@@ -5,7 +5,7 @@ const AdminActions = () => {
   return (
     <div className="flex flex-col gap-4 p-6 bg-white rounded-lg shadow-md">
       <h4 className="text-lg font-semibold text-center">Admin Actions</h4>
-      <Link href="/admin/attendance">
+      <Link href="/admin/select-event">
         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transition duration-200">
           Take Attendance
         </Button>
