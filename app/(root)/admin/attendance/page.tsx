@@ -16,13 +16,12 @@ const AttendancePage = async () => {
     return <div>You do not have access to this page.</div>;
   }
 
-  // Update the state type
-  const [events, setEvents] = useState<Event[]>([]); // Specify the type of events
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const response = await fetch('/api/events'); // Adjust the API endpoint as needed
+      const response = await fetch('/api/events');
       const data = await response.json();
       setEvents(data);
     };
@@ -30,7 +29,7 @@ const AttendancePage = async () => {
     fetchEvents();
   }, []);
 
-  const handleEventChange = (eventId: string) => { // Specify the type of eventId
+  const handleEventChange = (eventId: string) => {
     setSelectedEventId(eventId);
   };
 

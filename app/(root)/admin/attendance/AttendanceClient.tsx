@@ -14,17 +14,18 @@ const AttendanceClient = ({ eventId }: { eventId: string }) => {
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   useEffect(() => {
     fetchRegisteredUsers();
-  }, []);
+  }, [eventId]);
 
   const fetchRegisteredUsers = async () => {
     if (!eventId) {
       console.error('Event ID is undefined');
-      return; // or handle the case where eventId is not available
+      return;
     }
-    
+
     try {
       const res = await fetch(`/api/registered-users?eventId=${eventId}`);
       const data = await res.json();
@@ -52,43 +53,42 @@ const AttendanceClient = ({ eventId }: { eventId: string }) => {
     }
   };
 
-  const handleCheckboxChange = async (userId: string) => {
-    console.log(`Marking attendance for user ID: ${userId}`);
+  const handleCheckboxChange = (userId: string) => {
+    setSelectedUsers((prevSelected) => {
+      if (prevSelected.includes(userId)) {
+        // If user is already selected, remove them
+        return prevSelected.filter(id => id !== userId);
+      } else {
+        // If user is not selected, add them
+        return [...prevSelected, userId];
+      }
+    });
   };
 
   return (
     <div className="wrapper my-8">
-      <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-        <h3 className="wrapper h3-bold text-center sm:text-left">Mark Attendance</h3>
-      </section>
+      <h4>Registered Users</h4>
+      <ul>
+        {registeredUsers.map((user: User) => (
+          <li key={user.id}>
+            <label>
+              <input type="checkbox" onChange={() => handleCheckboxChange(user.id)} checked={selectedUsers.includes(user.id)} />
+              {user.name} - {user.queueNumber}
+            </label>
+          </li>
+        ))}
+      </ul>
 
-      <div className="wrapper my-8">
-        <h4>Registered Users</h4>
-        <ul>
-          {registeredUsers.map((user: User) => (
-            <li key={user.id}>
-              <label>
-                <input
-                  type="checkbox"
-                  onChange={() => handleCheckboxChange(user.id)}
-                />
-                {user.name} - {user.queueNumber}
-              </label>
-            </li>
-          ))}
-        </ul>
-
-        <Input
-          placeholder="Enter Queue Number"
-          value={queueNumber}
-          onChange={(e) => setQueueNumber(e.target.value)}
-          className="input-field"
-        />
-        <Button onClick={handleMarkAttendance} className="button mt-4">
-          Mark Attendance
-        </Button>
-        {message && <p className="mt-4">{message}</p>}
-      </div>
+      <Input
+        placeholder="Enter Queue Number"
+        value={queueNumber}
+        onChange={(e) => setQueueNumber(e.target.value)}
+        className="input-field"
+      />
+      <Button onClick={handleMarkAttendance} className="button mt-4">
+        Mark Attendance
+      </Button>
+      {message && <p className="mt-4">{message}</p>}
     </div>
   );
 };
