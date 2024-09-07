@@ -42,9 +42,10 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
       queueNumber: newQueueNumber,
     });
 
-    return JSON.parse(JSON.stringify(newOrder));
+    return { success: true, message: 'User successfully registered', order: newOrder };
   } catch (error) {
     handleError(error);
+    return { success: false, message: 'Registration failed' };
   }
 }
 

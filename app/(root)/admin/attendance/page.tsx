@@ -6,65 +6,71 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { currentUser } from '@clerk/nextjs'
 
+// Define a type for registered users
+type User = {
+  id: string;
+  name: string;
+  queueNumber: string;
+}
+
 const AttendancePage = () => {
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([])
   const [queueNumber, setQueueNumber] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchUser = async () => {
-      console.log('Fetching user...'); // Debug statement
-      try {
-        const user = await currentUser()
-        console.log('User fetched:', user); // Debug statement
-        if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
-          setIsAdmin(true)
-          console.log('User is admin or superadmin'); // Debug statement
-        } else {
-          console.log('User is not authorized, redirecting...'); // Debug statement
-          router.push('/') // Redirect non-admin users to the home page
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error)
-        setMessage('Failed to fetch user. Please try again later.')
-      } finally {
-        setLoading(false)
-        console.log('Loading state set to false'); // Debug statement
+      const user = await currentUser()
+      if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
+        setIsAdmin(true)
+        fetchRegisteredUsers() // Fetch registered users if admin
+      } else {
+        router.push('/') // Redirect non-admin users to the home page
       }
     }
     fetchUser()
   }, [router])
 
-  if (loading) {
-    console.log('Loading...'); // Debug statement
-    return <div>Loading...</div>
-  }
-
-  if (!isAdmin) {
-    console.log('Access denied, user is not admin'); // Debug statement
-    return <div>You do not have access to this page.</div>
+  const fetchRegisteredUsers = async () => {
+    try {
+      const res = await fetch('/api/registered-users') // Adjust the API endpoint as needed
+      const data = await res.json()
+      setRegisteredUsers(data)
+    } catch (error) {
+      console.error('Error fetching registered users:', error)
+      setMessage('Failed to fetch registered users.')
+    }
   }
 
   const handleMarkAttendance = async () => {
-    console.log('Marking attendance for queue number:', queueNumber); // Debug statement
     const res = await fetch('/api/attendance', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ queueNumber }),
-    })
+    });
 
-    const data = await res.json()
+    const data = await res.json();
     if (res.ok) {
-      setMessage(`Attendance marked for ${data.order.buyer.firstName} ${data.order.buyer.lastName}`)
-      console.log('Attendance marked successfully:', data); // Debug statement
+      setMessage(`Attendance marked for ${data.order.buyer.firstName} ${data.order.buyer.lastName}`);
+      // Optionally, you can also notify about the registration
+      setMessage(prev => `${prev} - ${data.message}`);
     } else {
-      setMessage(data.message)
-      console.error('Error marking attendance:', data.message); // Debug statement
+      setMessage(data.message);
     }
+  }
+
+  const handleCheckboxChange = async (userId: string) => { // Specify userId type
+    // Logic to mark attendance for the user
+    // You can send a request to the server to update the attendance status
+    console.log(`Marking attendance for user ID: ${userId}`)
+  }
+
+  if (!isAdmin) {
+    return <div>You do not have access to this page.</div>
   }
 
   return (
@@ -74,6 +80,21 @@ const AttendancePage = () => {
       </section>
 
       <div className="wrapper my-8">
+        <h4>Registered Users</h4>
+        <ul>
+          {registeredUsers.map((user: User) => ( // Specify User type
+            <li key={user.id}>
+              <label>
+                <input
+                  type="checkbox"
+                  onChange={() => handleCheckboxChange(user.id)}
+                />
+                {user.name} - {user.queueNumber}
+              </label>
+            </li>
+          ))}
+        </ul>
+
         <Input
           placeholder="Enter Queue Number"
           value={queueNumber}
