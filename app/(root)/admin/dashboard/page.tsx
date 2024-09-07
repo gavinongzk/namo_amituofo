@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { currentUser } from '@clerk/nextjs';
+import AdminActions from '@/components/shared/AdminActions';
 
 const AdminDashboard = async () => {
   const user = await currentUser();
@@ -15,17 +16,7 @@ const AdminDashboard = async () => {
         <h3 className="wrapper h3-bold text-center sm:text-left">Admin Dashboard</h3>
       </section>
 
-      <div className="wrapper my-8">
-        <Link href="/admin/attendance">
-          <a className="button">Take Attendance</a>
-        </Link>
-      </div>
-
-      <div className="wrapper my-8">
-        <Link href="/admin/users">
-          <a className="button">Manage Users</a>
-        </Link>
-      </div>
+      <AdminActions />
     </div>
   );
 };
