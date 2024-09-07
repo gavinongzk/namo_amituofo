@@ -24,7 +24,7 @@ const AttendancePage = () => {
         }
       } catch (error) {
         console.error('Error fetching user:', error)
-        router.push('/') // Redirect on error
+        setMessage('Failed to fetch user. Please try again later.')
       } finally {
         setLoading(false)
       }
