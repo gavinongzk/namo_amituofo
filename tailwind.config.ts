@@ -20,15 +20,14 @@ module.exports = withUt({
     extend: {
       colors: {
         primary: {
-          500: '#624CF5',
-          50: ' #F6F8FD',
-          DEFAULT: '#624CF5',
+          500: '#A52A2A', // Brown color
+          50: '#F6F8FD',
+          DEFAULT: '#A52A2A', // Brown color
           foreground: 'hsl(var(--primary-foreground))',
         },
         coral: {
           500: '#15BF59',
         },
-
         grey: {
           600: '#545454', // Subdued - color name in figma
           500: '#757575',
@@ -64,6 +63,9 @@ module.exports = withUt({
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        yellow: {
+          500: '#DAA520', // Yellow color for numbers
         },
       },
       fontFamily: {
