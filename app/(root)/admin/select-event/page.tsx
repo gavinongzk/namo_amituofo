@@ -2,7 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 type Event = {
   _id: string;

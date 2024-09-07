@@ -1,3 +1,4 @@
+// components/shared/RegisterForm.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -54,7 +55,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         return {
           id: key,
           label: field?.label || key,
-          type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text',
+          type: field?.type as 'boolean' | 'text', // Ensure type is either 'boolean' or 'text'
           value: String(value),
         };
       });

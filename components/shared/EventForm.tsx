@@ -321,10 +321,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   </FormItem>
                 )}
               />
-              <Button type="button" onClick={() => remove(index)} className="button small-button">Remove</Button>
+              <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}
-          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="button small-button">
+          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="small-button bg-blue-500 hover:bg-blue-600 text-white rounded-md">
             Add Question
           </Button>
         </div>
