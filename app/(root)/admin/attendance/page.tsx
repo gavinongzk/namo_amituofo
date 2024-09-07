@@ -15,11 +15,15 @@ const AttendancePage = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      console.log('Fetching user...'); // Debug statement
       try {
         const user = await currentUser()
+        console.log('User fetched:', user); // Debug statement
         if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
           setIsAdmin(true)
+          console.log('User is admin or superadmin'); // Debug statement
         } else {
+          console.log('User is not authorized, redirecting...'); // Debug statement
           router.push('/') // Redirect non-admin users to the home page
         }
       } catch (error) {
@@ -27,20 +31,24 @@ const AttendancePage = () => {
         setMessage('Failed to fetch user. Please try again later.')
       } finally {
         setLoading(false)
+        console.log('Loading state set to false'); // Debug statement
       }
     }
     fetchUser()
   }, [router])
 
   if (loading) {
+    console.log('Loading...'); // Debug statement
     return <div>Loading...</div>
   }
 
   if (!isAdmin) {
+    console.log('Access denied, user is not admin'); // Debug statement
     return <div>You do not have access to this page.</div>
   }
 
   const handleMarkAttendance = async () => {
+    console.log('Marking attendance for queue number:', queueNumber); // Debug statement
     const res = await fetch('/api/attendance', {
       method: 'POST',
       headers: {
@@ -52,8 +60,10 @@ const AttendancePage = () => {
     const data = await res.json()
     if (res.ok) {
       setMessage(`Attendance marked for ${data.order.buyer.firstName} ${data.order.buyer.lastName}`)
+      console.log('Attendance marked successfully:', data); // Debug statement
     } else {
       setMessage(data.message)
+      console.error('Error marking attendance:', data.message); // Debug statement
     }
   }
 
