@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
@@ -13,34 +11,31 @@ type User = {
   queueNumber: string;
 }
 
-const AttendancePage = () => {
+const AttendancePage = async () => {
+  const user = await currentUser();
+  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin';
+
+  if (!isAdmin) {
+    return <div>You do not have access to this page.</div>
+  }
+
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([])
   const [queueNumber, setQueueNumber] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = await currentUser()
-      if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin') {
-        setIsAdmin(true)
-        fetchRegisteredUsers() // Fetch registered users if admin
-      } else {
-        router.push('/') // Redirect non-admin users to the home page
-      }
-    }
-    fetchUser()
-  }, [router])
+    fetchRegisteredUsers();
+  }, []);
 
   const fetchRegisteredUsers = async () => {
     try {
-      const res = await fetch('/api/registered-users') // Adjust the API endpoint as needed
-      const data = await res.json()
-      setRegisteredUsers(data)
+      const res = await fetch('/api/registered-users');
+      const data = await res.json();
+      setRegisteredUsers(data);
     } catch (error) {
-      console.error('Error fetching registered users:', error)
-      setMessage('Failed to fetch registered users.')
+      console.error('Error fetching registered users:', error);
+      setMessage('Failed to fetch registered users.');
     }
   }
 
@@ -56,21 +51,14 @@ const AttendancePage = () => {
     const data = await res.json();
     if (res.ok) {
       setMessage(`Attendance marked for ${data.order.buyer.firstName} ${data.order.buyer.lastName}`);
-      // Optionally, you can also notify about the registration
       setMessage(prev => `${prev} - ${data.message}`);
     } else {
       setMessage(data.message);
     }
   }
 
-  const handleCheckboxChange = async (userId: string) => { // Specify userId type
-    // Logic to mark attendance for the user
-    // You can send a request to the server to update the attendance status
-    console.log(`Marking attendance for user ID: ${userId}`)
-  }
-
-  if (!isAdmin) {
-    return <div>You do not have access to this page.</div>
+  const handleCheckboxChange = async (userId: string) => {
+    console.log(`Marking attendance for user ID: ${userId}`);
   }
 
   return (
@@ -82,7 +70,7 @@ const AttendancePage = () => {
       <div className="wrapper my-8">
         <h4>Registered Users</h4>
         <ul>
-          {registeredUsers.map((user: User) => ( // Specify User type
+          {registeredUsers.map((user: User) => (
             <li key={user.id}>
               <label>
                 <input
@@ -110,4 +98,4 @@ const AttendancePage = () => {
   )
 }
 
-export default AttendancePage
+export default AttendancePage;
