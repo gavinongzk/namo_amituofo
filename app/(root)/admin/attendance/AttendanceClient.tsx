@@ -10,8 +10,8 @@ type User = {
   queueNumber: string;
 };
 
-const AttendanceClient = ({ events }: { events: { _id: string; title: string }[] }) => {
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
+const AttendanceClient = ({ events, selectedEventId: initialSelectedEventId }: { events: { _id: string; title: string }[], selectedEventId: string }) => {
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialSelectedEventId); // {{ edit_1 }}
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
