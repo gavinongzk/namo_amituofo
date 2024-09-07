@@ -3,15 +3,21 @@
 import { useState, useEffect } from 'react';
 import { updateUserRole } from '@/lib/actions/user.actions';
 
+type User = {
+  id: string;
+  name: string;
+  role: 'user' | 'admin' | 'superadmin';
+};
+
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   // Fetch users...
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch('/api/users');
-        const data = await response.json();
+        const data: User[] = await response.json();
         setUsers(data);
       } catch (error) {
         console.error('Failed to fetch users:', error);
