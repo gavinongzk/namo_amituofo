@@ -20,8 +20,13 @@ const AttendanceClient = ({ eventId }: { eventId: string }) => {
   }, []);
 
   const fetchRegisteredUsers = async () => {
+    if (!eventId) {
+      console.error('Event ID is undefined');
+      return; // or handle the case where eventId is not available
+    }
+    
     try {
-      const res = await fetch(`/api/registered-users?eventId=${eventId}`); // Pass eventId as a query parameter
+      const res = await fetch(`/api/registered-users?eventId=${eventId}`);
       const data = await res.json();
       setRegisteredUsers(data);
     } catch (error) {
