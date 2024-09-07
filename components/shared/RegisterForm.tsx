@@ -1,7 +1,6 @@
-// components/shared/RegisterForm.tsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -15,36 +14,31 @@ import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 
-// Define the form schema outside the component
-const createFormSchema = (customFields: { id: string; type: 'boolean' | 'text'; label?: string }[]) => z.object({
-  ...Object.fromEntries(
-    (customFields ?? []).map((field: { id: string; type: 'boolean' | 'text' }) => [ // Specify type here
-      field.id,
-      field.type === 'boolean'
-        ? z.boolean()
-        : z.string().min(1, { message: "This field is required" })
-    ])
-  )
-});
-
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
 
-  // Custom hook to fetch order count
-  const fetchOrderCount = useCallback(async () => {
-    const count = await getOrderCountByEvent(event._id);
-    setCurrentRegistrations(count ?? 0);
+  useEffect(() => {
+    async function fetchOrderCount() {
+      const count = await getOrderCountByEvent(event._id);
+      setCurrentRegistrations(count ?? 0); // Ensure count is a number
+    }
+    fetchOrderCount();
   }, [event._id]);
 
-  useEffect(() => {
-    fetchOrderCount();
-  }, [fetchOrderCount]);
+  const formSchema = z.object({
+    ...Object.fromEntries(
+      (event.customFields ?? []).map(field => [
+        field.id,
+        field.type === 'boolean'
+          ? z.boolean()
+          : z.string().min(1, { message: "This field is required" })
+      ])
+    )
+  });
 
-  const formSchema = createFormSchema(event.customFields as { id: string; type: 'boolean' | 'text'; label?: string }[]); // Type assertion
-  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: Object.fromEntries(
@@ -52,7 +46,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
     ),
   });
 
-  const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
       const customFieldValues = Object.entries(values).map(([key, value]) => {
@@ -60,7 +54,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         return {
           id: key,
           label: field?.label || key,
-          type: field?.type as 'boolean' | 'text',
+          type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text',
           value: String(value),
         };
       });
@@ -85,14 +79,14 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
       }
 
       const newOrder = await response.json();
+
       router.push(`/events/${event._id}/thank-you?orderId=${newOrder._id}`);
     } catch (error) {
       console.error(error);
-      // Optionally set an error state to display to the user
     } finally {
       setIsSubmitting(false);
     }
-  }, [event._id, user?.id, router]);
+  }
 
   const isFullyBooked = currentRegistrations >= event.maxSeats;
 
@@ -133,7 +127,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         )}
       </form>
     </Form>
-  );
-};
+  )
+}
 
-export default RegisterForm;
+export default RegisterForm
