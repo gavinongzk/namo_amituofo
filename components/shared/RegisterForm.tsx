@@ -55,7 +55,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         return {
           id: key,
           label: field?.label || key,
-          type: (typeof value === 'boolean' ? 'boolean' : 'text') as 'boolean' | 'text',
+          type: field?.type || (typeof value === 'boolean' ? 'boolean' : 'text'),
           value: String(value),
         };
       });

@@ -4,7 +4,6 @@ import { CreateOrderParams } from '@/types';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
-
   const user = await currentUser();
   const userId = user?.publicMetadata.userId as string;
 
@@ -14,6 +13,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const order: CreateOrderParams = await req.json();
+    if (!Array.isArray(order.customFieldValues)) {
+      throw new Error('customFieldValues must be an array');
+    }
     const newOrder = await createOrder(order, userId);
     return NextResponse.json(newOrder, { status: 200 });
   } catch (error: any) {
