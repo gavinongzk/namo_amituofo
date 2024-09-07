@@ -1,12 +1,5 @@
 import { currentUser } from '@clerk/nextjs';
 import AttendanceClient from './AttendanceClient';
-import { useEffect, useState } from 'react';
-
-// Define the Event type
-type Event = {
-  _id: string;
-  title: string;
-};
 
 const AttendancePage = async () => {
   const user = await currentUser();
@@ -16,36 +9,13 @@ const AttendancePage = async () => {
     return <div>You do not have access to this page.</div>;
   }
 
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const response = await fetch('/api/events');
-      const data = await response.json();
-      setEvents(data);
-    };
-
-    fetchEvents();
-  }, []);
-
-  const handleEventChange = (eventId: string) => {
-    setSelectedEventId(eventId);
-  };
+  const response = await fetch('/api/events');
+  const events = await response.json();
 
   return (
     <div>
       <h2>Select Event for Attendance</h2>
-      <select onChange={(e) => handleEventChange(e.target.value)} value={selectedEventId}>
-        <option value="">Select an event</option>
-        {events.map((event) => (
-          <option key={event._id} value={event._id}>
-            {event.title}
-          </option>
-        ))}
-      </select>
-
-      {selectedEventId && <AttendanceClient eventId={selectedEventId} />}
+      <AttendanceClient events={events} />
     </div>
   );
 };
