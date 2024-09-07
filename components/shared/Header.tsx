@@ -12,7 +12,7 @@ const Header = () => {
         <Link href="/" className="w-36">
           <Image 
             src="/assets/images/logo.svg" width={64} height={24}
-            alt="Evently logo" 
+            alt="Namo Amituofo logo" 
           />
         </Link>
 
