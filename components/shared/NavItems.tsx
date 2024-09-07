@@ -6,26 +6,22 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 
 const NavItems = () => {
-  const pathname = usePathname();
-
   return (
-    <ul className="md:flex-between flex w-full flex-col items-start gap-5 md:flex-row">
-      {headerLinks.map((link) => {
-        const isActive = pathname === link.route;
-        
-        return (
-          <li
-            key={link.route}
-            className={`${
-              isActive && 'text-primary-500'
-            } flex-center p-medium-16 whitespace-nowrap`}
-          >
-            <Link href={link.route}>{link.label}</Link>
-          </li>
-        )
-      })}
+    <ul className="flex gap-4">
+      <li>
+        <Link href="/">Home</Link>
+      </li>
+      <li>
+        <Link href="/events/create">Create Event</Link>
+      </li>
+      <li>
+        <Link href="/profile">My Profile</Link>
+      </li>
+      <li>
+        <Link href="/admin/dashboard">Admin Dashboard</Link>
+      </li>
     </ul>
-  )
-}
+  );
+};
 
-export default NavItems
+export default NavItems;
