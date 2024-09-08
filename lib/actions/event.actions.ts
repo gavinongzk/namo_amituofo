@@ -25,8 +25,7 @@ const getCategoryByName = async (name: string) => {
 
 const populateEvent = (query: any) => {
   return query
-    .select('_id title organizer category') // Add _id and title here
-    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .select('_id title startDateTime category') // Ensure these fields are selected
     .populate({ path: 'category', model: Category, select: '_id name' });
 }
 
@@ -126,14 +125,8 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
     const events = await populateEvent(eventsQuery);
     const eventsCount = await Event.countDocuments(conditions);
 
-    // Map the events to return only the necessary fields
-    const formattedEvents = events.map((event: IEvent) => ({
-      _id: event._id,
-      title: event.title,
-    }));
-
     return {
-      data: formattedEvents,
+      data: JSON.parse(JSON.stringify(events)),
       totalPages: Math.ceil(eventsCount / limit),
     };
   } catch (error) {
