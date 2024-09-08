@@ -36,6 +36,7 @@ const SelectEventPage = () => {
   }, []);
 
   const handleSelectEvent = () => {
+    console.log('Selected Event ID:', selectedEventId);
     if (selectedEventId) {
       router.push(`/admin/attendance?eventId=${selectedEventId}`);
     }
