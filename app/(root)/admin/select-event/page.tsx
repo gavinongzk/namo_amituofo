@@ -1,9 +1,10 @@
 'use client';
 
-import { currentUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type Event = {
   _id: string;
@@ -18,6 +19,9 @@ const SelectEventPage = () => {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+
   useEffect(() => {
     if (isLoaded && user) {
       const role = user.publicMetadata.role as string;
@@ -27,20 +31,21 @@ const SelectEventPage = () => {
     }
   }, [isLoaded, user, router]);
 
-  const [events, setEvents] = useState<Event[]>([]); // Define the type for events
-  const [selectedEventId, setSelectedEventId] = useState('');
-
   useEffect(() => {
     const fetchEvents = async () => {
-      const response = await fetch('/api/events');
-      const result = await response.json();
+      try {
+        const response = await fetch('/api/events');
+        const result = await response.json();
 
-      // Check if result.data is an array
-      if (Array.isArray(result.data)) {
-        setEvents(result.data);
-      } else {
-        console.error('Fetched data is not an array:', result);
-        setEvents([]); // Set to an empty array or handle the error as needed
+        if (Array.isArray(result.data)) {
+          setEvents(result.data);
+        } else {
+          console.error('Fetched data is not an array:', result);
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        setEvents([]);
       }
     };
 
@@ -48,26 +53,35 @@ const SelectEventPage = () => {
   }, []);
 
   const handleSelectEvent = () => {
-    console.log('Selected Event ID:', selectedEventId);
     if (selectedEventId) {
       router.push(`/admin/attendance?eventId=${selectedEventId}`);
     }
   };
 
   return (
-    <div>
-      <h2>Select an Event for Attendance</h2>
-      <select onChange={(e) => setSelectedEventId(e.target.value)} value={selectedEventId}>
-        <option value="">Select an event</option>
-        {events.map((event) => (
-          <option key={event._id} value={event._id}>
-            {event.title} | {new Date(event.startDateTime).toLocaleString()} | {event.category.name}
-          </option>
-        ))}
-      </select>
-      <button onClick={handleSelectEvent} disabled={!selectedEventId}>
-        Go to Attendance
-      </button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800">Select an Event for Attendance</h2>
+        <Select onValueChange={setSelectedEventId} value={selectedEventId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an event" />
+          </SelectTrigger>
+          <SelectContent>
+            {events.map((event) => (
+              <SelectItem key={event._id} value={event._id}>
+                {event.title} | {new Date(event.startDateTime).toLocaleString()} | {event.category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button 
+          onClick={handleSelectEvent} 
+          disabled={!selectedEventId}
+          className="w-full"
+        >
+          Go to Attendance
+        </Button>
+      </div>
     </div>
   );
 };
