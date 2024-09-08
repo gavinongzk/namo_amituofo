@@ -3,6 +3,7 @@
 import { currentUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 
 type Event = {
   _id: string;
@@ -14,9 +15,20 @@ type Event = {
 };
 
 const SelectEventPage = () => {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      const role = user.publicMetadata.role as string;
+      if (role !== 'admin' && role !== 'superadmin') {
+        router.push('/');
+      }
+    }
+  }, [isLoaded, user, router]);
+
   const [events, setEvents] = useState<Event[]>([]); // Define the type for events
   const [selectedEventId, setSelectedEventId] = useState('');
-  const router = useRouter();
 
   useEffect(() => {
     const fetchEvents = async () => {

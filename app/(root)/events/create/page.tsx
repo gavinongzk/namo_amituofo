@@ -7,7 +7,7 @@ const CreateEvent = async () => {
   const role = user?.publicMetadata.role as string;
   const userId = user?.publicMetadata.userId as string;
 
-  if (!userId || role !== 'superadmin') {
+  if (!userId || (role !== 'admin' && role !== 'superadmin')) {
     redirect('/');
   }
 
