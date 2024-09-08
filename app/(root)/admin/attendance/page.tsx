@@ -9,7 +9,8 @@ const AttendancePage = async () => {
     return <div>You do not have access to this page.</div>;
   }
 
-  const response = await fetch('/api/events');
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/events`);
   const events = await response.json();
 
   console.log('Fetched Events:', events);
