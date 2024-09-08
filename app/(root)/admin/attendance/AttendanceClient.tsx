@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 
 type User = {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   queueNumber: string;
   attended: boolean;
 };
@@ -140,7 +139,7 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
                           checked={user.attended}
                           onChange={() => handleMarkAttendance(user.id, !user.attended)}
                         />
-                        {user.firstName} {user.lastName} - Queue: {user.queueNumber}
+                        {user.name} - Queue: {user.queueNumber}
                       </label>
                     </li>
                   ))

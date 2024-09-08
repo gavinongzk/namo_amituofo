@@ -11,15 +11,14 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     console.log('Fetching attendees for event:', eventId);
 
     const attendees = await Order.find({ event: eventId })
-      .populate('buyer', 'firstName lastName')
-      .select('buyer queueNumber attendance');
+      .populate('buyer', '_id')
+      .select('buyer customFieldValues queueNumber attendance');
 
     console.log('Attendees found:', attendees.length);
 
     const formattedAttendees = attendees.map(order => ({
       id: order.buyer._id,
-      firstName: order.buyer.firstName,
-      lastName: order.buyer.lastName,
+      name: order.customFieldValues[0]?.value || 'N/A',
       queueNumber: order.queueNumber,
       attended: order.attendance
     }));
