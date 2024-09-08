@@ -61,7 +61,7 @@ const SelectEventPage = () => {
         <option value="">Select an event</option>
         {events.map((event) => (
           <option key={event._id} value={event._id}>
-            {event.title} - {new Date(event.startDateTime).toLocaleString()} - {event.category.name}
+            {event.title} | {new Date(event.startDateTime).toLocaleString()} | {event.category.name}
           </option>
         ))}
       </select>

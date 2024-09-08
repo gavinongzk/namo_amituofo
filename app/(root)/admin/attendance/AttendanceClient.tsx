@@ -11,11 +11,16 @@ type User = {
   lastName: string;
   queueNumber: string;
   attended: boolean;
+  phoneNumber?: string; // Add this line
 };
 
 type Event = {
   _id: string;
   title: string;
+  startDateTime: string;
+  category: {
+    name: string;
+  };
 };
 
 const AttendanceClient = ({ events }: { events: Event[] }) => {
@@ -26,6 +31,7 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -39,6 +45,7 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const res = await fetch(`/api/events/${selectedEventId}/attendees`);
       const data = await res.json();
@@ -46,6 +53,8 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
     } catch (error) {
       console.error('Error fetching registered users:', error);
       setMessage('Failed to fetch registered users.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,7 +101,7 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
         <option value="">Select an event</option>
         {events.map((event) => (
           <option key={event._id} value={event._id}>
-            {event.title}
+            {event.title} | {new Date(event.startDateTime).toLocaleString()} | {event.category.name}
           </option>
         ))}
       </select>
@@ -100,20 +109,28 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
       {selectedEventId && (
         <>
           <h4>Registered Users</h4>
-          <ul>
-            {registeredUsers.map((user) => (
-              <li key={user.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={user.attended}
-                    onChange={() => handleMarkAttendance(user.id, !user.attended)}
-                  />
-                  {user.firstName} {user.lastName} - Queue: {user.queueNumber}
-                </label>
-              </li>
-            ))}
-          </ul>
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <p>Total Registrations: {registeredUsers.length}</p>
+              <ul>
+                {registeredUsers.map((user) => (
+                  <li key={user.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={user.attended}
+                        onChange={() => handleMarkAttendance(user.id, !user.attended)}
+                      />
+                      {user.firstName} {user.lastName} - Queue: {user.queueNumber}
+                      {user.phoneNumber && ` - Phone: ${user.phoneNumber}`}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
 
           <Input
             placeholder="Enter Queue Number"
