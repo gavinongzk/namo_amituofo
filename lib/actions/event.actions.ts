@@ -17,14 +17,17 @@ import {
   GetRelatedEventsByCategoryParams,
 } from '@/types'
 
+import { IEvent } from '@/lib/database/models/event.model';
+
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
 }
 
 const populateEvent = (query: any) => {
   return query
-    .populate({ path: 'organizer', model: User, select: '_id' })
-    .populate({ path: 'category', model: Category, select: '_id name' })
+    .select('_id title organizer category') // Add _id and title here
+    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .populate({ path: 'category', model: Category, select: '_id name' });
 }
 
 // CREATE
@@ -106,29 +109,35 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 // GET ALL EVENTS
 export async function getAllEvents({ query, limit = 6, page, category }: GetAllEventsParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-    const categoryCondition = category ? await getCategoryByName(category) : null
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
+    const categoryCondition = category ? await getCategoryByName(category) : null;
     const conditions = {
       $and: [titleCondition, categoryCondition ? { category: categoryCondition._id } : {}],
-    }
+    };
 
-    const skipAmount = (Number(page) - 1) * limit
+    const skipAmount = (Number(page) - 1) * limit;
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
-      .limit(limit)
+      .limit(limit);
 
-    const events = await populateEvent(eventsQuery)
-    const eventsCount = await Event.countDocuments(conditions)
+    const events = await populateEvent(eventsQuery);
+    const eventsCount = await Event.countDocuments(conditions);
+
+    // Map the events to return only the necessary fields
+    const formattedEvents = events.map((event: IEvent) => ({
+      _id: event._id,
+      title: event.title,
+    }));
 
     return {
-      data: JSON.parse(JSON.stringify(events)),
+      data: formattedEvents,
       totalPages: Math.ceil(eventsCount / limit),
-    }
+    };
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 

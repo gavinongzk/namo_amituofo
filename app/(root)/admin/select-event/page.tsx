@@ -18,7 +18,14 @@ const SelectEventPage = () => {
     const fetchEvents = async () => {
       const response = await fetch('/api/events');
       const data = await response.json();
-      setEvents(data);
+      
+      // Check if data is an array
+      if (Array.isArray(data)) {
+        setEvents(data);
+      } else {
+        console.error('Fetched data is not an array:', data);
+        setEvents([]); // Set to an empty array or handle the error as needed
+      }
     };
 
     fetchEvents();
