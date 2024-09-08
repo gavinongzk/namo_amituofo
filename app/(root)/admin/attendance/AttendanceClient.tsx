@@ -1,6 +1,7 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -10,8 +11,11 @@ type User = {
   queueNumber: string;
 };
 
-const AttendanceClient = ({ events, selectedEventId: initialSelectedEventId }: { events: { _id: string; title: string }[], selectedEventId: string }) => {
-  const [selectedEventId, setSelectedEventId] = useState<string>(initialSelectedEventId); // {{ edit_1 }}
+const AttendanceClient = ({ events }: { events: { _id: string; title: string }[] }) => {
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('eventId') || '';
+
+  const [selectedEventId, setSelectedEventId] = useState<string>(eventId);
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
@@ -39,8 +43,8 @@ const AttendanceClient = ({ events, selectedEventId: initialSelectedEventId }: {
     }
   };
 
-  console.log('Events:', events); // Add this line
-  console.log('Selected Event ID:', selectedEventId); // Add this line
+  console.log('Events:', events);
+  console.log('Selected Event ID:', selectedEventId);
 
   const handleMarkAttendance = async () => {
     const res = await fetch('/api/attendance', {
