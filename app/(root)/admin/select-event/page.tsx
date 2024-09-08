@@ -17,13 +17,13 @@ const SelectEventPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       const response = await fetch('/api/events');
-      const data = await response.json();
-      
-      // Check if data is an array
-      if (Array.isArray(data)) {
-        setEvents(data);
+      const result = await response.json();
+
+      // Check if result.data is an array
+      if (Array.isArray(result.data)) {
+        setEvents(result.data);
       } else {
-        console.error('Fetched data is not an array:', data);
+        console.error('Fetched data is not an array:', result);
         setEvents([]); // Set to an empty array or handle the error as needed
       }
     };
