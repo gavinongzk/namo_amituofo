@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
+import User from '@/lib/database/models/user.model'; // Import the User model
 import { withAuth } from '@/middleware/auth';
 
 async function handler(req: NextRequest, { params }: { params: { id: string } }) {
@@ -11,14 +12,19 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     console.log('Fetching attendees for event:', eventId);
 
     const attendees = await Order.find({ event: eventId })
-      .populate('buyer', '_id')
+      .populate('buyer', 'firstName lastName phoneNumber') // Populate with User fields
+      .populate('event', 'title startDateTime endDateTime') // Populate with Event fields
       .select('buyer customFieldValues queueNumber attendance');
 
     console.log('Attendees found:', attendees.length);
 
     const formattedAttendees = attendees.map(order => ({
       id: order.buyer._id,
-      name: order.customFieldValues[0]?.value || 'N/A',
+      name: `${order.buyer.firstName} ${order.buyer.lastName}`,
+      phoneNumber: order.buyer.phoneNumber,
+      eventTitle: order.event.title,
+      eventStartDateTime: order.event.startDateTime,
+      eventEndDateTime: order.event.endDateTime,
       queueNumber: order.queueNumber,
       attended: order.attendance
     }));
