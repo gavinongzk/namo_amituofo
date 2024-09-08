@@ -9,6 +9,7 @@ export async function GET() {
       page: 1, // Starting from the first page
       limit: 6 // Set your desired limit
     });
+    console.log('Fetched Events:', events); // Add this line
     return NextResponse.json(events);
   } catch (error) {
     console.error('Error fetching events:', error);

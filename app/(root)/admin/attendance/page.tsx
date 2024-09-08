@@ -16,6 +16,8 @@ const AttendancePage = async () => {
   const response = await fetch('/api/events');
   const events = await response.json();
 
+  console.log('Fetched Events:', events); // Add this line
+
   return (
     <div>
       <h2>Select Event for Attendance</h2>

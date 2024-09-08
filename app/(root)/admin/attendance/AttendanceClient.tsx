@@ -39,6 +39,9 @@ const AttendanceClient = ({ events, selectedEventId: initialSelectedEventId }: {
     }
   };
 
+  console.log('Events:', events); // Add this line
+  console.log('Selected Event ID:', selectedEventId); // Add this line
+
   const handleMarkAttendance = async () => {
     const res = await fetch('/api/attendance', {
       method: 'POST',
