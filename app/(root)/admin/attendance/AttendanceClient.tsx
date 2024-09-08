@@ -11,7 +11,6 @@ type User = {
   lastName: string;
   queueNumber: string;
   attended: boolean;
-  phoneNumber?: string; // Add this line
 };
 
 type Event = {
@@ -49,10 +48,16 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
     try {
       const res = await fetch(`/api/events/${selectedEventId}/attendees`);
       const data = await res.json();
-      setRegisteredUsers(data);
+      if (Array.isArray(data.attendees)) {
+        setRegisteredUsers(data.attendees);
+      } else {
+        console.error('Received data is not an array:', data);
+        setRegisteredUsers([]);
+      }
     } catch (error) {
       console.error('Error fetching registered users:', error);
       setMessage('Failed to fetch registered users.');
+      setRegisteredUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -126,19 +131,22 @@ const AttendanceClient = ({ events }: { events: Event[] }) => {
             <>
               <p>Total Registrations: {registeredUsers.length}</p>
               <ul>
-                {registeredUsers.map((user) => (
-                  <li key={user.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={user.attended}
-                        onChange={() => handleMarkAttendance(user.id, !user.attended)}
-                      />
-                      {user.firstName} {user.lastName} - Queue: {user.queueNumber}
-                      {user.phoneNumber && ` - Phone: ${user.phoneNumber}`}
-                    </label>
-                  </li>
-                ))}
+                {registeredUsers && registeredUsers.length > 0 ? (
+                  registeredUsers.map((user) => (
+                    <li key={user.id}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={user.attended}
+                          onChange={() => handleMarkAttendance(user.id, !user.attended)}
+                        />
+                        {user.firstName} {user.lastName} - Queue: {user.queueNumber}
+                      </label>
+                    </li>
+                  ))
+                ) : (
+                  <p>No registered users found.</p>
+                )}
               </ul>
             </>
           )}

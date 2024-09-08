@@ -24,7 +24,7 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
       attended: order.attendance
     }));
 
-    return NextResponse.json(formattedAttendees);
+    return NextResponse.json({ attendees: formattedAttendees });
   } catch (error) {
     console.error('Error fetching attendees:', error);
     return NextResponse.json({ message: 'Error fetching attendees', error: error.message }, { status: 500 });
