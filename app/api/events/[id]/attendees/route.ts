@@ -8,9 +8,13 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     await connectToDatabase();
     const eventId = params.id;
 
+    console.log('Fetching attendees for event:', eventId);
+
     const attendees = await Order.find({ event: eventId })
       .populate('buyer', 'firstName lastName')
       .select('buyer queueNumber attendance');
+
+    console.log('Attendees found:', attendees.length);
 
     const formattedAttendees = attendees.map(order => ({
       id: order.buyer._id,
@@ -22,7 +26,8 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
 
     return NextResponse.json(formattedAttendees);
   } catch (error) {
-    return NextResponse.json({ message: 'Error fetching attendees', error }, { status: 500 });
+    console.error('Error fetching attendees:', error);
+    return NextResponse.json({ message: 'Error fetching attendees', error: error.message }, { status: 500 });
   }
 }
 
