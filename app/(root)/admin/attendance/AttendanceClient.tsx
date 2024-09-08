@@ -7,11 +7,18 @@ import { Button } from '@/components/ui/button';
 
 type User = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   queueNumber: string;
+  attended: boolean;
 };
 
-const AttendanceClient = ({ events }: { events: { _id: string; title: string }[] }) => {
+type Event = {
+  _id: string;
+  title: string;
+};
+
+const AttendanceClient = ({ events }: { events: Event[] }) => {
   const searchParams = useSearchParams();
   const eventId = searchParams.get('eventId') || '';
 
@@ -19,7 +26,6 @@ const AttendanceClient = ({ events }: { events: { _id: string; title: string }[]
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -34,7 +40,7 @@ const AttendanceClient = ({ events }: { events: { _id: string; title: string }[]
     }
 
     try {
-      const res = await fetch(`/api/registered-users?eventId=${selectedEventId}`);
+      const res = await fetch(`/api/events/${selectedEventId}/attendees`);
       const data = await res.json();
       setRegisteredUsers(data);
     } catch (error) {
@@ -43,49 +49,39 @@ const AttendanceClient = ({ events }: { events: { _id: string; title: string }[]
     }
   };
 
-  console.log('Events:', events);
-  console.log('Selected Event ID:', selectedEventId);
-
-  const handleMarkAttendance = async () => {
-    const res = await fetch('/api/attendance', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ queueNumber }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      setMessage(`Attendance marked for ${data.order.buyer.firstName} ${data.order.buyer.lastName}`);
-    } else {
-      setMessage(data.message);
-    }
-  };
-
-  const handleCheckboxChange = async (userId: string) => {
-    setSelectedUsers((prevSelected) => {
-      if (prevSelected.includes(userId)) {
-        return prevSelected.filter(id => id !== userId);
-      } else {
-        return [...prevSelected, userId];
-      }
-    });
-
+  const handleMarkAttendance = async (userId: string, attended: boolean) => {
     try {
-      const response = await fetch('/api/attendance', {
+      const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, attended: !selectedUsers.includes(userId) }),
+        body: JSON.stringify({ userId, eventId: selectedEventId, attended }),
       });
 
-      if (!response.ok) {
+      if (res.ok) {
+        setRegisteredUsers(prevUsers =>
+          prevUsers.map(user =>
+            user.id === userId ? { ...user, attended } : user
+          )
+        );
+        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
+      } else {
         throw new Error('Failed to update attendance');
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
+      setMessage('Failed to update attendance.');
+    }
+  };
+
+  const handleQueueNumberSubmit = async () => {
+    const user = registeredUsers.find(u => u.queueNumber === queueNumber);
+    if (user) {
+      await handleMarkAttendance(user.id, !user.attended);
+      setQueueNumber('');
+    } else {
+      setMessage('User not found with this queue number.');
     }
   };
 
@@ -105,11 +101,15 @@ const AttendanceClient = ({ events }: { events: { _id: string; title: string }[]
         <>
           <h4>Registered Users</h4>
           <ul>
-            {registeredUsers.map((user: User) => (
+            {registeredUsers.map((user) => (
               <li key={user.id}>
                 <label>
-                  <input type="checkbox" onChange={() => handleCheckboxChange(user.id)} checked={selectedUsers.includes(user.id)} />
-                  {user.name} - {user.queueNumber}
+                  <input
+                    type="checkbox"
+                    checked={user.attended}
+                    onChange={() => handleMarkAttendance(user.id, !user.attended)}
+                  />
+                  {user.firstName} {user.lastName} - Queue: {user.queueNumber}
                 </label>
               </li>
             ))}
@@ -121,8 +121,8 @@ const AttendanceClient = ({ events }: { events: { _id: string; title: string }[]
             onChange={(e) => setQueueNumber(e.target.value)}
             className="input-field"
           />
-          <Button onClick={handleMarkAttendance} className="button mt-4">
-            Mark Attendance
+          <Button onClick={handleQueueNumberSubmit} className="button mt-4">
+            Mark Attendance by Queue Number
           </Button>
           {message && <p className="mt-4">{message}</p>}
         </>

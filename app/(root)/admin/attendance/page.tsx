@@ -1,24 +1,31 @@
 import { currentUser } from '@clerk/nextjs';
 import AttendanceClient from './AttendanceClient';
+import { getEventById } from '@/lib/actions/event.actions';
+import { redirect } from 'next/navigation';
 
-const AttendancePage = async () => {
+const AttendancePage = async ({ searchParams }: { searchParams: { eventId: string } }) => {
   const user = await currentUser();
   const isAdmin = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin';
 
   if (!isAdmin) {
-    return <div>You do not have access to this page.</div>;
+    return redirect('/');
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const response = await fetch(`${baseUrl}/api/events`);
-  const events = await response.json();
+  const eventId = searchParams.eventId;
+  if (!eventId) {
+    return redirect('/admin/select-event');
+  }
 
-  console.log('Fetched Events:', events);
+  const event = await getEventById(eventId);
+
+  if (!event) {
+    return <div>Event not found</div>;
+  }
 
   return (
     <div>
-      <h2>Select Event for Attendance</h2>
-      <AttendanceClient events={events} />
+      <h2>Attendance for {event.title}</h2>
+      <AttendanceClient events={[event]} />
     </div>
   );
 };
