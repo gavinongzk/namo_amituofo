@@ -96,10 +96,10 @@ const AttendanceClient = ({ event }: { event: Event }) => {
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 className="text-2xl font-bold mb-4">{event.title}</h2>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Date:</span> {formatDateTime(event.startDateTime).dateOnly}
+          <span className="font-semibold">Date:</span> {formatDateTime(new Date(event.startDateTime)).dateOnly}
         </p>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Time:</span> {formatDateTime(event.startDateTime).timeOnly} - {formatDateTime(event.endDateTime).timeOnly}
+          <span className="font-semibold">Time:</span> {formatDateTime(new Date(event.startDateTime)).timeOnly} - {formatDateTime(new Date(event.endDateTime)).timeOnly}
         </p>
         <p className="text-gray-600 mb-2">
           <span className="font-semibold">Location:</span> {event.location}
