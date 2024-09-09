@@ -1,3 +1,4 @@
+import '@/lib/database/models'
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import User from '@/lib/database/models/user.model'; // Import the User model
@@ -34,8 +35,6 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
       queueNumber: order.queueNumber,
       attended: order.attendance
     }));
-
-    console.log('Formatted attendees:', JSON.stringify(formattedAttendees, null, 2));
 
     return NextResponse.json({ attendees: formattedAttendees });
   } catch (error) {
