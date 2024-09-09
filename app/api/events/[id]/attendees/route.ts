@@ -13,12 +13,16 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
 
     console.log('Fetching attendees for event:', eventId);
 
+    // Log the raw result of Order.find
+    const rawOrders = await Order.find({ event: eventId });
+    console.log('Raw orders:', JSON.stringify(rawOrders, null, 2));
+
     const attendees = await Order.find({ event: eventId })
       .populate('buyer', 'firstName lastName phoneNumber') // Populate with User fields
       .populate('event', 'title startDateTime endDateTime') // Populate with Event fields
       .select('buyer customFieldValues queueNumber attendance');
 
-    console.log('Attendees found:', attendees.length);
+    console.log('Populated attendees:', JSON.stringify(attendees, null, 2));
 
     const formattedAttendees = attendees.map(order => ({
       id: order.buyer._id,
@@ -30,6 +34,8 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
       queueNumber: order.queueNumber,
       attended: order.attendance
     }));
+
+    console.log('Formatted attendees:', JSON.stringify(formattedAttendees, null, 2));
 
     return NextResponse.json({ attendees: formattedAttendees });
   } catch (error) {
