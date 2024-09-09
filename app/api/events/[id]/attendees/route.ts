@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import User from '@/lib/database/models/user.model'; // Import the User model
+import Event from '@/lib/database/models/event.model'; // Import the User model
+
+import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/middleware/auth';
 
 async function handler(req: NextRequest, { params }: { params: { id: string } }) {
