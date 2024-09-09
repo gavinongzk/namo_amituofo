@@ -10,7 +10,12 @@ export async function GET() {
       limit: 6 // Set your desired limit
     });
     console.log('Fetched Events:', events); // Add this line
-    return NextResponse.json(events);
+    
+    return NextResponse.json(events, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json({ message: 'Failed to fetch events' }, { status: 500 });

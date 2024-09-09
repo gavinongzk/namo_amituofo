@@ -34,7 +34,8 @@ const SelectEventPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('/api/events');
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/events?t=${timestamp}`);
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
