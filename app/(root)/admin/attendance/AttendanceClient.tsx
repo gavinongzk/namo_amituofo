@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
@@ -31,8 +31,7 @@ type Event = {
   maxSeats: number;
 };
 
-const AttendanceClient = ({ event }: { event: Event }) => {
-  console.log('AttendanceClient: Component started', { event });
+const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
@@ -40,34 +39,28 @@ const AttendanceClient = ({ event }: { event: Event }) => {
   const [filters, setFilters] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    console.log('AttendanceClient: useEffect triggered');
     fetchRegisteredUsers();
   }, []);
 
-  const fetchRegisteredUsers = async () => {
-    console.log('AttendanceClient: fetchRegisteredUsers started');
+  const fetchRegisteredUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/events/${event._id}/attendees`);
       const data = await res.json();
-      console.log('AttendanceClient: Received data from API', data);
       if (Array.isArray(data.attendees)) {
-        console.log('AttendanceClient: Setting registeredUsers', data.attendees);
         setRegisteredUsers(data.attendees);
       } else {
-        console.error('Received data is not an array:', data);
         setRegisteredUsers([]);
       }
     } catch (error) {
-      console.error('Error fetching registered users:', error);
       setMessage('Failed to fetch registered users.');
       setRegisteredUsers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [event._id]);
 
-  const handleMarkAttendance = async (userId: string, attended: boolean) => {
+  const handleMarkAttendance = useCallback(async (userId: string, attended: boolean) => {
     try {
       const res = await fetch('/api/attendance', {
         method: 'POST',
@@ -88,12 +81,11 @@ const AttendanceClient = ({ event }: { event: Event }) => {
         throw new Error('Failed to update attendance');
       }
     } catch (error) {
-      console.error('Error updating attendance:', error);
       setMessage('Failed to update attendance.');
     }
-  };
+  }, [event._id]);
 
-  const handleQueueNumberSubmit = async () => {
+  const handleQueueNumberSubmit = useCallback(async () => {
     const user = registeredUsers.find(u => u.order.queueNumber === queueNumber);
     if (user) {
       await handleMarkAttendance(user.id, !user.order.attended);
@@ -101,14 +93,14 @@ const AttendanceClient = ({ event }: { event: Event }) => {
     } else {
       setMessage('User not found with this queue number.');
     }
-  };
+  }, [queueNumber, registeredUsers, handleMarkAttendance]);
 
-  const handleFilterChange = (fieldName: string, value: string) => {
+  const handleFilterChange = useCallback((fieldName: string, value: string) => {
     setFilters(prevFilters => ({
       ...prevFilters,
       [fieldName]: value
     }));
-  };
+  }, []);
 
   return (
     <div className="wrapper my-8">
@@ -136,7 +128,6 @@ const AttendanceClient = ({ event }: { event: Event }) => {
         <p>Loading...</p>
       ) : (
         <>
-          {console.log('AttendanceClient: Rendering user table', { registeredUsers })}
           <p className="mb-4">Total Registrations: {registeredUsers.length}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
@@ -168,26 +159,23 @@ const AttendanceClient = ({ event }: { event: Event }) => {
                       user.order?.customFieldValues?.[fieldName]?.toLowerCase().includes(filterValue.toLowerCase())
                     )
                   )
-                  .map((user) => {
-                    console.log('AttendanceClient: Rendering user row', user);
-                    return (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="py-2 px-4 border-b text-center">
-                          <input
-                            type="checkbox"
-                            checked={user.order?.attended || false}
-                            onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
-                            className="form-checkbox h-5 w-5 text-blue-600"
-                          />
-                        </td>
-                        <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
-                        <td className="py-2 px-4 border-b">{user.phoneNumber || 'N/A'}</td>
-                        {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
-                          <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
-                        ))}
-                      </tr>
-                    );
-                  })}
+                  .map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="py-2 px-4 border-b text-center">
+                        <input
+                          type="checkbox"
+                          checked={user.order?.attended || false}
+                          onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                      </td>
+                      <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
+                      <td className="py-2 px-4 border-b">{user.phoneNumber || 'N/A'}</td>
+                      {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
+                        <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -208,6 +196,6 @@ const AttendanceClient = ({ event }: { event: Event }) => {
       {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
     </div>
   );
-};
+});
 
 export default AttendanceClient;
