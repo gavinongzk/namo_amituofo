@@ -14,7 +14,7 @@ type User = {
   order: {
     queueNumber: string;
     attended: boolean;
-    customFieldValues: Record<string, string>;
+    customFieldValues: { id: string; label: string; type: string; value: string; _id: string }[];
   };
 };
 
@@ -136,9 +136,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b">Queue Number</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
-                    Object.keys(registeredUsers[0].order.customFieldValues).map((fieldName) => (
-                      <th key={fieldName} className="py-2 px-4 border-b">
-                        {fieldName}
+                    registeredUsers[0].order.customFieldValues.map((field) => (
+                      <th key={field.id} className="py-2 px-4 border-b">
+                        {field.label}
                       </th>
                     ))
                   }
@@ -151,10 +151,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
-                      {user.order?.customFieldValues && typeof user.order.customFieldValues === 'object' && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => {
-                        console.log('Rendering custom field:', fieldName, fieldValue);
+                      {user.order?.customFieldValues && user.order.customFieldValues.map((field) => {
+                        console.log('Rendering custom field:', field.label, field.value);
                         return (
-                          <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
+                          <td key={field.id} className="py-2 px-4 border-b">{field.value || 'N/A'}</td>
                         );
                       })}
                       <td className="py-2 px-4 border-b text-center">
