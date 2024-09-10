@@ -146,22 +146,28 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </tr>
               </thead>
               <tbody>
-                {registeredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
-                    {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
-                      <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
-                    ))}
-                    <td className="py-2 px-4 border-b text-center">
-                      <input
-                        type="checkbox"
-                        checked={user.order?.attended || false}
-                        onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
-                        className="form-checkbox h-5 w-5 text-blue-600"
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {registeredUsers.map((user) => {
+                  console.log('Rendering user:', user);
+                  return (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
+                      {user.order?.customFieldValues && typeof user.order.customFieldValues === 'object' && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => {
+                        console.log('Rendering custom field:', fieldName, fieldValue);
+                        return (
+                          <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
+                        );
+                      })}
+                      <td className="py-2 px-4 border-b text-center">
+                        <input
+                          type="checkbox"
+                          checked={user.order?.attended || false}
+                          onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
