@@ -127,9 +127,11 @@ const AttendanceClient = ({ event }: { event: Event }) => {
                   <th className="py-2 px-4 border-b">Attendance</th>
                   <th className="py-2 px-4 border-b">Queue Number</th>
                   <th className="py-2 px-4 border-b">Phone Number</th>
-                  {Object.keys(registeredUsers[0]?.order.customFieldValues || {}).map((fieldName) => (
-                    <th key={fieldName} className="py-2 px-4 border-b">{fieldName}</th>
-                  ))}
+                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
+                    Object.keys(registeredUsers[0].order.customFieldValues).map((fieldName) => (
+                      <th key={fieldName} className="py-2 px-4 border-b">{fieldName}</th>
+                    ))
+                  }
                 </tr>
               </thead>
               <tbody>
@@ -145,7 +147,7 @@ const AttendanceClient = ({ event }: { event: Event }) => {
                     </td>
                     <td className="py-2 px-4 border-b">{user.order.queueNumber}</td>
                     <td className="py-2 px-4 border-b">{user.phoneNumber}</td>
-                    {Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
+                    {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
                       <td key={fieldName} className="py-2 px-4 border-b">{fieldValue}</td>
                     ))}
                   </tr>

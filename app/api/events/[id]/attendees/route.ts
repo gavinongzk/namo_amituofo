@@ -33,7 +33,8 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
       eventStartDateTime: order.event.startDateTime,
       eventEndDateTime: order.event.endDateTime,
       queueNumber: order.queueNumber,
-      attended: order.attendance
+      attended: order.attendance,
+      customFieldValues: order.customFieldValues
     }));
 
     return NextResponse.json({ attendees: formattedAttendees });
