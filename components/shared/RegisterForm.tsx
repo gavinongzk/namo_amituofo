@@ -14,6 +14,8 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
@@ -111,6 +113,13 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                         <Checkbox
                           checked={formField.value as boolean}
                           onCheckedChange={formField.onChange}
+                        />
+                      ) : field.type === 'phone' ? (
+                        <PhoneInput
+                          country={'sg'}
+                          value={String(formField.value)} // Convert value to string
+                          onChange={formField.onChange}
+                          inputClass="input-field"
                         />
                       ) : (
                         <Input {...formField} value={String(formField.value)} />

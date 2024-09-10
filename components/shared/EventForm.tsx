@@ -326,25 +326,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   </FormItem>
                 )}
               />
-              {field.type === 'phone' && (
-                <FormField
-                  control={form.control}
-                  name={`customFields.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormControl>
-                        <PhoneInput
-                          country={'sg'}
-                          value={field.value}
-                          onChange={field.onChange}
-                          inputClass="input-field"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
               <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}
