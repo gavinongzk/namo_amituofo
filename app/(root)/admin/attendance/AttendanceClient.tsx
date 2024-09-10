@@ -124,9 +124,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b">Attendance</th>
                   <th className="py-2 px-4 border-b">Queue Number</th>
-                  <th className="py-2 px-4 border-b">Phone Number</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
                     Object.keys(registeredUsers[0].order.customFieldValues).map((fieldName) => (
                       <th key={fieldName} className="py-2 px-4 border-b">
@@ -134,11 +132,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                       </th>
                     ))
                   }
+                  <th className="py-2 px-4 border-b">Attendance</th>
                 </tr>
               </thead>
               <tbody>
                 {registeredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
+                    {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
+                      <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
+                    ))}
                     <td className="py-2 px-4 border-b text-center">
                       <input
                         type="checkbox"
@@ -147,11 +150,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         className="form-checkbox h-5 w-5 text-blue-600"
                       />
                     </td>
-                    <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">{user.phoneNumber || 'N/A'}</td>
-                    {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
-                      <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
-                    ))}
                   </tr>
                 ))}
               </tbody>
