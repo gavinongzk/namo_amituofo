@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 
 type User = {
-  id: string;
-  name: string;
+  id: string; // This would be the clerkId
   phoneNumber: string;
-  queueNumber: string;
-  attended: boolean;
+  order: {
+    queueNumber: string;
+    attended: boolean;
+    customFieldValues: Record<string, string>;
+  };
 };
 
 type Event = {
@@ -82,9 +84,9 @@ const AttendanceClient = ({ event }: { event: Event }) => {
   };
 
   const handleQueueNumberSubmit = async () => {
-    const user = registeredUsers.find(u => u.queueNumber === queueNumber);
+    const user = registeredUsers.find(u => u.order.queueNumber === queueNumber);
     if (user) {
-      await handleMarkAttendance(user.id, !user.attended);
+      await handleMarkAttendance(user.id, !user.order.attended);
       setQueueNumber('');
     } else {
       setMessage('User not found with this queue number.');
@@ -123,9 +125,11 @@ const AttendanceClient = ({ event }: { event: Event }) => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b">Attendance</th>
-                  <th className="py-2 px-4 border-b">Name</th>
                   <th className="py-2 px-4 border-b">Queue Number</th>
                   <th className="py-2 px-4 border-b">Phone Number</th>
+                  {Object.keys(registeredUsers[0]?.order.customFieldValues || {}).map((fieldName) => (
+                    <th key={fieldName} className="py-2 px-4 border-b">{fieldName}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -134,14 +138,16 @@ const AttendanceClient = ({ event }: { event: Event }) => {
                     <td className="py-2 px-4 border-b text-center">
                       <input
                         type="checkbox"
-                        checked={user.attended}
-                        onChange={() => handleMarkAttendance(user.id, !user.attended)}
+                        checked={user.order.attended}
+                        onChange={() => handleMarkAttendance(user.id, !user.order.attended)}
                         className="form-checkbox h-5 w-5 text-blue-600"
                       />
                     </td>
-                    <td className="py-2 px-4 border-b">{user.name}</td>
-                    <td className="py-2 px-4 border-b">{user.queueNumber}</td>
+                    <td className="py-2 px-4 border-b">{user.order.queueNumber}</td>
                     <td className="py-2 px-4 border-b">{user.phoneNumber}</td>
+                    {Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
+                      <td key={fieldName} className="py-2 px-4 border-b">{fieldValue}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
