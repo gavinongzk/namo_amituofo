@@ -37,6 +37,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    console.log('Fetching registered users for event:', event._id);
     fetchRegisteredUsers();
   }, []);
 
@@ -45,12 +46,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     try {
       const res = await fetch(`/api/events/${event._id}/attendees`);
       const data = await res.json();
+      console.log('Fetched data:', data);
       if (Array.isArray(data.attendees)) {
         setRegisteredUsers(data.attendees);
+        console.log('Registered users set:', data.attendees);
       } else {
         setRegisteredUsers([]);
+        console.log('No attendees found.');
       }
     } catch (error) {
+      console.error('Error fetching registered users:', error);
       setMessage('Failed to fetch registered users.');
       setRegisteredUsers([]);
     } finally {
@@ -59,6 +64,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [event._id]);
 
   const handleMarkAttendance = useCallback(async (userId: string, attended: boolean) => {
+    console.log(`Marking attendance for user ${userId}: ${attended}`);
     try {
       const res = await fetch('/api/attendance', {
         method: 'POST',
@@ -75,21 +81,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           )
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
+        console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
       } else {
         throw new Error('Failed to update attendance');
       }
     } catch (error) {
+      console.error('Error updating attendance:', error);
       setMessage('Failed to update attendance.');
     }
   }, [event._id]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
+    console.log('Submitting queue number:', queueNumber);
     const user = registeredUsers.find(u => u.order.queueNumber === queueNumber);
     if (user) {
       await handleMarkAttendance(user.id, !user.order.attended);
       setQueueNumber('');
     } else {
       setMessage('User not found with this queue number.');
+      console.log('User not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registeredUsers, handleMarkAttendance]);
 
