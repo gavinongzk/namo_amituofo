@@ -24,7 +24,6 @@ const AttendancePage = async ({ searchParams }: { searchParams: { eventId: strin
 
   return (
     <div>
-      <h2>Attendance for {event.title}</h2>
       <AttendanceClient event={event} />
     </div>
   );

@@ -23,6 +23,9 @@ import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
 
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+
 type EventFormProps = {
   userId: string
   type: "Create" | "Update"
@@ -39,9 +42,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         endDateTime: new Date(event.endDateTime),
         categoryId: event.category._id,
         customFields: event.customFields?.map(field => ({
-          type: field.type as "boolean" | "text",
+          type: field.type as "boolean" | "text" | "phone",
           id: field.id.toString(),
-          label: field.label
+          label: field.label,
+          value: field.value
         })) || []
       }
     : eventDefaultValues;
@@ -315,12 +319,32 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <select {...field} className="input-field rounded-full bg-grey-50 px-4 py-2">
                         <option value="text">Text</option>
                         <option value="boolean">Boolean</option>
+                        <option value="phone">Phone Number</option>
                       </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {field.type === 'phone' && (
+                <FormField
+                  control={form.control}
+                  name={`customFields.${index}.value`}
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <PhoneInput
+                          country={'sg'}
+                          value={field.value}
+                          onChange={field.onChange}
+                          inputClass="input-field"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}
