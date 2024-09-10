@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
+import ReactPaginate from 'react-paginate';
+import Modal from '@/components/ui/modal'; // Import the modal component
 
 type User = {
   id: string;
@@ -35,6 +37,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const usersPerPage = 10;
 
   useEffect(() => {
     console.log('Fetching registered users for event:', event._id);
@@ -65,6 +71,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleMarkAttendance = useCallback(async (userId: string, attended: boolean) => {
     console.log(`Marking attendance for user ${userId}: ${attended}`);
+    setShowModal(true);
+    setModalMessage('Updating attendance...');
     try {
       const res = await fetch('/api/attendance', {
         method: 'POST',
@@ -82,12 +90,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
+        setModalMessage('Attendance updated successfully.');
       } else {
         throw new Error('Failed to update attendance');
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
       setMessage('Failed to update attendance.');
+      setModalMessage('Failed to update attendance.');
+    } finally {
+      setTimeout(() => {
+        setShowModal(false);
+      }, 2000);
     }
   }, [event._id]);
 
@@ -102,6 +116,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log('User not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registeredUsers, handleMarkAttendance]);
+
+  const handlePageClick = (data: { selected: number }) => {
+    setCurrentPage(data.selected);
+  };
+
+  const offset = currentPage * usersPerPage;
+  const currentPageUsers = registeredUsers.slice(offset, offset + usersPerPage);
+  const pageCount = Math.ceil(registeredUsers.length / usersPerPage);
 
   return (
     <div className="wrapper my-8">
@@ -122,6 +144,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p className="text-gray-600">
           <span className="font-semibold">Max Seats:</span> {event.maxSeats}
         </p>
+      </div>
+
+      <div className="flex space-x-2 mb-6">
+        <Input
+          placeholder="Enter Queue Number"
+          value={queueNumber}
+          onChange={(e) => setQueueNumber(e.target.value)}
+          className="flex-grow"
+        />
+        <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
+          Mark Attendance
+        </Button>
       </div>
 
       <h4 className="text-xl font-bold mb-4">Registered Users</h4>
@@ -146,7 +180,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </tr>
               </thead>
               <tbody>
-                {registeredUsers.map((user) => {
+                {currentPageUsers.map((user) => {
                   console.log('Rendering user:', user);
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
@@ -171,21 +205,28 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               </tbody>
             </table>
           </div>
+          <ReactPaginate
+            previousLabel={'Previous'}
+            nextLabel={'Next'}
+            breakLabel={'...'}
+            breakClassName={'break-me'}
+            pageCount={pageCount}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            onPageChange={handlePageClick}
+            containerClassName={'pagination'}
+            activeClassName={'active'}
+          />
         </>
       )}
 
-      <div className="flex space-x-2 mt-6">
-        <Input
-          placeholder="Enter Queue Number"
-          value={queueNumber}
-          onChange={(e) => setQueueNumber(e.target.value)}
-          className="flex-grow"
-        />
-        <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
-          Mark Attendance
-        </Button>
-      </div>
       {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+      {showModal && (
+        <Modal>
+          <p>{modalMessage}</p>
+        </Modal>
+      )}
     </div>
   );
 });
