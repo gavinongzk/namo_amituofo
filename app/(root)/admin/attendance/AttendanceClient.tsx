@@ -7,7 +7,6 @@ import { formatDateTime } from '@/lib/utils';
 
 type User = {
   id: string;
-  name: string;
   phoneNumber: string;
   eventTitle: string;
   eventStartDateTime: string;

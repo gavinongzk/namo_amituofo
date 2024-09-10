@@ -29,7 +29,6 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
       console.log('Processing order:', JSON.stringify(order, null, 2));
       return {
         id: order.buyer._id,
-        name: `${order.buyer.firstName} ${order.buyer.lastName}`,
         phoneNumber: order.buyer.phoneNumber,
         eventTitle: order.event.title,
         eventStartDateTime: order.event.startDateTime,
