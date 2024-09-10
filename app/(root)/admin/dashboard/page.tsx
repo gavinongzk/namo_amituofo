@@ -4,9 +4,10 @@ import AdminActions from '@/components/shared/AdminActions';
 
 const AdminDashboard = async () => {
   const user = await currentUser();
-  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'superadmin';
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
+  const isNormalAdmin = user?.publicMetadata?.role === 'admin';
 
-  if (!isAdmin) {
+  if (!isSuperAdmin && !isNormalAdmin) {
     return <div>You do not have access to this page.</div>;
   }
 

@@ -173,15 +173,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b">Queue Number</th>
+                  <th className="py-2 px-4 border-b text-left">Queue Number</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
                     registeredUsers[0].order.customFieldValues.map((field) => (
-                      <th key={field.id} className="py-2 px-4 border-b">
+                      <th key={field.id} className="py-2 px-4 border-b text-left">
                         {field.label}
                       </th>
                     ))
                   }
-                  <th className="py-2 px-4 border-b">Attendance</th>
+                  <th className="py-2 px-4 border-b text-center">Attendance</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,11 +189,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   console.log('Rendering user:', user);
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
+                      <td className="py-2 px-4 border-b text-left">{user.order?.queueNumber || 'N/A'}</td>
                       {user.order?.customFieldValues && user.order.customFieldValues.map((field) => {
                         console.log('Rendering custom field:', field.label, field.value);
                         return (
-                          <td key={field.id} className="py-2 px-4 border-b">{field.value || 'N/A'}</td>
+                          <td key={field.id} className="py-2 px-4 border-b text-left">{field.value || 'N/A'}</td>
                         );
                       })}
                       <td className="py-2 px-4 border-b text-center">

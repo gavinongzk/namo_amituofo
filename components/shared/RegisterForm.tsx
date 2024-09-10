@@ -16,6 +16,7 @@ import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { phoneValidation } from '@/lib/validator';
 
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
@@ -37,6 +38,8 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         field.id,
         field.type === 'boolean'
           ? z.boolean()
+          : field.type === 'phone'
+          ? phoneValidation
           : z.string().min(1, { message: "This field is required" })
       ])
     )

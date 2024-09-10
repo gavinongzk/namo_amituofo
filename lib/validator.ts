@@ -7,6 +7,14 @@ const customFieldSchema = z.object({
   value: z.string().optional(), // Add this line
 })
 
+export const phoneValidation = z.string().refine((value) => {
+  const singaporePhoneRegex = /^[0-9]{8}$/;
+  const malaysiaPhoneRegex = /^[0-9]{10,11}$/;
+  return singaporePhoneRegex.test(value) || malaysiaPhoneRegex.test(value);
+}, {
+  message: "Phone number must be 8 digits long for Singapore or 10-11 digits long for Malaysia",
+});
+
 export const eventFormSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(3, 'Description must be at least 3 characters').max(400, 'Description must be less than 400 characters'),
