@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 
 type User = {
-  id: string; // This would be the clerkId
+  id: string;
+  name: string;
   phoneNumber: string;
+  eventTitle: string;
+  eventStartDateTime: string;
+  eventEndDateTime: string;
   order: {
     queueNumber: string;
     attended: boolean;
@@ -71,7 +75,7 @@ const AttendanceClient = ({ event }: { event: Event }) => {
       if (res.ok) {
         setRegisteredUsers(prevUsers =>
           prevUsers.map(user =>
-            user.id === userId ? { ...user, attended } : user
+            user.id === userId ? { ...user, order: { ...user.order, attended } } : user
           )
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
