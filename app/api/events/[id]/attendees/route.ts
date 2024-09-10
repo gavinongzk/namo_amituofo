@@ -21,7 +21,7 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     const attendees = await Order.find({ event: eventId })
       .populate('buyer', 'firstName lastName phoneNumber') // Populate with User fields
       .populate('event', 'title startDateTime endDateTime') // Populate with Event fields
-      .select('buyer event customFieldValues queueNumber attendance');
+      .select('buyer event customFieldValues queueNumber attendance version'); // Add version here
 
     console.log('Raw attendees:', JSON.stringify(attendees, null, 2));
 
@@ -36,7 +36,8 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
         order: {
           queueNumber: order.queueNumber,
           attended: order.attendance,
-          customFieldValues: order.customFieldValues
+          customFieldValues: order.customFieldValues,
+          version: order.version // Add version here
         }
       };
     });
