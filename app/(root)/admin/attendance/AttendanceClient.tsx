@@ -17,6 +17,7 @@ type User = {
     queueNumber: string;
     attended: boolean;
     customFieldValues: { id: string; label: string; type: string; value: string; _id: string }[];
+    version: number;
   };
 };
 
@@ -74,23 +75,27 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setShowModal(true);
     setModalMessage('Updating attendance...');
     try {
+      const user = registeredUsers.find(user => user.id === userId);
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, eventId: event._id, attended }),
+        body: JSON.stringify({ userId, eventId: event._id, attended, version: user?.order.version }),
       });
 
       if (res.ok) {
         setRegisteredUsers(prevUsers =>
           prevUsers.map(user =>
-            user.id === userId ? { ...user, order: { ...user.order, attended } } : user
+            user.id === userId ? { ...user, order: { ...user.order, attended, version: user.order.version + 1 } } : user
           )
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
-        setModalMessage('Attendance updated successfully.');
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${user?.order.queueNumber}`);
+      } else if (res.status === 409) {
+        setMessage('Version conflict. Please refresh the page.');
+        setModalMessage('Version conflict. Please refresh the page.');
       } else {
         throw new Error('Failed to update attendance');
       }
@@ -103,7 +108,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setShowModal(false);
       }, 2000);
     }
-  }, [event._id]);
+  }, [event._id, registeredUsers]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -214,8 +219,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             marginPagesDisplayed={2}
             pageRangeDisplayed={5}
             onPageChange={handlePageClick}
-            containerClassName={'pagination'}
+            containerClassName={'pagination flex justify-center mt-4'}
+            pageClassName={'page-item'}
+            pageLinkClassName={'page-link px-3 py-1 border rounded'}
+            previousClassName={'page-item'}
+            previousLinkClassName={'page-link px-3 py-1 border rounded mr-2'}
+            nextClassName={'page-item'}
+            nextLinkClassName={'page-link px-3 py-1 border rounded ml-2'}
             activeClassName={'active'}
+            activeLinkClassName={'bg-blue-500 text-white'}
           />
         </>
       )}

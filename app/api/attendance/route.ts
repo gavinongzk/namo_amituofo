@@ -6,17 +6,23 @@ import { withAuth } from '@/middleware/auth'
 async function handler(req: NextRequest) {
   try {
     await connectToDatabase()
-    const { userId, eventId, attended } = await req.json()
+    const { userId, eventId, attended, version } = await req.json();
 
     const order = await Order.findOne({ buyer: userId, event: eventId })
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 })
     }
 
-    order.attendance = attended
-    await order.save()
+    if (order.version !== version) {
+      return NextResponse.json({ message: 'Version conflict' }, { status: 409 });
+    }
 
-    return NextResponse.json({ message: 'Attendance updated', order })
+    order.attendance = attended;
+    order.version += 1;
+
+    await order.save();
+
+    return NextResponse.json({ message: 'Attendance updated successfully' });
   } catch (error) {
     return NextResponse.json({ message: 'Error updating attendance', error }, { status: 500 })
   }

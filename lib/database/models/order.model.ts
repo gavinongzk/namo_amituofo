@@ -19,6 +19,7 @@ export interface IOrder extends Document {
   customFieldValues: CustomField[]
   queueNumber: string
   attendance: boolean
+  version: number
 }
 
 export type IOrderItem = {
@@ -30,6 +31,7 @@ export type IOrderItem = {
   customFieldValues: CustomField[]
   queueNumber: string
   attendance: boolean
+  version: number
 }
 
 const OrderSchema = new Schema({
@@ -55,6 +57,7 @@ const OrderSchema = new Schema({
   ],
   queueNumber: { type: String, required: true },
   attendance: { type: Boolean, default: false },
+  version: { type: Number, default: 0 }, // Add this line
 })
 
 const Order = models.Order || model('Order', OrderSchema)
