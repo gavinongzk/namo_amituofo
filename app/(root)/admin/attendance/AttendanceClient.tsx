@@ -35,7 +35,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [filters, setFilters] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchRegisteredUsers();
@@ -94,13 +93,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [queueNumber, registeredUsers, handleMarkAttendance]);
 
-  const handleFilterChange = useCallback((fieldName: string, value: string) => {
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      [fieldName]: value
-    }));
-  }, []);
-
   return (
     <div className="wrapper my-8">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -139,42 +131,29 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     Object.keys(registeredUsers[0].order.customFieldValues).map((fieldName) => (
                       <th key={fieldName} className="py-2 px-4 border-b">
                         {fieldName}
-                        <Input
-                          type="text"
-                          placeholder={`Filter ${fieldName}`}
-                          value={filters[fieldName] || ''}
-                          onChange={(e) => handleFilterChange(fieldName, e.target.value)}
-                          className="mt-1 w-full"
-                        />
                       </th>
                     ))
                   }
                 </tr>
               </thead>
               <tbody>
-                {registeredUsers
-                  .filter(user => 
-                    Object.entries(filters).every(([fieldName, filterValue]) => 
-                      user.order?.customFieldValues?.[fieldName]?.toLowerCase().includes(filterValue.toLowerCase())
-                    )
-                  )
-                  .map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b text-center">
-                        <input
-                          type="checkbox"
-                          checked={user.order?.attended || false}
-                          onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
-                          className="form-checkbox h-5 w-5 text-blue-600"
-                        />
-                      </td>
-                      <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
-                      <td className="py-2 px-4 border-b">{user.phoneNumber || 'N/A'}</td>
-                      {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
-                        <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
-                      ))}
-                    </tr>
-                  ))}
+                {registeredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="py-2 px-4 border-b text-center">
+                      <input
+                        type="checkbox"
+                        checked={user.order?.attended || false}
+                        onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
+                        className="form-checkbox h-5 w-5 text-blue-600"
+                      />
+                    </td>
+                    <td className="py-2 px-4 border-b">{user.order?.queueNumber || 'N/A'}</td>
+                    <td className="py-2 px-4 border-b">{user.phoneNumber || 'N/A'}</td>
+                    {user.order?.customFieldValues && Object.entries(user.order.customFieldValues).map(([fieldName, fieldValue]) => (
+                      <td key={fieldName} className="py-2 px-4 border-b">{fieldValue || 'N/A'}</td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
