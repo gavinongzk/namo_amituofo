@@ -46,9 +46,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           id: field.id.toString(),
           label: field.label,
           value: field.value
-        })) || []
+        })) || [],
+        registrationSuccessMessage: event.registrationSuccessMessage || ""
       }
-    : eventDefaultValues;
+    : {
+        ...eventDefaultValues,
+        registrationSuccessMessage: ""
+      };
   const router = useRouter();
 
   const { startUpload } = useUploadThing('imageUploader')
@@ -293,6 +297,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             )}
           />
         </div>
+
 
         <div className="flex flex-col gap-5">
           <h3 className="text-lg font-medium">Custom Questions</h3>

@@ -20,6 +20,7 @@ export interface IEvent extends Document {
   organizer: { _id: string }
   customFields?: CustomField[];
   maxSeats: number; // Add this line
+  registrationSuccessMessage?: string;
 }
 
 const EventSchema = new Schema({
@@ -38,7 +39,8 @@ const EventSchema = new Schema({
     type: { type: String, required: true },
     value: { type: String, required: false }
   }],
-  maxSeats: { type: Number, required: true } // Add this line
+  maxSeats: { type: Number, required: true },
+  registrationSuccessMessage: { type: String}
 })
 
 const Event = models.Event || model('Event', EventSchema);
