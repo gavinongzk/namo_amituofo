@@ -21,23 +21,28 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     const attendees = await Order.find({ event: eventId })
       .populate('buyer', 'firstName lastName phoneNumber') // Populate with User fields
       .populate('event', 'title startDateTime endDateTime') // Populate with Event fields
-      .select('buyer customFieldValues queueNumber attendance');
+      .select('buyer event customFieldValues queueNumber attendance');
 
-    console.log('Populated attendees:', JSON.stringify(attendees, null, 2));
+    console.log('Raw attendees:', JSON.stringify(attendees, null, 2));
 
-    const formattedAttendees = attendees.map(order => ({
-      id: order.buyer._id,
-      name: `${order.buyer.firstName} ${order.buyer.lastName}`,
-      phoneNumber: order.buyer.phoneNumber,
-      eventTitle: order.event.title,
-      eventStartDateTime: order.event.startDateTime,
-      eventEndDateTime: order.event.endDateTime,
-      order: {
-        queueNumber: order.queueNumber,
-        attended: order.attendance,
-        customFieldValues: order.customFieldValues
-      }
-    }));
+    const formattedAttendees = attendees.map(order => {
+      console.log('Processing order:', JSON.stringify(order, null, 2));
+      return {
+        id: order.buyer._id,
+        name: `${order.buyer.firstName} ${order.buyer.lastName}`,
+        phoneNumber: order.buyer.phoneNumber,
+        eventTitle: order.event.title,
+        eventStartDateTime: order.event.startDateTime,
+        eventEndDateTime: order.event.endDateTime,
+        order: {
+          queueNumber: order.queueNumber,
+          attended: order.attendance,
+          customFieldValues: order.customFieldValues
+        }
+      };
+    });
+
+    console.log('Formatted attendees:', JSON.stringify(formattedAttendees, null, 2));
 
     return NextResponse.json({ attendees: formattedAttendees });
   } catch (error) {
