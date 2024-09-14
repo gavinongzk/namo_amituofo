@@ -61,16 +61,23 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     if (!eventId) throw new Error('Event ID is required');
     const eventObjectId = new ObjectId(eventId);
 
-    console.log("Event ID:", eventId); // Debugging log
-    console.log("Search String:", searchString); // Debugging log
+    const orders = await Order.find({ event: eventObjectId })
+      .populate('buyer', 'firstName lastName')
+      .populate('event', 'title')
+      .select('_id createdAt event buyer customFieldValues queueNumber attendance');
 
-    const orders = await Order.find({
-      event: eventObjectId,
-    }).select('_id createdAt event buyer customFieldValues');
+    const formattedOrders = orders.map(order => ({
+      _id: order._id.toString(),
+      createdAt: order.createdAt,
+      eventTitle: order.event.title,
+      eventId: order.event._id.toString(),
+      buyer: `${order.buyer.firstName} ${order.buyer.lastName}`,
+      customFieldValues: order.customFieldValues,
+      queueNumber: order.queueNumber,
+      attendance: order.attendance
+    }));
 
-    console.log("Orders Found:", orders); // Debugging log
-
-    return JSON.parse(JSON.stringify(orders));
+    return JSON.parse(JSON.stringify(formattedOrders));
   } catch (error) {
     handleError(error);
   }
