@@ -42,6 +42,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const usersPerPage = 10;
+  const [attendedUsersCount, setAttendedUsersCount] = useState(0);
 
   useEffect(() => {
     console.log('Fetching registered users for event:', event._id);
@@ -56,15 +57,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log('Fetched data:', data);
       if (Array.isArray(data.attendees)) {
         setRegisteredUsers(data.attendees);
+        const attendedCount = data.attendees.filter((user: User) => user.order.attended).length;
+        setAttendedUsersCount(attendedCount);
         console.log('Registered users set:', data.attendees);
       } else {
         setRegisteredUsers([]);
+        setAttendedUsersCount(0);
         console.log('No attendees found.');
       }
     } catch (error) {
       console.error('Error fetching registered users:', error);
       setMessage('Failed to fetch registered users. 获取注册用户失败。');
       setRegisteredUsers([]);
+      setAttendedUsersCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +95,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             user.id === userId ? { ...user, order: { ...user.order, attended, version: user.order.version + 1 } } : user
           )
         );
+        setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${user?.order.queueNumber}`);
@@ -168,7 +174,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-4">Total Registrations 总注册数: {registeredUsers.length}</p>
+          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.length}</p>
+          <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
