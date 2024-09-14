@@ -135,7 +135,7 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
       .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
-    const events = await eventsQuery.exec();
+    const events = (await eventsQuery.exec()) as IEvent[];
     const eventsWithCount = await Promise.all(
       events.map(async (event) => {
         const attendeeCount = await Order.countDocuments({ event: event._id });
@@ -171,7 +171,15 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
     const events = await populateEvent(eventsQuery)
     const eventsCount = await Event.countDocuments(conditions)
 
-    return { data: JSON.parse(JSON.stringify(events)), totalPages: Math.ceil(eventsCount / limit) }
+    const eventsWithAttendeeCount = await Promise.all(events.map(async (event: IEvent) => {
+      const attendeeCount = await Order.countDocuments({ event: event._id })
+      return {
+        ...JSON.parse(JSON.stringify(event)),
+        attendeeCount
+      }
+    }))
+
+    return { data: eventsWithAttendeeCount, totalPages: Math.ceil(eventsCount / limit) }
   } catch (error) {
     handleError(error)
   }

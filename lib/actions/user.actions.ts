@@ -100,3 +100,41 @@ export async function updateUserRole(userId: string, newRole: 'user' | 'admin' |
     throw error;
   }
 }
+
+export async function getAllUsers() {
+  try {
+    await connectToDatabase();
+    const users = await User.find().select('_id firstName lastName phoneNumber role');
+    return users.map(user => ({
+      id: user._id.toString(),
+      name: `${user.firstName} ${user.lastName}`,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+    }));
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+}
+
+export async function downloadUserPhoneNumbers() {
+  try {
+    await connectToDatabase();
+    const users = await User.find().select('firstName lastName phoneNumber');
+    const csvContent = users.map(user => `${user.firstName},${user.lastName},${user.phoneNumber}`).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'user_phone_numbers.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  } catch (error) {
+    console.error('Error downloading phone numbers:', error);
+    throw error;
+  }
+}

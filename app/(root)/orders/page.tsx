@@ -1,7 +1,8 @@
-import Search  from '@/components/shared/Search'
+import Search from '@/components/shared/Search'
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { SearchParamProps } from '@/types'
 import { IOrderItem } from '@/lib/database/models/order.model'
+import { formatDateTime } from '@/lib/utils'
 
 const Orders = async ({ searchParams }: SearchParamProps) => {
   const eventId = (searchParams?.eventId as string) || ''
@@ -9,12 +10,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   const orders = await getOrdersByEvent({ eventId, searchString: searchText })
 
-  // Extract custom field labels for table headers
-  const customFieldLabels = orders.length > 0 ? orders[0].customFieldValues.map((field: any) => field.label) : []
-
   return (
     <>
-      <section className=" bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
+      <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
         <h3 className="wrapper h3-bold text-center sm:text-left ">Orders</h3>
       </section>
 
@@ -26,31 +24,31 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
         <table className="w-full border-collapse border-t">
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
-              <th className="min-w-[200px] flex-1 py-3 pr-4 text-left">Event Title</th>
-              {customFieldLabels.map((label: string, index: number) => (
-                <th key={index} className="min-w-[150px] py-3 text-left">{label}</th>
-              ))}
+              <th className="min-w-[200px] py-3 text-left">Event Title</th>
+              <th className="min-w-[150px] py-3 text-left">Queue Number</th>
+              <th className="min-w-[150px] py-3 text-left">Attendance</th>
+              <th className="min-w-[150px] py-3 text-left">Registration Date</th>
             </tr>
           </thead>
           <tbody>
             {orders && orders.length === 0 ? (
               <tr className="border-b">
-                <td colSpan={customFieldLabels.length + 1} className="py-4 text-center text-gray-500">
+                <td colSpan={5} className="py-4 text-center text-gray-500">
                   No orders found.
                 </td>
               </tr>
             ) : (
               <>
                 {orders &&
-                  orders.map((row: IOrderItem) => (
+                  orders.map((order: IOrderItem) => (
                     <tr
-                      key={row._id}
-                      className="p-regular-14 lg:p-regular-16 border-b "
+                      key={order._id}
+                      className="p-regular-14 lg:p-regular-16 border-b"
                       style={{ boxSizing: 'border-box' }}>
-                      <td className="min-w-[200px] flex-1 py-4 pr-4">{row.eventTitle}</td>
-                      {row.customFieldValues.map((field: any, index: number) => (
-                        <td key={index} className="min-w-[150px] py-4">{field.value}</td>
-                      ))}
+                      <td className="min-w-[200px] py-4">{order.eventTitle}</td>
+                      <td className="min-w-[150px] py-4">{order.queueNumber}</td>
+                      <td className="min-w-[150px] py-4">{order.attendance ? 'Yes' : 'No'}</td>
+                      <td className="min-w-[150px] py-4">{formatDateTime(order.createdAt).dateTime}</td>
                     </tr>
                   ))}
               </>
