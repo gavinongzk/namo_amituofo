@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { SheetClose } from '@/components/ui/sheet'; // Import SheetClose
 
 interface NavItemsProps {
   isSuperAdmin: boolean;
@@ -14,19 +15,27 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onItem
   return (
     <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
       <li>
-        <Link href="/">寺院活动 Events</Link>
+        <SheetClose asChild>
+          <Link href="/">寺院活动 Events</Link>
+        </SheetClose>
       </li>
       {isSuperAdmin && (
         <li>
-          <Link href="/events/create">创建活动 Create Event</Link>
+          <SheetClose asChild>
+            <Link href="/events/create">创建活动 Create Event</Link>
+          </SheetClose>
         </li>
       )}
       <li>
-        <Link href="/profile">我的活动 My Events</Link>
+        <SheetClose asChild>
+          <Link href="/profile">我的活动 My Events</Link>
+        </SheetClose>
       </li>
       {(isSuperAdmin || isNormalAdmin) && (
         <li>
-          <Link href="/admin/dashboard">管理员系统 Admin Dashboard</Link>
+          <SheetClose asChild>
+            <Link href="/admin/dashboard">管理员系统 Admin Dashboard</Link>
+          </SheetClose>
         </li>
       )}
     </ul>
