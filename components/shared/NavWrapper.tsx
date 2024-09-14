@@ -1,23 +1,12 @@
-import React from 'react';
-import { useUser } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs';
 import NavItems from './NavItems';
 
-interface NavWrapperProps {
-  className?: string;
-}
+const NavWrapper = async () => {
+  const user = await currentUser();
+  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+  const isNormalAdmin = user?.publicMetadata.role === 'admin';
 
-const NavWrapper: React.FC<NavWrapperProps> = ({ className }) => {
-  const { user } = useUser();
-  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
-  const isNormalAdmin = user?.publicMetadata?.role === 'admin';
-
-  return (
-    <NavItems 
-      isSuperAdmin={isSuperAdmin} 
-      isNormalAdmin={isNormalAdmin} 
-      className={className}
-    />
-  );
+  return <NavItems isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin}/>;
 };
 
 export default NavWrapper;

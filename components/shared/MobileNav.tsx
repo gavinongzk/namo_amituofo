@@ -32,7 +32,7 @@ const MobileNav = () => {
             height={38}
           />
           <Separator className="border border-gray-50" />
-          <NavWrapper className="flex flex-col items-start gap-5" />
+          <NavWrapper />
         </SheetContent>
       </Sheet>
     </nav>
