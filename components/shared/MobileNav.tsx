@@ -11,13 +11,17 @@ import {
 import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
-
+import React, { useState } from "react";
 
 const MobileNav = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleClose = () => setIsOpen(false);
+
   return (
     <nav className="md:hidden">
-      <Sheet>
-        <SheetTrigger className="align-middle">
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger className="align-middle" onClick={() => setIsOpen(true)}>
           <Image 
             src="/assets/icons/menu.svg"
             alt="menu"
@@ -34,7 +38,7 @@ const MobileNav = () => {
             height={38}
           />
           <Separator className="border border-gray-50" />
-          <NavWrapper />
+          <NavWrapper onClose={handleClose} />
         </SheetContent>
       </Sheet>
     </nav>

@@ -2,40 +2,43 @@
 
 import Link from 'next/link';
 import React from 'react';
-import { SheetClose } from '@/components/ui/sheet'; // Correct import
 
 interface NavItemsProps {
   isSuperAdmin: boolean;
   isNormalAdmin: boolean;
-  onItemClick?: () => void;
+  onClose: () => void;
   className?: string;
 }
 
-const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onItemClick, className }) => {
+const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClose, className }) => {
+  const handleClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
     <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
       <li>
-        <SheetClose asChild>
-          <Link href="/">寺院活动 Events</Link>
-        </SheetClose>
+        <Link href="/" onClick={handleClick}>
+          寺院活动 Events
+        </Link>
       </li>
       {isSuperAdmin && (
         <li>
-          <SheetClose asChild>
-            <Link href="/events/create">创建活动 Create Event</Link>
-          </SheetClose>
+          <Link href="/events/create" onClick={handleClick}>
+            创建活动 Create Event
+          </Link>
         </li>
       )}
       <li>
-        <SheetClose asChild>
-          <Link href="/profile">我的活动 My Events</Link>
-        </SheetClose>
+        <Link href="/profile" onClick={handleClick}>
+          我的活动 My Events
+        </Link>
       </li>
       {(isSuperAdmin || isNormalAdmin) && (
         <li>
-          <SheetClose asChild>
-            <Link href="/admin/dashboard">管理员系统 Admin Dashboard</Link>
-          </SheetClose>
+          <Link href="/admin/dashboard" onClick={handleClick}>
+            管理员系统 Admin Dashboard
+          </Link>
         </li>
       )}
     </ul>
