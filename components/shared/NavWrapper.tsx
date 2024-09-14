@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import NavItems from './NavItems';
 
 interface NavWrapperProps {
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const NavWrapper: React.FC<NavWrapperProps> = ({ onClose }) => {

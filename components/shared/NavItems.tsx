@@ -6,7 +6,7 @@ import React from 'react';
 interface NavItemsProps {
   isSuperAdmin: boolean;
   isNormalAdmin: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
