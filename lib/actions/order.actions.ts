@@ -30,7 +30,7 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
       throw new Error('Event is fully booked');
     }
 
-    const lastOrder = await Order.findOne().sort({ createdAt: -1 });
+    const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
     const lastQueueNumber = lastOrder && lastOrder.queueNumber ? parseInt(lastOrder.queueNumber.slice(1)) : 0;
     const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`;
 
