@@ -9,7 +9,7 @@ import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
 
-const MobileNav = () => {
+const MobileNav = ({ isSuperAdmin, isNormalAdmin }: { isSuperAdmin: boolean; isNormalAdmin: boolean }) => {
   return (
     <Sheet>
       <SheetTrigger className="align-middle">
@@ -29,7 +29,7 @@ const MobileNav = () => {
           height={38}
         />
         <Separator className="border border-gray-50" />
-        <NavWrapper />
+        <NavWrapper isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin} />
       </SheetContent>
     </Sheet>
   )

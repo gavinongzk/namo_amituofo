@@ -1,11 +1,8 @@
-import { currentUser } from '@clerk/nextjs';
+'use client';
+
 import NavItems from './NavItems';
 
-const NavWrapper = async () => {
-  const user = await currentUser();
-  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-  const isNormalAdmin = user?.publicMetadata.role === 'admin';
-
+const NavWrapper = ({ isSuperAdmin, isNormalAdmin }: { isSuperAdmin: boolean; isNormalAdmin: boolean }) => {
   return <NavItems isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin} />;
 };
 
