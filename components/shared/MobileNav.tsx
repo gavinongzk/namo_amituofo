@@ -2,7 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import NavItems from "./NavItems"
 import { useUser } from "@clerk/nextjs"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const MobileNav = () => {
   const { user } = useUser();
