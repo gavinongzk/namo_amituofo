@@ -22,19 +22,19 @@ const MobileNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-md md:hidden">
-      <div className="flex justify-around items-center py-2">
+    <>
+      <div className="fixed top-4 right-4 z-50 md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger className="align-middle">
+          <SheetTrigger className="bg-white p-2 rounded-full shadow-md">
             <Image 
               src="/assets/icons/menu.svg"
               alt="menu"
-              width={24}
-              height={24}
+              width={32}
+              height={32}
               className="cursor-pointer"
             />
           </SheetTrigger>
-          <SheetContent className="flex flex-col gap-6 bg-white md:hidden">
+          <SheetContent className="flex flex-col gap-6 bg-white">
             <Image 
               src="/assets/images/logo.svg"
               alt="logo"
@@ -51,7 +51,7 @@ const MobileNav = () => {
           </SheetContent>
         </Sheet>
       </div>
-    </nav>
+    </>
   )
 }
 
