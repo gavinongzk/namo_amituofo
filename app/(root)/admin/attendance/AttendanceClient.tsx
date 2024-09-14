@@ -100,8 +100,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${user?.order.queueNumber}`);
       } else if (res.status === 409) {
-        setMessage('Version conflict. Please refresh the page. 版本冲突。请刷新页面。');
-        setModalMessage('Version conflict. Please refresh the page. 版本冲突。请刷新页面。');
+        setModalMessage('Refreshing due to an update by someone else. 正在刷新，因为有其他人更新了数据。');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         throw new Error('Failed to update attendance 更新出席情况失败');
       }

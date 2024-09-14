@@ -24,7 +24,6 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
         <table className="w-full border-collapse border-t">
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
-              <th className="min-w-[250px] py-3 text-left">Buyer</th>
               <th className="min-w-[200px] py-3 text-left">Event Title</th>
               <th className="min-w-[150px] py-3 text-left">Queue Number</th>
               <th className="min-w-[150px] py-3 text-left">Attendance</th>
@@ -46,7 +45,6 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                       key={order._id}
                       className="p-regular-14 lg:p-regular-16 border-b"
                       style={{ boxSizing: 'border-box' }}>
-                      <td className="min-w-[250px] py-4 text-left">{order.buyer}</td>
                       <td className="min-w-[200px] py-4">{order.eventTitle}</td>
                       <td className="min-w-[150px] py-4">{order.queueNumber}</td>
                       <td className="min-w-[150px] py-4">{order.attendance ? 'Yes' : 'No'}</td>
