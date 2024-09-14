@@ -135,45 +135,45 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 className="text-2xl font-bold mb-4">{event.title}</h2>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Date:</span> {formatDateTime(new Date(event.startDateTime)).dateOnly}
+          <span className="font-semibold">Date 日期:</span> {formatDateTime(new Date(event.startDateTime)).dateOnly}
         </p>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Time:</span> {formatDateTime(new Date(event.startDateTime)).timeOnly} - {formatDateTime(new Date(event.endDateTime)).timeOnly}
+          <span className="font-semibold">Time 时间:</span> {formatDateTime(new Date(event.startDateTime)).timeOnly} - {formatDateTime(new Date(event.endDateTime)).timeOnly}
         </p>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Location:</span> {event.location}
+          <span className="font-semibold">Location 地点:</span> {event.location}
         </p>
         <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Category:</span> {event.category.name}
+          <span className="font-semibold">Category 类别:</span> {event.category.name}
         </p>
         <p className="text-gray-600">
-          <span className="font-semibold">Max Seats:</span> {event.maxSeats}
+          <span className="font-semibold">Max Seats 最大座位数:</span> {event.maxSeats}
         </p>
       </div>
 
       <div className="flex space-x-2 mb-6">
         <Input
-          placeholder="Enter Queue Number"
+          placeholder="Enter Queue Number 输入排队号码"
           value={queueNumber}
           onChange={(e) => setQueueNumber(e.target.value)}
           className="flex-grow"
         />
         <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
-          Mark Attendance
+          Mark Attendance 标记出席
         </Button>
       </div>
 
-      <h4 className="text-xl font-bold mb-4">Registered Users</h4>
+      <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
       {isLoading ? (
-        <p>Loading...</p>
+        <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-4">Total Registrations: {registeredUsers.length}</p>
+          <p className="mb-4">Total Registrations 总注册数: {registeredUsers.length}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b text-left">Queue Number</th>
+                  <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
                     registeredUsers[0].order.customFieldValues.map((field) => (
                       <th key={field.id} className="py-2 px-4 border-b text-left">
@@ -181,7 +181,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                       </th>
                     ))
                   }
-                  <th className="py-2 px-4 border-b text-center">Attendance</th>
+                  <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
                 </tr>
               </thead>
               <tbody>
@@ -211,8 +211,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             </table>
           </div>
           <ReactPaginate
-            previousLabel={'Previous'}
-            nextLabel={'Next'}
+            previousLabel={'Previous 上一页'}
+            nextLabel={'Next 下一页'}
             breakLabel={'...'}
             breakClassName={'break-me'}
             pageCount={pageCount}
