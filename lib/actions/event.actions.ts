@@ -18,6 +18,7 @@ import {
 } from '@/types'
 
 import { IEvent } from '@/lib/database/models/event.model';
+import Order from '@/lib/database/models/order.model';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -178,6 +179,27 @@ export async function getRelatedEventsByCategory({
     const eventsCount = await Event.countDocuments(conditions)
 
     return { data: JSON.parse(JSON.stringify(events)), totalPages: Math.ceil(eventsCount / limit) }
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+export async function getEventWithAttendeeCount(eventId: string) {
+  try {
+    await connectToDatabase()
+
+    const event = await populateEvent(Event.findById(eventId))
+
+    if (!event) throw new Error('Event not found')
+
+    const attendeeCount = await Order.countDocuments({ event: eventId })
+
+    const eventWithCount = {
+      ...JSON.parse(JSON.stringify(event)),
+      attendeeCount
+    }
+
+    return eventWithCount
   } catch (error) {
     handleError(error)
   }
