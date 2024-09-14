@@ -63,7 +63,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } catch (error) {
       console.error('Error fetching registered users:', error);
-      setMessage('Failed to fetch registered users.');
+      setMessage('Failed to fetch registered users. 获取注册用户失败。');
       setRegisteredUsers([]);
     } finally {
       setIsLoading(false);
@@ -73,7 +73,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const handleMarkAttendance = useCallback(async (userId: string, attended: boolean) => {
     console.log(`Marking attendance for user ${userId}: ${attended}`);
     setShowModal(true);
-    setModalMessage('Updating attendance...');
+    setModalMessage('Updating attendance... 更新出席情况...');
     try {
       const user = registeredUsers.find(user => user.id === userId);
       const res = await fetch('/api/attendance', {
@@ -94,15 +94,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${user?.order.queueNumber}`);
       } else if (res.status === 409) {
-        setMessage('Version conflict. Please refresh the page.');
-        setModalMessage('Version conflict. Please refresh the page.');
+        setMessage('Version conflict. Please refresh the page. 版本冲突。请刷新页面。');
+        setModalMessage('Version conflict. Please refresh the page. 版本冲突。请刷新页面。');
       } else {
-        throw new Error('Failed to update attendance');
+        throw new Error('Failed to update attendance 更新出席情况失败');
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
-      setMessage('Failed to update attendance.');
-      setModalMessage('Failed to update attendance.');
+      setMessage('Failed to update attendance. 更新出席情况失败。');
+      setModalMessage('Failed to update attendance. 更新出席情况失败。');
     } finally {
       setTimeout(() => {
         setShowModal(false);
@@ -117,7 +117,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       await handleMarkAttendance(user.id, !user.order.attended);
       setQueueNumber('');
     } else {
-      setMessage('User not found with this queue number.');
+      setMessage('User not found with this queue number. 未找到此排队号码的用户。');
       console.log('User not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registeredUsers, handleMarkAttendance]);

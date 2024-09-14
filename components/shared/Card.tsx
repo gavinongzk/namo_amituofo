@@ -59,7 +59,6 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
           </div>
         )}

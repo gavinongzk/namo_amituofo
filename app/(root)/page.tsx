@@ -21,7 +21,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
 
   return (
     <>
-      <section className="bg-primary-50 bg-dotted-pattern bg-contain py-5 md:py-10">
+      {/* <section className="bg-primary-50 bg-dotted-pattern bg-contain py-5 md:py-10">
         <div className="wrapper grid grid-cols-1 gap-5 md:grid-cols-2 2xl:gap-0">
           <div className="flex flex-col justify-center gap-8">
             <h2 className="h2-medium">阿弥陀佛是我们的救主，是我们真正平安、喜乐、希望的来源；在人世间有苦难，在佛怀中有平安。</h2>
@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
             className="max-h-[70vh] object-contain object-center 2xl:max-h-[50vh]"
           />
         </div>
-      </section> 
+      </section>  */}
 
       <section id="events" className="wrapper my-8 flex flex-col gap-8 md:gap-12">
         <h2 className="h2-bold">最新活动</h2>

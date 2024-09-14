@@ -36,11 +36,11 @@ const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave, initialFi
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Define Custom Fields</Button>
+        <Button variant="outline">Define Custom Fields 定义自定义字段</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Custom Fields</DialogTitle>
+          <DialogTitle>Custom Fields 自定义字段</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {fields.map((field) => (
@@ -50,7 +50,7 @@ const CustomFieldsPopup: React.FC<CustomFieldsPopupProps> = ({ onSave, initialFi
             </div>
           ))}
         </div>
-        <Button onClick={handleSave}>Save Custom Fields</Button>
+        <Button onClick={handleSave}>Save Custom Fields 保存自定义字段</Button>
       </DialogContent>
     </Dialog>
   );

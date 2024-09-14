@@ -8,19 +8,19 @@ const NavItems: React.FC<{ isSuperAdmin: boolean, isNormalAdmin: boolean }> = ({
   return (
     <ul className="flex gap-4">
       <li>
-        <Link href="/">Home</Link>
+        <Link href="/">寺院活动 Events</Link>
       </li>
       {isSuperAdmin && (
         <li>
-          <Link href="/events/create">Create Event</Link>
+          <Link href="/events/create">创建活动 Create Event</Link>
         </li>
       )}
       <li>
-        <Link href="/profile">My Profile</Link>
+        <Link href="/profile">我的活动 My Events</Link>
       </li>
       {(isSuperAdmin || isNormalAdmin) && (
         <li>
-          <Link href="/admin/dashboard">Admin Dashboard</Link>
+          <Link href="/admin/dashboard">管理员系统 Admin Dashboard</Link>
         </li>
       )}
     </ul>

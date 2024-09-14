@@ -100,7 +100,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {isFullyBooked ? (
-          <p className="text-red-500">This event is fully booked.</p>
+          <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
         ) : (
           <>
             {event.customFields?.map((field) => (
@@ -134,7 +134,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
               />
             ))}
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Register'}
+              {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
             </Button>
           </>
         )}
