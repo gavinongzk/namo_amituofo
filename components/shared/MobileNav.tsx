@@ -1,20 +1,23 @@
+"use client"
+
+import { useState } from "react"
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
 
-
 const MobileNav = () => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const closeSheet = () => setIsOpen(false)
+
   return (
     <nav className="md:hidden">
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger className="align-middle">
           <Image 
             src="/assets/icons/menu.svg"
@@ -32,7 +35,7 @@ const MobileNav = () => {
             height={38}
           />
           <Separator className="border border-gray-50" />
-          <NavWrapper />
+          <NavWrapper className="flex flex-col items-start gap-5" closeSheet={closeSheet} />
         </SheetContent>
       </Sheet>
     </nav>
