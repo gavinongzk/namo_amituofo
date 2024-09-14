@@ -2,15 +2,10 @@ import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "../ui/button"
-import NavWrapper from "./NavWrapper"
+import NavWrapper from "./NavWrapper"; // Import the new NavWrapper
 import MobileNav from "./MobileNav"
-import { currentUser } from "@clerk/nextjs"
 
-const Header = async () => {
-  const user = await currentUser();
-  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-  const isNormalAdmin = user?.publicMetadata.role === 'admin';
-
+const Header = () => {
   return (
     <header className="w-full border-b">
       <div className="wrapper flex items-center justify-between">
@@ -23,19 +18,19 @@ const Header = async () => {
 
         <SignedIn>
           <nav className="md:flex-between hidden w-full max-w-xs">
-            <NavWrapper isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin} />
+            <NavWrapper /> {/* Use NavWrapper here */}
           </nav>
         </SignedIn>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-32 justify-end gap-3">
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
-            <MobileNav isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin} />
+            <MobileNav />
           </SignedIn>
           <SignedOut>
             <Button asChild className="rounded-full" size="lg">
               <Link href="/sign-in">
-                Login 登录
+                Login
               </Link>
             </Button>
           </SignedOut>
