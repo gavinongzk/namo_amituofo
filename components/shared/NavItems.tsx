@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
-import { SheetClose } from '@/components/ui/sheet'; // Import SheetClose
+import { SheetClose } from '@/components/ui/sheet'; // Correct import
 
 interface NavItemsProps {
   isSuperAdmin: boolean;
