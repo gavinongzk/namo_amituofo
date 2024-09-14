@@ -1,65 +1,32 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { updateUserRole } from '@/lib/actions/user.actions';
+import { useUser } from '@clerk/nextjs';
+import { redirect } from 'next/navigation';
+import UserManagement from '@/components/shared/UserManagement';
 
-type User = {
-  id: string;
-  name: string;
-  role: 'user' | 'admin' | 'superadmin';
-};
+const AdminUsersPage = () => {
+  const { user, isLoaded } = useUser();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
-
-  // Fetch users...
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        const data: User[] = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
+    if (isLoaded) {
+      const role = user?.publicMetadata.role as string;
+      setIsSuperAdmin(role === 'superadmin');
+      if (role !== 'superadmin' && role !== 'admin') {
+        redirect('/');
       }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const handleRoleChange = async (userId: string, newRole: 'user' | 'admin' | 'superadmin') => {
-    try {
-      await updateUserRole(userId, newRole);
-      // Update local state or refetch users
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-    } catch (error) {
-      console.error('Failed to update user role:', error);
     }
-  };
+  }, [isLoaded, user]);
+
+  if (!isLoaded) return <div>Loading...</div>;
 
   return (
-    <div>
-      {users.map((user) => (
-        <div key={user.id}>
-          <span>{user.name}</span>
-          <select
-            value={user.role}
-            onChange={(e) =>
-              handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
-            }
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="superadmin">Superadmin</option>
-          </select>
-        </div>
-      ))}
+    <div className="wrapper my-8">
+      <h1 className="h2-bold mb-8">User Management</h1>
+      <UserManagement isSuperAdmin={isSuperAdmin} />
     </div>
   );
 };
 
-export default UserManagement;
+export default AdminUsersPage;
