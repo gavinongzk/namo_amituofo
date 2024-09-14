@@ -135,9 +135,9 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
       .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
-    const events = await eventsQuery.exec();
+    const events = (await eventsQuery.exec()) as IEvent[];
     const eventsWithCount = await Promise.all(
-      events.map(async (event: IEvent) => {
+      events.map(async (event) => {
         const attendeeCount = await Order.countDocuments({ event: event._id });
         return {
           ...JSON.parse(JSON.stringify(event)),
