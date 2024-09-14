@@ -24,6 +24,7 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
     .map((order: IOrder) => ({
       ...order.event,
       orderId: order._id, // Add orderId to the event object
+      queueNumber: order.queueNumber,
     })) || [];
   const organizedEvents = await getEventsByUser({ userId, page: eventsPage });
 

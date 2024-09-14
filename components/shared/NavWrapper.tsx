@@ -6,7 +6,7 @@ const NavWrapper = async () => {
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const isNormalAdmin = user?.publicMetadata.role === 'admin';
 
-  return <NavItems isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin} />;
+  return <NavItems isSuperAdmin={isSuperAdmin} isNormalAdmin={isNormalAdmin}/>;
 };
 
 export default NavWrapper;

@@ -21,6 +21,7 @@ export interface IEvent extends Document {
   customFields?: CustomField[];
   maxSeats: number; // Add this line
   registrationSuccessMessage?: string;
+  attendeeCount?: number;
 }
 
 const EventSchema = new Schema({

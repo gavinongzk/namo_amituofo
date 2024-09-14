@@ -9,9 +9,14 @@ import { CustomField } from '@/types';
 
 
 type CardProps = {
-  event: IEvent & { orderId?: string, customFieldValues?: CustomField[], queueNumber?: string, attendeeCount?: number }, // Add customFieldValues, queueNumber, and attendeeCount to the event type
+  event: IEvent & { 
+    orderId?: string, 
+    customFieldValues?: CustomField[], 
+    queueNumber?: string, 
+    attendeeCount?: number 
+  },
   hasOrderLink?: boolean,
-  isMyTicket?: boolean, // Add this prop
+  isMyTicket?: boolean,
 }
 
 const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
@@ -24,8 +29,8 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
         href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`} // Conditional redirect
+        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
-        className="flex-center flex-grow bg-gray-50 bg-cover bg-center text-grey-500"
       />
       {/* IS EVENT CREATOR ... */}
 
@@ -50,7 +55,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isMyTicket && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">Queue Number: {event.queueNumber}</p>
+            <p className="p-medium-16 text-grey-500">Queue Number: {event.queueNumber || 'N/A'}</p>
             {event.customFieldValues?.map((field) => (
               <p key={field.id} className="p-medium-16 text-grey-500">{field.label}: {field.value}</p>
             ))}
@@ -59,6 +64,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
+            <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
           </div>
         )}
