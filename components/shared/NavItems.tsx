@@ -12,7 +12,7 @@ interface NavItemsProps {
 
 const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onItemClick, className }) => {
   return (
-    <ul className={`flex gap-4 ${className}`}>
+    <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
       <li>
         <Link href="/">寺院活动 Events</Link>
       </li>
