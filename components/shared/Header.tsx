@@ -25,7 +25,6 @@ const Header = () => {
         <div className="flex w-32 justify-end gap-3">
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
-            <MobileNav />
           </SignedIn>
           <SignedOut>
             <Button asChild className="rounded-full" size="lg">
@@ -36,6 +35,12 @@ const Header = () => {
           </SignedOut>
         </div>
       </div>
+      
+      <SignedIn>
+        <div className="md:hidden">
+          <MobileNav />
+        </div>
+      </SignedIn>
     </header>
   )
 }
