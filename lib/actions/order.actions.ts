@@ -42,6 +42,10 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
       queueNumber: newQueueNumber,
     });
 
+    // Optionally update attendeeCount in Event
+    // event.attendeeCount = currentRegistrations + 1;
+    // await event.save();
+
     return { success: true, message: 'User successfully registered', order: newOrder };
   } catch (error) {
     handleError(error);

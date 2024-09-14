@@ -55,15 +55,25 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 // GET ONE EVENT BY ID
 export async function getEventById(eventId: string) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const event = await populateEvent(Event.findById(eventId))
+    const event = await Event.findById(eventId)
+      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'category', model: Category, select: '_id name' });
 
-    if (!event) throw new Error('Event not found')
+    if (!event) {
+      throw new Error('Event not found');
+    }
 
-    return JSON.parse(JSON.stringify(event))
+    const attendeeCount = await Order.countDocuments({ event: eventId });
+
+    return {
+      ...JSON.parse(JSON.stringify(event)),
+      attendeeCount,
+    };
   } catch (error) {
-    handleError(error)
+    handleError(error);
+    return null;
   }
 }
 
@@ -109,29 +119,39 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 // GET ALL EVENTS
 export async function getAllEvents({ query, limit = 6, page, category }: GetAllEventsParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-    const categoryCondition = category ? await getCategoryByName(category) : null
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
+    const categoryCondition = category ? await getCategoryByName(category) : null;
     const conditions = {
       $and: [titleCondition, categoryCondition ? { category: categoryCondition._id } : {}],
-    }
+    };
 
-    const skipAmount = (Number(page) - 1) * limit
+    const skipAmount = (Number(page) - 1) * limit;
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
+      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'category', model: Category, select: '_id name' });
 
-    const events = await populateEvent(eventsQuery)
-    const eventsCount = await Event.countDocuments(conditions)
+    const events = await eventsQuery.exec();
+    const eventsWithCount = await Promise.all(
+      events.map(async (event) => {
+        const attendeeCount = await Order.countDocuments({ event: event._id });
+        return {
+          ...JSON.parse(JSON.stringify(event)),
+          attendeeCount,
+        };
+      })
+    );
 
-    return {
-      data: JSON.parse(JSON.stringify(events)),
-      totalPages: Math.ceil(eventsCount / limit),
-    }
+    const eventsCount = await Event.countDocuments(conditions);
+
+    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) };
   } catch (error) {
-    handleError(error)
+    handleError(error);
+    return { data: [], totalPages: 0 };
   }
 }
 

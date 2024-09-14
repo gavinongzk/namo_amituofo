@@ -26,7 +26,7 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
       orderId: order._id, // Add orderId to the event object
       queueNumber: order.queueNumber,
     })) || [];
-  const organizedEvents = await getEventsByUser({ userId, page: eventsPage });
+  const organizedEventsData = await getEventsByUser({ userId, limit: 3, page: eventsPage }) || { data: [], totalPages: 0 };
 
   return (
     <>
@@ -69,14 +69,14 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
 
       <section className="wrapper my-8">
         <Collection 
-          data={organizedEvents?.data}
+          data={organizedEventsData.data}
           emptyTitle="No events have been created yet"
           emptyStateSubtext="Go create some now"
           collectionType="Events_Organized"
           limit={3}
           page={eventsPage}
           urlParamName="eventsPage"
-          totalPages={organizedEvents?.totalPages}
+          totalPages={organizedEventsData.totalPages}
         />
       </section>
     </>
