@@ -37,12 +37,11 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
       console.log('Updating role for user:', userId, 'to', newRole);
       const result = await updateUserRole(userId, newRole);
       if (result.success) {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.id === userId ? { ...user, role: newRole } : user
-          )
-        );
-        setMessage(`Successfully updated role for user ${userId} to ${newRole}`);
+        setMessage(`Successfully updated role for user ${userId} to ${newRole}. Refreshing...`);
+        // Refresh the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         throw new Error(result.error || 'Failed to update user role');
       }
