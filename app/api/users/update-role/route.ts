@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import User from '@/lib/database/models/user.model';
 import { clerkClient } from '@clerk/nextjs';
+import { ObjectId } from 'mongodb';
 
 export async function PATCH(req: NextRequest) {
   if (req.method !== 'PATCH') {
@@ -17,9 +18,14 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Update user in your database
+    // Validate userId is a valid ObjectId
+    if (!ObjectId.isValid(userId)) {
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+    }
+
+    // Update user in your database using _id
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId: userId },
+      { _id: new ObjectId(userId) },
       { role: newRole },
       { new: true }
     );
@@ -29,7 +35,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update Clerk user metadata
-    await clerkClient.users.updateUser(userId, {
+    await clerkClient.users.updateUser(updatedUser.clerkId, {
       publicMetadata: {
         role: newRole
       }
