@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update Clerk user metadata
-    await clerkClient.users.updateUserMetadata(userId, {
+    await clerkClient.users.updateUser(userId, {
       publicMetadata: {
         role: newRole
       }
