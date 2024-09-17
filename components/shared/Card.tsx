@@ -13,7 +13,7 @@ type CardProps = {
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    attendeeCount?: number
+    attendeeCount?: number 
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
@@ -64,9 +64,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
-            {event.attendeeCount > 0 && (
-              <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount}</p>
-            )}
+            <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
           </div>
         )}
