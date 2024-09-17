@@ -73,7 +73,7 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
             <th className="py-2 px-4 border-b text-left">Name</th>
             {isSuperAdmin && <th className="py-2 px-4 border-b text-left">Phone Number</th>}
             <th className="py-2 px-4 border-b text-left">Role</th>
-            <th className="py-2 px-4 border-b text-center">Actions</th>
+            {isSuperAdmin && <th className="py-2 px-4 border-b text-center">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -82,19 +82,21 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
               <td className="py-2 px-4 border-b text-left">{user.customName}</td>
               {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.customPhone}</td>}
               <td className="py-2 px-4 border-b text-left">{user.role}</td>
-              <td className="py-2 px-4 border-b text-center">
-                <select
-                  value={user.role}
-                  onChange={(e) =>
-                    handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
-                  }
-                  className="border rounded px-2 py-1"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  {isSuperAdmin && <option value="superadmin">Superadmin</option>}
-                </select>
-              </td>
+              {isSuperAdmin && (
+                <td className="py-2 px-4 border-b text-center">
+                  <select
+                    value={user.role}
+                    onChange={(e) =>
+                      handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                  </select>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
