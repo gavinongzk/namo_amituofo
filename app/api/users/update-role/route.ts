@@ -25,14 +25,17 @@ export async function PATCH(req: NextRequest) {
 
     // Update user in your database using _id
     const updatedUser = await User.findOneAndUpdate(
-      { _id: new ObjectId(userId) },
+      { _id: userId },
       { role: newRole },
       { new: true }
     );
 
     if (!updatedUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      console.error('User not found or update failed');
+      return NextResponse.json({ error: 'User not found or update failed' }, { status: 404 });
     }
+
+    console.log('User role updated successfully:', updatedUser);
 
     // Update Clerk user metadata
     await clerkClient.users.updateUser(updatedUser.clerkId, {
