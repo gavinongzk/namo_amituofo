@@ -6,18 +6,28 @@ import { Button } from '@/components/ui/button';
 
 type User = {
   id: string;
-  name: string;
-  phoneNumber: string;
+  customName: string;
+  customPhone: string;
   role: 'user' | 'admin' | 'superadmin';
 };
 
 const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
   const [users, setUsers] = useState<User[]>([]);
+  const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const fetchedUsers = await getAllUsers();
-      setUsers(fetchedUsers);
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const fetchedUsers = await response.json();
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setMessage('Failed to fetch users. 获取用户失败。');
+      }
     };
     fetchUsers();
   }, []);
@@ -62,8 +72,8 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
         <tbody>
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-gray-50">
-              <td className="py-2 px-4 border-b text-left">{user.name}</td>
-              {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>}
+              <td className="py-2 px-4 border-b text-left">{user.customName}</td>
+              {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.customPhone}</td>}
               <td className="py-2 px-4 border-b text-left">{user.role}</td>
               <td className="py-2 px-4 border-b text-center">
                 <select
