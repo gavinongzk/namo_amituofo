@@ -6,32 +6,48 @@ import { Button } from '@/components/ui/button';
 
 type User = {
   id: string;
-  name: string;
-  phoneNumber: string;
+  customName: string;
+  customPhone: string;
   role: 'user' | 'admin' | 'superadmin';
 };
 
 const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
   const [users, setUsers] = useState<User[]>([]);
+  const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const fetchedUsers = await getAllUsers();
-      setUsers(fetchedUsers);
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const fetchedUsers = await response.json();
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setMessage('Failed to fetch users. 获取用户失败。');
+      }
     };
     fetchUsers();
   }, []);
 
   const handleRoleChange = async (userId: string, newRole: 'user' | 'admin' | 'superadmin') => {
     try {
-      await updateUserRole(userId, newRole);
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
+      console.log('Updating role for user:', userId, 'to', newRole);
+      const result = await updateUserRole(userId, newRole);
+      if (result.success) {
+        setMessage(`Successfully updated role for user ${userId} to ${newRole}. Refreshing...`);
+        // Refresh the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        throw new Error(result.error || 'Failed to update user role');
+      }
     } catch (error) {
       console.error('Failed to update user role:', error);
+      setMessage(`Failed to update user role: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -56,28 +72,30 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
             <th className="py-2 px-4 border-b text-left">Name</th>
             {isSuperAdmin && <th className="py-2 px-4 border-b text-left">Phone Number</th>}
             <th className="py-2 px-4 border-b text-left">Role</th>
-            <th className="py-2 px-4 border-b text-center">Actions</th>
+            {isSuperAdmin && <th className="py-2 px-4 border-b text-center">Actions</th>}
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-gray-50">
-              <td className="py-2 px-4 border-b text-left">{user.name}</td>
-              {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>}
+              <td className="py-2 px-4 border-b text-left">{user.customName}</td>
+              {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.customPhone}</td>}
               <td className="py-2 px-4 border-b text-left">{user.role}</td>
-              <td className="py-2 px-4 border-b text-center">
-                <select
-                  value={user.role}
-                  onChange={(e) =>
-                    handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
-                  }
-                  className="border rounded px-2 py-1"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  {isSuperAdmin && <option value="superadmin">Superadmin</option>}
-                </select>
-              </td>
+              {isSuperAdmin && (
+                <td className="py-2 px-4 border-b text-center">
+                  <select
+                    value={user.role}
+                    onChange={(e) =>
+                      handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                  </select>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
