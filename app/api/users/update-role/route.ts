@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import User from '@/lib/database/models/user.model';
 import { clerkClient } from '@clerk/nextjs';
-import { withAuth } from '@/middleware/auth';
 
-async function handler(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   if (req.method !== 'PATCH') {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -42,6 +41,3 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
-// Wrap the handler with authentication middleware
-export const PATCH = (req: NextRequest) => withAuth(req, ['superadmin'], handler);
