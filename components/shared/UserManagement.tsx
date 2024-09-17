@@ -34,14 +34,21 @@ const UserManagement = ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
 
   const handleRoleChange = async (userId: string, newRole: 'user' | 'admin' | 'superadmin') => {
     try {
-      await updateUserRole(userId, newRole);
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
+      console.log('Updating role for user:', userId, 'to', newRole);
+      const result = await updateUserRole(userId, newRole);
+      if (result.success) {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === userId ? { ...user, role: newRole } : user
+          )
+        );
+        setMessage(`Successfully updated role for user ${userId} to ${newRole}`);
+      } else {
+        throw new Error(result.error || 'Failed to update user role');
+      }
     } catch (error) {
       console.error('Failed to update user role:', error);
+      setMessage(`Failed to update user role: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
