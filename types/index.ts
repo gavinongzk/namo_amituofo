@@ -4,10 +4,12 @@ import { ObjectId } from 'mongodb'; // Add this import
 // ====== USER PARAMS
 export type CreateUserParams = {
   clerkId: string
+  email: string
   phoneNumber: string
 }
 
 export type UpdateUserParams = {
+  email: string
   phoneNumber: string
 }
 

@@ -2,7 +2,8 @@ import { Schema, model, models } from "mongoose";
 
 const UserSchema = new Schema({
   clerkId: { type: String, required: true, unique: true },
-  phoneNumber: {type: String, required: true},
+  email: {type: String},
+  phoneNumber: {type: String},
   role: { type: String, enum: ['superadmin', 'admin', 'user'], default: 'user' }
 })
 

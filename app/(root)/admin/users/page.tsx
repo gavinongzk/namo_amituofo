@@ -24,7 +24,7 @@ const AdminUsersPage = () => {
   return (
     <div className="wrapper my-8">
       <h1 className="h2-bold mb-8">User Management</h1>
-      <UserManagement isSuperAdmin={isSuperAdmin} />
+      <UserManagement />
     </div>
   );
 };

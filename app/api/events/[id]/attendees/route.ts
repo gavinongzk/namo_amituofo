@@ -5,7 +5,6 @@ import User from '@/lib/database/models/user.model'; // Import the User model
 import Event from '@/lib/database/models/event.model'; // Import the User model
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/middleware/auth';
 
 async function handler(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -50,6 +49,3 @@ async function handler(req: NextRequest, { params }: { params: { id: string } })
     return NextResponse.json({ message: 'Error fetching attendees', error: (error as Error).message }, { status: 500 });
   }
 }
-
-export const GET = (req: NextRequest, params: { params: { id: string } }) => 
-  withAuth(req, ['superadmin', 'admin'], (req) => handler(req, params));

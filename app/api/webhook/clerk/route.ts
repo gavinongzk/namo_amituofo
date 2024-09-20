@@ -54,10 +54,11 @@ export async function POST(req: Request) {
   const eventType = evt.type;
  
   if(eventType === 'user.created') {
-    const { id, phone_numbers } = evt.data;
+    const { id, email_addresses, phone_numbers } = evt.data;
   
     const user = {
       clerkId: id,
+      email: email_addresses[0]?.email_address,
       phoneNumber: phone_numbers[0]?.phone_number,
       role: 'user' // Default role
     }
@@ -77,9 +78,10 @@ export async function POST(req: Request) {
   }
   
   if (eventType === 'user.updated') {
-    const { id, phone_numbers } = evt.data
+    const { id, email_addresses, phone_numbers } = evt.data
   
     const user = {
+      email: email_addresses[0]?.email_address,
       phoneNumber: phone_numbers[0]?.phone_number,
     }
   
