@@ -1,40 +1,32 @@
 import { authMiddleware } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export default authMiddleware({
   publicRoutes: [
     '/',
     '/events/:id',
     '/api/webhook/clerk',
-    '/api/uploadthing',
-    '/api/events'
+    '/api/events',
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
-    '/api/uploadthing'
+    '/api/uploadthing',
   ],
   async afterAuth(auth, req) {
-    const url = new URL(req.url);
-    const isAdminRoute = url.pathname.startsWith('/admin') || 
-                         url.pathname.startsWith('/api/admin');
-    const isSuperAdminRoute = url.pathname.startsWith('/api/users/update-role');
-
-    if (!auth.userId && isAdminRoute) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
-    }
-
     if (auth.isPublicRoute) {
       return NextResponse.next();
     }
 
-    const user = auth.user;
+    const role = auth.sessionClaims?.role as string;
 
-    if (isAdminRoute && user?.publicMetadata?.role !== 'admin' && user?.publicMetadata?.role !== 'superadmin') {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
-
-    if (isSuperAdminRoute && user?.publicMetadata?.role !== 'superadmin') {
-      return NextResponse.redirect(new URL('/', req.url));
+    if (req.nextUrl.pathname.startsWith('/api/')) {
+      const allowedRoles = getAllowedRoles(req.nextUrl.pathname);
+      if (!allowedRoles.includes(role)) {
+        return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     return NextResponse.next();
@@ -44,3 +36,12 @@ export default authMiddleware({
 export const config = {
   matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
+
+function getAllowedRoles(pathname: string): string[] {
+  const routeRoles: { [key: string]: string[] } = {
+    '/api/users/update-role': ['superadmin'],
+    '/api/attendance': ['superadmin', 'admin'],
+  };
+
+  return routeRoles[pathname] || ['user', 'admin', 'superadmin'];
+}

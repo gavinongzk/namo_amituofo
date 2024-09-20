@@ -138,3 +138,25 @@ export async function downloadUserPhoneNumbers() {
     throw error;
   }
 }
+
+export async function getUserForAdmin(userId: string) {
+  try {
+    await connectToDatabase();
+
+    const user = await User.findById(userId).select('_id firstName lastName phoneNumber role');
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return {
+      id: user._id.toString(),
+      name: `${user.firstName} ${user.lastName}`,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+    };
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+}

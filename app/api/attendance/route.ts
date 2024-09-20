@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectToDatabase } from '@/lib/database'
 import Order from '@/lib/database/models/order.model'
 
-async function handler(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await connectToDatabase()
     const { userId, eventId, attended, version } = await req.json();
