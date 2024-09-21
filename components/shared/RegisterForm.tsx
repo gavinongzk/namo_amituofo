@@ -14,9 +14,8 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
-import { CountryData } from 'react-phone-input-2';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
@@ -38,7 +37,9 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         field.id,
         field.type === 'boolean'
           ? z.boolean()
-          : z.string().min(1, { message: "This field is required" })
+          : field.type === 'phone'
+            ? z.string().regex(/^\+[1-9]\d{1,14}$/, { message: "Invalid phone number" })
+            : z.string().min(1, { message: "This field is required" })
       ])
     )
   });
@@ -117,19 +118,13 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                         />
                       ) : field.type === 'phone' ? (
                         <PhoneInput
-                          value={String(formField.value)} // Convert value to string
-                          onChange={formField.onChange}
-                          inputClass="input-field"
-                          onlyCountries={["sg", "my"]}
-                          isValid={(value, country) => {
-                            if (value.match(/12345/)) {
-                              return `Invalid value: ${value}, ${(country as CountryData).name}`;
-                            } else if (value.match(/1234/)) {
-                              return false;
-                            } else {
-                              return true;
-                            }
-                          }}
+                          value={formField.value as string}
+                          onChange={(value) => formField.onChange(value || '')}
+                          defaultCountry="SG"
+                          countries={["SG", "MY"]}
+                          international
+                          countryCallingCodeEditable={false}
+                          className="input-field"
                         />
                       ) : (
                         <Input {...formField} value={String(formField.value)} />
