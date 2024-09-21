@@ -16,7 +16,6 @@ import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { phoneValidation } from '@/lib/validator';
 
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
@@ -38,8 +37,6 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
         field.id,
         field.type === 'boolean'
           ? z.boolean()
-          : field.type === 'phone'
-          ? phoneValidation
           : z.string().min(1, { message: "This field is required" })
       ])
     )
@@ -123,6 +120,16 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                           value={String(formField.value)} // Convert value to string
                           onChange={formField.onChange}
                           inputClass="input-field"
+                          onlyCountries={["SG", "MY"]}
+                          isValid={(value, country) => {
+                            if (value.match(/12345/)) {
+                              return 'Invalid value: '+value+', '+country.name;
+                            } else if (value.match(/1234/)) {
+                              return false;
+                            } else {
+                              return true;
+                            }
+                          }}
                         />
                       ) : (
                         <Input {...formField} value={String(formField.value)} />
