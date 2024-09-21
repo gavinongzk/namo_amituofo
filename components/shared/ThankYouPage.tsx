@@ -22,6 +22,11 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
 
       <div className="wrapper my-8">
         <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center">
+            <h4 className="text-2xl font-bold text-blue-800">Your Queue Number 您的排队号码</h4>
+            <p className="text-4xl font-bold text-blue-600 mt-2">{order.queueNumber}</p>
+          </div>
+
           <h4 className="text-xl font-bold mb-4">Registration Details 注册详情</h4>
           <p><strong>Event 活动:</strong> {order.event.title}</p>
           <p><strong>Date 日期:</strong> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
@@ -36,9 +41,6 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
               </li>
             ))}
           </ul>
-          {order.event.registrationSuccessMessage && (
-            <p className="mt-4 text-lg">{order.event.registrationSuccessMessage}</p>
-          )}
         </div>
       </div>
     </div>
