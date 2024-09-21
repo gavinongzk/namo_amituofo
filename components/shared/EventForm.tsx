@@ -45,11 +45,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           label: field.label,
           value: field.value
         })) || [],
-        registrationSuccessMessage: event.registrationSuccessMessage || ""
+        registrationSuccessMessage: event.registrationSuccessMessage || "",
+        country: event.country || ""
       }
     : {
         ...eventDefaultValues,
-        registrationSuccessMessage: ""
+        registrationSuccessMessage: "",
+        country: ""
       };
   const router = useRouter();
 
@@ -296,6 +298,22 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           />
         </div>
 
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormControl>
+                <Input
+                  placeholder="Country"
+                  {...field}
+                  className="input-field"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex flex-col gap-5">
           <h3 className="text-lg font-medium">Custom Questions</h3>

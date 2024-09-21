@@ -42,7 +42,8 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       ...event, 
       category: event.categoryId, 
       organizer: userId,
-      customFields: event.customFields // Ensure customFields are saved
+      customFields: event.customFields,
+      country: event.country // Add this line
     });
     revalidatePath(path);
 
@@ -92,7 +93,8 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { 
         ...event, 
         category: event.categoryId,
-        customFields: event.customFields // Ensure customFields are updated
+        customFields: event.customFields,
+        country: event.country // Add this line
       },
       { new: true }
     );
@@ -117,17 +119,29 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS
-export async function getAllEvents({ query, limit = 6, page, category }: GetAllEventsParams) {
+export async function getAllEvents({
+  query,
+  category,
+  limit = 6,
+  page,
+  country
+}: GetAllEventsParams) {
   try {
-    await connectToDatabase();
+    await connectToDatabase()
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
-    const categoryCondition = category ? await getCategoryByName(category) : null;
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+    const categoryCondition = category ? await getCategoryByName(category) : null
+    const countryCondition = country ? { country: country } : {}
+
     const conditions = {
-      $and: [titleCondition, categoryCondition ? { category: categoryCondition._id } : {}],
-    };
+      $and: [
+        titleCondition,
+        categoryCondition ? { category: categoryCondition._id } : {},
+        countryCondition
+      ],
+    }
 
-    const skipAmount = (Number(page) - 1) * limit;
+    const skipAmount = (Number(page) - 1) * limit
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)

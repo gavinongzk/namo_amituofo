@@ -34,7 +34,8 @@ export const eventDefaultValues = {
     ≡ +65-8818 4848 ≡
     Nearby Aljunied Mrt (阿裕尼地铁站附近)
     Google Map：https://goo.gl/maps/9LsNw8fSLmqRD64X6
-  `
+  `,
+  country: '',
 }
 
 export const categoryCustomFields = {

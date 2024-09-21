@@ -25,6 +25,7 @@ export type CreateEventParams = {
     endDateTime: Date
     categoryId: string
     customFields: CustomField[]
+    country: string
   }
   path: string
 }
@@ -55,6 +56,7 @@ export type GetAllEventsParams = {
   category: string
   limit: number
   page: number
+  country: string
 }
 
 export type GetEventsByUserParams = {

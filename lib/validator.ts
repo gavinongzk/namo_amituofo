@@ -19,4 +19,5 @@ export const eventFormSchema = z.object({
   customFields: z.array(customFieldSchema).optional(),
   maxSeats: z.number().min(1, 'Maximum seats must be at least 1'),
   registrationSuccessMessage: z.string().optional(),
+  country: z.string().min(2, 'Country must be at least 2 characters'),
 })

@@ -22,6 +22,7 @@ export interface IEvent extends Document {
   maxSeats: number; // Add this line
   registrationSuccessMessage?: string;
   attendeeCount?: number;
+  country?: string;
 }
 
 const EventSchema = new Schema({
@@ -41,7 +42,8 @@ const EventSchema = new Schema({
     value: { type: String, required: false }
   }],
   maxSeats: { type: Number, required: true },
-  registrationSuccessMessage: { type: String}
+  registrationSuccessMessage: { type: String },
+  country: { type: String } // Add this line
 })
 
 const Event = models.Event || model('Event', EventSchema);
