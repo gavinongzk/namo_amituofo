@@ -8,17 +8,29 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs';
 
-async function getCountry(userId?: string | null) {
-  if (userId) {
-    const res = await fetch(`/api/geolocation`, {
-      headers: { 'X-User-Id': userId },
-    });
-    if (res.ok) return (await res.json()).country;
+async function getCountry(userId?: string | null): Promise<string> {
+  try {
+    if (userId) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/geolocation`, {
+        headers: { 'X-User-Id': userId },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.country || "";
+      }
+    }
+    
+    // Fallback to geojs for non-logged in users
+    const res = await fetch('https://get.geojs.io/v1/ip/country.json');
+    if (res.ok) {
+      const data = await res.json();
+      return data.country || "";
+    }
+  } catch (error) {
+    console.error('Error fetching country:', error);
   }
   
-  // Fallback to geojs for non-logged in users
-  const res = await fetch('https://get.geojs.io/v1/ip/country.json');
-  return res.ok ? (await res.json()).country : null;
+  return "";
 }
 
 export default async function Home({ searchParams }: SearchParamProps) {
