@@ -19,8 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Input } from "../ui/input"
-import { createCategory, getAllCategories } from "@/lib/actions/category.actions"
-import { deleteCategory } from '@/lib/actions/category.actions';
+import { createCategory, getAllCategories, deleteCategory, categoryHasEvents } from "@/lib/actions/category.actions"
 import { Button } from "@/components/ui/button"
 
 type DropdownProps = {
@@ -52,14 +51,20 @@ const Dropdown = ({ value, onChangeHandler }: DropdownProps) => {
   }, [])
 
   const handleDeleteCategory = async (categoryId: string) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      try {
-        await deleteCategory(categoryId);
-        // Remove the deleted category from the local state
-        setCategories(prevCategories => prevCategories.filter(cat => cat._id !== categoryId));
-      } catch (error) {
-        console.error('Failed to delete category:', error);
+    try {
+      const hasEvents = await categoryHasEvents(categoryId);
+      if (hasEvents) {
+        alert('Cannot delete category with existing events.');
+        return;
       }
+
+      if (window.confirm('Are you sure you want to delete this category?')) {
+        await deleteCategory(categoryId);
+        setCategories(prevCategories => prevCategories.filter(cat => cat._id !== categoryId));
+      }
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+      alert('Failed to delete category. Please try again.');
     }
   };
 

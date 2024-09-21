@@ -4,6 +4,7 @@ import { CreateCategoryParams } from "@/types"
 import { handleError } from "../utils"
 import { connectToDatabase } from "../database"
 import Category from "../database/models/category.model"
+import Event from "../database/models/event.model"
 
 export const createCategory = async ({ categoryName }: CreateCategoryParams) => {
   try {
@@ -42,5 +43,16 @@ export const deleteCategory = async (categoryId: string) => {
     return JSON.parse(JSON.stringify(deletedCategory));
   } catch (error) {
     handleError(error)
+  }
+}
+
+export const categoryHasEvents = async (categoryId: string): Promise<boolean> => {
+  try {
+    await connectToDatabase();
+    const events = await Event.find({ category: categoryId });
+    return events.length > 0;
+  } catch (error) {
+    console.error('Error checking if category has events:', error);
+    throw error;
   }
 }
