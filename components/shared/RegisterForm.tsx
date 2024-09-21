@@ -16,6 +16,7 @@ import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { CountryData } from 'react-phone-input-2';
 
 const RegisterForm = ({ event }: { event: IEvent }) => {
   const router = useRouter();
@@ -123,7 +124,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                           onlyCountries={["SG", "MY"]}
                           isValid={(value, country) => {
                             if (value.match(/12345/)) {
-                              return 'Invalid value: '+value+', '+country.name;
+                              return `Invalid value: ${value}, ${(country as CountryData).name}`;
                             } else if (value.match(/1234/)) {
                               return false;
                             } else {

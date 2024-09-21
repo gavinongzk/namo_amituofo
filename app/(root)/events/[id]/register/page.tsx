@@ -1,6 +1,7 @@
 // app/(root)/events/[id]/register/page.tsx
 import RegisterForm from '@/components/shared/RegisterForm'
 import { getEventById } from '@/lib/actions/event.actions'
+import Image from 'next/image'
 
 const RegisterPage = async ({ params: { id } }: { params: { id: string } }) => {
   const event = await getEventById(id)
@@ -12,7 +13,20 @@ const RegisterPage = async ({ params: { id } }: { params: { id: string } }) => {
       </section>
 
       <div className="wrapper my-8">
-        <RegisterForm event={event} />
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex-1">
+            <Image
+              src={event.imageUrl}
+              alt={event.title}
+              width={500}
+              height={500}
+              className="w-full object-cover rounded-lg"
+            />
+          </div>
+          <div className="flex-1">
+            <RegisterForm event={event} />
+          </div>
+        </div>
       </div>
     </>
   )
