@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "../ui/button"
 import NavWrapper from "./NavWrapper"; // Import the updated NavWrapper
 import MobileNav from "./MobileNav"
+import CountrySelector from './CountrySelector'
 
 const Header = () => {
   return (
@@ -23,6 +24,7 @@ const Header = () => {
         </SignedIn>
 
         <div className="flex w-32 justify-end gap-3">
+          <CountrySelector />
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
             <MobileNav />

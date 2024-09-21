@@ -6,40 +6,15 @@ import { getAllEvents } from '@/lib/actions/event.actions';
 import { SearchParamProps } from '@/types';
 import Image from 'next/image'
 import Link from 'next/link'
-import { auth } from '@clerk/nextjs';
-
-async function getCountry(userId?: string | null): Promise<string> {
-  try {
-    if (userId) {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/geolocation`, {
-        headers: { 'X-User-Id': userId },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.name || "";
-      }
-    }
-    
-    // Fallback to geojs for non-logged in users
-    const res = await fetch('https://get.geojs.io/v1/ip/country.json');
-    if (res.ok) {
-      const data = await res.json();
-      return data.name || "";
-    }
-  } catch (error) {
-    console.error('Error fetching country:', error);
-  }
-  
-  return "";
-}
+import { auth, currentUser } from '@clerk/nextjs';
 
 export default async function Home({ searchParams }: SearchParamProps) {
-  const { userId } = auth();
+  const user = await currentUser();
   const page = Number(searchParams?.page) || 1;
   const searchText = (searchParams?.query as string) || '';
   const category = (searchParams?.category as string) || '';
   
-  const country = await getCountry(userId);
+  const country = user?.publicMetadata.country as string || '';
 
   const events = await getAllEvents({
     query: searchText,
@@ -51,6 +26,28 @@ export default async function Home({ searchParams }: SearchParamProps) {
 
   return (
     <>
+      <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
+        <div className="wrapper grid grid-cols-1 gap-5 md:grid-cols-2 2xl:gap-0">
+          <div className="flex flex-col justify-center gap-8">
+            <h1 className="h1-bold">Host, Connect, Celebrate: Your Events, Our Platform!</h1>
+            <p className="p-regular-20 md:p-regular-24">Book and learn helpful tips from 3,168+ mentors in world-class companies with our global community.</p>
+            <Button size="lg" asChild className="button w-full sm:w-fit">
+              <Link href="#events">
+                Explore Now
+              </Link>
+            </Button>
+          </div>
+
+          <Image 
+            src="/assets/images/hero.png"
+            alt="hero"
+            width={1000}
+            height={1000}
+            className="max-h-[70vh] object-contain object-center 2xl:max-h-[50vh]"
+          />
+        </div>
+      </section>
+      
       <section id="events" className="wrapper my-8 flex flex-col gap-8 md:gap-12">
         <h2 className="h2-bold">最新活动 {country ? `in ${country}` : ''}</h2>
 

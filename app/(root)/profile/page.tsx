@@ -8,7 +8,6 @@ import { SearchParamProps } from '@/types'
 import { currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React from 'react'
-import LocationUpdateForm from '@/components/shared/LocationUpdateForm'
 
 const ProfilePage = async ({ searchParams }: SearchParamProps) => {
   const user = await currentUser();
@@ -79,15 +78,6 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
           urlParamName="eventsPage"
           totalPages={organizedEventsData.totalPages}
         />
-      </section>
-
-      <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-        <div className="wrapper flex items-center justify-center sm:justify-between">
-          <h3 className='h3-bold text-center sm:text-left'>Custom Location</h3>
-        </div>
-        <div className="wrapper flex items-center justify-center mt-4">
-          <LocationUpdateForm userId={userId} />
-        </div>
       </section>
     </>
   )

@@ -10,6 +10,8 @@ import { handleError } from '@/lib/utils'
 
 import { CreateUserParams, UpdateUserParams } from '@/types'
 
+import { clerkClient } from "@clerk/nextjs";
+
 export async function createUser(user: CreateUserParams) {
   try {
     await connectToDatabase()
@@ -163,22 +165,13 @@ export async function getUserForAdmin(userId: string) {
 
 export async function updateUserCountry(userId: string, country: string) {
   try {
-    await connectToDatabase();
+    await clerkClient.users.updateUser(userId, {
+      publicMetadata: { country },
+    });
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { country },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      throw new Error('User not found');
-    }
-
-    revalidatePath('/profile');
-
-    return JSON.parse(JSON.stringify(updatedUser));
+    return { success: true };
   } catch (error) {
-    handleError(error);
+    console.error('Error updating user country:', error);
+    return { success: false, error: 'Failed to update country' };
   }
 }
