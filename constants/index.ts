@@ -36,3 +36,15 @@ export const eventDefaultValues = {
     Google Map：https://goo.gl/maps/9LsNw8fSLmqRD64X6
   `
 }
+
+export const categoryCustomFields = {
+  '念佛共修': [
+    { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+    { id: '2', label: '联系号码 Contact number', type: 'phone' },
+    { id: '3', label: '请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?', type: 'boolean' },
+  ],
+  '外出结缘法会': [
+    { id: '1', label: '义工名字 Volunteer\'s Name', type: 'text' },
+  ],
+  // Add more categories as needed
+};
