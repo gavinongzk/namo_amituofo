@@ -31,13 +31,11 @@ export function FileUploader({ imageUrl, onFieldChange, setFiles }: FileUploader
       <input {...getInputProps()} className="cursor-pointer" />
 
       {imageUrl ? (
-        <div className="flex h-full w-full flex-1 justify-center ">
+        <div className="flex h-full w-full flex-1 justify-center items-center">
           <img
             src={imageUrl}
             alt="image"
-            width={250}
-            height={250}
-            className="w-full object-cover object-center"
+            className="max-h-full max-w-full object-contain"
           />
         </div>
       ) : (
