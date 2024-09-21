@@ -19,7 +19,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Input } from "../ui/input"
-import { createCategory, getAllCategories } from "@/lib/actions/category.actions"
+import { createCategory, getAllCategories, deleteCategory, categoryHasEvents } from "@/lib/actions/category.actions"
+import { Button } from "@/components/ui/button"
 
 type DropdownProps = {
   value?: string
@@ -49,6 +50,24 @@ const Dropdown = ({ value, onChangeHandler }: DropdownProps) => {
     getCategories();
   }, [])
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const hasEvents = await categoryHasEvents(categoryId);
+      if (hasEvents) {
+        alert('Cannot delete category with existing events.');
+        return;
+      }
+
+      if (window.confirm('Are you sure you want to delete this category?')) {
+        await deleteCategory(categoryId);
+        setCategories(prevCategories => prevCategories.filter(cat => cat._id !== categoryId));
+      }
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+      alert('Failed to delete category. Please try again.');
+    }
+  };
+
   return (
     <Select onValueChange={onChangeHandler} defaultValue={value}>
       <SelectTrigger className="select-field">
@@ -56,11 +75,23 @@ const Dropdown = ({ value, onChangeHandler }: DropdownProps) => {
       </SelectTrigger>
       <SelectContent>
         {categories.length > 0 && categories.map((category) => (
-          <SelectItem key={category._id} value={category._id} className="select-item p-regular-14">
-            {category.name}
-          </SelectItem>
+          <div key={category._id} className="flex justify-between items-center">
+            <SelectItem value={category._id} className="select-item p-regular-14">
+              {category.name}
+            </SelectItem>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteCategory(category._id);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
         ))}
-
+  
         <AlertDialog>
           <AlertDialogTrigger className="p-medium-14 flex w-full rounded-sm py-3 pl-8 text-primary-500 hover:bg-primary-50 focus:text-primary-500">Add new category</AlertDialogTrigger>
           <AlertDialogContent className="bg-white">
