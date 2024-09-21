@@ -117,7 +117,6 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                         />
                       ) : field.type === 'phone' ? (
                         <PhoneInput
-                          country={'sg'}
                           value={String(formField.value)} // Convert value to string
                           onChange={formField.onChange}
                           inputClass="input-field"

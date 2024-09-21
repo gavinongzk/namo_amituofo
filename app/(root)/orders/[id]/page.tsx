@@ -25,7 +25,6 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
           <h4 className="text-xl font-bold mb-4">Registration Details</h4>
           <p><strong>Event:</strong> {order.event.title}</p>
           <p><strong>Date:</strong> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
-          <p><strong>Buyer:</strong> {order.buyer.firstName} {order.buyer.lastName}</p>
           <h5 className="text-lg font-bold mt-4">Custom Fields</h5>
           <ul>
             {order.customFieldValues.map((field: CustomFieldValue) => (
