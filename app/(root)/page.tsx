@@ -10,7 +10,7 @@ import { auth } from '@clerk/nextjs';
 
 async function getCountry(userId?: string | null) {
   if (userId) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/geolocation`, {
+    const res = await fetch(`/api/geolocation`, {
       headers: { 'X-User-Id': userId },
     });
     if (res.ok) return (await res.json()).country;
