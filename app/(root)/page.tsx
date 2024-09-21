@@ -6,20 +6,28 @@ import { getAllEvents } from '@/lib/actions/event.actions';
 import { SearchParamProps } from '@/types';
 import Image from 'next/image'
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs';
 
-async function getCountry() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/geolocation`);
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.country;
+async function getCountry(userId?: string | null) {
+  if (userId) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/geolocation`, {
+      headers: { 'X-User-Id': userId },
+    });
+    if (res.ok) return (await res.json()).country;
+  }
+  
+  // Fallback to geojs for non-logged in users
+  const res = await fetch('https://get.geojs.io/v1/ip/country.json');
+  return res.ok ? (await res.json()).country : null;
 }
 
 export default async function Home({ searchParams }: SearchParamProps) {
+  const { userId } = auth();
   const page = Number(searchParams?.page) || 1;
   const searchText = (searchParams?.query as string) || '';
   const category = (searchParams?.category as string) || '';
   
-  const country = await getCountry();
+  const country = await getCountry(userId);
 
   const events = await getAllEvents({
     query: searchText,
