@@ -18,12 +18,15 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
     <>
     <section className="flex justify-center bg-primary-50 bg-dotted-pattern bg-contain">
       <div className="grid grid-cols-1 md:grid-cols-2 2xl:max-w-7xl w-full">
-        <div className="relative w-full h-[400px] md:h-full">
+        <div className="relative w-full h-auto aspect-square md:aspect-auto md:h-[400px]">
           <Image 
             src={event.imageUrl}
             alt={event.title}
-            fill
-            className="object-cover rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none"
+            layout="responsive"
+            width={400}
+            height={400}
+            objectFit="contain"
+            className="rounded-t-xl md:rounded-l-xl md:rounded-t-none"
           />
         </div>
         <div className="flex w-full flex-col gap-8 p-5 md:p-10">
@@ -32,7 +35,7 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex gap-3">
-                <p className="p-medium-16 rounded-full bg-grey-500/10 px-4 py-2.5 text-grey-500">
+                <p className="p-medium-16 rounded-full bg-green-500/10 px-4 py-2.5 text-green-700">
                   {event.category.name}
                 </p>
               </div>
