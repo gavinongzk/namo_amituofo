@@ -16,7 +16,7 @@ async function getCountry(userId?: string | null): Promise<string> {
       });
       if (res.ok) {
         const data = await res.json();
-        return data.country || "";
+        return data.name || "";
       }
     }
     
@@ -24,7 +24,7 @@ async function getCountry(userId?: string | null): Promise<string> {
     const res = await fetch('https://get.geojs.io/v1/ip/country.json');
     if (res.ok) {
       const data = await res.json();
-      return data.country || "";
+      return data.name || "";
     }
   } catch (error) {
     console.error('Error fetching country:', error);
