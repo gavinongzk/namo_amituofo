@@ -121,7 +121,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
                           value={String(formField.value)} // Convert value to string
                           onChange={formField.onChange}
                           inputClass="input-field"
-                          onlyCountries={["SG", "MY"]}
+                          onlyCountries={["sg", "my"]}
                           isValid={(value, country) => {
                             if (value.match(/12345/)) {
                               return `Invalid value: ${value}, ${(country as CountryData).name}`;
