@@ -18,12 +18,15 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
     <>
     <section className="flex justify-center bg-primary-50 bg-dotted-pattern bg-contain">
       <div className="grid grid-cols-1 md:grid-cols-2 2xl:max-w-7xl w-full">
-        <div className="relative w-full h-[300px] md:h-[400px]">
+        <div className="relative w-full h-auto aspect-square md:aspect-auto md:h-[400px]">
           <Image 
             src={event.imageUrl}
             alt={event.title}
-            fill
-            className="object-cover object-center md:object-left"
+            layout="responsive"
+            width={400}
+            height={400}
+            objectFit="contain"
+            className="rounded-t-xl md:rounded-l-xl md:rounded-t-none"
           />
         </div>
         <div className="flex w-full flex-col gap-8 p-5 md:p-10">
