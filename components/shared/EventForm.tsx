@@ -46,12 +46,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           value: field.value
         })) || [],
         registrationSuccessMessage: event.registrationSuccessMessage || "",
-        country: event.country || ""
+        country: event.country as "Singapore" | "Malaysia" | undefined
       }
     : {
         ...eventDefaultValues,
         registrationSuccessMessage: "",
-        country: ""
+        country: undefined as "Singapore" | "Malaysia" | undefined
       };
   const router = useRouter();
 
@@ -83,7 +83,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     if(type === 'Create') {
       try {
         const newEvent = await createEvent({
-          event: { ...values, imageUrl: uploadedImageUrl, customFields: values.customFields ?? [] },
+          event: { 
+            ...values, 
+            imageUrl: uploadedImageUrl, 
+            customFields: values.customFields ?? [],
+            country: values.country || '' // Ensure country is always a string
+          },
           userId,
           path: '/profile'
         })
@@ -112,7 +117,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             ...values, 
             imageUrl: uploadedImageUrl, 
             _id: eventId,
-            customFields: values.customFields ?? []
+            customFields: values.customFields ?? [],
+            country: values.country || '' // Ensure country is always a string
           },
           path: `/events/${eventId}`
         })
@@ -190,27 +196,53 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                      <Image
-                        src="/assets/icons/location-grey.svg"
-                        alt="calendar"
-                        width={24}
-                        height={24}
-                      />
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/location-grey.svg"
+                      alt="location"
+                      width={24}
+                      height={24}
+                    />
+                    <Input placeholder="Event location or Online" {...field} className="input-field" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <Input placeholder="Event location or Online" {...field} className="input-field" />
-                    </div>
-
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/location-grey.svg"
+                      alt="country"
+                      width={24}
+                      height={24}
+                    />
+                    <select
+                      {...field}
+                      className="input-field"
+                    >
+                      <option value="">Select a country</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="Malaysia">Malaysia</option>
+                    </select>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row">
@@ -304,11 +336,14 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           render={({ field }) => (
             <FormItem className="w-full">
               <FormControl>
-                <Input
-                  placeholder="Country"
+                <select
                   {...field}
                   className="input-field"
-                />
+                >
+                  <option value="">Select a country</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Malaysia">Malaysia</option>
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>
