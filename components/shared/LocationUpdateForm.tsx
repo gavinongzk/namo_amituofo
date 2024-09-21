@@ -1,47 +1,46 @@
 'use client'
 
-import { useState } from 'react'
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { updateUserCountry } from '@/lib/actions/user.actions'
+import { getUserById } from '@/lib/actions/user.actions'
 
 const LocationUpdateForm = ({ userId }: { userId: string }) => {
-  const [customLocation, setCustomLocation] = useState('');
-  const [message, setMessage] = useState('');
+  const [country, setCountry] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleLocationUpdate = async () => {
-    try {
-      const response = await fetch('/api/users/update-location', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, customLocation }),
-      });
-
-      if (response.ok) {
-        setMessage('Location updated successfully');
-      } else {
-        setMessage('Failed to update location');
-      }
-    } catch (error) {
-      console.error('Error updating location:', error);
-      setMessage('Error updating location');
+  useEffect(() => {
+    const fetchUserCountry = async () => {
+      const user = await getUserById(userId)
+      setCountry(user?.country || '')
     }
-  };
+    fetchUserCountry()
+  }, [userId])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    await updateUserCountry(userId, country)
+    setIsLoading(false)
+  }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Input
-        type="text"
-        placeholder="Enter custom location"
-        value={customLocation}
-        onChange={(e) => setCustomLocation(e.target.value)}
-        className="w-full max-w-xs"
-      />
-      <Button onClick={handleLocationUpdate} className="w-fit">
-        Update Location
+    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
+      <select
+        value={country}
+        onChange={(e) => setCountry(e.target.value)}
+        className="select select-bordered w-full max-w-xs"
+      >
+        <option value="">Select a country</option>
+        <option value="Singapore">Singapore</option>
+        <option value="Malaysia">Malaysia</option>
+        {/* Add more countries as needed */}
+      </select>
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? 'Updating...' : 'Update Country'}
       </Button>
-      {message && <p className="text-sm text-gray-600">{message}</p>}
-    </div>
-  );
-};
+    </form>
+  )
+}
 
-export default LocationUpdateForm;
+export default LocationUpdateForm
