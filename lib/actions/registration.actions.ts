@@ -16,12 +16,16 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
       event: {
         _id: order.event._id.toString(),
         title: order.event.title,
-        imageUrl: order.event.imageUrl, // Add this line
-        organizer: order.event.organizer, // Add this line
+        imageUrl: order.event.imageUrl,
+        organizer: order.event.organizer,
+        orderId: order._id?.toString(), // Use optional chaining
+        customFieldValues: order.customFieldValues ?? [], // Use optional chaining
+        queueNumber: order.queueNumber ?? '', // Use optional chaining
+        attendeeCount: order.attendeeCount ?? 0, // Use optional chaining
       },
       registrations: [{
-        queueNumber: order.queueNumber,
-        name: order.customFieldValues.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+        queueNumber: order.queueNumber ?? '', // Use optional chaining
+        name: order.customFieldValues?.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
       }]
     }));
 
