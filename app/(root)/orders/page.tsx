@@ -25,6 +25,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
               <th className="min-w-[200px] py-3 text-left">Event Title</th>
+              <th className="min-w-[150px] py-3 text-left">Name</th>
               <th className="min-w-[150px] py-3 text-left">Queue Number</th>
               <th className="min-w-[150px] py-3 text-left">Attendance</th>
               <th className="min-w-[150px] py-3 text-left">Registration Date</th>
