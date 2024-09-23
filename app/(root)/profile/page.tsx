@@ -45,7 +45,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
           </div>
         </section>
 
-        {/* <section className="wrapper my-8">
+        <section className="wrapper my-8">
           <RegistrationCollection 
             data={registrations}
             emptyTitle="No registrations yet"
@@ -56,7 +56,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
             urlParamName="registrationsPage"
             totalPages={Math.ceil(registrations.length / 3)}
           />
-        </section> */}
+        </section>
 
         {/* Events Organized */}
         <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
