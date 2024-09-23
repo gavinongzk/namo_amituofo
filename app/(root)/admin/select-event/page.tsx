@@ -10,6 +10,7 @@ type Event = {
   _id: string;
   title: string;
   startDateTime: string;
+  endDateTime: string; // Add this line
   category: {
     name: string;
   };
@@ -39,7 +40,9 @@ const SelectEventPage = () => {
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
-          setEvents(result.data);
+          const currentDate = new Date();
+          const upcomingEvents = result.data.filter((event: Event) => new Date(event.endDateTime) >= currentDate); // Filter out past events
+          setEvents(upcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
           setEvents([]);

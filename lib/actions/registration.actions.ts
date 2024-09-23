@@ -8,10 +8,11 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
   try {
     await connectToDatabase();
 
+    const currentDate = new Date();
     const orders = await Order.find({ buyer: userId })
       .populate({
         path: 'event',
-        select: '_id title imageUrl organizer attendeeCount', // Specify the fields to populate
+        select: '_id title imageUrl organizer attendeeCount endDateTime', // Include endDateTime
         populate: {
           path: 'organizer',
           select: '_id', // Populate the organizer field if it's a reference
@@ -23,30 +24,32 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
 
     orders.forEach(order => {
       const eventId = order.event._id.toString();
-      if (!eventMap[eventId]) {
-        eventMap[eventId] = {
-          event: {
-            _id: eventId,
-            title: order.event.title,
-            imageUrl: order.event.imageUrl,
-            organizer: order.event.organizer,
-            orderId: order._id?.toString(), // Use optional chaining
-            customFieldValues: order.customFieldValues ?? [], // Use optional chaining
-            queueNumber: order.queueNumber ?? '', // Use optional chaining
-            attendeeCount: order.attendeeCount ?? 0, // Use optional chaining
-          },
-          registrations: [],
-        };
+      if (new Date(order.event.endDateTime) >= currentDate) { // Filter out past events
+        if (!eventMap[eventId]) {
+          eventMap[eventId] = {
+            event: {
+              _id: eventId,
+              title: order.event.title,
+              imageUrl: order.event.imageUrl,
+              organizer: order.event.organizer,
+              orderId: order._id?.toString(), // Use optional chaining
+              customFieldValues: order.customFieldValues ?? [], // Use optional chaining
+              queueNumber: order.queueNumber ?? '', // Use optional chaining
+              attendeeCount: order.attendeeCount ?? 0, // Use optional chaining
+            },
+            registrations: [],
+          };
+        }
+        eventMap[eventId].registrations.push({
+          queueNumber: order.queueNumber ?? '', // Use optional chaining
+          name: order.customFieldValues?.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+        });
       }
-      eventMap[eventId].registrations.push({
-        queueNumber: order.queueNumber ?? '', // Use optional chaining
-        name: order.customFieldValues?.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-      });
     });
 
     return Object.values(eventMap);
   } catch (error) {
-    console.error('Error in getRegistrationsByUser:', error);
-    throw new Error('Failed to fetch registrations');
+    console.error('Error fetching registrations:', error);
+    throw new Error('Error fetching registrations');
   }
 };

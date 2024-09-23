@@ -31,6 +31,9 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
     const organizedEventsData = await getEventsByUser({ userId, page: eventsPage }) || { data: [], totalPages: 0 };
     console.log('Fetched organized events:', organizedEventsData);
 
+    const currentDate = new Date();
+    const upcomingEvents = organizedEventsData.data.filter(event => new Date(event.endDateTime) >= currentDate); // Filter out past events
+
     return (
       <>
         {/* My Registrations */}
@@ -72,7 +75,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
 
         <section className="wrapper my-8">
           <Collection 
-            data={organizedEventsData.data}
+            data={upcomingEvents}
             emptyTitle="No events have been created yet"
             emptyStateSubtext="Go create some now"
             collectionType="Events_Organized"

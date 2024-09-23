@@ -18,17 +18,21 @@ const RegistrationCollection = ({
   data,
   emptyTitle,
   emptyStateSubtext,
+  limit = 3,
   page,
   totalPages = 0,
   collectionType,
   urlParamName,
 }: CollectionProps) => {
+  const offset = (Number(page) - 1) * Number(limit);
+  const paginatedData = data.slice(offset, offset + Number(limit));
+
   return (
     <>
-      {data.length > 0 ? (
+      {paginatedData.length > 0 ? (
         <div className="flex flex-col items-center gap-10">
           <ul className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
-            {data.map((item) => {
+            {paginatedData.map((item) => {
               if (collectionType === 'My_Registrations' && item.event && item.event._id) {
                 return (
                   <li key={item.event._id} className="flex justify-center">
