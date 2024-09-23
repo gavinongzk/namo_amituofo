@@ -19,7 +19,7 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
       if (!registrationsMap[eventId]) {
         registrationsMap[eventId] = {
           eventId,
-          eventTitle: order.event.title,
+          event: order.event, // Use the existing event property
           registrations: []
         };
       }

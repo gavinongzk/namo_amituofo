@@ -32,7 +32,7 @@ const RegistrationCard: React.FC<CardProps> = ({ registration, event, isMyTicket
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
       <div className="flex flex-col gap-3 p-5 md:gap-4">
-        <h3 className="text-xl font-bold text-gray-800">{registration.eventTitle}</h3>
+        <h3 className="text-xl font-bold text-gray-800">{registration.event.title}</h3>
         <ul className="mt-4 space-y-2">
           {registration.registrations.map((reg, index) => (
             <li key={index} className="flex justify-between py-1 text-gray-600">
