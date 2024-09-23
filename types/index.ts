@@ -141,3 +141,12 @@ export type CustomField = {
   type: "text" | "boolean" | "phone";
   value?: string | boolean;
 };
+
+export interface IRegistration {
+  eventId: string;
+  eventTitle: string;
+  registrations: {
+    queueNumber: string;
+    name: string;
+  }[];
+}

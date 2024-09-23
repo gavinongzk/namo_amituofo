@@ -1,36 +1,31 @@
 import Collection from '@/components/shared/Collection'
+import RegistrationCollection from '@/components/shared/RegistrationCollection'
+
 import { Button } from '@/components/ui/button'
+import { getRegistrationsByUser } from '@/lib/actions/registration.actions'
 import { getEventsByUser } from '@/lib/actions/event.actions'
-import { getOrdersByUser } from '@/lib/actions/order.actions'
-import { IOrder } from '@/lib/database/models/order.model'
-import { IEvent } from '@/lib/database/models/event.model'
-import { SearchParamProps } from '@/types'
+import { IRegistration } from '@/types'
 import { auth, currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React from 'react'
 
-const ProfilePage = async ({ searchParams }: SearchParamProps) => {
+
+const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
   const user = await currentUser();
   const userId = user?.publicMetadata.userId as string;
 
-  const ordersPage = Number(searchParams?.ordersPage) || 1;
+  const registrationsPage = Number(searchParams?.registrationsPage) || 1;
   const eventsPage = Number(searchParams?.eventsPage) || 1;
 
-  const orders = await getOrdersByUser({ userId, page: ordersPage });
+  // Fetch aggregated registrations
+  const registrations: IRegistration[] = await getRegistrationsByUser(userId);
 
-  // Filter out null values from orderedEvents
-  const orderedEvents = orders?.data
-    .filter((order: IOrder) => order && order.event) // Ensure order and order.event are defined
-    .map((order: IOrder) => ({
-      ...order.event,
-      orderId: order._id, // Add orderId to the event object
-      queueNumber: order.queueNumber,
-    })) || [];
-  const organizedEventsData = await getEventsByUser({ userId, limit: 3, page: eventsPage }) || { data: [], totalPages: 0 };
+  // Fetch organized events
+  const organizedEventsData = await getEventsByUser({ userId, page: eventsPage }) || { data: [], totalPages: 0 };
 
   return (
     <>
-      {/* My Tickets */}
+      {/* My Registrations */}
       <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
         <div className="wrapper flex items-center justify-center sm:justify-between">
           <h3 className='h3-bold text-center sm:text-left'>My Registrations 排队号码</h3>
@@ -43,15 +38,15 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
       </section>
 
       <section className="wrapper my-8">
-        <Collection 
-          data={orderedEvents}
-          emptyTitle="No event tickets purchased yet"
+        <RegistrationCollection 
+          data={registrations}
+          emptyTitle="No registrations yet"
           emptyStateSubtext="No worries - plenty of exciting events to explore!"
-          collectionType="My_Tickets"
+          collectionType="My_Registrations"
           limit={3}
-          page={ordersPage}
-          urlParamName="ordersPage"
-          totalPages={orders?.totalPages}
+          page={registrationsPage}
+          urlParamName="registrationsPage"
+          totalPages={Math.ceil(registrations.length / 3)}
         />
       </section>
 
