@@ -12,25 +12,20 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
       .populate('event', 'title')
       .exec();
 
-    const registrationsMap: { [eventId: string]: IRegistration } = {};
-
-    orders.forEach(order => {
-      const eventId = order.event._id.toString();
-      if (!registrationsMap[eventId]) {
-        registrationsMap[eventId] = {
-          event: order.event, // Use the existing event property
-          registrations: []
-        };
-      }
-      const nameField = order.customFieldValues.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'));
-      const name = nameField ? nameField.value : 'Unknown';
-      registrationsMap[eventId].registrations.push({
+    const registrations: IRegistration[] = orders.map(order => ({
+      event: {
+        _id: order.event._id.toString(),
+        title: order.event.title,
+        imageUrl: order.event.imageUrl, // Add this line
+        organizer: order.event.organizer, // Add this line
+      },
+      registrations: [{
         queueNumber: order.queueNumber,
-        name
-      });
-    });
+        name: order.customFieldValues.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+      }]
+    }));
 
-    return Object.values(registrationsMap);
+    return registrations;
   } catch (error) {
     console.error('Error in getRegistrationsByUser:', error);
     throw new Error('Failed to fetch registrations');
