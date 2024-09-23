@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
     // Fetch all orders for the authenticated user
     const orders = await Order.find({ buyer: userId })
       .populate('event', 'title')
-      .populate('buyer', 'firstName lastName')
       .exec();
 
     // Aggregate orders by event
@@ -35,9 +34,11 @@ export async function GET(req: NextRequest) {
           registrations: []
         };
       }
+      const nameField = order.customFieldValues.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'));
+      const name = nameField ? nameField.value : 'Unknown';
       registrationsMap[eventId].registrations.push({
         queueNumber: order.queueNumber,
-        name: `${order.buyer.firstName} ${order.buyer.lastName}`
+        name
       });
     });
 
