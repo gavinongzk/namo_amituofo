@@ -9,7 +9,14 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
     await connectToDatabase();
 
     const orders = await Order.find({ buyer: userId })
-      .populate('event', 'title')
+      .populate({
+        path: 'event',
+        select: '_id title imageUrl organizer attendeeCount', // Specify the fields to populate
+        populate: {
+          path: 'organizer',
+          select: '_id', // Populate the organizer field if it's a reference
+        },
+      })
       .exec();
 
     const registrations: IRegistration[] = orders.map(order => ({
