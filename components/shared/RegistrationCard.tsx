@@ -42,7 +42,7 @@ const RegistrationCard: React.FC<CardProps> = ({ registration, event, isMyTicket
           ))}
         </ul>
         <Button asChild size="sm" className="mt-4 self-start">
-          <Link href={`/events/${registration.eventId}`}>View Event</Link>
+          <Link href={`/events/${registration.event._id}`}>View Event</Link>
         </Button>
       </div>
     </div>

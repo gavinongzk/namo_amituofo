@@ -143,7 +143,6 @@ export type CustomField = {
 };
 
 export interface IRegistration {
-  eventId: string;
   event: {
     _id: string;
     title: string;

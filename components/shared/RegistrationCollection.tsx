@@ -31,7 +31,7 @@ const RegistrationCollection = ({
             {data.map((item) => {
               if (collectionType === 'My_Registrations' && item.event && item.event._id) {
                 return (
-                  <li key={item.eventId} className="flex justify-center">
+                  <li key={item.event._id} className="flex justify-center">
                     <RegistrationCard registration={item} event={item.event} />
                   </li>
                 );
