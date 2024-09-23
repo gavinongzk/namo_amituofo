@@ -49,3 +49,5 @@ export const categoryCustomFields = {
   ],
   // Add more categories as needed
 };
+
+export type CategoryName = keyof typeof categoryCustomFields;

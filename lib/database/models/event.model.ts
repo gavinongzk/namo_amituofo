@@ -19,7 +19,7 @@ export interface IEvent extends Document {
   category: { _id: string, name: string }
   organizer: { _id: string }
   customFields?: CustomField[];
-  maxSeats: number; // Add this line
+  maxSeats: number;
   registrationSuccessMessage?: string;
   attendeeCount?: number;
 }
@@ -34,7 +34,7 @@ const EventSchema = new Schema({
   endDateTime: { type: Date, default: Date.now },
   category: { type: Schema.Types.ObjectId, ref: 'Category' },
   organizer: { type: Schema.Types.ObjectId, ref: 'User' },
-  customFields: [{ // Add this field
+  customFields: [{
     id: { type: String, required: true },
     label: { type: String, required: true },
     type: { type: String, required: true },
