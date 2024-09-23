@@ -25,6 +25,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
               <th className="min-w-[200px] py-3 text-left">Event Title</th>
+              <th className="min-w-[150px] py-3 text-left">Name</th>
               <th className="min-w-[150px] py-3 text-left">Queue Number</th>
               <th className="min-w-[150px] py-3 text-left">Attendance</th>
               <th className="min-w-[150px] py-3 text-left">Registration Date</th>
@@ -46,6 +47,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                       className="p-regular-14 lg:p-regular-16 border-b"
                       style={{ boxSizing: 'border-box' }}>
                       <td className="min-w-[200px] py-4">{order.eventTitle}</td>
+                      <td className="min-w-[150px] py-4">
+                        {order.customFieldValues.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                      </td>
                       <td className="min-w-[150px] py-4">{order.queueNumber}</td>
                       <td className="min-w-[150px] py-4">{order.attendance ? 'Yes' : 'No'}</td>
                       <td className="min-w-[150px] py-4">{formatDateTime(order.createdAt).dateTime}</td>

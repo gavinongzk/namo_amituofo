@@ -17,7 +17,10 @@ export default async function Home({ searchParams }: SearchParamProps) {
     category,
     page,
     limit: 6
-  })
+  });
+
+  const currentDate = new Date();
+  const upcomingEvents = events.data.filter(event => new Date(event.endDateTime) >= currentDate); // Filter out past events
 
   return (
     <>
@@ -30,13 +33,13 @@ export default async function Home({ searchParams }: SearchParamProps) {
         </div>
 
         <Collection 
-          data={events?.data}
+          data={upcomingEvents}
           emptyTitle="No Events Found"
           emptyStateSubtext="Come back later"
           collectionType="All_Events"
           limit={6}
           page={page}
-          totalPages={events?.totalPages}
+          totalPages={events.totalPages}
         />
       </section>
     </>

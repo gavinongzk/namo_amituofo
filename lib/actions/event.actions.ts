@@ -26,7 +26,7 @@ const getCategoryByName = async (name: string) => {
 
 const populateEvent = (query: any) => {
   return query
-    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .populate({ path: 'organizer', model: User, select: '_id' })
     .populate({ path: 'category', model: Category, select: '_id name' })
 }
 
@@ -58,7 +58,7 @@ export async function getEventById(eventId: string) {
     await connectToDatabase();
 
     const event = await Event.findById(eventId)
-      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'organizer', model: User, select: '_id' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
     if (!event) {
@@ -123,8 +123,13 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
 
     const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
     const categoryCondition = category ? await getCategoryByName(category) : null;
+    const currentDate = new Date();
     const conditions = {
-      $and: [titleCondition, categoryCondition ? { category: categoryCondition._id } : {}],
+      $and: [
+        titleCondition,
+        categoryCondition ? { category: categoryCondition._id } : {},
+        { endDateTime: { $gte: currentDate } } // Filter out past events
+      ],
     };
 
     const skipAmount = (Number(page) - 1) * limit;
@@ -132,7 +137,7 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
-      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'organizer', model: User, select: '_id' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
     const events = (await eventsQuery.exec()) as IEvent[];
@@ -158,30 +163,31 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
 // GET EVENTS BY ORGANIZER
 export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUserParams) {
   try {
-    await connectToDatabase()
+    await connectToDatabase();
 
-    const conditions = { organizer: userId }
-    const skipAmount = (page - 1) * limit
+    const currentDate = new Date();
+    const conditions = { organizer: userId, endDateTime: { $gte: currentDate } }; // Filter out past events
+    const skipAmount = (page - 1) * limit;
 
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
-      .limit(limit)
+      .limit(limit);
 
-    const events = await populateEvent(eventsQuery)
-    const eventsCount = await Event.countDocuments(conditions)
+    const events = await populateEvent(eventsQuery);
+    const eventsCount = await Event.countDocuments(conditions);
 
     const eventsWithAttendeeCount = await Promise.all(events.map(async (event: IEvent) => {
-      const attendeeCount = await Order.countDocuments({ event: event._id })
+      const attendeeCount = await Order.countDocuments({ event: event._id });
       return {
         ...JSON.parse(JSON.stringify(event)),
         attendeeCount
-      }
-    }))
+      };
+    }));
 
-    return { data: eventsWithAttendeeCount, totalPages: Math.ceil(eventsCount / limit) }
+    return { data: eventsWithAttendeeCount, totalPages: Math.ceil(eventsCount / limit) };
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 

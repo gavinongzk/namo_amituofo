@@ -45,6 +45,7 @@ export const categoryCustomFields = {
   ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 Volunteer\'s Name', type: 'text' },
+    { id: '2', label: '联系号码 Contact number', type: 'phone' },
   ],
   // Add more categories as needed
 };

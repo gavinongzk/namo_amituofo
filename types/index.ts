@@ -141,3 +141,20 @@ export type CustomField = {
   type: "text" | "boolean" | "phone";
   value?: string | boolean;
 };
+
+export interface IRegistration {
+  event: {
+    _id: string;
+    title: string;
+    imageUrl: string;
+    organizer: { _id: string };
+    orderId?: string;
+    customFieldValues?: { id: string; label: string; value: string }[];
+    queueNumber?: string;
+    attendeeCount?: number;
+  };
+  registrations: {
+    queueNumber: string;
+    name: string;
+  }[];
+}
