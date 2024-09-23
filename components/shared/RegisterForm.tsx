@@ -14,10 +14,11 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+import { categoryCustomFields, CategoryName } from '@/constants'
 
-const RegisterForm = ({ event }: { event: IEvent }) => {
+const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,14 +27,16 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
   useEffect(() => {
     async function fetchOrderCount() {
       const count = await getOrderCountByEvent(event._id);
-      setCurrentRegistrations(count ?? 0); // Ensure count is a number
+      setCurrentRegistrations(count ?? 0);
     }
     fetchOrderCount();
   }, [event._id]);
 
+  const customFields = categoryCustomFields[event.category.name] || [];
+
   const formSchema = z.object({
     ...Object.fromEntries(
-      (event.customFields ?? []).map(field => [
+      customFields.map(field => [
         field.id,
         field.type === 'boolean'
           ? z.boolean()
@@ -47,7 +50,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: Object.fromEntries(
-      (event.customFields ?? []).map(field => [field.id, field.type === 'boolean' ? false : ''])
+      customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
     ),
   });
 
@@ -55,11 +58,11 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
     setIsSubmitting(true);
     try {
       const customFieldValues = Object.entries(values).map(([key, value]) => {
-        const field = event.customFields?.find(f => f.id === key);
+        const field = customFields.find(f => f.id === key);
         return {
           id: key,
           label: field?.label || key,
-          type: field?.type as 'boolean' | 'text', // Ensure type is either 'boolean' or 'text'
+          type: field?.type as 'boolean' | 'text' | 'phone',
           value: String(value),
         };
       });
@@ -102,7 +105,7 @@ const RegisterForm = ({ event }: { event: IEvent }) => {
           <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
         ) : (
           <>
-            {event.customFields?.map((field) => (
+            {customFields.map((field) => (
               <FormField
                 key={field.id}
                 control={form.control}
