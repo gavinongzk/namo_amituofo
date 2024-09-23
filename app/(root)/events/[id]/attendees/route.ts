@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const eventId = params.id;
 
     const attendees = await Order.find({ event: eventId, attendance: true })
-      .populate('buyer', 'firstName lastName phoneNumber')
+      .populate('buyer', 'phoneNumber')
       .select('buyer customFieldValues');
 
     return NextResponse.json(attendees);

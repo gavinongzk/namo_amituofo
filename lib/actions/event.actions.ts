@@ -26,7 +26,7 @@ const getCategoryByName = async (name: string) => {
 
 const populateEvent = (query: any) => {
   return query
-    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .populate({ path: 'organizer', model: User, select: '_id' })
     .populate({ path: 'category', model: Category, select: '_id name' })
 }
 
@@ -58,7 +58,7 @@ export async function getEventById(eventId: string) {
     await connectToDatabase();
 
     const event = await Event.findById(eventId)
-      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'organizer', model: User, select: '_id' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
     if (!event) {
@@ -137,7 +137,7 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
-      .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+      .populate({ path: 'organizer', model: User, select: '_id' })
       .populate({ path: 'category', model: Category, select: '_id name' });
 
     const events = (await eventsQuery.exec()) as IEvent[];

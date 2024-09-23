@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     console.log('Raw orders:', JSON.stringify(rawOrders, null, 2));
 
     const attendees = await Order.find({ event: eventId })
-      .populate('buyer', 'firstName lastName phoneNumber')
+      .populate('buyer', 'phoneNumber')
       .populate('event', 'title startDateTime endDateTime')
       .select('buyer event customFieldValues queueNumber attendance version');
 

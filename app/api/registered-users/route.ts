@@ -9,12 +9,11 @@ async function handler(req: NextRequest) {
 
     // Fetch registered users for the specific event
     const orders = await Order.find({ event: eventId})
-      .populate('buyer', 'firstName lastName queueNumber') // Adjust fields as necessary
+      .populate('buyer', 'queueNumber') // Adjust fields as necessary
       .select('buyer');
 
     const registeredUsers = orders.map(order => ({
       id: order.buyer._id,
-      name: `${order.buyer.firstName} ${order.buyer.lastName}`,
       queueNumber: order.buyer.queueNumber,
     }));
 

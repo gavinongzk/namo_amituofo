@@ -62,7 +62,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     const eventObjectId = new ObjectId(eventId);
 
     const orders = await Order.find({ event: eventObjectId })
-      .populate('buyer', 'firstName lastName')
+      .populate('buyer', '')
       .populate('event', 'title')
       .select('_id createdAt event buyer customFieldValues queueNumber attendance');
 
@@ -71,7 +71,6 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
       createdAt: order.createdAt,
       eventTitle: order.event.title,
       eventId: order.event._id.toString(),
-      buyer: `${order.buyer.firstName} ${order.buyer.lastName}`,
       customFieldValues: order.customFieldValues,
       queueNumber: order.queueNumber,
       attendance: order.attendance
@@ -102,7 +101,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
         populate: {
           path: 'organizer',
           model: User,
-          select: '_id firstName lastName',
+          select: '_id',
         },
       });
 

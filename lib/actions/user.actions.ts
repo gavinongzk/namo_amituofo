@@ -104,10 +104,9 @@ export async function updateUserRole(userId: string, newRole: 'user' | 'admin' |
 export async function getAllUsers() {
   try {
     await connectToDatabase();
-    const users = await User.find().select('_id firstName lastName phoneNumber role');
+    const users = await User.find().select('_id phoneNumber role');
     return users.map(user => ({
       id: user._id.toString(),
-      name: `${user.firstName} ${user.lastName}`,
       phoneNumber: user.phoneNumber,
       role: user.role,
     }));
@@ -120,8 +119,8 @@ export async function getAllUsers() {
 export async function downloadUserPhoneNumbers() {
   try {
     await connectToDatabase();
-    const users = await User.find().select('firstName lastName phoneNumber');
-    const csvContent = users.map(user => `${user.firstName},${user.lastName},${user.phoneNumber}`).join('\n');
+    const users = await User.find().select('phoneNumber');
+    const csvContent = users.map(user => `${user.phoneNumber}`).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.download !== undefined) {
@@ -143,7 +142,7 @@ export async function getUserForAdmin(userId: string) {
   try {
     await connectToDatabase();
 
-    const user = await User.findById(userId).select('_id firstName lastName phoneNumber role');
+    const user = await User.findById(userId).select('_id phoneNumber role');
 
     if (!user) {
       throw new Error('User not found');
@@ -151,7 +150,6 @@ export async function getUserForAdmin(userId: string) {
 
     return {
       id: user._id.toString(),
-      name: `${user.firstName} ${user.lastName}`,
       phoneNumber: user.phoneNumber,
       role: user.role,
     };

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
     
-    const users = await User.find().select('_id firstName lastName role');
+    const users = await User.find().select('_id role');
     
     const usersWithCustomFields = await Promise.all(users.map(async (user) => {
       const order = await Order.findOne({ buyer: user._id })
