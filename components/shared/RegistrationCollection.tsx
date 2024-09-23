@@ -32,7 +32,7 @@ const RegistrationCollection = ({
               if (collectionType === 'My_Registrations' && item.event && item.event._id) {
                 return (
                   <li key={item.event._id} className="flex justify-center">
-                    <RegistrationCard registration={item} event={item.event} />
+                    <RegistrationCard event={item.event} registrations={item.registrations} />
                   </li>
                 );
               }

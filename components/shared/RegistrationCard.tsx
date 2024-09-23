@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { auth } from '@clerk/nextjs';
 
 export type CardProps = {
-  registration: IRegistration;
   event: {
     _id: string;
     title: string;
@@ -16,11 +15,14 @@ export type CardProps = {
     queueNumber?: string;
     attendeeCount?: number;
   };
+  registrations: {
+    queueNumber: string;
+    name: string;
+  }[];
   isMyTicket?: boolean;
 };
 
-const RegistrationCard: React.FC<CardProps> = ({ registration, event, isMyTicket }) => {
-
+const RegistrationCard: React.FC<CardProps> = ({ event, registrations, isMyTicket }) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
@@ -29,9 +31,9 @@ const RegistrationCard: React.FC<CardProps> = ({ registration, event, isMyTicket
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
       <div className="flex flex-col gap-3 p-5 md:gap-4">
-        <h3 className="text-xl font-bold text-gray-800">{registration.event.title}</h3>
+        <h3 className="text-xl font-bold text-gray-800">{event.title}</h3>
         <ul className="mt-4 space-y-2">
-          {registration.registrations.map((reg, index) => (
+          {registrations.map((reg, index) => (
             <li key={index} className="flex justify-between py-1 text-gray-600">
               <span>Queue Number: <span className="font-medium">{reg.queueNumber}</span></span>
               <span>Name: <span className="font-medium">{reg.name}</span></span>
@@ -39,7 +41,7 @@ const RegistrationCard: React.FC<CardProps> = ({ registration, event, isMyTicket
           ))}
         </ul>
         <Button asChild size="sm" className="mt-4 self-start">
-          <Link href={`/events/${registration.event._id}`}>View Event</Link>
+          <Link href={`/events/${event._id}`}>View Event</Link>
         </Button>
       </div>
     </div>
