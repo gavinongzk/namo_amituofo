@@ -12,14 +12,32 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const order: CreateOrderParams = await req.json();
-    if (!Array.isArray(order.customFieldValues)) {
-      throw new Error('customFieldValues must be an array');
+    const body = await req.json();
+    const { eventId, customFieldValues } = body;
+
+    if (!eventId) {
+      return new NextResponse("Event ID is required", { status: 400 });
     }
-    const newOrder = await createOrder(order, userId);
-    return NextResponse.json(newOrder, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const newOrder = await createOrder({
+      eventId,
+      buyerId: userId,
+      createdAt: new Date(),
+      customFieldValues: customFieldValues.map((group: any) => ({
+        groupId: group.groupId,
+        fields: group.fields.map((field: any) => ({
+          id: field.id,
+          label: field.label,
+          type: field.type,
+          value: field.value
+        }))
+      }))
+    });
+
+    return NextResponse.json({ message: 'Order created successfully', order: newOrder });
+  } catch (error) {
+    console.error('Error in POST /api/orders:', error);
+    return new NextResponse(`Error creating order: ${(error as Error).message}`, { status: 500 });
   }
 }
 

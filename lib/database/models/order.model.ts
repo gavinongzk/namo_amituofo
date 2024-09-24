@@ -47,10 +47,15 @@ const OrderSchema = new Schema({
   },
   customFieldValues: [
     {
-      id: { type: String, required: true },
-      label: { type: String, required: true },
-      type: { type: String, required: true },
-      value: { type: String, required: true },
+      groupId: { type: String, required: true },
+      fields: [
+        {
+          id: { type: String, required: true },
+          label: { type: String, required: true },
+          type: { type: String, required: true },
+          value: { type: String, required: true },
+        },
+      ],
     },
   ],
   queueNumber: { type: String, required: true },

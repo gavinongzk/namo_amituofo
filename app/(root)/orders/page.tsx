@@ -25,38 +25,28 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
           <thead>
             <tr className="p-medium-14 border-b text-grey-500">
               <th className="min-w-[200px] py-3 text-left">Event Title</th>
-              <th className="min-w-[150px] py-3 text-left">Name</th>
               <th className="min-w-[150px] py-3 text-left">Queue Number</th>
               <th className="min-w-[150px] py-3 text-left">Attendance</th>
               <th className="min-w-[150px] py-3 text-left">Registration Date</th>
+              <th className="min-w-[150px] py-3 text-left">Details</th>
             </tr>
           </thead>
           <tbody>
-            {orders && orders.length === 0 ? (
-              <tr className="border-b">
-                <td colSpan={5} className="py-4 text-center text-gray-500">
-                  No orders found.
+            {orders.map((order: IOrderItem) => (
+              <tr key={order._id} className="p-regular-14 lg:p-regular-16 border-b">
+                <td className="min-w-[200px] py-4 text-left">{order.eventTitle}</td>
+                <td className="min-w-[150px] py-4 text-left">{order.queueNumber}</td>
+                <td className="min-w-[150px] py-4 text-left">{order.attendance ? 'Yes' : 'No'}</td>
+                <td className="min-w-[150px] py-4 text-left">
+                  {formatDateTime(order.createdAt).dateTime}
+                </td>
+                <td className="min-w-[150px] py-4 text-left">
+                  <a href={`/orders/${order._id}`} className="text-primary-500 underline">
+                    View Details
+                  </a>
                 </td>
               </tr>
-            ) : (
-              <>
-                {orders &&
-                  orders.map((order: IOrderItem) => (
-                    <tr
-                      key={order._id}
-                      className="p-regular-14 lg:p-regular-16 border-b"
-                      style={{ boxSizing: 'border-box' }}>
-                      <td className="min-w-[200px] py-4">{order.eventTitle}</td>
-                      <td className="min-w-[150px] py-4">
-                        {order.customFieldValues.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
-                      </td>
-                      <td className="min-w-[150px] py-4">{order.queueNumber}</td>
-                      <td className="min-w-[150px] py-4">{order.attendance ? 'Yes' : 'No'}</td>
-                      <td className="min-w-[150px] py-4">{formatDateTime(order.createdAt).dateTime}</td>
-                    </tr>
-                  ))}
-              </>
-            )}
+            ))}
           </tbody>
         </table>
       </section>

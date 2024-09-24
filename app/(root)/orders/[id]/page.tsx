@@ -1,10 +1,14 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 
-interface CustomFieldValue {
-  id: string;
-  label: string;
-  value: string;
+interface CustomFieldGroup {
+  groupId: string;
+  fields: {
+    id: string;
+    label: string;
+    type: string;
+    value: string;
+  }[];
 }
 
 const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) => {
@@ -26,13 +30,18 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
           <p><strong>Event:</strong> {order.event.title}</p>
           <p><strong>Date:</strong> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
           <h5 className="text-lg font-bold mt-4">Custom Fields</h5>
-          <ul>
-            {order.customFieldValues.map((field: CustomFieldValue) => (
-              <li key={field.id}>
-                <strong>{field.label}:</strong> {field.value}
-              </li>
-            ))}
-          </ul>
+          {order.customFieldValues.map((group: CustomFieldGroup, groupIndex: number) => (
+            <div key={group.groupId}>
+              <h6 className="text-md font-semibold mt-2">Group {groupIndex + 1}</h6>
+              <ul>
+                {group.fields.map((field) => (
+                  <li key={field.id}>
+                    <strong>{field.label}:</strong> {field.value}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </div>

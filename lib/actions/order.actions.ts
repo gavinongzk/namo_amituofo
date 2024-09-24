@@ -8,16 +8,16 @@ import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
 
-export const createOrder = async (order: CreateOrderParams, userId: string) => {
+export async function createOrder(order: CreateOrderParams) {
   try {
     await connectToDatabase();
-    
+
     if (!ObjectId.isValid(order.eventId)) {
       throw new Error('Invalid eventId');
     }
 
-    if (!ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
+    if (!ObjectId.isValid(order.buyerId)) {
+      throw new Error('Invalid buyerId');
     }
 
     const event = await Event.findById(order.eventId);
@@ -37,7 +37,7 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
-      buyer: new ObjectId(userId), // Convert buyerId to ObjectId
+      buyer: new ObjectId(order.buyerId), // Convert buyerId to ObjectId
       customFieldValues: order.customFieldValues,
       queueNumber: newQueueNumber,
     });
@@ -46,10 +46,10 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
     // event.attendeeCount = currentRegistrations + 1;
     // await event.save();
 
-    return { success: true, message: 'User successfully registered', order: newOrder };
+    return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
-    handleError(error);
-    return { success: false, message: 'Registration failed' };
+    console.error('Error creating order:', error);
+    throw error;
   }
 }
 

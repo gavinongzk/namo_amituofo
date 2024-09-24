@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import * as z from 'zod'
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -23,6 +23,8 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
+  const [groupCount, setGroupCount] = useState(1);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     async function fetchOrderCount() {
@@ -35,109 +37,139 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const customFields = categoryCustomFields[event.category.name] || [];
 
   const formSchema = z.object({
-    ...Object.fromEntries(
-      customFields.map(field => [
-        field.id,
-        field.type === 'boolean'
-          ? z.boolean()
-          : field.type === 'phone'
-            ? z.string().regex(/^\+[1-9]\d{1,14}$/, { message: "Invalid phone number" })
-            : z.string().min(1, { message: "This field is required" })
-      ])
+    groups: z.array(
+      z.object(
+        Object.fromEntries(
+          customFields.map(field => [
+            field.id,
+            field.type === 'boolean'
+              ? z.boolean()
+              : field.type === 'phone'
+                ? z.string().regex(/^\+[1-9]\d{1,14}$/, { message: "Invalid phone number" })
+                : z.string().min(1, { message: "This field is required" })
+          ])
+        )
+      )
     )
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: Object.fromEntries(
-      customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
-    ),
+    defaultValues: {
+      groups: [Object.fromEntries(
+        customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+      )]
+    },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    try {
-      const customFieldValues = Object.entries(values).map(([key, value]) => {
-        const field = customFields.find(f => f.id === key);
-        return {
-          id: key,
-          label: field?.label || key,
-          type: field?.type as 'boolean' | 'text' | 'phone',
-          value: String(value),
-        };
-      });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "groups"
+  });
 
-      const order: CreateOrderParams = {
-        eventId: event._id,
-        buyerId: user?.id || '',
-        createdAt: new Date(),
-        customFieldValues,
-      };
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    setMessage(''); // Clear any previous message
+    try {
+      const customFieldValues = values.groups.map((group, index) => ({
+        groupId: `group_${index + 1}`,
+        fields: Object.entries(group).map(([key, value]) => {
+          const field = customFields.find(f => f.id === key);
+          return {
+            id: key,
+            label: field?.label || key,
+            type: field?.type as 'boolean' | 'text' | 'phone',
+            value: String(value),
+          };
+        })
+      }));
 
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(order),
+        body: JSON.stringify({
+          eventId: event._id,
+          customFieldValues,
+        }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to create order');
       }
 
-      const newOrder = await response.json();
-
-      router.push(`/events/${event._id}/thank-you?orderId=${newOrder.order._id}`);
+      const data = await response.json();
+      router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
     } catch (error) {
-      console.error(error);
+      console.error('Error submitting form:', error);
+      setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   const isFullyBooked = currentRegistrations >= event.maxSeats;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {message && <p className="text-red-500">{message}</p>}
         {isFullyBooked ? (
           <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
         ) : (
           <>
-            {customFields.map((field) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={field.id}
-                render={({ field: formField }) => (
-                  <FormItem>
-                    <FormLabel>{field.label}</FormLabel>
-                    <FormControl>
-                      {field.type === 'boolean' ? (
-                        <Checkbox
-                          checked={formField.value as boolean}
-                          onCheckedChange={formField.onChange}
-                        />
-                      ) : field.type === 'phone' ? (
-                        <PhoneInput
-                          value={formField.value as string}
-                          onChange={(value) => formField.onChange(value || '')}
-                          defaultCountry="SG"
-                          countries={["SG", "MY"]}
-                          international
-                          countryCallingCodeEditable={false}
-                          className="input-field"
-                        />
-                      ) : (
-                        <Input {...formField} value={String(formField.value)} />
-                      )}
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            {fields.map((field, index) => (
+              <div key={field.id} className="space-y-4">
+                <h3 className="font-bold">Person {index + 1}</h3>
+                {customFields.map((customField) => (
+                  <FormField
+                    key={customField.id}
+                    control={form.control}
+                    name={`groups.${index}.${customField.id}`}
+                    render={({ field: formField }) => (
+                      <FormItem>
+                        <FormLabel>{customField.label}</FormLabel>
+                        <FormControl>
+                          {customField.type === 'boolean' ? (
+                            <Checkbox
+                              checked={formField.value as boolean}
+                              onCheckedChange={formField.onChange}
+                            />
+                          ) : customField.type === 'phone' ? (
+                            <PhoneInput
+                              value={formField.value as string}
+                              onChange={(value) => formField.onChange(value || '')}
+                              defaultCountry="SG"
+                              countries={["SG", "MY"]}
+                              international
+                              countryCallingCodeEditable={false}
+                              className="input-field"
+                            />
+                          ) : (
+                            <Input {...formField} value={String(formField.value)} />
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+                {index > 0 && (
+                  <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                    Remove Person
+                  </Button>
                 )}
-              />
+              </div>
             ))}
+            <Button
+              type="button"
+              onClick={() => append(Object.fromEntries(
+                customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+              ))}
+            >
+              Add Another Person
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
             </Button>

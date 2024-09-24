@@ -101,11 +101,19 @@ export type CheckoutOrderParams = {
 }
 
 export type CreateOrderParams = {
-  eventId: string;
-  buyerId: string; // Change this to ObjectId
-  createdAt: Date;
-  customFieldValues: CustomField[];
-};
+  eventId: string
+  buyerId: string
+  createdAt: Date
+  customFieldValues: {
+    groupId: string
+    fields: {
+      id: string
+      label: string
+      type: string
+      value: string
+    }[]
+  }[]
+}
 
 export type GetOrdersByEventParams = {
   eventId: string

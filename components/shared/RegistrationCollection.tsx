@@ -2,6 +2,7 @@ import React from 'react';
 import RegistrationCard from './RegistrationCard'; // Ensure correct import based on your file structure
 import Pagination from './Pagination';
 import { IRegistration } from '@/types';
+import { CardProps } from './RegistrationCard';
 
 type CollectionProps = {
   data: IRegistration[];
@@ -34,9 +35,28 @@ const RegistrationCollection = ({
           <ul className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
             {paginatedData.map((item) => {
               if (collectionType === 'My_Registrations' && item.event && item.event._id) {
+                const cardProps: CardProps = {
+                  event: {
+                    ...item.event,
+                    customFieldValues: item.event.customFieldValues?.map(field => ({
+                      groupId: 'default',
+                      fields: [
+                        {
+                          id: field.id,
+                          label: field.label,
+                          type: 'text', // Assuming 'text' as default type
+                          value: field.value
+                        }
+                      ]
+                    }))
+                  },
+                  registrations: item.registrations,
+                  isMyTicket: false // Set this value based on your logic
+                };
+
                 return (
                   <li key={item.event._id} className="flex justify-center">
-                    <RegistrationCard event={item.event} registrations={item.registrations} />
+                    <RegistrationCard {...cardProps} />
                   </li>
                 );
               }

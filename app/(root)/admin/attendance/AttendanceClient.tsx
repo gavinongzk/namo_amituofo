@@ -16,7 +16,15 @@ type User = {
   order: {
     queueNumber: string;
     attended: boolean;
-    customFieldValues: { id: string; label: string; type: string; value: string; _id: string }[];
+    customFieldValues: {
+      groupId: string;
+      fields: {
+        id: string;
+        label: string;
+        type: string;
+        value: string;
+      }[];
+    }[];
     version: number;
   };
 };
@@ -184,38 +192,38 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
-                    registeredUsers[0].order.customFieldValues.map((field) => (
-                      <th key={field.id} className="py-2 px-4 border-b text-left">
-                        {field.label}
-                      </th>
-                    ))
+                    registeredUsers[0].order.customFieldValues.flatMap(group => 
+                      group.fields.map(field => (
+                        <th key={`${group.groupId}_${field.id}`} className="py-2 px-4 border-b text-left">
+                          {field.label}
+                        </th>
+                      ))
+                    )
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
                 </tr>
               </thead>
               <tbody>
-                {currentPageUsers.map((user) => {
-                  console.log('Rendering user:', user);
-                  return (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b text-left">{user.order?.queueNumber || 'N/A'}</td>
-                      {user.order?.customFieldValues && user.order.customFieldValues.map((field) => {
-                        console.log('Rendering custom field:', field.label, field.value);
-                        return (
-                          <td key={field.id} className="py-2 px-4 border-b text-left">{field.value || 'N/A'}</td>
-                        );
-                      })}
-                      <td className="py-2 px-4 border-b text-center">
-                        <input
-                          type="checkbox"
-                          checked={user.order?.attended || false}
-                          onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
-                          className="form-checkbox h-5 w-5 text-blue-600"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
+                {currentPageUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="py-2 px-4 border-b text-left">{user.order?.queueNumber || 'N/A'}</td>
+                    {user.order?.customFieldValues && user.order.customFieldValues.flatMap(group => 
+                      group.fields.map(field => (
+                        <td key={`${group.groupId}_${field.id}`} className="py-2 px-4 border-b text-left">
+                          {field.value || 'N/A'}
+                        </td>
+                      ))
+                    )}
+                    <td className="py-2 px-4 border-b text-center">
+                      <input
+                        type="checkbox"
+                        checked={user.order?.attended || false}
+                        onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
+                        className="form-checkbox h-5 w-5 text-blue-600"
+                      />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
