@@ -1,5 +1,5 @@
 // components/shared/RegisterForm.tsx
-"use client"
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { useUser } from '@clerk/nextjs'
-import { CreateOrderParams, CustomFieldGroup } from "@/types"
+import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
@@ -61,6 +61,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       )]
     },
   });
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "groups"
@@ -70,7 +71,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     setIsSubmitting(true);
     setMessage(''); // Clear any previous message
     try {
-      const customFieldValues: CustomFieldGroup[] = values.groups.map((group, index) => ({
+      const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
           const field = customFields.find(f => f.id === key);
@@ -83,15 +84,19 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         })
       }));
 
+      const orderData: CreateOrderParams = {
+        eventId: event._id,
+        buyerId: user?.id || '', // Assuming user.id is available from Clerk
+        createdAt: new Date(),
+        customFieldValues,
+      };
+
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          eventId: event._id,
-          customFieldValues,
-        } as CreateOrderParams),
+        body: JSON.stringify(orderData),
       });
 
       if (!response.ok) {
@@ -112,39 +117,71 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {fields.map((field, index) => (
-          <div key={field.id}>
-            {customFields.map(customField => (
-              <FormField
-                key={customField.id}
-                name={`groups.${index}.${customField.id}`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{customField.label}</FormLabel>
-                    <FormControl>
-                      {customField.type === 'boolean' ? (
-                        <Checkbox {...field} />
-                      ) : customField.type === 'phone' ? (
-                        <PhoneInput {...field} />
-                      ) : (
-                        <Input {...field} />
-                      )}
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {message && <p className="text-red-500">{message}</p>}
+        {isFullyBooked ? (
+          <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
+        ) : (
+          <>
+            {fields.map((field, index) => (
+              <div key={field.id} className="space-y-4">
+                <h3 className="font-bold">Person {index + 1}</h3>
+                {customFields.map((customField) => (
+                  <FormField
+                    key={customField.id}
+                    control={form.control}
+                    name={`groups.${index}.${customField.id}`}
+                    render={({ field: formField }) => (
+                      <FormItem>
+                        <FormLabel>{customField.label}</FormLabel>
+                        <FormControl>
+                          {customField.type === 'boolean' ? (
+                            <Checkbox
+                              checked={formField.value as boolean}
+                              onCheckedChange={formField.onChange}
+                            />
+                          ) : customField.type === 'phone' ? (
+                            <PhoneInput
+                              value={formField.value as string}
+                              onChange={(value) => formField.onChange(value || '')}
+                              defaultCountry="SG"
+                              countries={["SG", "MY"]}
+                              international
+                              countryCallingCodeEditable={false}
+                              className="input-field"
+                            />
+                          ) : (
+                            <Input {...formField} value={String(formField.value)} />
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+                {index > 0 && (
+                  <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                    Remove Person
+                  </Button>
                 )}
-              />
+              </div>
             ))}
-          </div>
-        ))}
-        <Button type="submit" disabled={isSubmitting || isFullyBooked}>
-          {isSubmitting ? 'Submitting...' : isFullyBooked ? 'Fully Booked' : 'Submit'}
-        </Button>
-        {message && <p>{message}</p>}
+            <Button
+              type="button"
+              onClick={() => append(Object.fromEntries(
+                customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+              ))}
+            >
+              Add Another Person
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
+            </Button>
+          </>
+        )}
       </form>
     </Form>
-  );
-};
+  )
+}
 
-export default RegisterForm;
+export default RegisterForm
