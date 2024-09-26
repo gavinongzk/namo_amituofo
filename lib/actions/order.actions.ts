@@ -64,16 +64,19 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     const orders = await Order.find({ event: eventObjectId })
       .populate('buyer', '')
       .populate('event', 'title')
-      .select('_id createdAt event buyer customFieldValues queueNumber attendance');
+      .select('_id createdAt event buyer customFieldValues');
 
     const formattedOrders = orders.map(order => ({
       _id: order._id.toString(),
       createdAt: order.createdAt,
       eventTitle: order.event.title,
       eventId: order.event._id.toString(),
-      customFieldValues: order.customFieldValues,
-      queueNumber: order.queueNumber,
-      attendance: order.attendance
+      customFieldValues: order.customFieldValues.map((group: { groupId: string; fields: any[]; queueNumber: string; attendance: boolean }) => ({
+        groupId: group.groupId,
+        fields: group.fields,
+        queueNumber: group.queueNumber,
+        attendance: group.attendance
+      }))
     }));
 
     return JSON.parse(JSON.stringify(formattedOrders));

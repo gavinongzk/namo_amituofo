@@ -100,19 +100,11 @@ export type CheckoutOrderParams = {
   buyerId: string
 }
 
-export type CreateOrderParams = {
-  eventId: string
-  buyerId: string
-  createdAt: Date
-  customFieldValues: {
-    groupId: string
-    fields: {
-      id: string
-      label: string
-      type: string
-      value: string
-    }[]
-  }[]
+export interface CreateOrderParams {
+  eventId: string;
+  buyerId: string;
+  createdAt: Date;
+  customFieldValues: CustomFieldGroup[];
 }
 
 export type GetOrdersByEventParams = {
@@ -165,4 +157,9 @@ export interface IRegistration {
     queueNumber: string;
     name: string;
   }[];
+}
+
+export interface CustomFieldGroup {
+  groupId: string;
+  fields: CustomField[];
 }

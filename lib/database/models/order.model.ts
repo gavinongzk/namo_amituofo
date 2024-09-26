@@ -1,35 +1,47 @@
-import { Schema, model, models, Document } from 'mongoose'
+import { Schema, model, models, Document } from 'mongoose';
 
 export interface CustomField {
-  id: string
-  label: string
-  type: string
-  value: string
+  id: string;
+  label: string;
+  type: string;
+  value: string;
 }
 
 export interface IOrder extends Document {
-  createdAt: Date
+  createdAt: Date;
   event: {
-    _id: string
-    title: string
-  }
+    _id: string;
+    title: string;
+  };
   buyer: {
-    _id: string
-  }
-  customFieldValues: CustomField[]
-  queueNumber: string
-  attendance: boolean
+    _id: string;
+  };
+  customFieldValues: {
+    groupId: string;
+    fields: CustomField[];
+    queueNumber: string;
+    attendance: boolean;
+  }[];
+
 }
 
-export type IOrderItem = {
-  _id: string
-  createdAt: Date
-  eventTitle: string
-  eventId: string
-  buyer: string
-  customFieldValues: CustomField[]
-  queueNumber: string
-  attendance: boolean
+export interface IOrderItem {
+  _id: string;
+  createdAt: Date;
+  eventTitle: string;
+  eventId: string;
+  buyerName: string;
+  customFieldValues: {
+    groupId: string;
+    fields: {
+      id: string;
+      label: string;
+      type: string;
+      value: string;
+    }[];
+    queueNumber: string;
+    attendance: boolean;
+  }[];
 }
 
 const OrderSchema = new Schema({
@@ -56,12 +68,10 @@ const OrderSchema = new Schema({
           value: { type: String, required: true },
         },
       ],
+      queueNumber: { type: String, required: true },
+      attendance: { type: Boolean, default: false },
     },
   ],
-  queueNumber: { type: String, required: true },
-  attendance: { type: Boolean, default: false },
-})
+});
 
-const Order = models.Order || model('Order', OrderSchema)
-
-export default Order
+export default models.Order || model<IOrder>('Order', OrderSchema);

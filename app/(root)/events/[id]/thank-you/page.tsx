@@ -23,8 +23,10 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
       <div className="wrapper my-8">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center">
-            <h4 className="text-2xl font-bold text-blue-800">Your Queue Number 您的排队号码</h4>
-            <p className="text-4xl font-bold text-blue-600 mt-2">{order.queueNumber}</p>
+            <h4 className="text-2xl font-bold text-blue-800">Your Queue Numbers 您的排队号码</h4>
+            {order.customFieldValues.map((group: any) => (
+              <p key={group.groupId} className="text-4xl font-bold text-blue-600 mt-2">{group.queueNumber}</p>
+            ))}
           </div>
 
           <h4 className="text-xl font-bold mb-4">Registration Details 注册详情</h4>
@@ -45,6 +47,6 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
       </div>
     </div>
   );
-};
+}
 
 export default ThankYouPage;
