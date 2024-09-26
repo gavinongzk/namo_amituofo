@@ -34,24 +34,24 @@ export async function createOrder(order: CreateOrderParams) {
     }
 
     const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
-    const lastQueueNumber = lastOrder && lastOrder.queueNumber ? parseInt(lastOrder.queueNumber.slice(1)) : 0;
+    const lastQueueNumber = lastOrder && lastOrder.customFieldValues[0].queueNumber 
+      ? parseInt(lastOrder.customFieldValues[0].queueNumber.slice(1)) 
+      : 0;
     const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`;
 
     const newOrder = await Order.create({
       ...order,
-      event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
-      buyer: new ObjectId(order.buyerId), // Convert buyerId to ObjectId
-      customFieldValues: order.customFieldValues,
-      queueNumber: newQueueNumber,
+      event: new ObjectId(order.eventId),
+      buyer: new ObjectId(order.buyerId),
+      customFieldValues: order.customFieldValues.map(group => ({
+        ...group,
+        queueNumber: newQueueNumber,
+      })),
     });
-
-    // Optionally update attendeeCount in Event
-    // event.attendeeCount = currentRegistrations + 1;
-    // await event.save();
 
     return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
-    console.error('Error in createOrder:', error);
+    console.error('Error creating order:', error);
     throw error;
   }
 }
