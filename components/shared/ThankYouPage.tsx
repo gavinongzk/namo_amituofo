@@ -1,6 +1,5 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
-import { CustomFieldGroupSchema } from '@/lib/database/models/customfieldvalue.model'
 
 interface CustomFieldValue {
   id: string;
@@ -21,7 +20,8 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
     return <div>Order not found 订单未找到</div>;
   }
 
-  const customFieldValues = CustomFieldGroupSchema.parse(order.customFieldValues);
+  // Use order.customFieldValues directly
+  const customFieldValues = order.customFieldValues;
 
   // Ensure customFieldValues is an array
   const customFieldValuesArray = Array.isArray(customFieldValues) ? customFieldValues : [customFieldValues];

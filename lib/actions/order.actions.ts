@@ -34,19 +34,27 @@ export async function createOrder(order: CreateOrderParams) {
     }
 
     const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
-    const lastQueueNumber = lastOrder && lastOrder.customFieldValues[0].queueNumber 
-      ? parseInt(lastOrder.customFieldValues[0].queueNumber.slice(1)) 
-      : 0;
-    const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`;
+    let lastQueueNumber = 0;
+    if (lastOrder) {
+      const allQueueNumbers = lastOrder.customFieldValues.map((group: { queueNumber: string }) => 
+        parseInt(group.queueNumber.slice(1))
+      );
+      lastQueueNumber = Math.max(...allQueueNumbers);
+    }
+
+    const newCustomFieldValues = order.customFieldValues.map((group, index) => {
+      const newQueueNumber = `A${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
+      return {
+        ...group,
+        queueNumber: newQueueNumber,
+      };
+    });
 
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId),
       buyer: new ObjectId(order.buyerId),
-      customFieldValues: order.customFieldValues.map(group => ({
-        ...group,
-        queueNumber: newQueueNumber,
-      })),
+      customFieldValues: newCustomFieldValues,
     });
 
     return JSON.parse(JSON.stringify(newOrder));
