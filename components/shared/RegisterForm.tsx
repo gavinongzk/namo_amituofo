@@ -68,6 +68,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log("Form submitted with values:", values);
     setIsSubmitting(true);
     setMessage(''); // Clear any previous message
     try {

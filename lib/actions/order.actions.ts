@@ -11,12 +11,15 @@ import User from '../database/models/user.model';
 export async function createOrder(order: CreateOrderParams) {
   try {
     await connectToDatabase();
+    console.log("Connected to database");
 
     if (!ObjectId.isValid(order.eventId)) {
+      console.log("Invalid eventId:", order.eventId);
       throw new Error('Invalid eventId');
     }
 
     if (!ObjectId.isValid(order.buyerId)) {
+      console.log("Invalid buyerId:", order.buyerId);
       throw new Error('Invalid buyerId');
     }
 
@@ -48,7 +51,7 @@ export async function createOrder(order: CreateOrderParams) {
 
     return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('Error in createOrder:', error);
     throw error;
   }
 }

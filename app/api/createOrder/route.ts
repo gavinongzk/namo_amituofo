@@ -4,15 +4,18 @@ import { CreateOrderParams, CustomFieldGroup } from '@/types';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
+  console.log("Received POST request to /api/createOrder");
   const user = await currentUser();
   const userId = user?.publicMetadata.userId as string;
 
   if (!userId) {
+    console.log("Unauthorized: No user ID found");
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const body = await req.json();
+    console.log("Request body:", body);
     const { eventId, customFieldValues }: CreateOrderParams = body;
 
     if (!eventId) {
