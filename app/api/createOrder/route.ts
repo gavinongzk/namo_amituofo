@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrder } from '@/lib/actions/order.actions';
-import { CreateOrderParams } from '@/types';
+import { CreateOrderParams, CustomFieldGroup } from '@/types';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { eventId, customFieldValues } = body;
+    const { eventId, customFieldValues }: CreateOrderParams = body;
 
     if (!eventId) {
       return new NextResponse("Event ID is required", { status: 400 });
@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
       eventId,
       buyerId: userId,
       createdAt: new Date(),
-      customFieldValues: customFieldValues.map((group: any) => ({
+      customFieldValues: customFieldValues.map((group: CustomFieldGroup) => ({
         groupId: group.groupId,
-        fields: group.fields.map((field: any) => ({
+        fields: group.fields.map((field) => ({
           id: field.id,
           label: field.label,
           type: field.type,

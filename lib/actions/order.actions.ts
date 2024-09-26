@@ -135,12 +135,15 @@ export async function getOrderCountByEvent(eventId: string) {
       throw new Error('Invalid eventId');
     }
 
-    const eventObjectId = new ObjectId(eventId);
-    const orderCount = await Order.countDocuments({ event: eventObjectId });
+    const orders = await Order.find({ event: eventId });
+    const registrationCount = orders.reduce((count, order) => {
+      return count + order.customFieldValues.length;
+    }, 0);
 
-    return orderCount;
+    return registrationCount;
   } catch (error) {
-    handleError(error);
+    console.error('Error fetching order count:', error);
+    throw error;
   }
 }
 
