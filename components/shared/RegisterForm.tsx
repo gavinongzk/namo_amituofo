@@ -21,7 +21,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
-  const [groupCount, setGroupCount] = useState(1);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -33,7 +32,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   }, [event._id]);
 
   const customFields = categoryCustomFields[event.category.name] || [];
-  console.log("Custom fields:", customFields);
 
   const formSchema = z.object({
     groups: z.array(
@@ -49,10 +47,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
           ])
         )
       )
-    ).refine(groups => groups[0] && groups[0].phone, {
-      message: "Phone number for the first person is required",
-      path: ['groups', 0, 'phone'],
-    }),
+    )
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,16 +65,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("onSubmit function called");
-    console.log("Form is valid:", form.formState.isValid);
-    console.log("Form errors:", JSON.stringify(form.formState.errors, null, 2));
     console.log("Form submitted with values:", values);
-    
-    if (!form.formState.isValid) {
-      console.log("Form is invalid, submission stopped");
-      return;
-    }
-
     setIsSubmitting(true);
     setMessage(''); // Clear any previous message
     try {
@@ -102,8 +88,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFieldValues,
       };
 
-      console.log("Sending order data:", orderData);
-
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
@@ -112,25 +96,15 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         body: JSON.stringify(orderData),
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        throw new Error(`Failed to create order: ${errorData.message || response.statusText}`);
+        throw new Error('Failed to create order');
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
-
-      if (data.order && data.order._id) {
-        router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
-      } else {
-        throw new Error('Invalid response data');
-      }
+      router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
-      setMessage(`Failed to submit registration: ${(error as Error).message}`);
+      setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,15 +114,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   return (
     <Form {...form}>
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        try {
-          form.handleSubmit(onSubmit)(e);
-        } catch (error) {
-          console.error("Error in form submission:", error);
-        }
-      }} className="space-y-8">
-        <input type="hidden" {...form.register('groups.0.name')} />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {message && <p className="text-red-500">{message}</p>}
         {isFullyBooked ? (
           <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
@@ -207,12 +173,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
               >
                 Add Another Person 添加另一位
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="flex-1"
-                onClick={() => console.log("Button clicked")}
-              >
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
               </Button>
             </div>
