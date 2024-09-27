@@ -1,22 +1,25 @@
 "use client"
 
 import { IEvent } from '@/lib/database/models/event.model'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 import { Button } from '../ui/button'
 
 const CheckoutButton = ({ event }: { event: IEvent }) => {
+  const router = useRouter()
   const hasEventFinished = new Date(event.endDateTime) < new Date();
+
+  const handleRegisterClick = () => {
+    router.push(`/events/${event._id}/register`);
+  }
 
   return (
     <div className="flex items-center gap-3">
       {hasEventFinished ? (
         <p className="p-2 text-red-400">Sorry, registration is closed.</p>
       ) : (
-        <Button asChild className="button rounded-full" size="lg">
-          <Link href={`/events/${event._id}/register`}>
-            Register
-          </Link>
+        <Button onClick={handleRegisterClick} className="button rounded-full" size="lg">
+          Register
         </Button>
       )}
     </div>
