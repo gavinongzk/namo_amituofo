@@ -148,7 +148,7 @@ export async function getOrderCountByEvent(eventId: string) {
 
     const orders = await Order.find({ event: eventId });
     const attendeeCount = orders.reduce((count, order) => {
-      return count + order.customFieldValues.filter(group => group.attendance).length;
+      return count + order.customFieldValues.filter((group: { attendance: boolean }) => group.attendance).length;
     }, 0);
 
     return attendeeCount;

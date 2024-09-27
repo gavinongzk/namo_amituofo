@@ -22,8 +22,8 @@ export type CardProps = {
     attendeeCount?: number;
   };
   registrations: {
-    queueNumber: string;
-    name: string;
+    queueNumber: string | undefined;
+    name: string | undefined;
   }[];
   isMyTicket?: boolean;
 };

@@ -1,8 +1,7 @@
-import React from 'react';
-import RegistrationCard from './RegistrationCard'; // Ensure correct import based on your file structure
+import React, { FC } from 'react';
+import RegistrationCard from './RegistrationCard';
 import Pagination from './Pagination';
 import { IRegistration } from '@/types';
-import { CardProps } from './RegistrationCard';
 
 type CollectionProps = {
   data: IRegistration[];
@@ -15,7 +14,7 @@ type CollectionProps = {
   collectionType?: 'Events_Organized' | 'My_Tickets' | 'My_Registrations' | 'All_Events';
 };
 
-const RegistrationCollection = ({
+const RegistrationCollection: FC<CollectionProps> = ({
   data,
   emptyTitle,
   emptyStateSubtext,
@@ -24,7 +23,7 @@ const RegistrationCollection = ({
   totalPages = 0,
   collectionType,
   urlParamName,
-}: CollectionProps) => {
+}) => {
   const offset = (Number(page) - 1) * Number(limit);
   const paginatedData = data.slice(offset, offset + Number(limit));
 
@@ -33,37 +32,30 @@ const RegistrationCollection = ({
       {paginatedData.length > 0 ? (
         <div className="flex flex-col items-center gap-10">
           <ul className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
-            {paginatedData.map((item) => {
-              if (collectionType === 'My_Registrations' && item.event && item.event._id) {
-                const cardProps: CardProps = {
-                  event: {
+            {paginatedData.map((item: IRegistration) => (
+              <li key={item.event._id} className="flex justify-center">
+                <RegistrationCard
+                  event={{
                     ...item.event,
-                    customFieldValues: item.event.customFieldValues?.map(field => ({
-                      groupId: 'default',
-                      fields: [
-                        {
-                          id: field.id,
-                          label: field.label,
-                          type: 'text', // Assuming 'text' as default type
-                          value: field.value
-                        }
-                      ]
-                    }))
-                  },
-                  registrations: item.registrations,
-                  isMyTicket: false // Set this value based on your logic
-                };
-
-                return (
-                  <li key={item.event._id} className="flex justify-center">
-                    <RegistrationCard {...cardProps} />
-                  </li>
-                );
-              }
-
-              // Handle other collection types as needed
-              return null;
-            })}
+                    imageUrl: item.event.imageUrl || '',
+                    customFieldValues: item.event.customFieldValues?.map(group => ({
+                      groupId: group.groupId || '',
+                      fields: group.fields?.map(field => ({
+                        id: field.id || '',
+                        label: field.label || '',
+                        type: field.type || '',
+                        value: field.value || ''
+                      })) || []
+                    })) || []
+                  }}
+                  registrations={item.registrations.map(reg => ({
+                    queueNumber: reg.queueNumber || '',
+                    name: reg.name || ''
+                  }))}
+                  isMyTicket={collectionType === 'My_Tickets'}
+                />
+              </li>
+            ))}
           </ul>
 
           {totalPages > 1 && (

@@ -65,11 +65,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log('Fetched data:', data);
       if (Array.isArray(data.attendees)) {
         setRegisteredUsers(data.attendees);
+        const totalRegistrations = data.attendees.reduce((count: number, user: User) => {
+          return count + user.order.customFieldValues.length;
+        }, 0);
         const attendedCount = data.attendees.reduce((count: number, user: User) => {
           return count + user.order.customFieldValues.filter(group => group.attendance).length;
         }, 0);
         setAttendedUsersCount(attendedCount);
-        console.log('Registered users set:', data.attendees);
+        console.log('Total registrations:', totalRegistrations);
+        console.log('Attended users:', attendedCount);
       } else {
         setRegisteredUsers([]);
         setAttendedUsersCount(0);
