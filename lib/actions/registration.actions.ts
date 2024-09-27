@@ -4,6 +4,11 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import User from '../database/models/user.model';
 
+interface CustomFieldGroup {
+  queueNumber: string;
+  fields: Array<{ label: string; value: string }>;
+}
+
 export const getRegistrationsByUser = async (userId: string): Promise<IRegistration[]> => {
   try {
     await connectToDatabase();
@@ -33,16 +38,18 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
               imageUrl: order.event.imageUrl,
               organizer: order.event.organizer,
               orderId: order._id?.toString(), // Use optional chaining
-              customFieldValues: order.customFieldValues ?? [], // Use optional chaining
-              queueNumber: order.queueNumber ?? '', // Use optional chaining
-              attendeeCount: order.attendeeCount ?? 0, // Use optional chaining
+              customFieldValues: order.customFieldValues,
+              attendeeCount: order.event.attendeeCount ?? 0,
             },
             registrations: [],
           };
         }
-        eventMap[eventId].registrations.push({
-          queueNumber: order.queueNumber ?? '', // Use optional chaining
-          name: order.customFieldValues?.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+        order.customFieldValues.forEach((group: CustomFieldGroup) => {
+          const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+          eventMap[eventId].registrations.push({
+            queueNumber: group.queueNumber,
+            name: nameField ? nameField.value : 'Unknown',
+          });
         });
       }
     });

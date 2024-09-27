@@ -7,7 +7,6 @@ import { currentUser } from '@clerk/nextjs';
 
 export async function GET(req: NextRequest) {
   try {
-    // Authenticate the user
     const user = await currentUser();
     const userId = user?.publicMetadata.userId as string;
 
@@ -17,12 +16,10 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
-    // Fetch all orders for the authenticated user
     const orders = await Order.find({ buyer: userId })
       .populate('event', 'title')
       .exec();
 
-    // Aggregate orders by event
     const registrationsMap: { [eventId: string]: any } = {};
 
     orders.forEach(order => {
@@ -34,15 +31,16 @@ export async function GET(req: NextRequest) {
           registrations: []
         };
       }
-      const nameField = order.customFieldValues.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'));
-      const name = nameField ? nameField.value : 'Unknown';
-      registrationsMap[eventId].registrations.push({
-        queueNumber: order.queueNumber,
-        name
+      order.customFieldValues.forEach((group: { fields: { label: string; value: string }[] }) => {
+        const nameField = group.fields.find((field: { label: string; value: string }) => field.label.toLowerCase().includes('name'));
+        const name = nameField ? nameField.value : 'Unknown';
+        registrationsMap[eventId].registrations.push({
+          queueNumber: order.queueNumber,
+          name
+        });
       });
     });
 
-    // Convert the map to an array
     const aggregatedRegistrations = Object.values(registrationsMap);
 
     return NextResponse.json(aggregatedRegistrations);
