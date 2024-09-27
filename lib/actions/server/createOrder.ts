@@ -17,7 +17,6 @@ export const createOrder = async (order: CreateOrderParams) => {
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId),
-      buyer: new ObjectId(order.buyerId), // Use buyerId from order params
       customFieldValues: order.customFieldValues.map(group => ({
         groupId: group.groupId,
         fields: group.fields.map(field => ({

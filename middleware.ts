@@ -7,7 +7,9 @@ export default authMiddleware({
     '/events/:id',
     '/api/webhook/clerk',
     '/api/events',
-    '/api/createOrder',  // Add this line
+    '/api/createOrder',
+    '/events/:id/register',  // Add this line
+    '/events/:id/thank-you', // Add this line
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',

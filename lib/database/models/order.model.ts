@@ -30,7 +30,6 @@ export interface IOrderItem {
   createdAt: Date;
   eventTitle: string;
   eventId: string;
-  buyerName: string;
   customFieldValues: {
     groupId: string;
     fields: {
@@ -73,5 +72,8 @@ const OrderSchema = new Schema({
     },
   ],
 });
+
+// Add this index
+OrderSchema.index({ 'customFieldValues.fields.value': 1 });
 
 export default models.Order || model<IOrder>('Order', OrderSchema);

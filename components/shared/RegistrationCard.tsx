@@ -1,57 +1,32 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { IOrderItem } from '@/lib/database/models/order.model'
+import { formatDateTime } from '@/lib/utils'
 
-export type CardProps = {
-  event: {
-    _id: string;
-    title: string;
-    imageUrl: string;
-    organizer: { _id: string };
-    orderId?: string;
-    customFieldValues?: {
-      groupId: string;
-      fields: {
-        id: string;
-        label: string;
-        type: string;
-        value: string;
-      }[];
-    }[];
-    queueNumber?: string;
-    attendeeCount?: number;
-  };
-  registrations: {
-    queueNumber: string | undefined;
-    name: string | undefined;
-  }[];
-  isMyTicket?: boolean;
-};
+type Props = {
+  registration: IOrderItem
+}
 
-const RegistrationCard: React.FC<CardProps> = ({ event, registrations, isMyTicket }) => {
+const RegistrationCard = ({ registration }: Props) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
-      <Link 
-        href={`/orders/${event.orderId}`}
-        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
-        style={{backgroundImage: `url(${event.imageUrl})`}}
-      />
       <div className="flex flex-col gap-3 p-5 md:gap-4">
-        <h3 className="text-xl font-bold text-gray-800">{event.title}</h3>
-        <ul className="mt-4 space-y-2">
-          {registrations.map((reg, index) => (
-            <li key={index} className="flex justify-between py-1 text-gray-600">
-              <span>Queue Number: <span className="font-medium">{reg.queueNumber}</span></span>
-              <span>Name: <span className="font-medium">{reg.name}</span></span>
-            </li>
+        <div className="flex flex-col gap-2">
+          <h2 className="h3-bold line-clamp-2 text-black">{registration.eventTitle}</h2>
+          <p className="p-medium-16 md:p-medium-20 line-clamp-2 text-black">
+            {formatDateTime(registration.createdAt).dateTime}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="p-medium-16 md:p-medium-18 text-black">Queue Number: {registration.customFieldValues[0].queueNumber}</p>
+          {registration.customFieldValues[0].fields.map((field, index) => (
+            <p key={index} className="p-medium-14 md:p-medium-16 text-grey-600">
+              {field.label}: {field.value}
+            </p>
           ))}
-        </ul>
-        <Button asChild size="sm" className="mt-4 self-start">
-          <Link href={`/orders/${event.orderId}`}>View Order Details</Link>
-        </Button>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default RegistrationCard;
+export default RegistrationCard

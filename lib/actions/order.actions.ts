@@ -1,12 +1,34 @@
 "use server"
 
-import { CheckoutOrderParams, CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams } from "@/types"
+import { CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams } from "@/types"
 import { handleError } from '../utils';
 import { connectToDatabase } from '../database';
 import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
+import { IOrder, IOrderItem } from '../database/models/order.model';
 import User from '../database/models/user.model';
+
+
+interface CustomField {
+  id: string;
+  label: string;
+  type: string;
+  value: string;
+}
+
+interface CustomFieldGroup {
+  groupId: string;
+  fields: CustomField[];
+  queueNumber: string;
+  attendance: boolean;
+}
+
+interface TypedOrder {
+  _id: { toString: () => string };
+  createdAt: Date;
+  event: { title: string };
+}
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -16,11 +38,6 @@ export async function createOrder(order: CreateOrderParams) {
     if (!ObjectId.isValid(order.eventId)) {
       console.log("Invalid eventId:", order.eventId);
       throw new Error('Invalid eventId');
-    }
-
-    if (!ObjectId.isValid(order.buyerId)) {
-      console.log("Invalid buyerId:", order.buyerId);
-      throw new Error('Invalid buyerId');
     }
 
     const event = await Event.findById(order.eventId);
@@ -53,7 +70,6 @@ export async function createOrder(order: CreateOrderParams) {
     const newOrder = await Order.create({
       ...order,
       event: new ObjectId(order.eventId),
-      buyer: new ObjectId(order.buyerId),
       customFieldValues: newCustomFieldValues,
     });
 
@@ -73,24 +89,53 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     const eventObjectId = new ObjectId(eventId);
 
     const orders = await Order.find({ event: eventObjectId })
-      .populate('buyer', '')
       .populate('event', 'title')
-      .select('_id createdAt event buyer customFieldValues');
+      .select('_id createdAt event customFieldValues')
+      .lean();
 
-    const formattedOrders = orders.map(order => ({
-      _id: order._id.toString(),
-      createdAt: order.createdAt,
-      eventTitle: order.event.title,
-      eventId: order.event._id.toString(),
-      customFieldValues: order.customFieldValues.map((group: { groupId: string; fields: any[]; queueNumber: string; attendance: boolean }) => ({
-        groupId: group.groupId,
-        fields: group.fields,
-        queueNumber: group.queueNumber,
-        attendance: group.attendance
-      }))
-    }));
+    const formattedOrders: IOrderItem[] = orders.map((order) => {
+      const typedOrder = order as unknown as IOrder;
 
-    return JSON.parse(JSON.stringify(formattedOrders));
+      return {
+        _id: (typedOrder as TypedOrder)._id.toString(),
+        createdAt: (typedOrder as TypedOrder).createdAt,
+        eventTitle: (typedOrder as TypedOrder).event.title,
+        eventId: typedOrder.event._id.toString(),
+        customFieldValues: typedOrder.customFieldValues.map((group: CustomFieldGroup) => ({
+          groupId: group.groupId,
+          fields: group.fields,
+          queueNumber: group.queueNumber,
+          attendance: group.attendance
+        }))
+      };
+    });
+
+    // If searchString is provided, filter the orders
+    if (searchString) {
+      const lowercasedSearchString = searchString.toLowerCase();
+      return formattedOrders.filter(order => {
+        const phoneField = order.customFieldValues.flatMap(group => 
+          group.fields.find(field => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
+        ).find(field => field);
+
+        const nameField = order.customFieldValues.flatMap(group => 
+          group.fields.find(field => field.label.toLowerCase().includes('name'))
+        ).find(field => field);
+
+        const phoneNumber = phoneField?.value || '';
+        const name = nameField?.value || '';
+
+        return phoneNumber.includes(lowercasedSearchString) ||
+               name.toLowerCase().includes(lowercasedSearchString) ||
+               order.customFieldValues.some(group => 
+                 group.fields.some(field => 
+                   field.value.toLowerCase().includes(lowercasedSearchString)
+                 )
+               );
+      });
+    }
+
+    return formattedOrders;
   } catch (error) {
     handleError(error);
   }
@@ -174,6 +219,39 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
     return totalRegistrations;
   } catch (error) {
     console.error('Error fetching total registrations:', error);
+    throw error;
+  }
+}
+
+export async function getOrdersByPhoneNumber(phoneNumber: string) {
+  try {
+    await connectToDatabase();
+
+    const orders = await Order.find({
+      'customFieldValues.fields': {
+        $elemMatch: {
+          type: 'phone',
+          value: phoneNumber
+        }
+      }
+    }).populate('event', 'title');
+
+    const formattedOrders = orders.map(order => ({
+      _id: order._id.toString(),
+      createdAt: order.createdAt,
+      eventTitle: order.event.title,
+      eventId: order.event._id.toString(),
+      customFieldValues: order.customFieldValues.map((group: CustomFieldGroup) => ({
+        groupId: group.groupId,
+        fields: group.fields,
+        queueNumber: group.queueNumber,
+        attendance: group.attendance
+      }))
+    }));
+
+    return JSON.parse(JSON.stringify(formattedOrders));
+  } catch (error) {
+    console.error('Error fetching orders by phone number:', error);
     throw error;
   }
 }
