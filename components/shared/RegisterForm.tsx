@@ -92,6 +92,8 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFieldValues,
       };
 
+      console.log("Sending order data:", orderData);
+
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
@@ -100,15 +102,25 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         body: JSON.stringify(orderData),
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        const errorData = await response.json();
+        console.error("Error response:", errorData);
+        throw new Error(`Failed to create order: ${errorData.message || response.statusText}`);
       }
 
       const data = await response.json();
-      router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
+      console.log("Response data:", data);
+
+      if (data.order && data.order._id) {
+        router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
+      } else {
+        throw new Error('Invalid response data');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
-      setMessage('Failed to submit registration. Please try again.');
+      setMessage(`Failed to submit registration: ${(error as Error).message}`);
     } finally {
       setIsSubmitting(false);
     }
