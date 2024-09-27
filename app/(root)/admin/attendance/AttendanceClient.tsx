@@ -212,11 +212,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                  <th className="py-2 px-4 border-b text-left">Participant's Name 参加者名字</th>
-                  <th className="py-2 px-4 border-b text-left">Contact number 联系号码</th>
                   {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues[0]?.fields && 
                     registeredUsers[0].order.customFieldValues[0].fields
-                      .filter(field => !['name', 'phone'].includes(field.label.toLowerCase()))
+                      .filter(field => !['name'].includes(field.label.toLowerCase()))
                       .map(field => (
                         <th key={field.id} className="py-2 px-4 border-b text-left">
                           {field.label}
@@ -231,14 +229,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   user.order.customFieldValues.map((group) => (
                     <tr key={`${user.id}_${group.groupId}`} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
-                      <td className="py-2 px-4 border-b text-left">
-                        {group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A'}
-                      </td>
-                      <td className="py-2 px-4 border-b text-left">
-                        {group.fields.find(f => f.label.toLowerCase() === 'phone')?.value || 'N/A'}
-                      </td>
                       {group.fields
-                        .filter(field => !['name', 'phone'].includes(field.label.toLowerCase()))
+                        .filter(field => !['name'].includes(field.label.toLowerCase()))
                         .map(field => (
                           <td key={field.id} className="py-2 px-4 border-b text-left">
                             {field.value || 'N/A'}
