@@ -56,7 +56,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
-    // resolver: zodResolver(formSchema), // Comment this line out temporarily
+    resolver: zodResolver(formSchema),
     defaultValues: {
       groups: [Object.fromEntries(
         customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
@@ -72,7 +72,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log("onSubmit function called");
     console.log("Form is valid:", form.formState.isValid);
-    console.log("Form errors:", form.formState.errors);
+    console.log("Form errors:", JSON.stringify(form.formState.errors, null, 2));
     console.log("Form submitted with values:", values);
     
     if (!form.formState.isValid) {
