@@ -205,7 +205,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.length}</p>
+          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.reduce((count, user) => count + user.order.customFieldValues.length, 0)}</p>
           <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
