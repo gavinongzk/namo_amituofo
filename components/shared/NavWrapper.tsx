@@ -8,7 +8,7 @@ interface NavWrapperProps {
 }
 
 const NavWrapper: React.FC<NavWrapperProps> = ({ onClose }) => {
-  const { user, isSignedIn } = useUser();
+  const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const isNormalAdmin = user?.publicMetadata.role === 'admin';
 

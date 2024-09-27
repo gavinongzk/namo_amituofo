@@ -24,31 +24,34 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           寺院活动 Events
         </Link>
       </li>
-      {isSuperAdmin && (
-        <li>
-          <Link href="/events/create" onClick={handleClick}>
-            创建活动 Create Event
-          </Link>
-        </li>
-      )}
-      <li>
-        <Link href="/profile" onClick={handleClick}>
-          我的活动 My Events
-        </Link>
-      </li>
       <li>
         <Link href="/event-lookup" onClick={handleClick}>
           活动查询 Event Lookup
         </Link>
       </li>
-      {(isSuperAdmin || isNormalAdmin) && (
-        <li>
-          <Link href="/admin/dashboard" onClick={handleClick}>
-            管理员系统 Admin Dashboard
-          </Link>
-        </li>
-      )}
-      {!isSignedIn && (
+      {isSignedIn ? (
+        <>
+          <li>
+            <Link href="/profile" onClick={handleClick}>
+              我的活动 My Events
+            </Link>
+          </li>
+          {isSuperAdmin && (
+            <li>
+              <Link href="/events/create" onClick={handleClick}>
+                创建活动 Create Event
+              </Link>
+            </li>
+          )}
+          {(isSuperAdmin || isNormalAdmin) && (
+            <li>
+              <Link href="/admin/dashboard" onClick={handleClick}>
+                管理员系统 Admin Dashboard
+              </Link>
+            </li>
+          )}
+        </>
+      ) : (
         <li>
           <Link href="/sign-in" onClick={handleClick}>
             Login 登录
