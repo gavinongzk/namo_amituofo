@@ -224,24 +224,20 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
   }
 }
 
-export async function getOrdersByPhoneNumber(phoneNumber: string) {
+export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
-    const res = await fetch(`/api/orders?phoneNumber=${encodeURIComponent(phoneNumber)}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!res.ok) {
+    const encodedPhoneNumber = encodeURIComponent(phoneNumber);
+    const url = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/orders?phoneNumber=${encodedPhoneNumber}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
       throw new Error('Failed to fetch orders');
     }
 
-    const data = await res.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching orders by phone number:', error);
+    console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;
   }
-}
+};
 

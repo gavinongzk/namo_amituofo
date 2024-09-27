@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import RegistrationCollection from '@/components/shared/RegistrationCollection';
 import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const EventLookupPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -32,11 +33,15 @@ const EventLookupPage = () => {
       </section>
 
       <div className="flex flex-col gap-4">
-        <Input
-          type="tel"
+        <PhoneInput
           placeholder="Enter phone number"
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          onChange={(value) => setPhoneNumber(value || '')}
+          defaultCountry="SG"
+          countries={["SG", "MY"]}
+          international
+          countryCallingCodeEditable={false}
+          className="p-regular-16 border-2 border-gray-300 rounded-md"
         />
         <Button onClick={handleLookup} disabled={isLoading}>
           {isLoading ? 'Looking up...' : 'Lookup Orders'}
