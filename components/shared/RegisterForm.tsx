@@ -33,6 +33,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   }, [event._id]);
 
   const customFields = categoryCustomFields[event.category.name] || [];
+  console.log("Custom fields:", customFields);
 
   const formSchema = z.object({
     groups: z.array(
@@ -55,7 +56,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    // resolver: zodResolver(formSchema), // Comment this line out temporarily
     defaultValues: {
       groups: [Object.fromEntries(
         customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
@@ -70,7 +71,15 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log("onSubmit function called");
+    console.log("Form is valid:", form.formState.isValid);
+    console.log("Form errors:", form.formState.errors);
     console.log("Form submitted with values:", values);
+    
+    if (!form.formState.isValid) {
+      console.log("Form is invalid, submission stopped");
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage(''); // Clear any previous message
     try {
@@ -131,7 +140,15 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        try {
+          form.handleSubmit(onSubmit)(e);
+        } catch (error) {
+          console.error("Error in form submission:", error);
+        }
+      }} className="space-y-8">
+        <input type="hidden" {...form.register('groups.0.name')} />
         {message && <p className="text-red-500">{message}</p>}
         {isFullyBooked ? (
           <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
