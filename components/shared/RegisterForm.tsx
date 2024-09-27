@@ -69,6 +69,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log("onSubmit function called");
     console.log("Form submitted with values:", values);
     setIsSubmitting(true);
     setMessage(''); // Clear any previous message
@@ -189,7 +190,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
               >
                 Add Another Person 添加另一位
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="flex-1"
+                onClick={() => console.log("Button clicked")}
+              >
                 {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
               </Button>
             </div>
