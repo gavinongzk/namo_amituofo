@@ -144,10 +144,11 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
     const events = (await eventsQuery.exec()) as IEvent[];
     const eventsWithCount = await Promise.all(
       events.map(async (event) => {
-        const attendeeCount = await Order.countDocuments({ event: event._id });
+        const orders = await Order.find({ event: event._id });
+        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0);
         return {
           ...JSON.parse(JSON.stringify(event)),
-          attendeeCount,
+          registrationCount,
         };
       })
     );
@@ -178,15 +179,16 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
     const events = await populateEvent(eventsQuery);
     const eventsCount = await Event.countDocuments(conditions);
 
-    const eventsWithAttendeeCount = await Promise.all(events.map(async (event: IEvent) => {
-      const attendeeCount = await getOrderCountByEvent(event._id);
+    const eventsWithRegistrationCount = await Promise.all(events.map(async (event: IEvent) => {
+      const orders = await Order.find({ event: event._id });
+      const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0);
       return {
         ...JSON.parse(JSON.stringify(event)),
-        attendeeCount
+        registrationCount
       };
     }));
 
-    return { data: eventsWithAttendeeCount, totalPages: Math.ceil(eventsCount / limit) };
+    return { data: eventsWithRegistrationCount, totalPages: Math.ceil(eventsCount / limit) };
   } catch (error) {
     handleError(error);
   }

@@ -5,7 +5,7 @@ import Card from './Card'
 import Pagination from './Pagination'
 
 type CollectionProps = {
-  data: (IEvent & { orderId?: string, customFieldValues?: CustomField[], queueNumber?: string, attendeeCount?: number })[], // Add customFieldValues, queueNumber, and attendeeCount to the event type
+  data: (IEvent & { orderId?: string, customFieldValues?: CustomField[], queueNumber?: string, registrationCount?: number })[], // Change attendeeCount to registrationCount
   emptyTitle: string,
   emptyStateSubtext: string,
   limit: number,
