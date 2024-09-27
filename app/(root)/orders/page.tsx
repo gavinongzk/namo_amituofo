@@ -34,9 +34,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
           <tbody>
             {orders && orders.map((order: IOrderItem) => (
               <tr key={order._id} className="p-regular-14 lg:p-regular-16 border-b">
-                <td className="min-w-[200px] py-4 text-left">{order.eventTitle}</td>
-                <td className="min-w-[150px] py-4 text-left">{order.customFieldValues[0].queueNumber}</td> 
-                <td className="min-w-[150px] py-4 text-left">{order.customFieldValues[0].attendance ? "Yes" : "No"}</td>
+                <td className="min-w-[200px] py-4 text-left">{order.event.title}</td>
+                <td className="min-w-[150px] py-4 text-left">{order.customFieldValues[0]?.queueNumber || 'N/A'}</td> 
+                <td className="min-w-[150px] py-4 text-left">{order.customFieldValues[0]?.attendance ? "Yes" : "No"}</td>
                 <td className="min-w-[150px] py-4 text-left">
                   {formatDateTime(order.createdAt).dateTime}
                 </td>

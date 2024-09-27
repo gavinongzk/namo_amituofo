@@ -89,37 +89,38 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     const eventObjectId = new ObjectId(eventId);
 
     const orders = await Order.find({ event: eventObjectId })
-      .populate('event', 'title')
+      .populate('event', 'title imageUrl startDateTime endDateTime')
       .select('_id createdAt event customFieldValues')
       .lean();
 
-    const formattedOrders: IOrderItem[] = orders.map((order) => {
-      const typedOrder = order as unknown as IOrder;
-
-      return {
-        _id: (typedOrder as TypedOrder)._id.toString(),
-        createdAt: (typedOrder as TypedOrder).createdAt,
-        eventTitle: (typedOrder as TypedOrder).event.title,
-        eventId: typedOrder.event._id.toString(),
-        customFieldValues: typedOrder.customFieldValues.map((group: CustomFieldGroup) => ({
-          groupId: group.groupId,
-          fields: group.fields,
-          queueNumber: group.queueNumber,
-          attendance: group.attendance
-        }))
-      };
-    });
+    const formattedOrders: IOrderItem[] = orders.map((order: any) => ({
+      _id: order._id.toString(),
+      createdAt: order.createdAt,
+      event: {
+        _id: order.event._id.toString(),
+        title: order.event.title,
+        imageUrl: order.event.imageUrl,
+        startDateTime: order.event.startDateTime,
+        endDateTime: order.event.endDateTime,
+      },
+      customFieldValues: order.customFieldValues.map((field: any) => ({
+        groupId: field.groupId,
+        queueNumber: field.queueNumber,
+        fields: field.fields,
+        attendance: field.attendance || false,
+      })),
+    }));
 
     // If searchString is provided, filter the orders
     if (searchString) {
       const lowercasedSearchString = searchString.toLowerCase();
       return formattedOrders.filter(order => {
         const phoneField = order.customFieldValues.flatMap(group => 
-          group.fields.find(field => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
+          group.fields.find((field: any) => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
         ).find(field => field);
 
         const nameField = order.customFieldValues.flatMap(group => 
-          group.fields.find(field => field.label.toLowerCase().includes('name'))
+          group.fields.find((field: any) => field.label.toLowerCase().includes('name'))
         ).find(field => field);
 
         const phoneNumber = phoneField?.value || '';
@@ -128,7 +129,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         return phoneNumber.includes(lowercasedSearchString) ||
                name.toLowerCase().includes(lowercasedSearchString) ||
                order.customFieldValues.some(group => 
-                 group.fields.some(field => 
+                 group.fields.some((field: any) => 
                    field.value.toLowerCase().includes(lowercasedSearchString)
                  )
                );

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { useUser } from '@clerk/nextjs';
 
 interface NavItemsProps {
   isSuperAdmin: boolean;
@@ -11,6 +12,7 @@ interface NavItemsProps {
 }
 
 const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClose, className }) => {
+  const { isSignedIn } = useUser();
   const handleClick = () => {
     if (onClose) onClose();
   };
@@ -43,6 +45,13 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
         <li>
           <Link href="/admin/dashboard" onClick={handleClick}>
             管理员系统 Admin Dashboard
+          </Link>
+        </li>
+      )}
+      {!isSignedIn && (
+        <li>
+          <Link href="/sign-in" onClick={handleClick}>
+            Login 登录
           </Link>
         </li>
       )}

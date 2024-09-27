@@ -7,40 +7,40 @@ export interface CustomField {
   value: string;
 }
 
+export interface CustomFieldGroup {
+  groupId: string;
+  fields: CustomField[];
+  queueNumber: string;
+  attendance: boolean;
+}
+
 export interface IOrder extends Document {
+  _id: string;
   createdAt: Date;
   event: {
     _id: string;
     title: string;
+    imageUrl?: string;
+    startDateTime?: Date;
+    endDateTime?: Date;
   };
   buyer: {
     _id: string;
   };
-  customFieldValues: {
-    groupId: string;
-    fields: CustomField[];
-    queueNumber: string;
-    attendance: boolean;
-  }[];
-
+  customFieldValues: CustomFieldGroup[];
 }
 
 export interface IOrderItem {
   _id: string;
   createdAt: Date;
-  eventTitle: string;
-  eventId: string;
-  customFieldValues: {
-    groupId: string;
-    fields: {
-      id: string;
-      label: string;
-      type: string;
-      value: string;
-    }[];
-    queueNumber: string;
-    attendance: boolean;
-  }[];
+  event: {
+    _id: string;
+    title: string;
+    imageUrl: string;
+    startDateTime: Date;
+    endDateTime: Date;
+  };
+  customFieldValues: CustomFieldGroup[];
 }
 
 const OrderSchema = new Schema({

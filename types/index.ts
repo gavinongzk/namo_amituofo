@@ -145,6 +145,8 @@ export interface IRegistration {
     _id: string;
     title: string;
     imageUrl?: string;
+    startDateTime?: Date;
+    endDateTime?: Date;
     organizer: { _id: string };
     orderId?: string;
     customFieldValues?: {
