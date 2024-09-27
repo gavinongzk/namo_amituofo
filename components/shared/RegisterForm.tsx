@@ -167,17 +167,20 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                 )}
               </div>
             ))}
-            <Button
-              type="button"
-              onClick={() => append(Object.fromEntries(
-                customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
-              ))}
-            >
-              Add Another Person
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
-            </Button>
+            <div className="flex gap-4 mt-6">
+              <Button
+                type="button"
+                onClick={() => append(Object.fromEntries(
+                  customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+                ))}
+                className="flex-1 bg-secondary hover:bg-secondary-dark text-white"
+              >
+                Add Another Person
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
+              </Button>
+            </div>
           </>
         )}
       </form>

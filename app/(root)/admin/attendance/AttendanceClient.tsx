@@ -16,14 +16,14 @@ type User = {
   order: {
     customFieldValues: {
       groupId: string;
+      queueNumber: string;
+      attendance: boolean;
       fields: {
         id: string;
         label: string;
         type: string;
         value: string;
       }[];
-      queueNumber: string;
-      attendance: boolean;
     }[];
     version: number;
   };
@@ -64,13 +64,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       const data = await res.json();
       console.log('Fetched data:', data);
       if (Array.isArray(data.attendees)) {
-        setRegisteredUsers(data.attendees);
         const totalRegistrations = data.attendees.reduce((count: number, user: User) => {
           return count + user.order.customFieldValues.length;
         }, 0);
         const attendedCount = data.attendees.reduce((count: number, user: User) => {
           return count + user.order.customFieldValues.filter(group => group.attendance).length;
         }, 0);
+        setRegisteredUsers(data.attendees);
         setAttendedUsersCount(attendedCount);
         console.log('Total registrations:', totalRegistrations);
         console.log('Attended users:', attendedCount);
@@ -212,28 +212,39 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
-                    registeredUsers[0].order.customFieldValues.flatMap(group => 
-                      group.fields.map(field => (
-                        <th key={`${group.groupId}_${field.id}`} className="py-2 px-4 border-b text-left">
+                  <th className="py-2 px-4 border-b text-left">Participant's Name 参加者名字</th>
+                  <th className="py-2 px-4 border-b text-left">Contact number 联系号码</th>
+                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues[0]?.fields && 
+                    registeredUsers[0].order.customFieldValues[0].fields
+                      .filter(field => !['name', 'phone'].includes(field.label.toLowerCase()))
+                      .map(field => (
+                        <th key={field.id} className="py-2 px-4 border-b text-left">
                           {field.label}
                         </th>
                       ))
-                    )
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
                 </tr>
               </thead>
               <tbody>
-                {currentPageUsers.map((user) => (
+                {currentPageUsers.flatMap((user) => (
                   user.order.customFieldValues.map((group) => (
                     <tr key={`${user.id}_${group.groupId}`} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
-                      {group.fields.map(field => (
-                        <td key={`${group.groupId}_${field.id}`} className="py-2 px-4 border-b text-left">
-                          {field.value || 'N/A'}
-                        </td>
-                      ))}
+                      <td className="py-2 px-4 border-b text-left">
+                        {group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A'}
+                      </td>
+                      <td className="py-2 px-4 border-b text-left">
+                        {group.fields.find(f => f.label.toLowerCase() === 'phone')?.value || 'N/A'}
+                      </td>
+                      {group.fields
+                        .filter(field => !['name', 'phone'].includes(field.label.toLowerCase()))
+                        .map(field => (
+                          <td key={field.id} className="py-2 px-4 border-b text-left">
+                            {field.value || 'N/A'}
+                          </td>
+                        ))
+                      }
                       <td className="py-2 px-4 border-b text-center">
                         <input
                           type="checkbox"
