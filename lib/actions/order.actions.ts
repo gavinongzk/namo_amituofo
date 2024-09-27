@@ -147,13 +147,33 @@ export async function getOrderCountByEvent(eventId: string) {
     }
 
     const orders = await Order.find({ event: eventId });
-    const registrationCount = orders.reduce((count, order) => {
+    const attendeeCount = orders.reduce((count, order) => {
+      return count + order.customFieldValues.filter(group => group.attendance).length;
+    }, 0);
+
+    return attendeeCount;
+  } catch (error) {
+    console.error('Error fetching attendee count:', error);
+    throw error;
+  }
+}
+
+export async function getTotalRegistrationsByEvent(eventId: string) {
+  try {
+    await connectToDatabase();
+
+    if (!ObjectId.isValid(eventId)) {
+      throw new Error('Invalid eventId');
+    }
+
+    const orders = await Order.find({ event: eventId });
+    const totalRegistrations = orders.reduce((count, order) => {
       return count + order.customFieldValues.length;
     }, 0);
 
-    return registrationCount;
+    return totalRegistrations;
   } catch (error) {
-    console.error('Error fetching order count:', error);
+    console.error('Error fetching total registrations:', error);
     throw error;
   }
 }

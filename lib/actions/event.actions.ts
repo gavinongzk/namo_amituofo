@@ -19,6 +19,7 @@ import {
 
 import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
+import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -178,7 +179,7 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
     const eventsCount = await Event.countDocuments(conditions);
 
     const eventsWithAttendeeCount = await Promise.all(events.map(async (event: IEvent) => {
-      const attendeeCount = await Order.countDocuments({ event: event._id });
+      const attendeeCount = await getOrderCountByEvent(event._id);
       return {
         ...JSON.parse(JSON.stringify(event)),
         attendeeCount
@@ -226,11 +227,13 @@ export async function getEventWithAttendeeCount(eventId: string) {
 
     if (!event) throw new Error('Event not found')
 
-    const attendeeCount = await Order.countDocuments({ event: eventId })
+    const attendeeCount = await getOrderCountByEvent(eventId)
+    const totalRegistrations = await getTotalRegistrationsByEvent(eventId)
 
     const eventWithCount = {
       ...JSON.parse(JSON.stringify(event)),
-      attendeeCount
+      attendeeCount,
+      totalRegistrations
     }
 
     return eventWithCount
