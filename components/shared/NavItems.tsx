@@ -34,6 +34,11 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           我的活动 My Events
         </Link>
       </li>
+      <li>
+        <Link href="/event-lookup" onClick={handleClick}>
+          活动查询 Event Lookup
+        </Link>
+      </li>
       {(isSuperAdmin || isNormalAdmin) && (
         <li>
           <Link href="/admin/dashboard" onClick={handleClick}>

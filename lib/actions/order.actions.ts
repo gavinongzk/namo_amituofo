@@ -225,31 +225,19 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 
 export async function getOrdersByPhoneNumber(phoneNumber: string) {
   try {
-    await connectToDatabase();
+    const res = await fetch(`/api/orders?phoneNumber=${encodeURIComponent(phoneNumber)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch orders');
+    }
 
-    const orders = await Order.find({
-      'customFieldValues.fields': {
-        $elemMatch: {
-          type: 'phone',
-          value: phoneNumber
-        }
-      }
-    }).populate('event', 'title');
-
-    const formattedOrders = orders.map(order => ({
-      _id: order._id.toString(),
-      createdAt: order.createdAt,
-      eventTitle: order.event.title,
-      eventId: order.event._id.toString(),
-      customFieldValues: order.customFieldValues.map((group: CustomFieldGroup) => ({
-        groupId: group.groupId,
-        fields: group.fields,
-        queueNumber: group.queueNumber,
-        attendance: group.attendance
-      }))
-    }));
-
-    return JSON.parse(JSON.stringify(formattedOrders));
+    const data = await res.json();
+    return data;
   } catch (error) {
     console.error('Error fetching orders by phone number:', error);
     throw error;
