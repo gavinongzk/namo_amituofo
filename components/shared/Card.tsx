@@ -7,13 +7,12 @@ import React from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types';
 
-
 type CardProps = {
   event: IEvent & { 
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    attendeeCount?: number 
+    registrationCount?: number  // Changed from attendeeCount to registrationCount
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
@@ -28,11 +27,10 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`} // Conditional redirect
+        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
-      {/* IS EVENT CREATOR ... */}
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all">
@@ -64,7 +62,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">Attendees: {event.attendeeCount || 0}</p>
+            <p className="p-medium-16 text-grey-500">Registrations: {event.registrationCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
           </div>
         )}

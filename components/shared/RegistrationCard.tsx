@@ -32,7 +32,7 @@ const RegistrationCard: React.FC<CardProps> = ({ event, registrations, isMyTicke
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
+        href={`/orders/${event.orderId}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
@@ -47,7 +47,7 @@ const RegistrationCard: React.FC<CardProps> = ({ event, registrations, isMyTicke
           ))}
         </ul>
         <Button asChild size="sm" className="mt-4 self-start">
-          <Link href={`/events/${event._id}`}>View Event</Link>
+          <Link href={`/orders/${event.orderId}`}>View Order Details</Link>
         </Button>
       </div>
     </div>
