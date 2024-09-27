@@ -4,27 +4,25 @@ import { formatDateTime } from '@/lib/utils';
 interface CustomFieldValue {
   id: string;
   label: string;
-  value?: string; // Allow value to be string or undefined
+  value?: string;
 }
 
 interface CustomFieldGroup {
   groupId: string;
   fields: CustomFieldValue[];
-  queueNumber?: string; // Add queueNumber to the interface
+  queueNumber?: string;
 }
 
 const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) => {
   const order = await getOrderById(id);
 
   if (!order) {
-    return <div>Order not found</div>;
+    return <div className="wrapper my-8 text-center">Order not found</div>;
   }
 
-  // Use order.customFieldValues directly
-  const customFieldValues = order.customFieldValues;
-
-  // Ensure customFieldValues is an array
-  const customFieldValuesArray = Array.isArray(customFieldValues) ? customFieldValues : [customFieldValues];
+  const customFieldValuesArray = Array.isArray(order.customFieldValues) 
+    ? order.customFieldValues 
+    : [order.customFieldValues];
 
   return (
     <div className="wrapper my-8">
@@ -32,28 +30,43 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
         <h3 className="wrapper h3-bold text-center sm:text-left">Order Details</h3>
       </section>
 
-      <div className="wrapper my-8">
+      <div className="my-8 grid gap-8 md:grid-cols-2">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h4 className="text-xl font-bold mb-4">Registration Details</h4>
+          <h4 className="text-xl font-bold mb-4">Event Information</h4>
           <p><strong>Event:</strong> {order.event.title}</p>
           <p><strong>Date:</strong> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
-          <h5 className="text-lg font-bold mt-4">Queue Numbers</h5>
-          {customFieldValuesArray.map((group: CustomFieldGroup) => (
-            <div key={group.groupId} className="mb-4">
-              {group.queueNumber && (
-                <p><strong>Queue Number:</strong> {group.queueNumber}</p>
-              )}
-              <h6 className="text-md font-semibold mt-2">Group {group.groupId}</h6>
-              <ul>
-                {group.fields.map((field: CustomFieldValue) => (
-                  <li key={field.id}>
-                    <strong>{field.label}:</strong> {field.value}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <p><strong>Time:</strong> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
         </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h4 className="text-xl font-bold mb-4">Order Summary</h4>
+          <p><strong>Order ID:</strong> {order._id}</p>
+          <p><strong>Order Date:</strong> {formatDateTime(order.createdAt).dateTime}</p>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-md mt-8">
+        <h4 className="text-xl font-bold mb-4">Registration Details</h4>
+        {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
+          <div key={group.groupId} className="mb-6 pb-6 border-b last:border-b-0">
+            <div className="flex justify-between items-center mb-2">
+              <h5 className="text-lg font-semibold">Person {index + 1}</h5>
+              {group.queueNumber && (
+                <span className="bg-primary-50 text-primary-500 px-3 py-1 rounded-full font-medium">
+                  Queue Number: {group.queueNumber}
+                </span>
+              )}
+            </div>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {group.fields.map((field: CustomFieldValue) => (
+                <div key={field.id}>
+                  <dt className="font-medium text-gray-600">{field.label}</dt>
+                  <dd className="mt-1">{field.value || 'N/A'}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
       </div>
     </div>
   );
