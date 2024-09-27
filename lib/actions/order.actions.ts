@@ -227,8 +227,7 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     const encodedPhoneNumber = encodeURIComponent(phoneNumber);
-    const url = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/orders?phoneNumber=${encodedPhoneNumber}`;
-    const response = await fetch(url);
+    const response = await fetch(`/api/orders?phoneNumber=${encodedPhoneNumber}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch orders');
