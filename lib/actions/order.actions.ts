@@ -226,14 +226,20 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 
 export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
-    const encodedPhoneNumber = encodeURIComponent(phoneNumber);
-    const response = await fetch(`/api/orders?phoneNumber=${encodedPhoneNumber}`);
+    await connectToDatabase();
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch orders');
-    }
+    const orders = await Order.find({
+      'customFieldValues.fields': {
+        $elemMatch: {
+          $or: [
+            { type: 'phone', value: phoneNumber },
+            { label: { $regex: /phone/i }, value: phoneNumber }
+          ]
+        }
+      }
+    }).populate('event', 'title imageUrl startDateTime endDateTime');
 
-    return await response.json();
+    return JSON.parse(JSON.stringify(orders));
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;
