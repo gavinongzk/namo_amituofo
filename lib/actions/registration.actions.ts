@@ -42,7 +42,8 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
         }
         eventMap[eventId].registrations.push({
           queueNumber: order.queueNumber ?? '', // Use optional chaining
-          name: order.customFieldValues?.find((field: { label: string, value: string }) => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+          name: order.customFieldValues?.find((field: { label?: string, value?: string }) => 
+            field.label?.toLowerCase().includes('name'))?.value || 'Unknown',
         });
       }
     });

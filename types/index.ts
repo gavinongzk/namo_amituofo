@@ -146,16 +146,24 @@ export interface IRegistration {
   event: {
     _id: string;
     title: string;
-    imageUrl: string;
+    imageUrl?: string;
     organizer: { _id: string };
     orderId?: string;
-    customFieldValues?: { id: string; label: string; value: string }[];
+    customFieldValues?: {
+      groupId?: string;
+      fields?: {
+        id?: string;
+        label?: string;
+        type?: string;
+        value?: string;
+      }[];
+    }[];
     queueNumber?: string;
     attendeeCount?: number;
   };
   registrations: {
-    queueNumber: string;
-    name: string;
+    queueNumber?: string;
+    name?: string;
   }[];
 }
 
