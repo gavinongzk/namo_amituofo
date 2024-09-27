@@ -14,9 +14,17 @@ type User = {
   eventStartDateTime: string;
   eventEndDateTime: string;
   order: {
-    queueNumber: string;
-    attended: boolean;
-    customFieldValues: { id: string; label: string; type: string; value: string; _id: string }[];
+    customFieldValues: {
+      groupId: string;
+      queueNumber: string;
+      attendance: boolean;
+      fields: {
+        id: string;
+        label: string;
+        type: string;
+        value: string;
+      }[];
+    }[];
     version: number;
   };
 };
@@ -56,10 +64,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       const data = await res.json();
       console.log('Fetched data:', data);
       if (Array.isArray(data.attendees)) {
+        const totalRegistrations = data.attendees.reduce((count: number, user: User) => {
+          return count + user.order.customFieldValues.length;
+        }, 0);
+        const attendedCount = data.attendees.reduce((count: number, user: User) => {
+          return count + user.order.customFieldValues.filter(group => group.attendance).length;
+        }, 0);
         setRegisteredUsers(data.attendees);
-        const attendedCount = data.attendees.filter((user: User) => user.order.attended).length;
         setAttendedUsersCount(attendedCount);
-        console.log('Registered users set:', data.attendees);
+        console.log('Total registrations:', totalRegistrations);
+        console.log('Attended users:', attendedCount);
       } else {
         setRegisteredUsers([]);
         setAttendedUsersCount(0);
@@ -75,30 +89,42 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [event._id]);
 
-  const handleMarkAttendance = useCallback(async (userId: string, attended: boolean) => {
-    console.log(`Marking attendance for user ${userId}: ${attended}`);
+  const handleMarkAttendance = useCallback(async (userId: string, groupId: string, attended: boolean) => {
+    console.log(`Marking attendance for user ${userId}, group ${groupId}: ${attended}`);
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
     try {
       const user = registeredUsers.find(user => user.id === userId);
+      const group = user?.order.customFieldValues.find(group => group.groupId === groupId);
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, eventId: event._id, attended, version: user?.order.version }),
+        body: JSON.stringify({ userId, eventId: event._id, groupId, attended, version: user?.order.version }),
       });
 
       if (res.ok) {
         setRegisteredUsers(prevUsers =>
           prevUsers.map(user =>
-            user.id === userId ? { ...user, order: { ...user.order, attended, version: user.order.version + 1 } } : user
+            user.id === userId
+              ? {
+                  ...user,
+                  order: {
+                    ...user.order,
+                    customFieldValues: user.order.customFieldValues.map(group =>
+                      group.groupId === groupId ? { ...group, attendance: attended } : group
+                    ),
+                    version: user.order.version + 1,
+                  },
+                }
+              : user
           )
         );
         setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
-        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
-        console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}`);
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${user?.order.queueNumber}`);
+        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}, group ${groupId}`);
+        console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}, group ${groupId}`);
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group?.queueNumber}`);
       } else if (res.status === 409) {
         setModalMessage('Refreshing due to an update by someone else. 正在刷新，因为有其他人更新了数据。');
         setTimeout(() => {
@@ -120,10 +146,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
-    const user = registeredUsers.find(u => u.order.queueNumber === queueNumber);
+    const user = registeredUsers.find(u => u.order.customFieldValues.some(group => group.queueNumber === queueNumber));
     if (user) {
-      await handleMarkAttendance(user.id, !user.order.attended);
-      setQueueNumber('');
+      const group = user.order.customFieldValues.find(group => group.queueNumber === queueNumber);
+      if (group) {
+        await handleMarkAttendance(user.id, group.groupId, !group.attendance);
+        setQueueNumber('');
+      }
     } else {
       setMessage('User not found with this queue number. 未找到此排队号码的用户。');
       console.log('User not found with this queue number:', queueNumber);
@@ -176,46 +205,49 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.length}</p>
+          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.reduce((count, user) => count + user.order.customFieldValues.length, 0)}</p>
           <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues && 
-                    registeredUsers[0].order.customFieldValues.map((field) => (
-                      <th key={field.id} className="py-2 px-4 border-b text-left">
-                        {field.label}
-                      </th>
-                    ))
+                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues[0]?.fields && 
+                    registeredUsers[0].order.customFieldValues[0].fields
+                      .filter(field => !['name'].includes(field.label.toLowerCase()))
+                      .map(field => (
+                        <th key={field.id} className="py-2 px-4 border-b text-left">
+                          {field.label}
+                        </th>
+                      ))
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
                 </tr>
               </thead>
               <tbody>
-                {currentPageUsers.map((user) => {
-                  console.log('Rendering user:', user);
-                  return (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b text-left">{user.order?.queueNumber || 'N/A'}</td>
-                      {user.order?.customFieldValues && user.order.customFieldValues.map((field) => {
-                        console.log('Rendering custom field:', field.label, field.value);
-                        return (
-                          <td key={field.id} className="py-2 px-4 border-b text-left">{field.value || 'N/A'}</td>
-                        );
-                      })}
+                {currentPageUsers.flatMap((user) => (
+                  user.order.customFieldValues.map((group) => (
+                    <tr key={`${user.id}_${group.groupId}`} className="hover:bg-gray-50">
+                      <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
+                      {group.fields
+                        .filter(field => !['name'].includes(field.label.toLowerCase()))
+                        .map(field => (
+                          <td key={field.id} className="py-2 px-4 border-b text-left">
+                            {field.value || 'N/A'}
+                          </td>
+                        ))
+                      }
                       <td className="py-2 px-4 border-b text-center">
                         <input
                           type="checkbox"
-                          checked={user.order?.attended || false}
-                          onChange={() => handleMarkAttendance(user.id, !(user.order?.attended || false))}
+                          checked={group.attendance || false}
+                          onChange={() => handleMarkAttendance(user.id, group.groupId, !(group.attendance || false))}
                           className="form-checkbox h-5 w-5 text-blue-600"
                         />
                       </td>
                     </tr>
-                  );
-                })}
+                  ))
+                ))}
               </tbody>
             </table>
           </div>

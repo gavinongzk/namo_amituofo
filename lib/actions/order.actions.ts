@@ -8,16 +8,19 @@ import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
 
-export const createOrder = async (order: CreateOrderParams, userId: string) => {
+export async function createOrder(order: CreateOrderParams) {
   try {
     await connectToDatabase();
-    
+    console.log("Connected to database");
+
     if (!ObjectId.isValid(order.eventId)) {
+      console.log("Invalid eventId:", order.eventId);
       throw new Error('Invalid eventId');
     }
 
-    if (!ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
+    if (!ObjectId.isValid(order.buyerId)) {
+      console.log("Invalid buyerId:", order.buyerId);
+      throw new Error('Invalid buyerId');
     }
 
     const event = await Event.findById(order.eventId);
@@ -31,25 +34,33 @@ export const createOrder = async (order: CreateOrderParams, userId: string) => {
     }
 
     const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
-    const lastQueueNumber = lastOrder && lastOrder.queueNumber ? parseInt(lastOrder.queueNumber.slice(1)) : 0;
-    const newQueueNumber = `A${(lastQueueNumber + 1).toString().padStart(3, '0')}`;
+    let lastQueueNumber = 0;
+    if (lastOrder) {
+      const allQueueNumbers = lastOrder.customFieldValues.map((group: { queueNumber: string }) => 
+        parseInt(group.queueNumber.slice(1))
+      );
+      lastQueueNumber = Math.max(...allQueueNumbers);
+    }
+
+    const newCustomFieldValues = order.customFieldValues.map((group, index) => {
+      const newQueueNumber = `A${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
+      return {
+        ...group,
+        queueNumber: newQueueNumber,
+      };
+    });
 
     const newOrder = await Order.create({
       ...order,
-      event: new ObjectId(order.eventId), // Ensure eventId is an ObjectId
-      buyer: new ObjectId(userId), // Convert buyerId to ObjectId
-      customFieldValues: order.customFieldValues,
-      queueNumber: newQueueNumber,
+      event: new ObjectId(order.eventId),
+      buyer: new ObjectId(order.buyerId),
+      customFieldValues: newCustomFieldValues,
     });
 
-    // Optionally update attendeeCount in Event
-    // event.attendeeCount = currentRegistrations + 1;
-    // await event.save();
-
-    return { success: true, message: 'User successfully registered', order: newOrder };
+    return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
-    handleError(error);
-    return { success: false, message: 'Registration failed' };
+    console.error('Error creating order:', error);
+    throw error;
   }
 }
 
@@ -64,16 +75,19 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     const orders = await Order.find({ event: eventObjectId })
       .populate('buyer', '')
       .populate('event', 'title')
-      .select('_id createdAt event buyer customFieldValues queueNumber attendance');
+      .select('_id createdAt event buyer customFieldValues');
 
     const formattedOrders = orders.map(order => ({
       _id: order._id.toString(),
       createdAt: order.createdAt,
       eventTitle: order.event.title,
       eventId: order.event._id.toString(),
-      customFieldValues: order.customFieldValues,
-      queueNumber: order.queueNumber,
-      attendance: order.attendance
+      customFieldValues: order.customFieldValues.map((group: { groupId: string; fields: any[]; queueNumber: string; attendance: boolean }) => ({
+        groupId: group.groupId,
+        fields: group.fields,
+        queueNumber: group.queueNumber,
+        attendance: group.attendance
+      }))
     }));
 
     return JSON.parse(JSON.stringify(formattedOrders));
@@ -132,12 +146,35 @@ export async function getOrderCountByEvent(eventId: string) {
       throw new Error('Invalid eventId');
     }
 
-    const eventObjectId = new ObjectId(eventId);
-    const orderCount = await Order.countDocuments({ event: eventObjectId });
+    const orders = await Order.find({ event: eventId });
+    const attendeeCount = orders.reduce((count, order) => {
+      return count + order.customFieldValues.filter((group: { attendance: boolean }) => group.attendance).length;
+    }, 0);
 
-    return orderCount;
+    return attendeeCount;
   } catch (error) {
-    handleError(error);
+    console.error('Error fetching attendee count:', error);
+    throw error;
+  }
+}
+
+export async function getTotalRegistrationsByEvent(eventId: string) {
+  try {
+    await connectToDatabase();
+
+    if (!ObjectId.isValid(eventId)) {
+      throw new Error('Invalid eventId');
+    }
+
+    const orders = await Order.find({ event: eventId });
+    const totalRegistrations = orders.reduce((count, order) => {
+      return count + order.customFieldValues.length;
+    }, 0);
+
+    return totalRegistrations;
+  } catch (error) {
+    console.error('Error fetching total registrations:', error);
+    throw error;
   }
 }
 
