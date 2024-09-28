@@ -1,5 +1,6 @@
 import Collection from '@/components/shared/Collection'
 import RegistrationCollection from '@/components/shared/RegistrationCollection'
+import RegistrationLookup from '@/components/shared/RegistrationLookup'
 
 import { Button } from '@/components/ui/button'
 import { getRegistrationsByUser } from '@/lib/actions/registration.actions'
@@ -49,16 +50,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
         </section>
 
         <section className="wrapper my-8">
-          <RegistrationCollection 
-            data={registrations}
-            emptyTitle="No registrations yet"
-            emptyStateSubtext="No worries - plenty of exciting events to explore!"
-            collectionType="My_Registrations"
-            limit={3}
-            page={registrationsPage}
-            urlParamName="registrationsPage"
-            totalPages={Math.ceil(registrations.length / 3)}
-          />
+          <RegistrationLookup />
         </section>
 
         {/* Events Organized */}
