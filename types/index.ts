@@ -170,7 +170,7 @@ export interface IRegistration {
 export interface CustomFieldGroup {
   groupId: string;
   fields: CustomField[];
-  __v: number;
+  __v?: number;
   queueNumber?: string;
   attendance?: boolean;
 }

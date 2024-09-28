@@ -25,6 +25,7 @@ export const createOrder = async (order: CreateOrderParams) => {
           type: field.type,
           value: field.value,
         })),
+        __v: group.__v,
       })),
     });
 

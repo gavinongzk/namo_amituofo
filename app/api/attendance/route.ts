@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     order.customFieldValues[groupIndex].attendance = attended;
-    order.__v += 1;
+    order.customFieldValues[groupIndex].__v += 1;
 
     await order.save();
 

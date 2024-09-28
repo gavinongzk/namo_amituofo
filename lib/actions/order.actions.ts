@@ -113,8 +113,8 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         const phoneNumber = phoneField?.value || '';
         const name = nameField?.value || '';
 
-        return phoneNumber.includes(lowercasedSearchString) ||
-               name.toLowerCase().includes(lowercasedSearchString) ||
+        return (typeof phoneNumber === 'string' && phoneNumber.includes(lowercasedSearchString)) ||
+               (typeof name === 'string' && name.toLowerCase().includes(lowercasedSearchString)) ||
                order.customFieldValues.some(group => 
                  group.fields.some((field: any) => 
                    field.value.toLowerCase().includes(lowercasedSearchString)
