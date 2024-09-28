@@ -68,7 +68,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         <div className="flex-between w-full">
           {(hasOrderLink || isEventCreator) && (
             <Link 
-              href={`/orders?eventId=${event._id}`} 
+              href={`/orders?eventId=${event._id.toString()}`} 
               className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
             >
               <span className="underline">Order Details</span>
