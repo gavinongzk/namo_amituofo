@@ -97,54 +97,62 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
-    try {
-      const [orderId, orderGroupId] = registrationId.split('_');
-      const registration = registrations.find(reg => reg.id === registrationId);
-      const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
-      
-      if (!registration || !group) {
-        throw new Error('Registration or group not found');
-      }
+    let attempts = 0;
+    const maxAttempts = 3;
 
-      const res = await fetch('/api/attendance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          orderId, 
-          eventId: event._id, 
-          groupId, 
-          attended, 
-          version: registration.order.customFieldValues[0].__v 
-        }),
-      });
+    while (attempts < maxAttempts) {
+      try {
+        const [orderId, orderGroupId] = registrationId.split('_');
+        const registration = registrations.find(reg => reg.id === registrationId);
+        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
+        
+        if (!registration || !group) {
+          throw new Error('Registration or group not found');
+        }
 
-      if (res.ok) {
-        const updatedRegistration = await res.json();
-        setRegistrations(prevRegistrations =>
-          prevRegistrations.map(r =>
-            r.id === registrationId ? { ...r, order: updatedRegistration.order } : r
-          )
-        );
-        setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
-        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
-      } else if (res.status === 409) {
-        setModalMessage('Refreshing due to an update by someone else. 正在刷新，因为有其他人更新了数据。');
-        await fetchRegistrations(); // Refresh the data
-      } else {
-        throw new Error('Failed to update attendance 更新出席情况失败');
+        const res = await fetch('/api/attendance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            orderId, 
+            eventId: event._id, 
+            groupId, 
+            attended, 
+            version: group.__v 
+          }),
+        });
+
+        if (res.ok) {
+          const updatedRegistration = await res.json();
+          setRegistrations(prevRegistrations =>
+            prevRegistrations.map(r =>
+              r.id === registrationId ? { ...r, order: updatedRegistration.order } : r
+            )
+          );
+          setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
+          setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
+          setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
+          break;
+        } else if (res.status === 409) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 100 * attempts)); // Exponential backoff
+          await fetchRegistrations(); // Refresh the data
+        } else {
+          throw new Error('Failed to update attendance 更新出席情况失败');
+        }
+      } catch (error) {
+        console.error('Error updating attendance:', error);
+        setMessage('Failed to update attendance. 更新出席情况失败。');
+        setModalMessage('Failed to update attendance. 更新出席情况失败。');
+        break;
       }
-    } catch (error) {
-      console.error('Error updating attendance:', error);
-      setMessage('Failed to update attendance. 更新出席情况失败。');
-      setModalMessage('Failed to update attendance. 更新出席情况失败。');
-    } finally {
-      setTimeout(() => {
-        setShowModal(false);
-      }, 2000);
     }
+
+    setTimeout(() => {
+      setShowModal(false);
+    }, 2000);
   }, [event._id, registrations, fetchRegistrations]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
