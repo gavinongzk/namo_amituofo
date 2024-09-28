@@ -11,6 +11,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   const orders = await getOrdersByEvent({ eventId, searchString: searchText })
 
+  const totalCustomFieldValues = orders?.reduce((total, order) => 
+    total + order.customFieldValues.length, 0) || 0;
+
   return (
     <>
       <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
@@ -30,7 +33,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
           <>
             <div className="bg-white shadow-md rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-4">Event Orders</h2>
-              <p className="mb-2">Total Orders: {orders.length}</p>
+              <p className="mb-2">Total Orders: {totalCustomFieldValues}</p>
             </div>
 
             <div className="overflow-x-auto">
