@@ -101,7 +101,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       }
 
       const data = await response.json();
-      router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
+      router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
       setMessage('Failed to submit registration. Please try again.');
