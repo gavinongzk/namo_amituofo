@@ -3,7 +3,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetOverlay,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import Image from "next/image"
@@ -19,13 +18,13 @@ const MobileNav = () => {
   return (
     <nav className="md:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger className="align-middle" onClick={() => setIsOpen(true)}>
+        <SheetTrigger className="align-middle">
           <Image 
             src="/assets/icons/menu.svg"
             alt="menu"
             width={24}
             height={24}
-            className="cursor-pointer"
+            className="cursor-pointer transition-opacity hover:opacity-75"
           />
         </SheetTrigger>
         <SheetContent className="flex flex-col gap-6 bg-white md:hidden">
@@ -34,8 +33,9 @@ const MobileNav = () => {
             alt="logo"
             width={128}
             height={38}
+            className="mx-auto mt-4"
           />
-          <Separator className="border border-gray-50" />
+          <Separator className="border border-gray-200" />
           <NavWrapper onClose={handleClose} />
         </SheetContent>
       </Sheet>

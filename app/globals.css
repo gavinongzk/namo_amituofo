@@ -13,16 +13,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 22 100% 50%;
+    --primary: 22 80% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 22 30% 90%;
+    --secondary-foreground: 22 80% 20%;
 
     --muted: 0 0% 90%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 22 100% 50%;
+    --accent: 22 80% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -102,6 +102,10 @@ body {
     @apply font-bold text-[40px] leading-[48px] lg:text-[48px] lg:leading-[60px]  xl:text-[58px] xl:leading-[74px];
   }
 
+  .h1-extra-bold {
+    @apply font-extrabold text-[48px] leading-[56px] lg:text-[64px] lg:leading-[72px];
+  }
+
   /* 40 */
   .h2-bold {
     @apply font-bold text-[32px] leading-[40px] lg:text-[36px] lg:leading-[44px] xl:text-[40px] xl:leading-[48px];
@@ -173,6 +177,10 @@ body {
     @apply text-[18px] font-normal leading-[28px] tracking-[2%];
   }
 
+  .subtitle-medium {
+    @apply font-medium text-[18px] leading-[28px] text-gray-600;
+  }
+
   /* 16 */
   .p-bold-16 {
     @apply text-[16px] font-bold leading-[24px];
@@ -210,7 +218,7 @@ body {
   }
 
   .input-field {
-    @apply bg-grey-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-grey-500 rounded-full p-regular-16 px-4 py-3 border-none focus-visible:ring-transparent !important;
+    @apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-4 py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 !important;
   }
 
   .textarea {
@@ -218,7 +226,7 @@ body {
   }
 
   .button {
-    @apply rounded-full h-[54px] p-regular-16;
+    @apply rounded-full h-[54px] p-regular-16 transition-all duration-300 hover:shadow-md active:scale-95;
   }
 
   .select-item {
@@ -316,3 +324,18 @@ body {
   border-color: #007bff;
 }
 
+.section-padding {
+  @apply py-12 md:py-16 lg:py-20;
+}
+
+.content-margin {
+  @apply my-8 md:my-12;
+}
+
+.fade-in {
+  @apply transition-opacity duration-300 ease-in-out;
+}
+
+.hover-scale {
+  @apply transition-transform duration-300 hover:scale-105;
+}
