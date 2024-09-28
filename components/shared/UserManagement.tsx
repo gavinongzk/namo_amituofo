@@ -1,119 +1,85 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { getAllUsers, downloadUserPhoneNumbers, updateUserRole } from '@/lib/actions/user.actions';
+import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
-
+import { Input } from '@/components/ui/input';
 
 type User = {
-  id: string;
-  customName: string;
-  customPhone: string;
-  role: 'user' | 'admin' | 'superadmin';
+  phoneNumber: string;
+  name: string;
+  isNewUser: boolean;
 };
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState<string>('');
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [customDate, setCustomDate] = useState<string>('');
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-        const fetchedUsers = await response.json();
-        setUsers(fetchedUsers);
-        // Assuming the API response includes the current user's role
-        setIsSuperAdmin(fetchedUsers.currentUserRole === 'superadmin');
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setMessage('Failed to fetch users. 获取用户失败。');
-      }
-    };
-    fetchUsers();
+    // Set default date to one week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const formattedDate = oneWeekAgo.toISOString().split('T')[0];
+    setCustomDate(formattedDate);
+    fetchUsers(formattedDate);
   }, []);
 
-  const handleRoleChange = async (userId: string, newRole: 'user' | 'admin' | 'superadmin') => {
+  const fetchUsers = async (date?: string) => {
     try {
-      console.log('Updating role for user:', userId, 'to', newRole);
-      const result = await updateUserRole(userId, newRole);
-      if (result.success) {
-        setMessage(`Successfully updated role for user ${userId} to ${newRole}. Refreshing...`);
-        // Refresh the page after a short delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        throw new Error(result.error || 'Failed to update user role');
-      }
+      const fetchedUsers = await getAllUniquePhoneNumbers(date);
+      setUsers(fetchedUsers);
     } catch (error) {
-      console.error('Failed to update user role:', error);
-      setMessage(`Failed to update user role: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error fetching users:', error);
+      setMessage('Failed to fetch users. 获取用户失败。');
     }
   };
 
-  const handleDownloadPhoneNumbers = async () => {
-    try {
-      const csvContent = users.map(user => `${user.customName},${user.customPhone}`).join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'user_phone_numbers.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch (error) {
-      console.error('Failed to download phone numbers:', error);
-    }
+  const handleDownloadPhoneNumbers = () => {
+    window.location.href = '/api/download-users-csv';
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomDate(e.target.value);
+  };
+
+  const handleApplyDate = () => {
+    fetchUsers(customDate);
   };
 
   return (
     <div>
-      <Button onClick={handleDownloadPhoneNumbers} className="mb-4">
-        Download Phone Numbers
-      </Button>
+      <div className="mb-4 flex items-center gap-4">
+        <Button onClick={handleDownloadPhoneNumbers}>
+          Download Phone Numbers
+        </Button>
+        <Input
+          type="date"
+          value={customDate}
+          onChange={handleDateChange}
+          className="w-auto"
+        />
+        <Button onClick={handleApplyDate}>Apply Date</Button>
+      </div>
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
             <th className="py-2 px-4 border-b text-left">Name</th>
-            {isSuperAdmin && <th className="py-2 px-4 border-b text-left">Phone Number</th>}
-            <th className="py-2 px-4 border-b text-left">Role</th>
-            {isSuperAdmin && <th className="py-2 px-4 border-b text-center">Actions</th>}
+            <th className="py-2 px-4 border-b text-left">Phone Number</th>
+            <th className="py-2 px-4 border-b text-left">Status</th>
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50">
-              <td className="py-2 px-4 border-b text-left">{user.customName}</td>
-              {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{user.customPhone}</td>}
-              <td className="py-2 px-4 border-b text-left">{user.role}</td>
-              {isSuperAdmin && (
-                <td className="py-2 px-4 border-b text-center">
-                  <select
-                    value={user.role}
-                    onChange={(e) =>
-                      handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'superadmin')
-                    }
-                    className="border rounded px-2 py-1"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="superadmin">Superadmin</option>
-                  </select>
-                </td>
-              )}
+          {users.map((user, index) => (
+            <tr key={index} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
+              <td className="py-2 px-4 border-b text-left">{user.name}</td>
+              <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
+              <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
     </div>
   );
 };

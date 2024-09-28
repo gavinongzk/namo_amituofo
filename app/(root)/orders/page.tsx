@@ -4,6 +4,9 @@ import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { SearchParamProps } from '@/types'
 import { IOrderItem } from '@/lib/database/models/order.model'
 import { formatDateTime } from '@/lib/utils'
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { downloadCsv } from '@/lib/utils/downloadCsv';
 
 const Orders = async ({ searchParams }: SearchParamProps) => {
   const eventId = searchParams?.eventId as string | undefined
@@ -49,6 +52,18 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   console.log('Total custom field values:', totalCustomFieldValues)
 
+  const router = useRouter();
+
+  const handleDownloadCsv = () => {
+    const queryParams = new URLSearchParams({
+      eventId: eventId || '',
+      searchText: searchText || '',
+    }).toString();
+
+    // Navigate to the API route
+    router.push(`/api/download-csv?${queryParams}`);
+  };
+
   return (
     <>
       <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
@@ -73,6 +88,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
             <div className="bg-white shadow-md rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-4">Event Orders</h2>
               <p className="mb-2">Total Orders: {totalCustomFieldValues}</p>
+              <Button onClick={handleDownloadCsv} className="bg-blue-500 hover:bg-blue-600 text-white">
+                Download CSV
+              </Button>
             </div>
 
             <div className="overflow-x-auto">
