@@ -11,8 +11,17 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   const orders = await getOrdersByEvent({ eventId, searchString: searchText })
 
-  const totalCustomFieldValues = orders?.reduce((total, order) => 
-    total + order.customFieldValues.length, 0) || 0;
+  const filteredOrders = orders?.filter(order => 
+    order.customFieldValues.some(group => 
+      group.fields.some(field => 
+        field.label.toLowerCase() === 'name' && 
+        (typeof field.value === 'string' && field.value.toLowerCase().includes(searchText.toLowerCase()))
+      )
+    )
+  ) || []
+
+  const totalCustomFieldValues = filteredOrders.reduce((total, order) => 
+    total + order.customFieldValues.length, 0);
 
   return (
     <>
@@ -21,11 +30,11 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
       </section>
 
       <section className="wrapper mt-8">
-        <Search placeholder="Search buyer name..." />
+        <Search placeholder="Search by name..." />
       </section>
 
       <section className="wrapper overflow-x-auto content-margin my-8">
-        {!orders || orders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
           <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
             <p className="text-xl font-semibold">No orders found</p>
           </div>
@@ -43,8 +52,8 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                     <th className="py-2 px-4 border-b text-left">Queue Number</th>
                     <th className="py-2 px-4 border-b text-left">Event Title</th>
                     <th className="py-2 px-4 border-b text-left">Registration Date</th>
-                    {orders.length > 0 && orders[0]?.customFieldValues[0]?.fields && 
-                      orders[0].customFieldValues[0].fields
+                    {filteredOrders.length > 0 && filteredOrders[0]?.customFieldValues[0]?.fields && 
+                      filteredOrders[0].customFieldValues[0].fields
                         .filter(field => !['name'].includes(field.label.toLowerCase()))
                         .map(field => (
                           <th key={field.id} className="py-2 px-4 border-b text-left">
@@ -56,7 +65,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order: IOrderItem) => (
+                  {filteredOrders.map((order: IOrderItem) => (
                     order.customFieldValues.map((group, index) => (
                       <tr key={`${order._id}_${group.groupId}`} className="hover:bg-gray-50">
                         <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>

@@ -38,7 +38,7 @@ const EventLookupPage = () => {
                 },
                 registrations: order.customFieldValues.map((group) => ({
                     queueNumber: group.queueNumber || '',
-                    name: group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                    name: group.fields?.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
                 })),
             }));
 

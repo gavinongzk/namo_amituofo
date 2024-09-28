@@ -16,6 +16,7 @@ import Image from "next/image"
 import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
 import { useFieldArray } from "react-hook-form";
+import { CustomField } from "@/types";
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox"
@@ -39,19 +40,19 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         startDateTime: new Date(event.startDateTime),
         endDateTime: new Date(event.endDateTime),
         categoryId: event.category._id,
-        customFields: event.customFields?.map(field => ({
-          type: field.type as "boolean" | "text" | "phone" | "radio",
-          id: field.id.toString(),
+        customFields: event.customFields.map(field => ({
+          id: field.id,
           label: field.label,
+          type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
           value: field.value,
-          options: field.options
+          options: field.options?.map(option => 
+            typeof option === 'string' ? option : option.value
+          )
         })) || [],
         registrationSuccessMessage: event.registrationSuccessMessage || ""
       }
-    : {
-        ...eventDefaultValues,
-        registrationSuccessMessage: ""
-      };
+    : eventDefaultValues;
+
   const router = useRouter();
 
   const { startUpload } = useUploadThing('imageUploader')
@@ -82,7 +83,14 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     if(type === 'Create') {
       try {
         const newEvent = await createEvent({
-          event: { ...values, imageUrl: uploadedImageUrl, customFields: values.customFields ?? [] },
+          event: { 
+            ...values, 
+            imageUrl: uploadedImageUrl, 
+            customFields: values.customFields.map(field => ({
+              ...field,
+              value: field.value || '' // Ensure value is never undefined
+            })) as CustomField[]
+          },
           userId,
           path: '/profile'
         })
@@ -111,7 +119,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             ...values, 
             imageUrl: uploadedImageUrl, 
             _id: eventId,
-            customFields: values.customFields ?? []
+            customFields: values.customFields.map(field => ({
+              ...field,
+              value: field.value || '' // Ensure value is never undefined
+            })) as CustomField[]
           },
           path: `/events/${eventId}`
         })

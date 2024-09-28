@@ -16,6 +16,7 @@ import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
+import { CustomField } from "@/types"
 
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
@@ -73,13 +74,13 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
-          const field = customFields.find(f => f.id === key) as { id: string; label: string; type: string; options?: string[] };
+          const field = customFields.find(f => f.id === key) as CustomField;
           return {
             id: key,
             label: field?.label || key,
-            type: field?.type as 'boolean' | 'text' | 'phone' | 'radio',
+            type: field?.type,
             value: String(value),
-            options: Array.isArray(field?.options) ? field?.options : [],
+            options: field?.options || [],
           };
         })
       }));

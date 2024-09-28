@@ -13,7 +13,7 @@ export interface IEvent extends Document {
   endDateTime: Date;
   category: { _id: string, name: string }
   organizer: { _id: string }
-  customFields?: CustomField[];
+  customFields: CustomField[];
   maxSeats: number;
   registrationSuccessMessage?: string;
   attendeeCount?: number;
