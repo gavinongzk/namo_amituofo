@@ -61,7 +61,11 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
                   {group.fields.map((field: CustomField) => (
                     <div key={field.id} className="flex flex-col hover:bg-gray-100 p-2 rounded transition-colors duration-200">
                       <dt className="font-medium text-gray-600 mb-1">{field.label}</dt>
-                      <dd className="text-gray-900 font-semibold">{field.value || 'N/A'}</dd>
+                      <dd className="text-gray-900 font-semibold">
+                        {field.type === 'radio' 
+                          ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                          : (field.value || 'N/A')}
+                      </dd>
                     </div>
                   ))}
                 </dl>

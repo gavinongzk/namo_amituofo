@@ -75,10 +75,31 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     if (!eventId) throw new Error('Event ID is required');
     const eventObjectId = new ObjectId(eventId);
 
-    const orders = await Order.find({ event: eventObjectId })
+    console.log('Fetching orders for event:', eventId);
+
+    let query = { event: eventObjectId };
+
+    if (searchString) {
+      const lowercasedSearchString = searchString.toLowerCase();
+      const queryObject = {
+        event: query.event,
+        $or: [
+          { 'customFieldValues.fields.value': { $regex: lowercasedSearchString, $options: 'i' } },
+          { 'customFieldValues.queueNumber': { $regex: lowercasedSearchString, $options: 'i' } }
+        ]
+      };
+
+      query = queryObject;
+    }
+
+    console.log('Query:', JSON.stringify(query));
+
+    const orders = await Order.find(query)
       .populate('event', 'title imageUrl startDateTime endDateTime')
       .select('_id createdAt event customFieldValues __v')
       .lean();
+
+    console.log('Found orders:', orders.length);
 
     const formattedOrders: IOrderItem[] = orders.map((order: any) => ({
       _id: order._id.toString(),
@@ -95,38 +116,16 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         queueNumber: field.queueNumber,
         fields: field.fields,
         attendance: field.attendance || false,
-        __v: field.__v || 0, // Include __v for each customFieldValues group
+        __v: field.__v || 0,
       })),
       __v: order.__v,
     }));
 
-    // If searchString is provided, filter the orders
-    if (searchString) {
-      const lowercasedSearchString = searchString.toLowerCase();
-      return formattedOrders.filter(order => {
-        const phoneField = order.customFieldValues.flatMap(group => 
-          group.fields.find((field: any) => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
-        ).find(field => field);
-
-        const nameField = order.customFieldValues.flatMap(group => 
-          group.fields.find((field: any) => field.label.toLowerCase().includes('name'))
-        ).find(field => field);
-
-        const phoneNumber = phoneField?.value || '';
-        const name = nameField?.value || '';
-
-        return (typeof phoneNumber === 'string' && phoneNumber.includes(lowercasedSearchString)) ||
-               (typeof name === 'string' && name.toLowerCase().includes(lowercasedSearchString)) ||
-               order.customFieldValues.some(group => 
-                 group.fields.some((field: any) => 
-                   field.value.toLowerCase().includes(lowercasedSearchString)
-                 )
-               );
-      });
-    }
+    console.log('Formatted orders:', formattedOrders.length);
 
     return formattedOrders;
   } catch (error) {
+    console.error('Error in getOrdersByEvent:', error);
     handleError(error);
   }
 }
@@ -244,4 +243,3 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     throw error;
   }
 };
-

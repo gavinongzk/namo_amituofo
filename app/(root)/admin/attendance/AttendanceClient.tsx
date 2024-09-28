@@ -253,7 +253,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         .filter(field => !['name'].includes(field.label.toLowerCase()))
                         .map(field => (
                           <td key={field.id} className="py-2 px-4 border-b text-left">
-                            {field.value || 'N/A'}
+                            {field.type === 'radio'
+                              ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                              : (field.value || 'N/A')}
                           </td>
                         ))
                       }

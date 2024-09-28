@@ -1,11 +1,6 @@
 import { Document, Schema, model, models } from "mongoose";
+import { CustomField } from "@/types";
 
-interface CustomField {
-  id: string;
-  label: string;
-  type: string;
-  value: string;
-}
 
 export interface IEvent extends Document {
   _id: string;
@@ -18,7 +13,7 @@ export interface IEvent extends Document {
   endDateTime: Date;
   category: { _id: string, name: string }
   organizer: { _id: string }
-  customFields?: CustomField[];
+  customFields: CustomField[];
   maxSeats: number;
   registrationSuccessMessage?: string;
   attendeeCount?: number;

@@ -16,6 +16,7 @@ import Image from "next/image"
 import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
 import { useFieldArray } from "react-hook-form";
+import { CustomField } from "@/types";
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox"
@@ -39,25 +40,26 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         startDateTime: new Date(event.startDateTime),
         endDateTime: new Date(event.endDateTime),
         categoryId: event.category._id,
-        customFields: event.customFields?.map(field => ({
-          type: field.type as "boolean" | "text" | "phone",
-          id: field.id.toString(),
+        customFields: event.customFields.map(field => ({
+          id: field.id,
           label: field.label,
-          value: field.value
+          type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
+          value: field.value,
+          options: field.options?.map(option => 
+            typeof option === 'string' ? option : option.value
+          )
         })) || [],
         registrationSuccessMessage: event.registrationSuccessMessage || ""
       }
-    : {
-        ...eventDefaultValues,
-        registrationSuccessMessage: ""
-      };
+    : eventDefaultValues;
+
   const router = useRouter();
 
   const { startUpload } = useUploadThing('imageUploader')
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: initialValues
+    defaultValues: initialValues as z.infer<typeof eventFormSchema>
   })
 
   const { fields: customFields, append, remove } = useFieldArray({
@@ -81,7 +83,14 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     if(type === 'Create') {
       try {
         const newEvent = await createEvent({
-          event: { ...values, imageUrl: uploadedImageUrl, customFields: values.customFields ?? [] },
+          event: { 
+            ...values, 
+            imageUrl: uploadedImageUrl, 
+            customFields: values.customFields.map(field => ({
+              ...field,
+              value: field.value || '' // Ensure value is never undefined
+            })) as CustomField[]
+          },
           userId,
           path: '/profile'
         })
@@ -110,7 +119,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             ...values, 
             imageUrl: uploadedImageUrl, 
             _id: eventId,
-            customFields: values.customFields ?? []
+            customFields: values.customFields.map(field => ({
+              ...field,
+              value: field.value || '' // Ensure value is never undefined
+            })) as CustomField[]
           },
           path: `/events/${eventId}`
         })
@@ -127,7 +139,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
             control={form.control}
@@ -323,12 +335,37 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         <option value="text">Text</option>
                         <option value="boolean">Boolean</option>
                         <option value="phone">Phone Number</option>
+                        <option value="radio">Radio</option>
                       </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {field.type === 'radio' && (
+                <FormField
+                  control={form.control}
+                  name={`customFields.${index}.options`}
+                  render={({ field: optionsField }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input
+                          placeholder="Options (comma-separated)"
+                          value={Array.isArray(optionsField.value) ? optionsField.value.join(', ') : String(optionsField.value ?? '')}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const optionsArray = inputValue.split(',').map(option => option.trim()).filter(Boolean);
+                            optionsField.onChange(optionsArray);
+                          }}
+                          onBlur={optionsField.onBlur}
+                          name={optionsField.name}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}

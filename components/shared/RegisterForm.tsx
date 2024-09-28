@@ -16,6 +16,7 @@ import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
+import { CustomField } from "@/types"
 
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
@@ -44,6 +45,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
               : field.type === 'phone'
                 ? z.string().regex(/^\+[1-9]\d{1,14}$/, { message: "Invalid phone number" })
                 : z.string().min(1, { message: "This field is required" })
+                
           ])
         )
       )
@@ -72,12 +74,13 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
-          const field = customFields.find(f => f.id === key);
+          const field = customFields.find(f => f.id === key) as CustomField;
           return {
             id: key,
             label: field?.label || key,
-            type: field?.type as 'boolean' | 'text' | 'phone',
+            type: field?.type,
             value: String(value),
+            options: field?.options || [],
           };
         })
       }));
@@ -147,6 +150,21 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                               countryCallingCodeEditable={false}
                               className="input-field"
                             />
+                          ) : customField.type === 'radio' ? (
+                            <div className="flex gap-4">
+                              {('options' in customField) && customField.options?.map((option) => (
+                                <label key={option.value} className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    value={option.value}
+                                    checked={formField.value === option.value}
+                                    onChange={() => formField.onChange(option.value)}
+                                    className="mr-2"
+                                  />
+                                  {option.label}
+                                </label>
+                              ))}
+                            </div>
                           ) : (
                             <Input {...formField} value={String(formField.value)} />
                           )}
