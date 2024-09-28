@@ -50,6 +50,7 @@ export async function createOrder(order: CreateOrderParams) {
       return {
         ...group,
         queueNumber: newQueueNumber,
+        __v: 0, // Add this line to set the initial version
       };
     });
 
