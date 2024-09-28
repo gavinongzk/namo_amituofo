@@ -52,18 +52,6 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   console.log('Total custom field values:', totalCustomFieldValues)
 
-  const router = useRouter();
-
-  const handleDownloadCsv = () => {
-    const queryParams = new URLSearchParams({
-      eventId: eventId || '',
-      searchText: searchText || '',
-    }).toString();
-
-    // Navigate to the API route
-    router.push(`/api/download-csv?${queryParams}`);
-  };
-
   return (
     <>
       <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
