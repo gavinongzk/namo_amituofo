@@ -227,6 +227,7 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
+    console.log('Connected to database, searching for phone number:', phoneNumber);
 
     const orders = await Order.find({
       'customFieldValues': {
@@ -243,7 +244,12 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
       }
     }).populate('event', 'title imageUrl startDateTime endDateTime');
 
-    return JSON.parse(JSON.stringify(orders));
+    console.log('Found orders:', orders);
+
+    const serializedOrders = JSON.parse(JSON.stringify(orders));
+    console.log('Serialized orders:', serializedOrders);
+
+    return serializedOrders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;

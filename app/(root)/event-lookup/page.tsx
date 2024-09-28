@@ -17,11 +17,13 @@ const EventLookupPage = () => {
     setIsLoading(true);
     setError('');
     try {
+      console.log('Fetching orders for phone number:', phoneNumber);
       const orders = await getOrdersByPhoneNumber(phoneNumber);
+      console.log('Received orders:', orders);
       setRegistrations(orders || []); // Ensure registrations is always an array
     } catch (err) {
+      console.error('Error fetching registrations:', err);
       setError('Failed to fetch registrations. Please try again.');
-      console.error(err);
     }
     setIsLoading(false);
   };
