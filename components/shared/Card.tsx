@@ -12,7 +12,7 @@ type CardProps = {
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    registrationCount?: number  // Changed from attendeeCount to registrationCount
+    registrationCount?: number
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,

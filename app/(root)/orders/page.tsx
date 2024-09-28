@@ -6,22 +6,32 @@ import { IOrderItem } from '@/lib/database/models/order.model'
 import { formatDateTime } from '@/lib/utils'
 
 const Orders = async ({ searchParams }: SearchParamProps) => {
-  const eventId = (searchParams?.eventId as string) || ''
+  const eventId = searchParams?.eventId as string
   const searchText = (searchParams?.query as string) || ''
 
   console.log('Fetching orders with eventId:', eventId, 'and searchText:', searchText)
 
-  const orders = await getOrdersByEvent({ eventId, searchString: searchText })
+  let orders: IOrderItem[] = []
+  if (eventId) {
+    try {
+      orders = await getOrdersByEvent({ eventId, searchString: searchText }) || []
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+    }
+  } else {
+    console.log('No eventId provided, skipping order fetch')
+  }
+
   console.log('Fetched orders:', orders)
 
-  const filteredOrders = orders?.filter(order => 
+  const filteredOrders = orders.filter(order => 
     order.customFieldValues.some(group => 
       group.fields.some(field => 
         field.label.toLowerCase() === 'name' && 
         (typeof field.value === 'string' && field.value.toLowerCase().includes(searchText.toLowerCase()))
       )
     )
-  ) || []
+  )
 
   console.log('Filtered orders:', filteredOrders)
 
@@ -41,9 +51,13 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
       </section>
 
       <section className="wrapper overflow-x-auto content-margin my-8">
-        {filteredOrders.length === 0 ? (
+        {!eventId ? (
           <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
-            <p className="text-xl font-semibold">No orders found</p>
+            <p className="text-xl font-semibold">Please select an event to view orders</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
+            <p className="text-xl font-semibold">No orders found for this event</p>
           </div>
         ) : (
           <>
