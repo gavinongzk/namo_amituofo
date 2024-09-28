@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
+import { downloadCsv } from '@/lib/utils/downloadCsv';
 
 type User = {
   phoneNumber: string;
@@ -27,21 +28,9 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  const handleDownloadPhoneNumbers = async () => {
+  const handleDownloadPhoneNumbers = () => {
     try {
-      const csvContent = users.map(user => `${user.name},${user.phoneNumber}`).join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'user_phone_numbers.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      downloadCsv(users, 'user_phone_numbers.csv', ['Name', 'Phone Number', 'Status']);
     } catch (error) {
       console.error('Failed to download phone numbers:', error);
     }
