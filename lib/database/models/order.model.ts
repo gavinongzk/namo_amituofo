@@ -43,6 +43,7 @@ export interface IOrderItem {
     organizer?: { _id: string };
   };
   customFieldValues: CustomFieldGroup[];
+  __v?: number; // Add this line
 }
 
 const OrderSchema = new Schema({

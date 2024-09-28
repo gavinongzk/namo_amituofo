@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 import ReactPaginate from 'react-paginate';
 import Modal from '@/components/ui/modal'; // Import the modal component
+import { getEventWithAttendeeCount } from '@/lib/actions/event.actions';
+import { getOrdersByEvent } from '@/lib/actions/order.actions';
 
 type User = {
   id: string;
-  phoneNumber: string;
   eventTitle: string;
   eventStartDateTime: string;
   eventEndDateTime: string;
@@ -60,24 +61,33 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const fetchRegisteredUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/events/${event._id}/attendees`);
-      const data = await res.json();
-      console.log('Fetched data:', data);
-      if (Array.isArray(data.attendees)) {
-        const totalRegistrations = data.attendees.reduce((count: number, user: User) => {
-          return count + user.order.customFieldValues.length;
-        }, 0);
-        const attendedCount = data.attendees.reduce((count: number, user: User) => {
-          return count + user.order.customFieldValues.filter(group => group.attendance).length;
-        }, 0);
-        setRegisteredUsers(data.attendees);
-        setAttendedUsersCount(attendedCount);
-        console.log('Total registrations:', totalRegistrations);
-        console.log('Attended users:', attendedCount);
+      const eventWithAttendees = await getEventWithAttendeeCount(event._id);
+      if (eventWithAttendees) {
+        const orders = await getOrdersByEvent({ eventId: event._id });
+        if (orders) {
+          const attendees = orders.flatMap(order => 
+            order.customFieldValues.map(group => ({
+              id: `${order._id}_${group.groupId}`,
+              eventTitle: event.title,
+              eventStartDateTime: event.startDateTime,
+              eventEndDateTime: event.endDateTime,
+              order: {
+                customFieldValues: [group],
+                version: order.__v || 0
+              }
+            }))
+          );
+          setRegisteredUsers(attendees);
+          setAttendedUsersCount(eventWithAttendees.attendeeCount);
+        } else {
+          setRegisteredUsers([]);
+          setAttendedUsersCount(0);
+          setMessage('No orders found for this event. 未找到此活动的订单。');
+        }
       } else {
         setRegisteredUsers([]);
         setAttendedUsersCount(0);
-        console.log('No attendees found.');
+        setMessage('Event details not found. 未找到活动详情。');
       }
     } catch (error) {
       console.error('Error fetching registered users:', error);
@@ -94,14 +104,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
     try {
+      const [orderId, groupId] = userId.split('_');
       const user = registeredUsers.find(user => user.id === userId);
-      const group = user?.order.customFieldValues.find(group => group.groupId === groupId);
+      const group = user?.order.customFieldValues[0];
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, eventId: event._id, groupId, attended, version: user?.order.version }),
+        body: JSON.stringify({ orderId, eventId: event._id, groupId, attended, version: user?.order.version }),
       });
 
       if (res.ok) {
@@ -148,7 +159,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log('Submitting queue number:', queueNumber);
     const user = registeredUsers.find(u => u.order.customFieldValues.some(group => group.queueNumber === queueNumber));
     if (user) {
-      const group = user.order.customFieldValues.find(group => group.queueNumber === queueNumber);
+      const group = user.order.customFieldValues[0];
       if (group) {
         await handleMarkAttendance(user.id, group.groupId, !group.attendance);
         setQueueNumber('');
@@ -205,7 +216,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-2">Total Registrations 总注册数: {registeredUsers.reduce((count, user) => count + user.order.customFieldValues.length, 0)}</p>
+          <p className="mb-2">Total Registrations 总注册: {registeredUsers.reduce((count, user) => count + user.order.customFieldValues.length, 0)}</p>
           <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
