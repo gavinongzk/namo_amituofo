@@ -9,6 +9,7 @@ import Event from '@/lib/database/models/event.model'
 import { handleError } from '@/lib/utils'
 
 import { CreateUserParams, UpdateUserParams, CustomFieldGroup, UniquePhoneNumber } from '@/types'
+import { Types } from 'mongoose';
 
 export async function createUser(user: CreateUserParams) {
   try {
@@ -163,8 +164,11 @@ export async function getAllUniquePhoneNumbers() {
   try {
     await connectToDatabase();
 
-    const orders = await Order.find().select('customFieldValues');
-    const phoneMap = new Map();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const orders = await Order.find().select('customFieldValues createdAt');
+    const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
     const userList: UniquePhoneNumber[] = [];
 
     orders.forEach(order => {
@@ -173,15 +177,24 @@ export async function getAllUniquePhoneNumbers() {
           field.label.toLowerCase().includes('phone') || 
           field.label.toLowerCase().includes('contact number')
         );
-        if (phoneField && phoneField.value) {
-          const count = phoneMap.get(phoneField.value) || 0;
-          phoneMap.set(phoneField.value, count + 1);
+        if (phoneField && typeof phoneField.value === 'string') {
+          const existingData = phoneMap.get(phoneField.value);
+          if (!existingData || order.createdAt < existingData.firstOrderDate) {
+            phoneMap.set(phoneField.value, {
+              count: (existingData?.count || 0) + 1,
+              firstOrderDate: order.createdAt
+            });
+          } else {
+            phoneMap.set(phoneField.value, {
+              count: existingData.count + 1,
+              firstOrderDate: existingData.firstOrderDate
+            });
+          }
         }
       });
     });
 
-    const phoneMapObj = Object.fromEntries(phoneMap);
-    for (const [phoneNumber, count] of Object.entries(phoneMapObj)) {
+    for (const [phoneNumber, data] of Array.from(phoneMap)) {
       const order = orders.find(order => 
         order.customFieldValues.some((group: CustomFieldGroup) => 
           group.fields.some(field => 
@@ -204,7 +217,7 @@ export async function getAllUniquePhoneNumbers() {
 
           userList.push({
             phoneNumber,
-            isNewUser: count === 1,
+            isNewUser: data.firstOrderDate > oneWeekAgo,
             name: nameField ? nameField.value : 'Unknown'
           });
         }

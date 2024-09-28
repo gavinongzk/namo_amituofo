@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
-import { downloadCsv } from '@/lib/utils/downloadCsv';
 
 type User = {
   phoneNumber: string;
