@@ -1,23 +1,12 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
-
-interface CustomFieldValue {
-  id: string;
-  label: string;
-  value?: string;
-}
-
-interface CustomFieldGroup {
-  groupId: string;
-  fields: CustomFieldValue[];
-  queueNumber?: string;
-}
+import { CustomFieldGroup, CustomField } from '@/types';
 
 const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) => {
   const order = await getOrderById(id);
 
   if (!order) {
-    return <div className="wrapper my-8 text-center">Order not found</div>;
+    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">Order not found 订单未找到</div>;
   }
 
   const customFieldValuesArray = Array.isArray(order.customFieldValues) 
@@ -25,48 +14,49 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
     : [order.customFieldValues];
 
   return (
-    <div className="wrapper my-8">
-      <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-        <h3 className="wrapper h3-bold text-center sm:text-left">Order Details</h3>
+    <div className="wrapper my-8 max-w-6xl mx-auto">
+      <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-8 md:py-12 rounded-t-2xl animate-fadeIn">
+        <h3 className="text-3xl font-bold text-center text-primary-500">
+          Registration Successful 注册成功
+        </h3>
       </section>
 
-      <div className="my-8 grid gap-8 md:grid-cols-2">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h4 className="text-xl font-bold mb-4">Event Information</h4>
-          <p><strong>Event:</strong> {order.event.title}</p>
-          <p><strong>Date:</strong> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
-          <p><strong>Time:</strong> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h4 className="text-xl font-bold mb-4">Order Summary</h4>
-          <p><strong>Order ID:</strong> {order._id}</p>
-          <p><strong>Order Date:</strong> {formatDateTime(order.createdAt).dateTime}</p>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-        <h4 className="text-xl font-bold mb-4">Registration Details</h4>
-        {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-          <div key={group.groupId} className="mb-6 pb-6 border-b last:border-b-0">
-            <div className="flex justify-between items-center mb-2">
-              <h5 className="text-lg font-semibold">Person {index + 1}</h5>
-              {group.queueNumber && (
-                <span className="bg-primary-50 text-primary-500 px-3 py-1 rounded-full font-medium">
-                  Queue Number: {group.queueNumber}
-                </span>
-              )}
+      <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden transition-all duration-300 hover:shadow-xl">
+        <div className="p-8 space-y-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
+              <h4 className="text-xl font-bold mb-4 text-primary-700">Event Information 活动信息</h4>
+              <p className="mb-2"><span className="font-semibold">Event 活动:</span> {order.event.title}</p>
+              <p className="mb-2"><span className="font-semibold">Date 日期:</span> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
+              <p><span className="font-semibold">Time 时间:</span> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
             </div>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {group.fields.map((field: CustomFieldValue) => (
-                <div key={field.id}>
-                  <dt className="font-medium text-gray-600">{field.label}</dt>
-                  <dd className="mt-1">{field.value || 'N/A'}</dd>
+
+            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
+              <h4 className="text-xl font-bold mb-4 text-primary-700">Order Summary 订单摘要</h4>
+              <p className="mb-2"><span className="font-semibold">Order ID 订单号:</span> {order._id}</p>
+              <p><span className="font-semibold">Order Date 订单日期:</span> {formatDateTime(order.createdAt).dateTime}</p>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
+              <h4 className="text-xl font-bold mb-4 text-primary-700">Quick Info 快速信息</h4>
+              <p className="mb-2"><span className="font-semibold">Total Registrations 总注册人数:</span> {customFieldValuesArray.length}</p>
+              <p><span className="font-semibold">Event Location 活动地点:</span> {order.event.location || 'N/A'}</p>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <h4 className="text-2xl font-bold mb-6 text-primary-700">Registration Details 注册详情</h4>
+            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
+              <div key={group.groupId} className="mb-8 pb-8 border-b last:border-b-0 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                  <h5 className="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">Person 人员 {index + 1}</h5>
+                  {group.queueNumber && (
+                    <div className="bg-blue-100 p-3 rounded-xl text-center">
+                      <p className="text-sm text-blue-600 mb-1">Queue Number 队列号</p>
+                      <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                    </div>
+                  )}
                 </div>
-<<<<<<< main
-              ))}
-            </dl>
-=======
                 <dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl">
                   {group.fields.map((field: CustomField) => (
                     <div key={field.id} className="flex flex-col hover:bg-gray-100 p-2 rounded transition-colors duration-200">
@@ -81,9 +71,8 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
                 </dl>
               </div>
             ))}
->>>>>>> local
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

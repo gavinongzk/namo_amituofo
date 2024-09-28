@@ -11,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { useUser } from '@clerk/nextjs'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import PhoneInput from 'react-phone-number-input'
@@ -20,10 +19,8 @@ import { categoryCustomFields, CategoryName } from '@/constants'
 
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
-  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
-  const [groupCount, setGroupCount] = useState(1);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -34,7 +31,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     fetchOrderCount();
   }, [event._id]);
 
-  const customFields = categoryCustomFields[event.category.name] || [];
+  const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
   const formSchema = z.object({
     groups: z.array(
@@ -89,7 +86,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
       const orderData: CreateOrderParams = {
         eventId: event._id,
-        buyerId: user?.id || '', // Assuming user.id is available from Clerk
         createdAt: new Date(),
         customFieldValues,
       };
@@ -107,7 +103,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       }
 
       const data = await response.json();
-      router.push(`/events/${event._id}/thank-you?orderId=${data.order._id}`);
+      router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
       setMessage('Failed to submit registration. Please try again.');
