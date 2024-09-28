@@ -127,9 +127,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         if (res.ok) {
           const updatedRegistration = await res.json();
           setRegistrations(prevRegistrations =>
-            prevRegistrations.map(r =>
-              r.id === registrationId ? { ...r, order: updatedRegistration.order } : r
-            )
+            prevRegistrations.map(r => {
+              if (r.id === registrationId) {
+                // Find the specific group within the registration
+                const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
+                  group.groupId === groupId 
+                    ? { ...group, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                    : group
+                );
+                return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
+              }
+              return r;
+            })
           );
           setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
           setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
@@ -236,7 +245,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </tr>
               </thead>
               <tbody>
-                {currentPageRegistrations.flatMap((registration) => (
+                {currentPageRegistrations.map((registration) => (
                   registration.order.customFieldValues.map((group) => (
                     <tr key={`${registration.id}_${group.groupId}`} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
