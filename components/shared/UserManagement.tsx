@@ -49,17 +49,19 @@ const UserManagement = () => {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <Button onClick={handleDownloadPhoneNumbers}>
           Download Phone Numbers
         </Button>
-        <Input
-          type="date"
-          value={customDate}
-          onChange={handleDateChange}
-          className="w-auto"
-        />
-        <Button onClick={handleApplyDate}>Apply Date</Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Input
+            type="date"
+            value={customDate}
+            onChange={handleDateChange}
+            className="w-full sm:w-auto"
+          />
+          <Button onClick={handleApplyDate}>Apply Date</Button>
+        </div>
       </div>
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
