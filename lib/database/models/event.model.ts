@@ -1,11 +1,6 @@
 import { Document, Schema, model, models } from "mongoose";
+import { CustomField } from "@/types";
 
-interface CustomField {
-  id: string;
-  label: string;
-  type: string;
-  value: string;
-}
 
 export interface IEvent extends Document {
   _id: string;

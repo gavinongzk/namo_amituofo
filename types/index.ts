@@ -138,8 +138,9 @@ export type SearchParamProps = {
 export type CustomField = {
   id: string;
   label: string;
-  type: "text" | "boolean" | "phone";
+  type: "text" | "boolean" | "phone" | "radio";
   value?: string | boolean;
+  options?: string[];
 };
 
 export interface IRegistration {

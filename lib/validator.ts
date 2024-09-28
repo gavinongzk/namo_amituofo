@@ -3,8 +3,9 @@ import * as z from "zod"
 const customFieldSchema = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(['text', 'boolean', 'phone']), // Added 'phone' type
+  type: z.enum(['text', 'boolean', 'phone', 'radio']), // Added 'phone' type
   value: z.string().optional(), // Add this line
+  options: z.array(z.string()).optional(),
 })
 
 

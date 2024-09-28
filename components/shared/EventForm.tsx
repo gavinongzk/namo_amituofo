@@ -40,10 +40,11 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         endDateTime: new Date(event.endDateTime),
         categoryId: event.category._id,
         customFields: event.customFields?.map(field => ({
-          type: field.type as "boolean" | "text" | "phone",
+          type: field.type as "boolean" | "text" | "phone" | "radio",
           id: field.id.toString(),
           label: field.label,
-          value: field.value
+          value: field.value,
+          options: field.options
         })) || [],
         registrationSuccessMessage: event.registrationSuccessMessage || ""
       }
@@ -57,7 +58,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: initialValues
+    defaultValues: initialValues as z.infer<typeof eventFormSchema>
   })
 
   const { fields: customFields, append, remove } = useFieldArray({
@@ -127,7 +128,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
             control={form.control}
@@ -323,12 +324,37 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         <option value="text">Text</option>
                         <option value="boolean">Boolean</option>
                         <option value="phone">Phone Number</option>
+                        <option value="radio">Radio</option>
                       </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {field.type === 'radio' && (
+                <FormField
+                  control={form.control}
+                  name={`customFields.${index}.options`}
+                  render={({ field: optionsField }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input
+                          placeholder="Options (comma-separated)"
+                          value={Array.isArray(optionsField.value) ? optionsField.value.join(', ') : String(optionsField.value ?? '')}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const optionsArray = inputValue.split(',').map(option => option.trim()).filter(Boolean);
+                            optionsField.onChange(optionsArray);
+                          }}
+                          onBlur={optionsField.onBlur}
+                          name={optionsField.name}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}
