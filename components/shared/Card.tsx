@@ -62,14 +62,17 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         {isEventCreator && (
           <div className="flex flex-col gap-2 animate-fadeIn">
             <p className="p-medium-16 text-grey-500">Registrations: {event.registrationCount || 0}</p>
-            <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline hover:text-primary-600 transition-colors duration-200">Order Details</Link>
           </div>
         )}
 
         <div className="flex-between w-full">
-          {hasOrderLink && (
-            <Link href={`/orders?eventId=${event._id}`} className="flex gap-2 group-hover:translate-x-2 transition-transform duration-300">
-              <Image src="/assets/icons/arrow.svg" alt="search" width={10} height={10} />
+          {(hasOrderLink || isEventCreator) && (
+            <Link 
+              href={`/orders?eventId=${event._id}`} 
+              className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
+            >
+              <span className="underline">Order Details</span>
+              <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
             </Link>
           )}
         </div>
