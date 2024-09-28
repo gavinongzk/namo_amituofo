@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type User = {
   phoneNumber: string;
@@ -13,29 +14,53 @@ type User = {
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState<string>('');
+  const [customDate, setCustomDate] = useState<string>('');
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const fetchedUsers = await getAllUniquePhoneNumbers();
-        setUsers(fetchedUsers);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setMessage('Failed to fetch users. 获取用户失败。');
-      }
-    };
-    fetchUsers();
+    // Set default date to one week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const formattedDate = oneWeekAgo.toISOString().split('T')[0];
+    setCustomDate(formattedDate);
+    fetchUsers(formattedDate);
   }, []);
+
+  const fetchUsers = async (date?: string) => {
+    try {
+      const fetchedUsers = await getAllUniquePhoneNumbers(date);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setMessage('Failed to fetch users. 获取用户失败。');
+    }
+  };
 
   const handleDownloadPhoneNumbers = () => {
     window.location.href = '/api/download-users-csv';
   };
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomDate(e.target.value);
+  };
+
+  const handleApplyDate = () => {
+    fetchUsers(customDate);
+  };
+
   return (
     <div>
-      <Button onClick={handleDownloadPhoneNumbers} className="mb-4">
-        Download Phone Numbers
-      </Button>
+      <div className="mb-4 flex items-center gap-4">
+        <Button onClick={handleDownloadPhoneNumbers}>
+          Download Phone Numbers
+        </Button>
+        <Input
+          type="date"
+          value={customDate}
+          onChange={handleDateChange}
+          className="w-auto"
+        />
+        <Button onClick={handleApplyDate}>Apply Date</Button>
+      </div>
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
           <tr className="bg-gray-100">

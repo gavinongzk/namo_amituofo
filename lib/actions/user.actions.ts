@@ -160,12 +160,12 @@ export async function getUserForAdmin(userId: string) {
   }
 }
 
-export async function getAllUniquePhoneNumbers() {
+export async function getAllUniquePhoneNumbers(customDate?: string) {
   try {
     await connectToDatabase();
 
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const cutoffDate = customDate ? new Date(customDate) : new Date();
+    cutoffDate.setHours(0, 0, 0, 0); // Set to start of the day
 
     const orders = await Order.find().select('customFieldValues createdAt');
     const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
@@ -217,7 +217,7 @@ export async function getAllUniquePhoneNumbers() {
 
           userList.push({
             phoneNumber,
-            isNewUser: data.firstOrderDate > oneWeekAgo,
+            isNewUser: data.firstOrderDate >= cutoffDate,
             name: nameField ? nameField.value : 'Unknown'
           });
         }
