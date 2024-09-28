@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const orders = await getOrdersByEvent({ eventId });
 
-    if (!orders) {
+    if (!orders || orders.length === 0) {
       return NextResponse.json({ message: 'No orders found' }, { status: 404 });
     }
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                       : String(field.value).replace(/\d/g, '*')
                   : '',
               })),
-              __v: group.__v || 0 // Include version at the group level
+              __v: group.__v // Use the __v from the database
             }
           ]
         }

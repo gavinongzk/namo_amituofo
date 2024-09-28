@@ -95,6 +95,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         queueNumber: field.queueNumber,
         fields: field.fields,
         attendance: field.attendance || false,
+        __v: field.__v || 0, // Include __v for each customFieldValues group
       })),
       __v: order.__v,
     }));
