@@ -41,7 +41,9 @@ const SelectEventPage = () => {
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
-          const upcomingEvents = result.data.filter((event: Event) => new Date(event.endDateTime) >= currentDate);
+          const upcomingEvents = result.data
+            .filter((event: Event) => new Date(event.endDateTime) >= currentDate)
+            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
           setEvents(upcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
