@@ -29,11 +29,7 @@ const UserManagement = () => {
   }, []);
 
   const handleDownloadPhoneNumbers = () => {
-    try {
-      downloadCsv(users, 'user_phone_numbers.csv', ['Name', 'Phone Number', 'Status']);
-    } catch (error) {
-      console.error('Failed to download phone numbers:', error);
-    }
+    window.location.href = '/api/download-users-csv';
   };
 
   return (
