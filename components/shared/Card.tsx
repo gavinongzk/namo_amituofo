@@ -12,7 +12,7 @@ type CardProps = {
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    registrationCount?: number
+    registrationCount?: number  // Changed from attendeeCount to registrationCount
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
@@ -28,15 +28,16 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
         href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
-        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500 transition-transform duration-300 group-hover:scale-105"
+        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all">
-          <Link href={`/events/${event._id}/update`} className="transition-transform hover:scale-110">
+          <Link href={`/events/${event._id}/update`}>
             <Image src="/assets/icons/edit.svg" alt="edit" width={20} height={20} />
           </Link>
+
           <DeleteConfirmation eventId={event._id} />
         </div>
       )}
@@ -46,12 +47,12 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           {formatDateTime(event.startDateTime).dateTime}
         </p>
 
-        <Link href={`/events/${event._id}`} className="group-hover:text-primary-500 transition-colors duration-200">
+        <Link href={`/events/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
         </Link>
 
         {isMyTicket && (
-          <div className="flex flex-col gap-2 animate-fadeIn">
+          <div className="flex flex-col gap-2">
             <p className="p-medium-16 text-grey-500">Queue Number: {event.queueNumber || 'N/A'}</p>
             {event.customFieldValues?.map((field) => (
               <p key={field.id} className="p-medium-16 text-grey-500">{field.label}: {field.value}</p>
@@ -60,19 +61,16 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         )}
 
         {isEventCreator && (
-          <div className="flex flex-col gap-2 animate-fadeIn">
+          <div className="flex flex-col gap-2">
             <p className="p-medium-16 text-grey-500">Registrations: {event.registrationCount || 0}</p>
+            <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline">Order Details</Link>
           </div>
         )}
 
         <div className="flex-between w-full">
-          {(hasOrderLink || isEventCreator) && (
-            <Link 
-              href={`/orders?eventId=${event._id.toString()}`} 
-              className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
-            >
-              <span className="underline">Order Details</span>
-              <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
+          {hasOrderLink && (
+            <Link href={`/orders?eventId=${event._id}`} className="flex gap-2">
+              <Image src="/assets/icons/arrow.svg" alt="search" width={10} height={10} />
             </Link>
           )}
         </div>

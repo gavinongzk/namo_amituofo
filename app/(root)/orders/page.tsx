@@ -24,14 +24,23 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   console.log('Fetched orders:', orders)
 
-  const filteredOrders = orders.filter(order => 
-    order.customFieldValues.some(group => 
-      group.fields.some(field => 
-        field.label.toLowerCase() === 'name' && 
-        (typeof field.value === 'string' && field.value.toLowerCase().includes(searchText.toLowerCase()))
-      )
-    )
-  )
+  const filteredOrders = orders.filter(order => {
+    if (searchText === '') {
+      console.log(`Order ${order._id} included due to empty search string`);
+      return true;
+    }
+
+    const hasMatchingName = order.customFieldValues.some(group => 
+      group.fields.some(field => {
+        const isNameField = field.label.toLowerCase().includes('name');
+        const matchesSearch = typeof field.value === 'string' && field.value.toLowerCase().includes(searchText.toLowerCase());
+        console.log(`Field: ${field.label}, Is Name: ${isNameField}, Matches Search: ${matchesSearch}`);
+        return isNameField && matchesSearch;
+      })
+    );
+    console.log(`Order ${order._id} matches filter: ${hasMatchingName}`);
+    return hasMatchingName;
+  })
 
   console.log('Filtered orders:', filteredOrders)
 
