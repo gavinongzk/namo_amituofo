@@ -7,7 +7,7 @@ export async function GET() {
       query: '', // No search query
       category: '', // No category filter
       page: 1, // Starting from the first page
-      limit: 6 // Set your desired limit
+      limit: 1000 // Set a high limit to fetch all events
     });
     console.log('Fetched Events:', events); // Add this line
     
