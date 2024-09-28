@@ -1,47 +1,33 @@
 import { Schema, model, models, Document } from 'mongoose';
+import { CustomFieldGroup, CustomField } from '@/types';
 
-export interface CustomField {
-  id: string;
-  label: string;
-  type: string;
-  value: string;
-}
 
 export interface IOrder extends Document {
+  _id: string;
   createdAt: Date;
   event: {
     _id: string;
     title: string;
+    imageUrl?: string;
+    startDateTime?: Date;
+    endDateTime?: Date;
+    organizer?: { _id: string };
   };
-  buyer: {
-    _id: string;
-  };
-  customFieldValues: {
-    groupId: string;
-    fields: CustomField[];
-    queueNumber: string;
-    attendance: boolean;
-  }[];
-
+  customFieldValues: CustomFieldGroup[];
 }
 
 export interface IOrderItem {
   _id: string;
   createdAt: Date;
-  eventTitle: string;
-  eventId: string;
-  buyerName: string;
-  customFieldValues: {
-    groupId: string;
-    fields: {
-      id: string;
-      label: string;
-      type: string;
-      value: string;
-    }[];
-    queueNumber: string;
-    attendance: boolean;
-  }[];
+  event: {
+    _id: string;
+    title: string;
+    imageUrl: string;
+    startDateTime: Date;
+    endDateTime: Date;
+    organizer?: { _id: string };
+  };
+  customFieldValues: CustomFieldGroup[];
 }
 
 const OrderSchema = new Schema({
@@ -70,8 +56,12 @@ const OrderSchema = new Schema({
       ],
       queueNumber: { type: String, required: true },
       attendance: { type: Boolean, default: false },
+      __v: { type: Number, default: 0 }, // Add version control at this level
     },
   ],
 });
+
+// Add this index
+OrderSchema.index({ 'customFieldValues.fields.value': 1 });
 
 export default models.Order || model<IOrder>('Order', OrderSchema);

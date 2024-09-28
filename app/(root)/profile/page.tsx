@@ -1,91 +1,73 @@
 import Collection from '@/components/shared/Collection'
-import RegistrationCollection from '@/components/shared/RegistrationCollection'
-
 import { Button } from '@/components/ui/button'
-import { getRegistrationsByUser } from '@/lib/actions/registration.actions'
 import { getEventsByUser } from '@/lib/actions/event.actions'
-import { IRegistration } from '@/types'
 import { auth, currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React from 'react'
+import RegistrationLookup from '@/components/shared/RegistrationLookup'
 
 const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
   try {
     const user = await currentUser();
     
     if (!user || !user.publicMetadata) {
-      // Handle the case where the user is not authenticated or publicMetadata is missing
       return <div>User not authenticated or missing metadata</div>;
     }
 
     const userId = user.publicMetadata.userId as string;
-
-    const registrationsPage = Number(searchParams?.registrationsPage) || 1;
     const eventsPage = Number(searchParams?.eventsPage) || 1;
-
-    // Fetch aggregated registrations
-    const registrations: IRegistration[] = await getRegistrationsByUser(userId);
-    console.log('Fetched registrations:', registrations);
-
-    // Fetch organized events
     const organizedEventsData = await getEventsByUser({ userId, page: eventsPage }) || { data: [], totalPages: 0 };
-    console.log('Fetched organized events:', organizedEventsData);
-
     const currentDate = new Date();
-    const upcomingEvents = organizedEventsData.data.filter(event => new Date(event.endDateTime) >= currentDate); // Filter out past events
+    const upcomingEvents = organizedEventsData.data.filter(event => new Date(event.endDateTime) >= currentDate);
 
     return (
-      <>
-        {/* My Registrations */}
-        <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-          <div className="wrapper flex items-center justify-center sm:justify-between">
-            <h3 className='h3-bold text-center sm:text-left'>My Registrations 排队号码</h3>
-            <Button asChild size="lg" className="button hidden sm:flex">
-              <Link href="/#events">
-                Explore More Events
-              </Link>
-            </Button>
+      <div className="flex flex-col gap-10">
+        {/* My Registrations Section */}
+        <section className="bg-primary-50">
+          <div className="wrapper py-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className='h2-bold text-primary-500'>My Registrations 我的注册</h2>
+              <Button asChild size="lg" className="button hidden sm:flex">
+                <Link href="/#events">
+                  Explore More Events
+                </Link>
+              </Button>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <RegistrationLookup />
+            </div>
           </div>
         </section>
 
-        <section className="wrapper my-8">
-          <RegistrationCollection 
-            data={registrations}
-            emptyTitle="No registrations yet"
-            emptyStateSubtext="No worries - plenty of exciting events to explore!"
-            collectionType="My_Registrations"
-            limit={3}
-            page={registrationsPage}
-            urlParamName="registrationsPage"
-            totalPages={Math.ceil(registrations.length / 3)}
-          />
-        </section>
+        {/* Visual Separator */}
+        <div className="border-t-2 border-gray-200 mx-auto w-1/2"></div>
 
-        {/* Events Organized */}
-        <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-          <div className="wrapper flex items-center justify-center sm:justify-between">
-            <h3 className='h3-bold text-center sm:text-left'>Events Organized</h3>
-            <Button asChild size="lg" className="button hidden sm:flex">
-              <Link href="/events/create">
-                Create New Event
-              </Link>
-            </Button>
+        {/* Events Organized Section */}
+        <section className="bg-secondary-50">
+          <div className="wrapper py-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className='h2-bold text-secondary-500'>Events Organized 我组织的活动</h2>
+              <Button asChild size="lg" className="button hidden sm:flex">
+                <Link href="/events/create">
+                  Create New Event
+                </Link>
+              </Button>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <Collection 
+                data={upcomingEvents}
+                emptyTitle="No events have been created yet"
+                emptyStateSubtext="Go create some now"
+                collectionType="Events_Organized"
+                limit={3}
+                page={eventsPage}
+                urlParamName="eventsPage"
+                totalPages={organizedEventsData.totalPages}
+              />
+            </div>
           </div>
         </section>
-
-        <section className="wrapper my-8">
-          <Collection 
-            data={upcomingEvents}
-            emptyTitle="No events have been created yet"
-            emptyStateSubtext="Go create some now"
-            collectionType="Events_Organized"
-            limit={3}
-            page={eventsPage}
-            urlParamName="eventsPage"
-            totalPages={organizedEventsData.totalPages}
-          />
-        </section>
-      </>
+      </div>
     )
   } catch (error) {
     console.error('Error in ProfilePage:', error);

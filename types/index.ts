@@ -97,19 +97,17 @@ export type CreateCategoryParams = {
 export type CheckoutOrderParams = {
   eventTitle: string
   eventId: string
-  buyerId: string
 }
 
 export interface CreateOrderParams {
   eventId: string;
-  buyerId: string;
   createdAt: Date;
   customFieldValues: CustomFieldGroup[];
 }
 
 export type GetOrdersByEventParams = {
   eventId: string
-  searchString: string
+  searchString?: string
 }
 
 export type GetOrdersByUserParams = {
@@ -147,6 +145,8 @@ export interface IRegistration {
     _id: string;
     title: string;
     imageUrl?: string;
+    startDateTime?: Date;
+    endDateTime?: Date;
     organizer: { _id: string };
     orderId?: string;
     customFieldValues?: {
@@ -170,4 +170,7 @@ export interface IRegistration {
 export interface CustomFieldGroup {
   groupId: string;
   fields: CustomField[];
+  __v?: number;
+  queueNumber?: string;
+  attendance?: boolean;
 }

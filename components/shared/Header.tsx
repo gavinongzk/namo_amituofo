@@ -1,39 +1,37 @@
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "../ui/button"
-import NavWrapper from "./NavWrapper"; // Import the updated NavWrapper
+import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
 
 const Header = () => {
   return (
-    <header className="w-full border-b">
-      <div className="wrapper flex items-center justify-between">
-        <Link href="/" className="w-36">
+    <header className="w-full border-b bg-white shadow-sm">
+      <div className="wrapper flex items-center justify-between py-4">
+        <Link href="/" className="w-36 transition-transform hover:scale-105 ml-4 md:ml-6">
           <Image 
             src="/assets/images/logo.svg" width={64} height={24}
             alt="Namo Amituofo logo" 
+            className="object-contain"
           />
         </Link>
 
-        <SignedIn>
-          <nav className="md:flex-between hidden w-full max-w-xs">
-            <NavWrapper /> {/* Desktop navigation without onClose */}
-          </nav>
-        </SignedIn>
+        <nav className="md:flex-between hidden w-full max-w-xs">
+          <NavWrapper />
+        </nav>
 
-        <div className="flex w-32 justify-end gap-3">
+        <div className="flex items-center gap-3 mr-4 md:mr-6">
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-            <MobileNav />
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-10 w-10"
+                }
+              }}
+            />
           </SignedIn>
-          <SignedOut>
-            <Button asChild className="rounded-full" size="lg">
-              <Link href="/sign-in">
-                Login
-              </Link>
-            </Button>
-          </SignedOut>
+          <MobileNav />
         </div>
       </div>
     </header>
