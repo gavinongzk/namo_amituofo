@@ -1,3 +1,4 @@
+import React from 'react'
 import Search from '@/components/shared/Search'
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { SearchParamProps } from '@/types'
@@ -20,35 +21,69 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
         <Search placeholder="Search buyer name..." />
       </section>
 
-      <section className="wrapper overflow-x-auto content-margin">
-        <table className="w-full border-collapse border-t">
-          <thead>
-            <tr className="p-medium-14 border-b text-grey-500 bg-gray-50">
-              <th className="min-w-[200px] py-3 px-4 text-left">Event Title</th>
-              <th className="min-w-[150px] py-3 px-4 text-left">Queue Number</th>
-              <th className="min-w-[150px] py-3 px-4 text-left">Attendance</th>
-              <th className="min-w-[150px] py-3 px-4 text-left">Registration Date</th>
-              <th className="min-w-[150px] py-3 px-4 text-left">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders && orders.map((order: IOrderItem) => (
-              <tr key={order._id} className="p-regular-14 lg:p-regular-16 border-b hover:bg-gray-50 transition-colors duration-200">
-                <td className="min-w-[200px] py-4 px-4 text-left">{order.event.title}</td>
-                <td className="min-w-[150px] py-4 px-4 text-left">{order.customFieldValues[0]?.queueNumber || 'N/A'}</td> 
-                <td className="min-w-[150px] py-4 px-4 text-left">{order.customFieldValues[0]?.attendance ? "Yes" : "No"}</td>
-                <td className="min-w-[150px] py-4 px-4 text-left">
-                  {formatDateTime(order.createdAt).dateTime}
-                </td>
-                <td className="min-w-[150px] py-4 px-4 text-left">
-                  <a href={`/orders/${order._id}`} className="text-primary-500 underline hover:text-primary-600 transition-colors duration-200">
-                    View Details
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="wrapper overflow-x-auto content-margin my-8">
+        {!orders || orders.length === 0 ? (
+          <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
+            <p className="text-xl font-semibold">No orders found</p>
+          </div>
+        ) : (
+          <>
+            <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold mb-4">Event Orders</h2>
+              <p className="mb-2">Total Orders: {orders.length}</p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="py-2 px-4 border-b text-left">Queue Number</th>
+                    <th className="py-2 px-4 border-b text-left">Event Title</th>
+                    <th className="py-2 px-4 border-b text-left">Registration Date</th>
+                    {orders.length > 0 && orders[0]?.customFieldValues[0]?.fields && 
+                      orders[0].customFieldValues[0].fields
+                        .filter(field => !['name'].includes(field.label.toLowerCase()))
+                        .map(field => (
+                          <th key={field.id} className="py-2 px-4 border-b text-left">
+                            {field.label}
+                          </th>
+                        ))
+                    }
+                    <th className="py-2 px-4 border-b text-left">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order: IOrderItem) => (
+                    order.customFieldValues.map((group, index) => (
+                      <tr key={`${order._id}_${group.groupId}`} className="hover:bg-gray-50">
+                        <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
+                        <td className="py-2 px-4 border-b text-left">{order.event.title}</td>
+                        <td className="py-2 px-4 border-b text-left">
+                          {formatDateTime(order.createdAt).dateTime}
+                        </td>
+                        {group.fields
+                          .filter(field => !['name'].includes(field.label.toLowerCase()))
+                          .map(field => (
+                            <td key={field.id} className="py-2 px-4 border-b text-left">
+                              {field.type === 'radio'
+                                ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                                : (field.value || 'N/A')}
+                            </td>
+                          ))
+                        }
+                        <td className="py-2 px-4 border-b text-left">
+                          <a href={`/orders/${order._id}`} className="text-primary-500 underline hover:text-primary-600 transition-colors duration-200">
+                            View Details
+                          </a>
+                        </td>
+                      </tr>
+                    ))
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
     </>
   )
