@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
-import { eventDefaultValues } from "@/constants"
+import { eventDefaultValues, categoryCustomFields } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUploader } from "./FileUploader"
@@ -49,6 +49,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       }
     : {
         ...eventDefaultValues,
+        customFields: categoryCustomFields.default,
         registrationSuccessMessage: ""
       };
   const router = useRouter();

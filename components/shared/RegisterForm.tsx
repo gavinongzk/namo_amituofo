@@ -31,7 +31,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     fetchOrderCount();
   }, [event._id]);
 
-  const customFields = categoryCustomFields[event.category.name] || [];
+  const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
   const formSchema = z.object({
     groups: z.array(

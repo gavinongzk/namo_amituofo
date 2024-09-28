@@ -38,6 +38,10 @@ export const eventDefaultValues = {
 }
 
 export const categoryCustomFields = {
+  default: [
+    { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+    { id: '2', label: '联系号码 Contact number', type: 'phone' },
+  ],
   '念佛共修': [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
