@@ -75,6 +75,8 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     if (!eventId) throw new Error('Event ID is required');
     const eventObjectId = new ObjectId(eventId);
 
+    console.log('Fetching orders for event:', eventId);
+
     let query = { event: eventObjectId };
 
     if (searchString) {
@@ -90,10 +92,14 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
       query = queryObject;
     }
 
+    console.log('Query:', JSON.stringify(query));
+
     const orders = await Order.find(query)
       .populate('event', 'title imageUrl startDateTime endDateTime')
       .select('_id createdAt event customFieldValues __v')
       .lean();
+
+    console.log('Found orders:', orders.length);
 
     const formattedOrders: IOrderItem[] = orders.map((order: any) => ({
       _id: order._id.toString(),
@@ -115,8 +121,11 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
       __v: order.__v,
     }));
 
+    console.log('Formatted orders:', formattedOrders.length);
+
     return formattedOrders;
   } catch (error) {
+    console.error('Error in getOrdersByEvent:', error);
     handleError(error);
   }
 }
