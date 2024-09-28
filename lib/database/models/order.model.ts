@@ -23,6 +23,7 @@ export interface IOrder extends Document {
     imageUrl?: string;
     startDateTime?: Date;
     endDateTime?: Date;
+    organizer?: { _id: string };
   };
   buyer: {
     _id: string;
@@ -39,6 +40,7 @@ export interface IOrderItem {
     imageUrl: string;
     startDateTime: Date;
     endDateTime: Date;
+    organizer?: { _id: string };
   };
   customFieldValues: CustomFieldGroup[];
 }
