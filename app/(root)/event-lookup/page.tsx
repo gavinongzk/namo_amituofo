@@ -6,10 +6,11 @@ import RegistrationCollection from '@/components/shared/RegistrationCollection';
 import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { IRegistration } from '@/types';
 
 const EventLookupPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [registrations, setRegistrations] = useState([]);
+  const [registrations, setRegistrations] = useState<IRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,10 +21,11 @@ const EventLookupPage = () => {
       console.log('Fetching orders for phone number:', phoneNumber);
       const orders = await getOrdersByPhoneNumber(phoneNumber);
       console.log('Received orders:', orders);
-      setRegistrations(orders || []); // Ensure registrations is always an array
+      setRegistrations(Array.isArray(orders) ? orders : []);
     } catch (err) {
       console.error('Error fetching registrations:', err);
       setError('Failed to fetch registrations. Please try again.');
+      setRegistrations([]);
     }
     setIsLoading(false);
   };
@@ -52,7 +54,9 @@ const EventLookupPage = () => {
 
       {error && <p className="text-red-500">{error}</p>}
 
-      {registrations && registrations.length > 0 ? (
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : registrations.length > 0 ? (
         <RegistrationCollection 
           data={registrations}
           emptyTitle="No registrations found"
@@ -63,11 +67,7 @@ const EventLookupPage = () => {
           totalPages={1}
         />
       ) : (
-        isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <p>No registrations found for this phone number.</p>
-        )
+        <p>No registrations found for this phone number.</p>
       )}
     </div>
   );
