@@ -12,13 +12,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    if (order.__v !== version) {
-      return NextResponse.json({ message: 'Version conflict' }, { status: 409 });
-    }
-
     const groupIndex = order.customFieldValues.findIndex((group: { groupId: string }) => group.groupId === groupId);
     if (groupIndex === -1) {
       return NextResponse.json({ message: 'Group not found' }, { status: 404 });
+    }
+
+    // Check the version of the specific group
+    if (order.customFieldValues[groupIndex].__v !== version) {
+      return NextResponse.json({ message: 'Version conflict' }, { status: 409 });
     }
 
     order.customFieldValues[groupIndex].attendance = attended;
@@ -30,7 +31,6 @@ export async function POST(req: NextRequest) {
       message: 'Attendance updated successfully',
       order: {
         customFieldValues: order.customFieldValues,
-        version: order.__v
       }
     });
   } catch (error) {
