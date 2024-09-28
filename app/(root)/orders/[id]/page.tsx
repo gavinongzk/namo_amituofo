@@ -44,12 +44,13 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
               <div key={group.groupId} className="mb-8 pb-8 border-b last:border-b-0 animate-fadeIn">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
                   <h5 className="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">Person 人员 {index + 1}</h5>
-                  {group.queueNumber && (
-                    <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full font-medium text-lg">
-                      Queue Number 队列号: {group.queueNumber}
-                    </span>
-                  )}
                 </div>
+                {group.queueNumber && (
+                  <div className="bg-primary-100 p-4 rounded-xl mb-4 text-center animate-pulse">
+                    <p className="text-sm text-primary-600 mb-1">Queue Number 队列号</p>
+                    <p className="text-4xl font-bold text-primary-700">{group.queueNumber}</p>
+                  </div>
+                )}
                 <dl className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl">
                   {group.fields.map((field: CustomField) => (
                     <div key={field.id} className="flex flex-col hover:bg-gray-100 p-2 rounded transition-colors duration-200">

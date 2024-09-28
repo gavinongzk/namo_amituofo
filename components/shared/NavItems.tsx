@@ -21,7 +21,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
   };
 
   const navItemClass = (href: string) => 
-    `px-4 py-2 rounded-md transition-colors duration-200 ${
+    `flex flex-col items-center justify-center px-3 py-2 text-sm rounded-md transition-colors duration-200 ${
       pathname === href
         ? 'bg-primary-100 text-primary-600'
         : 'hover:bg-gray-100'
@@ -31,32 +31,37 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     <ul className={`flex flex-col md:flex-row gap-2 ${className}`}>
       <li>
         <Link href="/" className={navItemClass('/')} onClick={handleClick}>
-          寺院活动 Events
+          <span className="font-medium">寺院活动</span>
+          <span className="text-xs">Events</span>
         </Link>
       </li>
       <li>
         <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
-          活动查询 Event Lookup
+          <span className="font-medium">活动查询</span>
+          <span className="text-xs">Event Lookup</span>
         </Link>
       </li>
       {isSignedIn ? (
         <>
           <li>
             <Link href="/profile" className={navItemClass('/profile')} onClick={handleClick}>
-              我的活动 My Events
+              <span className="font-medium">我的活动</span>
+              <span className="text-xs">My Events</span>
             </Link>
           </li>
           {isSuperAdmin && (
             <li>
               <Link href="/events/create" className={navItemClass('/events/create')} onClick={handleClick}>
-                创建活动 Create Event
+                <span className="font-medium">创建活动</span>
+                <span className="text-xs">Create Event</span>
               </Link>
             </li>
           )}
           {(isSuperAdmin || isNormalAdmin) && (
             <li>
               <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={handleClick}>
-                管理员系统 Admin Dashboard
+                <span className="font-medium">管理员系统</span>
+                <span className="text-xs">Admin Dashboard</span>
               </Link>
             </li>
           )}
@@ -64,12 +69,13 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       ) : (
         <li>
           <Link href="/sign-in" className={navItemClass('/sign-in')} onClick={handleClick}>
-            Admin Login 管理员登录
+            <span className="font-medium">管理员登录</span>
+            <span className="text-xs">Admin Login</span>
           </Link>
         </li>
       )}
     </ul>
   );
-};
+}
 
 export default NavItems;
