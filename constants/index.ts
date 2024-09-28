@@ -43,6 +43,11 @@ export const categoryCustomFields = {
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
     { id: '3', label: '请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?', type: 'boolean' },
   ],
+  '念佛｜闻法｜祈福｜超荐': [
+    { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+    { id: '2', label: '联系号码 Contact number', type: 'phone' },
+    { id: '3', label: '请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?', type: 'boolean' },
+  ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 Volunteer\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
