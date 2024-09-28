@@ -35,14 +35,21 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                       : String(field.value).replace(/\d/g, '*')
                   : '',
               })),
-              __v: group.__v // Include version at the group level
+              __v: group.__v || 0 // Include version at the group level
             }
           ]
         }
       }))
     );
 
-    console.log('Formatted attendees:', JSON.stringify(attendees, null, 2));
+    // Log the entire attendees object
+    console.log('Full attendees object:', JSON.stringify(attendees, null, 2));
+
+    // Log just the __v values for each attendee
+    console.log('__v values for each attendee:');
+    attendees.forEach((attendee, index) => {
+      console.log(`Attendee ${index + 1}: __v =`, attendee.order.customFieldValues[0].__v);
+    });
 
     return NextResponse.json({ attendees });
   } catch (error) {
