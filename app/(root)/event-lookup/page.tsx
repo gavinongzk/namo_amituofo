@@ -18,7 +18,7 @@ const EventLookupPage = () => {
     setError('');
     try {
       const orders = await getOrdersByPhoneNumber(phoneNumber);
-      setRegistrations(orders);
+      setRegistrations(orders || []); // Ensure registrations is always an array
     } catch (err) {
       setError('Failed to fetch registrations. Please try again.');
       console.error(err);
@@ -50,7 +50,7 @@ const EventLookupPage = () => {
 
       {error && <p className="text-red-500">{error}</p>}
 
-      {registrations.length > 0 && (
+      {registrations && registrations.length > 0 ? (
         <RegistrationCollection 
           data={registrations}
           emptyTitle="No registrations found"
@@ -60,6 +60,12 @@ const EventLookupPage = () => {
           page={1}
           totalPages={1}
         />
+      ) : (
+        isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          <p>No registrations found for this phone number.</p>
+        )
       )}
     </div>
   );

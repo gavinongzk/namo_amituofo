@@ -229,12 +229,16 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     await connectToDatabase();
 
     const orders = await Order.find({
-      'customFieldValues.fields': {
+      'customFieldValues': {
         $elemMatch: {
-          $or: [
-            { type: 'phone', value: phoneNumber },
-            { label: { $regex: /phone/i }, value: phoneNumber }
-          ]
+          'fields': {
+            $elemMatch: {
+              $or: [
+                { type: 'phone', value: phoneNumber },
+                { label: { $regex: /contact number/i }, value: phoneNumber }
+              ]
+            }
+          }
         }
       }
     }).populate('event', 'title imageUrl startDateTime endDateTime');
