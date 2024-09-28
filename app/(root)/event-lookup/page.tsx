@@ -14,10 +14,12 @@ const EventLookupPage = () => {
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [hasSearched, setHasSearched] = useState(false);
 
     const handleLookup = async () => {
         setIsLoading(true);
         setError('');
+        setHasSearched(true);
         try {
             console.log('Fetching orders for phone number:', phoneNumber);
             const orders = await getOrdersByPhoneNumber(phoneNumber);
@@ -50,17 +52,17 @@ const EventLookupPage = () => {
     };
 
     return (
-        <>
-            <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
-                <div className="wrapper flex items-center justify-center sm:justify-between">
-                    <h3 className='h3-bold text-center sm:text-left'>Event Lookup</h3>
-                </div>
-            </section>
-
-            <div className="wrapper my-8 flex flex-col gap-8">
+        <div className="wrapper my-8 flex flex-col gap-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold mb-4 text-center text-primary-500">Event Lookup / 活动查询</h2>
+                <p className="text-gray-600 mb-6 text-center">
+                    Enter your registered phone number to find your event details and queue numbers.
+                    <br />
+                    输入您注册时使用的电话号码，查找您的活动详情和排队号码。
+                </p>
                 <div className="flex flex-col gap-4">
                     <PhoneInput
-                        placeholder="Enter phone number"
+                        placeholder="Enter phone number / 输入电话号码"
                         value={phoneNumber}
                         onChange={(value) => setPhoneNumber(value || '')}
                         defaultCountry="SG"
@@ -69,28 +71,33 @@ const EventLookupPage = () => {
                         countryCallingCodeEditable={false}
                         className="p-regular-16 border-2 border-gray-300 rounded-md"
                     />
-                    <Button onClick={handleLookup} disabled={isLoading}>
-                        {isLoading ? 'Looking up...' : 'Lookup Orders'}
+                    <Button onClick={handleLookup} disabled={isLoading} className="w-full">
+                        {isLoading ? 'Looking up... / 查询中...' : 'Lookup Orders / 查询订单'}
                     </Button>
                 </div>
-
-                {error && <p className="text-red-500">{error}</p>}
-
-                {isLoading ? (
-                    <p>Loading...</p>
-                ) : (
-                    <RegistrationCollection
-                        data={registrations}
-                        emptyTitle="No registrations found"
-                        emptyStateSubtext="No registrations found for this phone number."
-                        collectionType="All_Registrations"
-                        limit={6}
-                        page={1}
-                        totalPages={1}
-                    />
-                )}
             </div>
-        </>
+
+            {error && <p className="text-red-500 text-center">{error}</p>}
+
+            {isLoading ? (
+                <p className="text-center">Loading... / 加载中...</p>
+            ) : hasSearched ? (
+                <RegistrationCollection
+                    data={registrations}
+                    emptyTitle="No registrations found / 未找到注册信息"
+                    emptyStateSubtext="No registrations found for this phone number. / 未找到与此电话号码相关的注册信息。"
+                    collectionType="All_Registrations"
+                    limit={6}
+                    page={1}
+                    totalPages={1}
+                />
+            ) : (
+                <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-primary-50 py-28 text-center">
+                    <h3 className="p-bold-20 md:h5-bold text-primary-500">Ready to find your event details? / 准备查找您的活动详情？</h3>
+                    <p className="p-regular-14 text-gray-600">Use the form above to search for your registrations and queue numbers. / 使用上方的表单搜索您的注册信息和排队号码。</p>
+                </div>
+            )}
+        </div>
     );
 };
 
