@@ -35,12 +35,14 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           <span className="text-xs">Events</span>
         </Link>
       </li>
-      <li>
-        <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
-          <span className="font-medium">活动查询</span>
-          <span className="text-xs">Event Lookup</span>
-        </Link>
-      </li>
+      {!isSuperAdmin && !isNormalAdmin && (
+        <li>
+          <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
+            <span className="font-medium">活动查询</span>
+            <span className="text-xs">Event Lookup</span>
+          </Link>
+        </li>
+      )}
       {isSignedIn ? (
         <>
           <li>
