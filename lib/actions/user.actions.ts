@@ -8,7 +8,7 @@ import Order from '@/lib/database/models/order.model'
 import Event from '@/lib/database/models/event.model'
 import { handleError } from '@/lib/utils'
 
-import { CreateUserParams, UpdateUserParams } from '@/types'
+import { CreateUserParams, UpdateUserParams, CustomFieldGroup, UniquePhoneNumber } from '@/types'
 
 export async function createUser(user: CreateUserParams) {
   try {
@@ -155,6 +155,65 @@ export async function getUserForAdmin(userId: string) {
     };
   } catch (error) {
     console.error('Error fetching user:', error);
+    throw error;
+  }
+}
+
+export async function getAllUniquePhoneNumbers() {
+  try {
+    await connectToDatabase();
+
+    const orders = await Order.find().select('customFieldValues');
+    const phoneMap = new Map();
+    const userList: UniquePhoneNumber[] = [];
+
+    orders.forEach(order => {
+      order.customFieldValues.forEach((group: CustomFieldGroup) => {
+        const phoneField = group.fields.find(field => 
+          field.label.toLowerCase().includes('phone') || 
+          field.label.toLowerCase().includes('contact number')
+        );
+        if (phoneField && phoneField.value) {
+          const count = phoneMap.get(phoneField.value) || 0;
+          phoneMap.set(phoneField.value, count + 1);
+        }
+      });
+    });
+
+    const phoneMapObj = Object.fromEntries(phoneMap);
+    for (const [phoneNumber, count] of Object.entries(phoneMapObj)) {
+      const order = orders.find(order => 
+        order.customFieldValues.some((group: CustomFieldGroup) => 
+          group.fields.some(field => 
+            (field.label.toLowerCase().includes('phone') || field.label.toLowerCase().includes('contact number')) 
+            && field.value === phoneNumber
+          )
+        )
+      );
+
+      if (order) {
+        const group = order.customFieldValues.find((group: CustomFieldGroup) => 
+          group.fields.some(field => 
+            (field.label.toLowerCase().includes('phone') || field.label.toLowerCase().includes('contact number')) 
+            && field.value === phoneNumber
+          )
+        );
+
+        if (group) {
+          const nameField = group.fields.find((field: { label: string }) => field.label.toLowerCase().includes('name'));
+
+          userList.push({
+            phoneNumber,
+            isNewUser: count === 1,
+            name: nameField ? nameField.value : 'Unknown'
+          });
+        }
+      }
+    }
+
+    return userList;
+  } catch (error) {
+    console.error('Error fetching unique phone numbers:', error);
     throw error;
   }
 }

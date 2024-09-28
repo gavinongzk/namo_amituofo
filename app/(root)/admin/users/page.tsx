@@ -13,7 +13,7 @@ const AdminUsersPage = () => {
     if (isLoaded) {
       const role = user?.publicMetadata.role as string;
       setIsSuperAdmin(role === 'superadmin');
-      if (role !== 'superadmin' && role !== 'admin') {
+      if (role !== 'superadmin') {
         redirect('/');
       }
     }

@@ -176,3 +176,10 @@ export interface CustomFieldGroup {
   queueNumber?: string;
   attendance?: boolean;
 }
+
+// Add this type definition
+export type UniquePhoneNumber = {
+  phoneNumber: string;
+  isNewUser: boolean;
+  name: string;
+};
