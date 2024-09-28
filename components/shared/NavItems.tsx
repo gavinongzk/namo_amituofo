@@ -54,7 +54,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       ) : (
         <li>
           <Link href="/sign-in" onClick={handleClick}>
-            Login 登录
+            Admin Login 管理员登录
           </Link>
         </li>
       )}
