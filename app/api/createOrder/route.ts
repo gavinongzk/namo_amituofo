@@ -23,9 +23,10 @@ export async function POST(req: NextRequest) {
           id: field.id,
           label: field.label,
           type: field.type,
-          value: field.value
-        }))
-      }))
+          value: field.value,
+        })),
+        __v: group.__v,
+      })),
     });
 
     return NextResponse.json({ message: 'Order created successfully', order: newOrder });

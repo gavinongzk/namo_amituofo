@@ -3,11 +3,8 @@ import { connectToDatabase } from '../database';
 import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import User from '../database/models/user.model';
+import { CustomFieldGroup } from '@/types';
 
-interface CustomFieldGroup {
-  queueNumber: string;
-  fields: Array<{ label: string; value: string }>;
-}
 
 export const getRegistrationsByUser = async (userId: string): Promise<IRegistration[]> => {
   try {
@@ -48,7 +45,7 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
           const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
           eventMap[eventId].registrations.push({
             queueNumber: group.queueNumber,
-            name: nameField ? nameField.value : 'Unknown',
+            name: nameField && typeof nameField.value === 'string' ? nameField.value : 'Unknown',
           });
         });
       }

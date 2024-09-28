@@ -1,10 +1,6 @@
-import '@/lib/database/models'
-import { connectToDatabase } from '@/lib/database';
-import Order from '@/lib/database/models/order.model';
-import User from '@/lib/database/models/user.model'; // Import the User model
-import Event from '@/lib/database/models/event.model'; // Import the User model
-
 import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/database';
+import { getOrdersByEvent } from '@/lib/actions/order.actions';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -13,34 +9,44 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     console.log('Fetching attendees for event:', eventId);
 
-    const rawOrders = await Order.find({ event: eventId });
-    console.log('Raw orders:', JSON.stringify(rawOrders, null, 2));
+    const orders = await getOrdersByEvent({ eventId });
 
-    const attendees = await Order.find({ event: eventId })
-      .populate('buyer', 'phoneNumber')
-      .populate('event', 'title startDateTime endDateTime')
-      .select('buyer event customFieldValues queueNumber attendance version');
+    if (!orders) {
+      return NextResponse.json({ message: 'No orders found' }, { status: 404 });
+    }
 
-    console.log('Raw attendees:', JSON.stringify(attendees, null, 2));
+    const attendees = orders.flatMap(order => 
+      order.customFieldValues.map(group => ({
+        id: `${order._id}_${group.groupId}`,
+        eventTitle: order.event.title,
+        eventStartDateTime: order.event.startDateTime,
+        eventEndDateTime: order.event.endDateTime,
+        order: {
+          customFieldValues: [
+            {
+              ...group,
+              fields: group.fields.map(field => ({
+                ...field,
+                value: field.value
+                  ? field.type === 'phone'
+                    ? field.value
+                    : typeof field.value === 'string'
+                      ? field.value.replace(/\d/g, '*')
+                      : String(field.value).replace(/\d/g, '*')
+                  : '',
+              })),
+              __v: group.__v || 0 // Include version at the group level
+            }
+          ]
+        }
+      }))
+    );
 
-    const formattedAttendees = attendees.map(order => ({
-      id: order.buyer._id,
-      phoneNumber: order.buyer.phoneNumber,
-      eventTitle: order.event.title,
-      eventStartDateTime: order.event.startDateTime,
-      eventEndDateTime: order.event.endDateTime,
-      order: {
-        queueNumber: order.queueNumber,
-        attended: order.attendance,
-        customFieldValues: order.customFieldValues,
-        version: order.version
-      }
-    }));
+    console.log('Formatted attendees:', JSON.stringify(attendees, null, 2));
 
-    console.log('Formatted attendees:', JSON.stringify(formattedAttendees, null, 2));
-
-    return NextResponse.json({ attendees: formattedAttendees });
+    return NextResponse.json({ attendees });
   } catch (error) {
+    console.error('Error fetching attendees:', error);
     return NextResponse.json({ message: 'Error fetching attendees', error }, { status: 500 });
   }
 }

@@ -1,45 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { connectToDatabase } from '@/lib/database'
-import Order from '@/lib/database/models/order.model'
-import { Document } from 'mongoose';
-
-// Define the type for customFieldValues
-interface CustomFieldValue {
-  groupId: string;
-  attendance: boolean;
-}
-
-// Extend the Order model to include customFieldValues
-interface OrderDocument extends Document {
-  customFieldValues: CustomFieldValue[];
-  version: number;
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/database';
+import Order from '@/lib/database/models/order.model';
 
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
-    const { userId, eventId, groupId, attended, version } = await req.json();
+    const { orderId, eventId, groupId, attended, version } = await req.json();
 
-    const order: OrderDocument | null = await Order.findOne({ buyer: userId, event: eventId });
+    const order = await Order.findById(orderId);
     if (!order) {
-      return NextResponse.json({ message: "Order not found" }, { status: 404 });
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    if (order.version !== version) {
-      return NextResponse.json({ message: "Version conflict" }, { status: 409 });
+    if (order.__v !== version) {
+      return NextResponse.json({ message: 'Version conflict' }, { status: 409 });
     }
 
-    const group = order.customFieldValues.find((group: CustomFieldValue) => group.groupId === groupId);
-    if (group) {
-      group.attendance = attended;
+    const groupIndex = order.customFieldValues.findIndex((group: { groupId: string }) => group.groupId === groupId);
+    if (groupIndex === -1) {
+      return NextResponse.json({ message: 'Group not found' }, { status: 404 });
     }
 
-    order.version += 1;
+    order.customFieldValues[groupIndex].attendance = attended;
+    order.__v += 1;
 
     await order.save();
 
-    return NextResponse.json({ message: "Attendance updated successfully" });
+    return NextResponse.json({ 
+      message: 'Attendance updated successfully',
+      order: {
+        customFieldValues: order.customFieldValues,
+        version: order.__v
+      }
+    });
   } catch (error) {
-    return NextResponse.json({ message: "Error updating attendance", error }, { status: 500 });
+    console.error('Error updating attendance:', error);
+    return NextResponse.json({ message: 'Error updating attendance' }, { status: 500 });
   }
 }

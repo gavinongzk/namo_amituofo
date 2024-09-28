@@ -1,17 +1,7 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
+import { CustomFieldGroup, CustomField } from '@/types';
 
-interface CustomFieldValue {
-  id: string;
-  label: string;
-  value?: string; // Allow value to be string or undefined
-}
-
-interface CustomFieldGroup {
-  groupId: string;
-  fields: CustomFieldValue[];
-  queueNumber?: string; // Add queueNumber to the interface
-}
 
 const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: string }, searchParams: { orderId: string } }) => {
   const order = await getOrderById(searchParams.orderId);
@@ -53,7 +43,7 @@ const ThankYouPage = async ({ params: { id }, searchParams }: { params: { id: st
                 <p><strong>Queue Number:</strong> {group.queueNumber}</p>
               )}
               <ul>
-                {group.fields.map((field: CustomFieldValue) => (
+                {group.fields.map((field: CustomField) => (
                   <li key={field.id}>
                     <strong>{field.label}:</strong> {field.value}
                   </li>

@@ -5,11 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 import ReactPaginate from 'react-paginate';
-import Modal from '@/components/ui/modal'; // Import the modal component
-import { getEventWithAttendeeCount } from '@/lib/actions/event.actions';
-import { getOrdersByEvent } from '@/lib/actions/order.actions';
+import Modal from '@/components/ui/modal';
 
-type User = {
+type EventRegistration = {
   id: string;
   eventTitle: string;
   eventStartDateTime: string;
@@ -25,8 +23,8 @@ type User = {
         type: string;
         value: string;
       }[];
+      __v: number;
     }[];
-    version: number;
   };
 };
 
@@ -42,8 +40,16 @@ type Event = {
   maxSeats: number;
 };
 
+interface Attendee {
+  order: {
+    customFieldValues: Array<{
+      attendance: boolean;
+    }>;
+  };
+}
+
 const AttendanceClient = React.memo(({ event }: { event: Event }) => {
-  const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
+  const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -53,94 +59,80 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const usersPerPage = 10;
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
 
-  useEffect(() => {
-    console.log('Fetching registered users for event:', event._id);
-    fetchRegisteredUsers();
-  }, []);
-
-  const fetchRegisteredUsers = useCallback(async () => {
+  const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
     try {
-      const eventWithAttendees = await getEventWithAttendeeCount(event._id);
-      if (eventWithAttendees) {
-        const orders = await getOrdersByEvent({ eventId: event._id });
-        if (orders) {
-          const attendees = orders.flatMap(order => 
-            order.customFieldValues.map(group => ({
-              id: `${order._id}_${group.groupId}`,
-              eventTitle: event.title,
-              eventStartDateTime: event.startDateTime,
-              eventEndDateTime: event.endDateTime,
-              order: {
-                customFieldValues: [group],
-                version: order.__v || 0
-              }
-            }))
-          );
-          setRegisteredUsers(attendees);
-          setAttendedUsersCount(eventWithAttendees.attendeeCount);
-        } else {
-          setRegisteredUsers([]);
-          setAttendedUsersCount(0);
-          setMessage('No orders found for this event. 未找到此活动的订单。');
-        }
+      const response = await fetch(`/api/events/${event._id}/attendees`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch registrations');
+      }
+      const data = await response.json();
+      if (Array.isArray(data.attendees)) {
+        setRegistrations(data.attendees);
+        const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
+          return count + registration.order.customFieldValues.filter(group => group.attendance).length;
+        }, 0);
+        setAttendedUsersCount(attendedCount);
       } else {
-        setRegisteredUsers([]);
+        setRegistrations([]);
         setAttendedUsersCount(0);
-        setMessage('Event details not found. 未找到活动详情。');
+        setMessage('No registrations found for this event. 未找到此活动的注册。');
       }
     } catch (error) {
-      console.error('Error fetching registered users:', error);
-      setMessage('Failed to fetch registered users. 获取注册用户失败。');
-      setRegisteredUsers([]);
+      console.error('Error fetching registrations:', error);
+      setMessage('Failed to fetch registrations. 获取注册失败。');
+      setRegistrations([]);
       setAttendedUsersCount(0);
     } finally {
       setIsLoading(false);
     }
   }, [event._id]);
 
-  const handleMarkAttendance = useCallback(async (userId: string, groupId: string, attended: boolean) => {
-    console.log(`Marking attendance for user ${userId}, group ${groupId}: ${attended}`);
+  useEffect(() => {
+    console.log('Fetching registrations for event:', event._id);
+    fetchRegistrations();
+  }, [fetchRegistrations]);
+
+  const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
+    console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
     try {
-      const [orderId, groupId] = userId.split('_');
-      const user = registeredUsers.find(user => user.id === userId);
-      const group = user?.order.customFieldValues[0];
+      const [orderId, orderGroupId] = registrationId.split('_');
+      const registration = registrations.find(reg => reg.id === registrationId);
+      const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
+      
+      if (!registration || !group) {
+        throw new Error('Registration or group not found');
+      }
+
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId, eventId: event._id, groupId, attended, version: user?.order.version }),
+        body: JSON.stringify({ 
+          orderId, 
+          eventId: event._id, 
+          groupId, 
+          attended, 
+          version: registration.order.customFieldValues[0].__v 
+        }),
       });
 
       if (res.ok) {
-        setRegisteredUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId
-              ? {
-                  ...user,
-                  order: {
-                    ...user.order,
-                    customFieldValues: user.order.customFieldValues.map(group =>
-                      group.groupId === groupId ? { ...group, attendance: attended } : group
-                    ),
-                    version: user.order.version + 1,
-                  },
-                }
-              : user
+        const updatedRegistration = await res.json();
+        setRegistrations(prevRegistrations =>
+          prevRegistrations.map(r =>
+            r.id === registrationId ? { ...r, order: updatedRegistration.order } : r
           )
         );
         setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
-        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}, group ${groupId}`);
-        console.log(`Attendance ${attended ? 'marked' : 'unmarked'} for ${userId}, group ${groupId}`);
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group?.queueNumber}`);
+        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
       } else if (res.status === 409) {
         setModalMessage('Refreshing due to an update by someone else. 正在刷新，因为有其他人更新了数据。');
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        await fetchRegistrations(); // Refresh the data
       } else {
         throw new Error('Failed to update attendance 更新出席情况失败');
       }
@@ -153,30 +145,30 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setShowModal(false);
       }, 2000);
     }
-  }, [event._id, registeredUsers]);
+  }, [event._id, registrations, fetchRegistrations]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
-    const user = registeredUsers.find(u => u.order.customFieldValues.some(group => group.queueNumber === queueNumber));
-    if (user) {
-      const group = user.order.customFieldValues[0];
+    const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
+    if (registration) {
+      const group = registration.order.customFieldValues[0];
       if (group) {
-        await handleMarkAttendance(user.id, group.groupId, !group.attendance);
+        await handleMarkAttendance(registration.id, group.groupId, !group.attendance);
         setQueueNumber('');
       }
     } else {
-      setMessage('User not found with this queue number. 未找到此排队号码的用户。');
-      console.log('User not found with this queue number:', queueNumber);
+      setMessage('Registration not found with this queue number. 未找到此排队号码的注册。');
+      console.log('Registration not found with this queue number:', queueNumber);
     }
-  }, [queueNumber, registeredUsers, handleMarkAttendance]);
+  }, [queueNumber, registrations, handleMarkAttendance]);
 
   const handlePageClick = (data: { selected: number }) => {
     setCurrentPage(data.selected);
   };
 
   const offset = currentPage * usersPerPage;
-  const currentPageUsers = registeredUsers.slice(offset, offset + usersPerPage);
-  const pageCount = Math.ceil(registeredUsers.length / usersPerPage);
+  const currentPageRegistrations = registrations.slice(offset, offset + usersPerPage);
+  const pageCount = Math.ceil(registrations.length / usersPerPage);
 
   return (
     <div className="wrapper my-8">
@@ -216,15 +208,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-2">Total Registrations 总注册: {registeredUsers.reduce((count, user) => count + user.order.customFieldValues.length, 0)}</p>
+          <p className="mb-2">Total Registrations 总注册: {registrations.reduce((count, registration) => count + registration.order.customFieldValues.length, 0)}</p>
           <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                  {registeredUsers.length > 0 && registeredUsers[0]?.order?.customFieldValues[0]?.fields && 
-                    registeredUsers[0].order.customFieldValues[0].fields
+                  {registrations.length > 0 && registrations[0]?.order?.customFieldValues[0]?.fields && 
+                    registrations[0].order.customFieldValues[0].fields
                       .filter(field => !['name'].includes(field.label.toLowerCase()))
                       .map(field => (
                         <th key={field.id} className="py-2 px-4 border-b text-left">
@@ -236,9 +228,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </tr>
               </thead>
               <tbody>
-                {currentPageUsers.flatMap((user) => (
-                  user.order.customFieldValues.map((group) => (
-                    <tr key={`${user.id}_${group.groupId}`} className="hover:bg-gray-50">
+                {currentPageRegistrations.flatMap((registration) => (
+                  registration.order.customFieldValues.map((group) => (
+                    <tr key={`${registration.id}_${group.groupId}`} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
                       {group.fields
                         .filter(field => !['name'].includes(field.label.toLowerCase()))
@@ -252,7 +244,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         <input
                           type="checkbox"
                           checked={group.attendance || false}
-                          onChange={() => handleMarkAttendance(user.id, group.groupId, !(group.attendance || false))}
+                          onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
                           className="form-checkbox h-5 w-5 text-blue-600"
                         />
                       </td>

@@ -10,20 +10,6 @@ import { IOrder, IOrderItem } from '../database/models/order.model';
 import User from '../database/models/user.model';
 
 
-interface CustomField {
-  id: string;
-  label: string;
-  type: string;
-  value: string;
-}
-
-interface CustomFieldGroup {
-  groupId: string;
-  fields: CustomField[];
-  queueNumber: string;
-  attendance: boolean;
-}
-
 interface TypedOrder {
   _id: { toString: () => string };
   createdAt: Date;
@@ -90,7 +76,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
 
     const orders = await Order.find({ event: eventObjectId })
       .populate('event', 'title imageUrl startDateTime endDateTime')
-      .select('_id createdAt event customFieldValues')
+      .select('_id createdAt event customFieldValues __v')
       .lean();
 
     const formattedOrders: IOrderItem[] = orders.map((order: any) => ({
@@ -109,6 +95,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         fields: field.fields,
         attendance: field.attendance || false,
       })),
+      __v: order.__v,
     }));
 
     // If searchString is provided, filter the orders

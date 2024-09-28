@@ -1,18 +1,6 @@
 import { Schema, model, models, Document } from 'mongoose';
+import { CustomFieldGroup, CustomField } from '@/types';
 
-export interface CustomField {
-  id: string;
-  label: string;
-  type: string;
-  value: string;
-}
-
-export interface CustomFieldGroup {
-  groupId: string;
-  fields: CustomField[];
-  queueNumber: string;
-  attendance: boolean;
-}
 
 export interface IOrder extends Document {
   _id: string;
@@ -24,9 +12,6 @@ export interface IOrder extends Document {
     startDateTime?: Date;
     endDateTime?: Date;
     organizer?: { _id: string };
-  };
-  buyer: {
-    _id: string;
   };
   customFieldValues: CustomFieldGroup[];
 }
@@ -43,7 +28,6 @@ export interface IOrderItem {
     organizer?: { _id: string };
   };
   customFieldValues: CustomFieldGroup[];
-  __v?: number; // Add this line
 }
 
 const OrderSchema = new Schema({
@@ -72,6 +56,7 @@ const OrderSchema = new Schema({
       ],
       queueNumber: { type: String, required: true },
       attendance: { type: Boolean, default: false },
+      __v: { type: Number, default: 0 }, // Add version control at this level
     },
   ],
 });

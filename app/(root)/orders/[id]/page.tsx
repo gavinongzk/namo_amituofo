@@ -1,17 +1,7 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
+import { CustomFieldGroup, CustomField } from '@/types';
 
-interface CustomFieldValue {
-  id: string;
-  label: string;
-  value?: string;
-}
-
-interface CustomFieldGroup {
-  groupId: string;
-  fields: CustomFieldValue[];
-  queueNumber?: string;
-}
 
 const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) => {
   const order = await getOrderById(id);
@@ -58,7 +48,7 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
               )}
             </div>
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {group.fields.map((field: CustomFieldValue) => (
+              {group.fields.map((field: CustomField) => (
                 <div key={field.id}>
                   <dt className="font-medium text-gray-600">{field.label}</dt>
                   <dd className="mt-1">{field.value || 'N/A'}</dd>
