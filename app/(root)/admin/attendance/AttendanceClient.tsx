@@ -97,72 +97,67 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
-    let attempts = 0;
-    const maxAttempts = 3;
 
-    while (attempts < maxAttempts) {
-      try {
-        const [orderId, orderGroupId] = registrationId.split('_');
-        const registration = registrations.find(reg => reg.id === registrationId);
-        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
-        
-        if (!registration || !group) {
-          throw new Error('Registration or group not found');
-        }
-
-        const res = await fetch('/api/attendance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            orderId, 
-            eventId: event._id, 
-            groupId, 
-            attended, 
-            version: group.__v 
-          }),
-        });
-
-        if (res.ok) {
-          const updatedRegistration = await res.json();
-          setRegistrations(prevRegistrations =>
-            prevRegistrations.map(r => {
-              if (r.id === registrationId) {
-                // Find the specific group within the registration
-                const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
-                  group.groupId === groupId 
-                    ? { ...group, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
-                    : group
-                );
-                return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
-              }
-              return r;
-            })
-          );
-          setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
-          setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
-          setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
-          break;
-        } else if (res.status === 409) {
-          attempts++;
-          await new Promise(resolve => setTimeout(resolve, 100 * attempts)); // Exponential backoff
-          await fetchRegistrations(); // Refresh the data
-        } else {
-          throw new Error('Failed to update attendance 更新出席情况失败');
-        }
-      } catch (error) {
-        console.error('Error updating attendance:', error);
-        setMessage('Failed to update attendance. 更新出席情况失败。');
-        setModalMessage('Failed to update attendance. 更新出席情况失败。');
-        break;
+    try {
+      const [orderId, orderGroupId] = registrationId.split('_');
+      const registration = registrations.find(reg => reg.id === registrationId);
+      const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
+      
+      if (!registration || !group) {
+        throw new Error('Registration or group not found');
       }
+
+      const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          orderId, 
+          eventId: event._id, 
+          groupId, 
+          attended, 
+          version: group.__v 
+        }),
+      });
+
+      if (res.ok) {
+        const updatedRegistration = await res.json();
+        setRegistrations(prevRegistrations =>
+          prevRegistrations.map(r => {
+            if (r.id === registrationId) {
+              const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
+                group.groupId === groupId 
+                  ? { ...group, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                  : group
+              );
+              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
+            }
+            return r;
+          })
+        );
+        setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
+        setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
+      } else if (res.status === 409) {
+        setModalMessage('Attendance update failed. Refreshing page... 更新出席情况失败。正在刷新页面...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+        return; // Exit the function early as we're refreshing the page
+      } else {
+        throw new Error('Failed to update attendance 更新出席情况失败');
+      }
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      setMessage('Failed to update attendance. 更新出席情况失败。');
+      setModalMessage('Failed to update attendance. 更新出席情况失败。');
     }
 
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [event._id, registrations, fetchRegistrations]);
+  }, [event._id, registrations]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
