@@ -7,14 +7,6 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
-import User from '../database/models/user.model';
-
-
-interface TypedOrder {
-  _id: { toString: () => string };
-  createdAt: Date;
-  event: { title: string };
-}
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -136,37 +128,6 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     return formattedOrders;
   } catch (error) {
     console.error('Error in getOrdersByEvent:', error);
-    handleError(error);
-  }
-}
-
-// GET ORDERS BY USER
-export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUserParams) {
-  try {
-    await connectToDatabase();
-
-    const skipAmount = (Number(page) - 1) * limit;
-    const conditions = { buyer: userId };
-
-    const orders = await Order.distinct('event._id')
-      .find(conditions)
-      .sort({ createdAt: 'desc' })
-      .skip(skipAmount)
-      .limit(limit)
-      .populate({
-        path: 'event',
-        model: Event,
-        populate: {
-          path: 'organizer',
-          model: User,
-          select: '_id',
-        },
-      });
-
-    const ordersCount = await Order.distinct('event').countDocuments(conditions);
-
-    return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) };
-  } catch (error) {
     handleError(error);
   }
 }
