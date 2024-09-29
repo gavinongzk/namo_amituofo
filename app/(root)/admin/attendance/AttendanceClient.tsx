@@ -9,7 +9,7 @@ import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
+import AttendanceDetailsCard from '@/components/shared/AttendanceDetailsCard';
 
 type EventRegistration = {
   id: string;
@@ -58,8 +58,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
   const [totalRegistrations, setTotalRegistrations] = useState(0);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -185,23 +183,31 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const pageCount = Math.ceil(registrations.length / usersPerPage);
 
   const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
+    setShowModal(true);
+    setModalMessage(cancelled ? 'Cancelling registration... 取消注册中...' : 'Uncancelling registration... 恢复注册中...');
+
     try {
+      const [orderId] = registrationId.split('_');
+      if (!orderId) {
+        throw new Error('Invalid registration ID');
+      }
+
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId, cancelled }),
+        body: JSON.stringify({ orderId, groupId, cancelled }),
       });
 
       if (res.ok) {
-        // Update the local state
+        const data = await res.json();
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
               const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
                 group.groupId === groupId 
-                  ? { ...group, cancelled: cancelled }
+                  ? { ...group, cancelled: data.cancelled }
                   : group
               );
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
@@ -209,28 +215,33 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             return r;
           })
         );
+        setMessage(data.message);
+        setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} for queue number ${queueNumber}`);
         
-        // Update the total registrations count
-        setTotalRegistrations(prev => prev + (cancelled ? -1 : 1));
+        // Update counts
+        setTotalRegistrations(prevTotal => prevTotal + (cancelled ? -1 : 1));
+        
+        // If the registration was marked as attended, update the attendedUsersCount
+        const registration = registrations.find(r => r.id === registrationId);
+        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
+        if (group?.attendance) {
+          setAttendedUsersCount(prevCount => prevCount + (cancelled ? -1 : 1));
+        }
       } else {
-        throw new Error('Failed to update registration');
+        throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
       }
     } catch (error) {
-      console.error('Error updating registration:', error);
-      // Handle error (e.g., show an error message to the user)
+      console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
+      setMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
+      setModalMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
     }
-  }, []);
+
+    setTimeout(() => {
+      setShowModal(false);
+    }, 2000);
+  }, [registrations]);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
-    setShowDeleteConfirmation(true);
-    setDeleteConfirmationData({ registrationId, groupId, queueNumber });
-  }, []);
-
-  const confirmDeleteRegistration = useCallback(async () => {
-    if (!deleteConfirmationData) return;
-
-    const { registrationId, groupId, queueNumber } = deleteConfirmationData;
-    setShowDeleteConfirmation(false);
     setShowModal(true);
     setModalMessage('Deleting registration... 删除注册中...');
 
@@ -244,22 +255,30 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
 
       if (res.ok) {
-        setModalMessage('Registration deleted successfully. Refreshing page... 注册已成功删除。正在刷新页面...');
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        setRegistrations(prevRegistrations =>
+          prevRegistrations.map(r => {
+            if (r.id === registrationId) {
+              const updatedCustomFieldValues = r.order.customFieldValues.filter(group => group.groupId !== groupId);
+              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
+            }
+            return r;
+          })
+        );
+        setMessage(`Registration deleted for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Registration deleted for queue number ${queueNumber}`);
       } else {
         throw new Error('Failed to delete registration 删除注册失败');
       }
     } catch (error) {
       console.error('Error deleting registration:', error);
+      setMessage('Failed to delete registration. 删除注册失败。');
       setModalMessage('Failed to delete registration. 删除注册失败。');
     }
 
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [deleteConfirmationData]);
+  }, [registrations]);
 
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: string[] } = {};
