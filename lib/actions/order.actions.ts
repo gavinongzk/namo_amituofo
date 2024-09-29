@@ -31,17 +31,8 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event not found');
     }
 
-    // Count only uncancelled registrations
-    const currentRegistrations = await Order.aggregate([
-      { $match: { event: new ObjectId(order.eventId) } },
-      { $unwind: "$customFieldValues" },
-      { $match: { "customFieldValues.cancelled": { $ne: true } } },
-      { $count: "total" }
-    ]);
-
-    const totalRegistrations = currentRegistrations[0]?.total || 0;
-
-    if (totalRegistrations >= event.maxSeats) {
+    const currentRegistrations = await Order.countDocuments({ event: order.eventId });
+    if (currentRegistrations >= event.maxSeats) {
       throw new Error('Event is fully booked');
     }
 
@@ -59,13 +50,13 @@ export async function createOrder(order: CreateOrderParams) {
       return {
         ...group,
         queueNumber: newQueueNumber,
-        cancelled: false,
-        __v: 0,
+        __v: 0, // Add this line to set the initial version
       };
     });
 
     const newOrder = await Order.create({
       ...order,
+      event: new ObjectId(order.eventId),
       customFieldValues: newCustomFieldValues,
     });
 
