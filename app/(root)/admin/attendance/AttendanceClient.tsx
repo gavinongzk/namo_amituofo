@@ -229,6 +229,63 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }, 2000);
   }, [registrations]);
 
+  const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
+    setShowModal(true);
+    setModalMessage('Deleting registration... 删除注册中...');
+
+    try {
+      const res = await fetch('/api/admin/delete-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId }),
+      });
+
+      if (res.ok) {
+        setRegistrations(prevRegistrations =>
+          prevRegistrations.map(r => {
+            if (r.id === registrationId) {
+              const updatedCustomFieldValues = r.order.customFieldValues.filter(group => group.groupId !== groupId);
+              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
+            }
+            return r;
+          })
+        );
+        setMessage(`Registration deleted for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Registration deleted for queue number ${queueNumber}`);
+      } else {
+        throw new Error('Failed to delete registration 删除注册失败');
+      }
+    } catch (error) {
+      console.error('Error deleting registration:', error);
+      setMessage('Failed to delete registration. 删除注册失败。');
+      setModalMessage('Failed to delete registration. 删除注册失败。');
+    }
+
+    setTimeout(() => {
+      setShowModal(false);
+    }, 2000);
+  }, [registrations]);
+
+  const groupRegistrationsByPhone = useCallback(() => {
+    const phoneGroups: { [key: string]: string[] } = {};
+    registrations.forEach(registration => {
+      registration.order.customFieldValues.forEach(group => {
+        const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+        if (phoneField) {
+          if (!phoneGroups[phoneField.value]) {
+            phoneGroups[phoneField.value] = [];
+          }
+          phoneGroups[phoneField.value].push(`${registration.id}_${group.groupId}`);
+        }
+      });
+    });
+    return phoneGroups;
+  }, [registrations]);
+
+  const phoneGroups = groupRegistrationsByPhone();
+
   return (
     <div className="wrapper my-8">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -284,41 +341,63 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                       ))
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
+                  {user?.publicMetadata.role === 'superadmin' && (
+                    <th className="py-2 px-4 border-b text-center">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {currentPageRegistrations.map((registration) => (
-                  registration.order.customFieldValues.map((group) => (
-                    <tr key={`${registration.id}_${group.groupId}`} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
-                      {group.fields
-                        .filter(field => !['name'].includes(field.label.toLowerCase()))
-                        .map(field => (
-                          <td key={field.id} className="py-2 px-4 border-b text-left">
-                            {field.type === 'radio'
-                              ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                              : (field.value || 'N/A')}
+                  registration.order.customFieldValues.map((group) => {
+                    const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+                    const phoneNumber = phoneField ? phoneField.value : '';
+                    const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
+                    
+                    return (
+                      <tr 
+                        key={`${registration.id}_${group.groupId}`} 
+                        className={`hover:bg-gray-50 ${isDuplicate ? 'bg-yellow-100' : ''}`}
+                      >
+                        <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
+                        {group.fields
+                          .filter(field => !['name'].includes(field.label.toLowerCase()))
+                          .map(field => (
+                            <td key={field.id} className="py-2 px-4 border-b text-left">
+                              {field.type === 'radio'
+                                ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                                : (field.value || 'N/A')}
+                            </td>
+                          ))
+                        }
+                        <td className="py-2 px-4 border-b text-center">
+                          <input
+                            type="checkbox"
+                            checked={group.attendance || false}
+                            onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                          />
+                        </td>
+                        {user?.publicMetadata.role === 'superadmin' && (
+                          <td className="py-2 px-4 border-b text-center">
+                            {!group.cancelled && (
+                              <button
+                                onClick={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
+                                className="mr-2 bg-yellow-500 text-white px-2 py-1 rounded"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
+                              className="bg-red-500 text-white px-2 py-1 rounded"
+                            >
+                              Delete
+                            </button>
                           </td>
-                        ))
-                      }
-                      <td className="py-2 px-4 border-b text-center">
-                        <input
-                          type="checkbox"
-                          checked={group.attendance || false}
-                          onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
-                          className="form-checkbox h-5 w-5 text-blue-600"
-                        />
-                        {user?.publicMetadata.role === 'superadmin' && !group.cancelled && (
-                          <button
-                            onClick={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
-                            className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
-                          >
-                            Cancel
-                          </button>
                         )}
-                      </td>
-                    </tr>
-                  ))
+                      </tr>
+                    );
+                  })
                 ))}
               </tbody>
             </table>
@@ -351,6 +430,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <Modal>
           <p>{modalMessage}</p>
         </Modal>
+      )}
+
+      {user?.publicMetadata.role === 'superadmin' && (
+        <p className="mt-4 text-sm text-gray-600">
+          Note: Rows highlighted in yellow indicate registrations with the same phone number.
+        </p>
       )}
     </div>
   );
