@@ -3,11 +3,11 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { ObjectId } from 'mongodb';
 
-export async function GET(req: NextRequest, { params }: { params: { eventId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectToDatabase();
 
-    const eventId = params.eventId;
+    const eventId = params.id;
 
     if (!ObjectId.isValid(eventId)) {
       return NextResponse.json({ error: 'Invalid event ID' }, { status: 400 });
