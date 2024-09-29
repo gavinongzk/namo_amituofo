@@ -9,6 +9,7 @@ import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
+import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 
 type EventRegistration = {
   id: string;
@@ -57,7 +58,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
   const [totalRegistrations, setTotalRegistrations] = useState(0);
-  const [activeRegistrations, setActiveRegistrations] = useState(0);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -220,7 +222,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         
         // Update counts
         setTotalRegistrations(prevTotal => prevTotal + (cancelled ? -1 : 1));
-        setActiveRegistrations(prevActive => prevActive + (cancelled ? -1 : 1));
         
         // If the registration was marked as attended, update the attendedUsersCount
         const registration = registrations.find(r => r.id === registrationId);
@@ -243,6 +244,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [registrations]);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
+    setShowDeleteConfirmation(true);
+    setDeleteConfirmationData({ registrationId, groupId, queueNumber });
+  }, []);
+
+  const confirmDeleteRegistration = useCallback(async () => {
+    if (!deleteConfirmationData) return;
+
+    const { registrationId, groupId, queueNumber } = deleteConfirmationData;
+    setShowDeleteConfirmation(false);
     setShowModal(true);
     setModalMessage('Deleting registration... 删除注册中...');
 
@@ -279,7 +289,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [registrations]);
+  }, [deleteConfirmationData, setRegistrations, setMessage, setModalMessage]);
 
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: string[] } = {};
@@ -306,7 +316,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         if (res.ok) {
           const data = await res.json();
           setTotalRegistrations(data.totalRegistrations);
-          setActiveRegistrations(data.activeRegistrations);
           setAttendedUsersCount(data.attendedUsers);
         } else {
           console.error('Failed to fetch counts:', await res.text());
@@ -321,159 +330,162 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   return (
     <div className="wrapper my-8">
-      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h1 className="text-2xl font-bold mb-4">{event.title}</h1>
-        <p className="mb-2">Total Registrations 总注册: {totalRegistrations}</p>
-        <p className="mb-2">Active Registrations 活跃注册: {activeRegistrations}</p>
-        <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
-        <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Date 日期:</span> {formatDateTime(new Date(event.startDateTime)).dateOnly}
-        </p>
-        <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Time 时间:</span> {formatDateTime(new Date(event.startDateTime)).timeOnly} - {formatDateTime(new Date(event.endDateTime)).timeOnly}
-        </p>
-        <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Location 地点:</span> {event.location}
-        </p>
-        <p className="text-gray-600 mb-2">
-          <span className="font-semibold">Category 类别:</span> {event.category.name}
-        </p>
-        <p className="text-gray-600">
-          <span className="font-semibold">Max Seats 最大座位数:</span> {event.maxSeats}
-        </p>
-      </div>
+      <AttendanceDetailsCard 
+        event={event}
+        totalRegistrations={totalRegistrations}
+        attendedUsersCount={attendedUsersCount}
+      />
 
-      <div className="flex space-x-2 mb-6">
-        <Input
-          placeholder="Enter Queue Number 输入排队号码"
-          value={queueNumber}
-          onChange={(e) => setQueueNumber(e.target.value)}
-          className="flex-grow"
-        />
-        <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
-          Mark Attendance 标记出席
-        </Button>
-      </div>
-
-      <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
-      {isLoading ? (
-        <p>Loading... 加载中...</p>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                  {registrations.length > 0 && registrations[0]?.order?.customFieldValues[0]?.fields && 
-                    registrations[0].order.customFieldValues[0].fields
-                      .filter(field => !['name'].includes(field.label.toLowerCase()))
-                      .map(field => (
-                        <th key={field.id} className="py-2 px-4 border-b text-left">
-                          {field.label}
-                        </th>
-                      ))
-                  }
-                  <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
-                  <th className="py-2 px-4 border-b text-center">Cancelled 已取消</th>
-                  {user?.publicMetadata.role === 'superadmin' && (
-                    <th className="py-2 px-4 border-b text-center">Delete 删除</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {currentPageRegistrations.map((registration) => (
-                  registration.order.customFieldValues.map((group) => {
-                    const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
-                    const phoneNumber = phoneField ? phoneField.value : '';
-                    const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
-                    
-                    return (
-                      <tr 
-                        key={`${registration.id}_${group.groupId}`} 
-                        className={`hover:bg-gray-50 ${isDuplicate ? 'bg-yellow-100' : ''}`}
-                      >
-                        <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
-                        {group.fields
-                          .filter(field => !['name'].includes(field.label.toLowerCase()))
-                          .map(field => (
-                            <td key={field.id} className="py-2 px-4 border-b text-left">
-                              {field.type === 'radio'
-                                ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                                : (field.value || 'N/A')}
-                            </td>
-                          ))
-                        }
-                        <td className="py-2 px-4 border-b text-center">
-                          <input
-                            type="checkbox"
-                            checked={group.attendance || false}
-                            onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
-                            className="form-checkbox h-5 w-5 text-blue-600"
-                          />
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {user?.publicMetadata.role === 'superadmin' ? (
-                            <Checkbox
-                              checked={group.cancelled || false}
-                              onCheckedChange={(checked) => handleCancelRegistration(registration.id, group.groupId, group.queueNumber, checked as boolean)}
-                            />
-                          ) : (
-                            <span>{group.cancelled ? 'Yes' : 'No'}</span>
-                          )}
-                        </td>
-                        {user?.publicMetadata.role === 'superadmin' && (
-                          <td className="py-2 px-4 border-b text-center">
-                            <button
-                              onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <ReactPaginate
-            previousLabel={'Previous 上一页'}
-            nextLabel={'Next 下一页'}
-            breakLabel={'...'}
-            breakClassName={'break-me'}
-            pageCount={pageCount}
-            marginPagesDisplayed={2}
-            pageRangeDisplayed={5}
-            onPageChange={handlePageClick}
-            containerClassName={'pagination flex justify-center mt-4'}
-            pageClassName={'page-item'}
-            pageLinkClassName={'page-link px-3 py-1 border rounded'}
-            previousClassName={'page-item'}
-            previousLinkClassName={'page-link px-3 py-1 border rounded mr-2'}
-            nextClassName={'page-item'}
-            nextLinkClassName={'page-link px-3 py-1 border rounded ml-2'}
-            activeClassName={'active'}
-            activeLinkClassName={'bg-blue-500 text-white'}
+      <div className="mt-8">
+        <div className="flex space-x-2 mb-6">
+          <Input
+            placeholder="Enter Queue Number 输入排队号码"
+            value={queueNumber}
+            onChange={(e) => setQueueNumber(e.target.value)}
+            className="flex-grow"
           />
-        </>
-      )}
+          <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
+            Mark Attendance 标记出席
+          </Button>
+        </div>
 
-      {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+        <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
+        {isLoading ? (
+          <p>Loading... 加载中...</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
+                    {registrations.length > 0 && registrations[0]?.order?.customFieldValues[0]?.fields && 
+                      registrations[0].order.customFieldValues[0].fields
+                        .filter(field => !['name'].includes(field.label.toLowerCase()))
+                        .map(field => (
+                          <th key={field.id} className="py-2 px-4 border-b text-left">
+                            {field.label}
+                          </th>
+                        ))
+                    }
+                    <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
+                    <th className="py-2 px-4 border-b text-center">Cancelled 已取消</th>
+                    {user?.publicMetadata.role === 'superadmin' && (
+                      <th className="py-2 px-4 border-b text-center">Delete 删除</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentPageRegistrations.map((registration) => (
+                    registration.order.customFieldValues.map((group) => {
+                      const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+                      const phoneNumber = phoneField ? phoneField.value : '';
+                      const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
+                      
+                      return (
+                        <tr 
+                          key={`${registration.id}_${group.groupId}`} 
+                          className={`hover:bg-gray-50 ${isDuplicate ? 'bg-yellow-100' : ''}`}
+                        >
+                          <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
+                          {group.fields
+                            .filter(field => !['name'].includes(field.label.toLowerCase()))
+                            .map(field => (
+                              <td key={field.id} className="py-2 px-4 border-b text-left">
+                                {field.type === 'radio'
+                                  ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                                  : (field.value || 'N/A')}
+                              </td>
+                            ))
+                          }
+                          <td className="py-2 px-4 border-b text-center">
+                            <input
+                              type="checkbox"
+                              checked={group.attendance || false}
+                              onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
+                              className="form-checkbox h-5 w-5 text-blue-600"
+                            />
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {user?.publicMetadata.role === 'superadmin' ? (
+                              <Checkbox
+                                checked={group.cancelled || false}
+                                onCheckedChange={(checked) => handleCancelRegistration(registration.id, group.groupId, group.queueNumber, checked as boolean)}
+                              />
+                            ) : (
+                              <span>{group.cancelled ? 'Yes' : 'No'}</span>
+                            )}
+                          </td>
+                          {user?.publicMetadata.role === 'superadmin' && (
+                            <td className="py-2 px-4 border-b text-center">
+                              <button
+                                onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ReactPaginate
+              previousLabel={'Previous 上一页'}
+              nextLabel={'Next 下一页'}
+              breakLabel={'...'}
+              breakClassName={'break-me'}
+              pageCount={pageCount}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={5}
+              onPageChange={handlePageClick}
+              containerClassName={'pagination flex justify-center mt-4'}
+              pageClassName={'page-item'}
+              pageLinkClassName={'page-link px-3 py-1 border rounded'}
+              previousClassName={'page-item'}
+              previousLinkClassName={'page-link px-3 py-1 border rounded mr-2'}
+              nextClassName={'page-item'}
+              nextLinkClassName={'page-link px-3 py-1 border rounded ml-2'}
+              activeClassName={'active'}
+              activeLinkClassName={'bg-blue-500 text-white'}
+            />
+          </>
+        )}
 
-      {showModal && (
-        <Modal>
-          <p>{modalMessage}</p>
-        </Modal>
-      )}
+        {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
 
-      {user?.publicMetadata.role === 'superadmin' && (
-        <p className="mt-4 text-sm text-gray-600">
-          Note: Rows highlighted in yellow indicate registrations with the same phone number.
-        </p>
-      )}
+        {showModal && (
+          <Modal>
+            <p>{modalMessage}</p>
+          </Modal>
+        )}
+
+        {showDeleteConfirmation && deleteConfirmationData && (
+          <Modal>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
+              <div className="flex justify-end space-x-4">
+                <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
+                  Cancel
+                </Button>
+                <Button onClick={confirmDeleteRegistration} variant="destructive">
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {user?.publicMetadata.role === 'superadmin' && (
+          <p className="mt-4 text-sm text-gray-600">
+            Note: Rows highlighted in yellow indicate registrations with the same phone number.
+          </p>
+        )}
+      </div>
     </div>
   );
 });

@@ -20,8 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       {
         $group: {
           _id: null,
-          totalRegistrations: { $sum: 1 },
-          activeRegistrations: {
+          totalRegistrations: {
             $sum: {
               $cond: [{ $eq: ['$customFieldValues.cancelled', false] }, 1, 0]
             }
@@ -42,11 +41,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       }
     ]);
 
-    const counts = result[0] || { totalRegistrations: 0, activeRegistrations: 0, attendedUsers: 0 };
+    const counts = result[0] || { totalRegistrations: 0, attendedUsers: 0 };
 
     return NextResponse.json({
       totalRegistrations: counts.totalRegistrations,
-      activeRegistrations: counts.activeRegistrations,
       attendedUsers: counts.attendedUsers
     });
 
