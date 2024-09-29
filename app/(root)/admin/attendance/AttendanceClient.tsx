@@ -213,45 +213,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setRegistrations(prevRegistrations =>
-          prevRegistrations.map(r => {
-            if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
-                group.groupId === groupId 
-                  ? { ...group, cancelled: data.cancelled }
-                  : group
-              );
-              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
-            }
-            return r;
-          })
+        setModalMessage(cancelled 
+          ? 'Registration cancelled successfully. Refreshing page... 注册已成功取消。正在刷新页面...' 
+          : 'Registration uncancelled successfully. Refreshing page... 注册已成功恢复。正在刷新页面...'
         );
-        setMessage(data.message);
-        setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} for queue number ${queueNumber}`);
         
-        // Update counts
-        setTotalRegistrations(prevTotal => prevTotal + (cancelled ? -1 : 1));
-        
-        // If the registration was marked as attended, update the attendedUsersCount
-        const registration = registrations.find(r => r.id === registrationId);
-        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
-        if (group?.attendance) {
-          setAttendedUsersCount(prevCount => prevCount + (cancelled ? -1 : 1));
-        }
+        // Refresh the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
       }
     } catch (error) {
       console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
-      setMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
       setModalMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
     }
 
-    setTimeout(() => {
-      setShowModal(false);
-    }, 2000);
-  }, [registrations]);
+    // No need to hide the modal here as the page will refresh
+  }, []);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
     setShowDeleteConfirmation(true);

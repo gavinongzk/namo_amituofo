@@ -98,7 +98,6 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
 
     const orders = await Order.find(query)
       .populate('event', 'title imageUrl startDateTime endDateTime')
-      .select('_id createdAt event customFieldValues __v')
       .lean();
 
     console.log('Found orders:', orders.length);
@@ -118,6 +117,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         queueNumber: field.queueNumber,
         fields: field.fields,
         attendance: field.attendance || false,
+        cancelled: field.cancelled || false,
         __v: field.__v || 0,
       })),
       __v: order.__v,
