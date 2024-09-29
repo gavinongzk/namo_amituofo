@@ -213,7 +213,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
       if (res.ok) {
         setModalMessage(cancelled 
-          ? 'Registration cancelled successfully. Refreshing page... 注册已成功取消。正在刷新页面...' 
+          ? 'Registration cancelled successfully. Refreshing page... 注已成功取消。正在刷新页面...' 
           : 'Registration uncancelled successfully. Refreshing page... 注册已成功恢复。正在刷新页面...'
         );
         
@@ -294,7 +294,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     const phoneGroups: { [key: string]: { id: string; queueNumber: string }[] } = {};
     registrations.forEach(registration => {
       registration.order.customFieldValues.forEach(group => {
-        const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+        const phoneField = group.fields.find(field => 
+          field.label.toLowerCase().includes('phone') || field.type === 'phone'
+        );
         if (phoneField) {
           if (!phoneGroups[phoneField.value]) {
             phoneGroups[phoneField.value] = [];
@@ -419,20 +421,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     registrations.flatMap(registration => 
       registration.order.customFieldValues.map(group => {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
-        const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+        const phoneField = group.fields.find(field => 
+          field.label.toLowerCase().includes('phone') || field.type === 'phone'
+        );
+        const phoneNumber = phoneField ? phoneField.value : '';
+        const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
         return {
           registrationId: registration.id,
           groupId: group.groupId,
           queueNumber: group.queueNumber,
           name: nameField ? nameField.value : 'N/A',
-          phoneNumber: phoneField ? phoneField.value : 'N/A',
+          phoneNumber: phoneNumber,
+          isDuplicate: isDuplicate,
           fields: group.fields,
           attendance: group.attendance,
           cancelled: group.cancelled,
         };
       })
     ),
-    [registrations]
+    [registrations, phoneGroups]
   );
 
   const table = useReactTable({
@@ -496,7 +503,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </thead>
                 <tbody>
                   {table.getRowModel().rows.map(row => (
-                    <tr key={row.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={row.id} 
+                      className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
+                    >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id} className="py-2 px-4 border-b text-left">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -593,6 +603,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           </Modal>
         )}
       </div>
+
+      {/* Add this after the table */}
+      <p className="mt-4 text-sm text-gray-600">
+        Note: Rows highlighted in yellow indicate registrations with the same phone number.
+      </p>
     </div>
   );
 });
