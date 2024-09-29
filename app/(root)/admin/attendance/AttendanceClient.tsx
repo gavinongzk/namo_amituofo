@@ -1,10 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  flexRender,
+  createColumnHelper,
+} from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
-import ReactPaginate from 'react-paginate';
 import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
 import { Checkbox } from '@/components/ui/checkbox';
@@ -52,10 +59,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const usersPerPage = 10;
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
   const [totalRegistrations, setTotalRegistrations] = useState(0);
@@ -185,14 +190,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log('Registration not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registrations, handleMarkAttendance]);
-
-  const handlePageClick = (data: { selected: number }) => {
-    setCurrentPage(data.selected);
-  };
-
-  const offset = currentPage * usersPerPage;
-  const currentPageRegistrations = registrations.slice(offset, offset + usersPerPage);
-  const pageCount = Math.ceil(registrations.length / usersPerPage);
 
   const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
     setShowModal(true);
@@ -331,6 +328,78 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     fetchCounts();
   }, [event._id]);
 
+  const columnHelper = createColumnHelper<any>();
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('queueNumber', {
+      header: 'Queue Number 排队号码',
+      cell: info => info.getValue() || 'N/A',
+    }),
+    columnHelper.accessor(row => row.fields.find((f: any) => f.label.toLowerCase().includes('phone'))?.value, {
+      id: 'phoneNumber',
+      header: 'Phone Number 电话号码',
+      cell: info => info.getValue() || 'N/A',
+    }),
+    // Add other columns based on your fields
+    columnHelper.accessor('attendance', {
+      header: 'Attendance 出席',
+      cell: info => (
+        <Checkbox
+          checked={info.getValue() || false}
+          onCheckedChange={(checked) => handleMarkAttendance(info.row.original.registrationId, info.row.original.groupId, checked as boolean)}
+        />
+      ),
+    }),
+    columnHelper.accessor('cancelled', {
+      header: 'Cancelled 已取消',
+      cell: info => (
+        user?.publicMetadata.role === 'superadmin' ? (
+          <Checkbox
+            checked={info.getValue() || false}
+            onCheckedChange={(checked) => handleCancelRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber, checked as boolean)}
+          />
+        ) : (
+          <span>{info.getValue() ? 'Yes' : 'No'}</span>
+        )
+      ),
+    }),
+    columnHelper.accessor('delete', {
+      header: 'Delete 删除',
+      cell: info => (
+        user?.publicMetadata.role === 'superadmin' && (
+          <button
+            onClick={() => handleDeleteRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+          </button>
+        )
+      ),
+    }),
+  ], [user, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
+
+  const data = useMemo(() => 
+    registrations.flatMap(registration => 
+      registration.order.customFieldValues.map(group => ({
+        registrationId: registration.id,
+        groupId: group.groupId,
+        queueNumber: group.queueNumber,
+        fields: group.fields,
+        attendance: group.attendance,
+        cancelled: group.cancelled,
+      }))
+    ),
+    [registrations]
+  );
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -360,102 +429,91 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-300">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="py-2 px-4 border-b text-left">Queue Number 排队号码</th>
-                    {registrations.length > 0 && registrations[0]?.order?.customFieldValues[0]?.fields && 
-                      registrations[0].order.customFieldValues[0].fields
-                        .filter(field => !['name'].includes(field.label.toLowerCase()))
-                        .map(field => (
-                          <th key={field.id} className="py-2 px-4 border-b text-left">
-                            {field.label}
-                          </th>
-                        ))
-                    }
-                    <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
-                    <th className="py-2 px-4 border-b text-center">Cancelled 已取消</th>
-                    {user?.publicMetadata.role === 'superadmin' && (
-                      <th className="py-2 px-4 border-b text-center">Delete 删除</th>
-                    )}
-                  </tr>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id} className="bg-gray-100">
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id} className="py-2 px-4 border-b text-left">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
                 </thead>
                 <tbody>
-                  {currentPageRegistrations.map((registration) => (
-                    registration.order.customFieldValues.map((group) => {
-                      const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
-                      const phoneNumber = phoneField ? phoneField.value : '';
-                      const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
-                      const rowId = `${registration.id}_${group.groupId}`;
-                      
-                      return (
-                        <tr 
-                          key={rowId} 
-                          className={`hover:bg-gray-50 ${isDuplicate ? 'bg-yellow-100' : ''}`}
-                        >
-                          <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
-                          {group.fields
-                            .filter(field => !['name'].includes(field.label.toLowerCase()))
-                            .map(field => (
-                              <td key={field.id} className="py-2 px-4 border-b text-left">
-                                {field.type === 'radio'
-                                  ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                                  : (field.value || 'N/A')}
-                              </td>
-                            ))
-                          }
-                          <td className="py-2 px-4 border-b text-center">
-                            <input
-                              type="checkbox"
-                              checked={group.attendance || false}
-                              onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
-                              className="form-checkbox h-5 w-5 text-blue-600"
-                            />
-                          </td>
-                          <td className="py-2 px-4 border-b text-center">
-                            {user?.publicMetadata.role === 'superadmin' ? (
-                              <Checkbox
-                                checked={group.cancelled || false}
-                                onCheckedChange={(checked) => handleCancelRegistration(registration.id, group.groupId, group.queueNumber, checked as boolean)}
-                              />
-                            ) : (
-                              <span>{group.cancelled ? 'Yes' : 'No'}</span>
-                            )}
-                          </td>
-                          {user?.publicMetadata.role === 'superadmin' && (
-                            <td className="py-2 px-4 border-b text-center">
-                              <button
-                                onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })
+                  {table.getRowModel().rows.map(row => (
+                    <tr key={row.id} className="hover:bg-gray-50">
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="py-2 px-4 border-b text-left">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <ReactPaginate
-              previousLabel={'Previous 上一页'}
-              nextLabel={'Next 下一页'}
-              breakLabel={'...'}
-              breakClassName={'break-me'}
-              pageCount={pageCount}
-              marginPagesDisplayed={2}
-              pageRangeDisplayed={5}
-              onPageChange={handlePageClick}
-              containerClassName={'pagination flex justify-center mt-4'}
-              pageClassName={'page-item'}
-              pageLinkClassName={'page-link px-3 py-1 border rounded'}
-              previousClassName={'page-item'}
-              previousLinkClassName={'page-link px-3 py-1 border rounded mr-2'}
-              nextClassName={'page-item'}
-              nextLinkClassName={'page-link px-3 py-1 border rounded ml-2'}
-              activeClassName={'active'}
-              activeLinkClassName={'bg-blue-500 text-white'}
-            />
+            <div className="flex items-center gap-2 mt-4">
+              <Button
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+              >
+                {'<<'}
+              </Button>
+              <Button
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                {'<'}
+              </Button>
+              <Button
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                {'>'}
+              </Button>
+              <Button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+              >
+                {'>>'}
+              </Button>
+              <span className="flex items-center gap-1">
+                <div>Page</div>
+                <strong>
+                  {table.getState().pagination.pageIndex + 1} of{' '}
+                  {table.getPageCount()}
+                </strong>
+              </span>
+              <span className="flex items-center gap-1">
+                | Go to page:
+                <Input
+                  type="number"
+                  defaultValue={table.getState().pagination.pageIndex + 1}
+                  onChange={e => {
+                    const page = e.target.value ? Number(e.target.value) - 1 : 0
+                    table.setPageIndex(page)
+                  }}
+                  className="border p-1 rounded w-16"
+                />
+              </span>
+              <select
+                value={table.getState().pagination.pageSize}
+                onChange={e => {
+                  table.setPageSize(Number(e.target.value))
+                }}
+              >
+                {[10, 20, 30, 40, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    Show {pageSize}
+                  </option>
+                ))}
+              </select>
+            </div>
           </>
         )}
 
@@ -483,12 +541,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               </div>
             </div>
           </Modal>
-        )}
-
-        {user?.publicMetadata.role === 'superadmin' && (
-          <p className="mt-4 text-sm text-gray-600">
-            Note: Rows highlighted in yellow indicate registrations with the same phone number.
-          </p>
         )}
       </div>
     </div>
