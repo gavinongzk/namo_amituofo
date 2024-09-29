@@ -238,7 +238,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
               ]
             }
           },
-          // 'cancelled': { $ne: true }
+          'cancelled': { $ne: true }
         }
       }
     }).populate('event', 'title imageUrl startDateTime endDateTime');

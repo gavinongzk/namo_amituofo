@@ -26,13 +26,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    // Update the cancelled status
-    group.cancelled = cancelled;
-    await order.save();
+    // Check if the cancelled status is actually changing
+    if (group.cancelled !== cancelled) {
+      // Update the cancelled status
+      group.cancelled = cancelled;
+      await order.save();
 
-    // Update event's available seats
-    const seatChange = cancelled ? 1 : -1;
-    await Event.findByIdAndUpdate(order.event, { $inc: { maxSeats: seatChange } });
+      // Update event's max seats
+      const seatChange = cancelled ? -1 : 1;
+      const event = await Event.findByIdAndUpdate(
+        order.event,
+        { $inc: { maxSeats: seatChange } },
+        { new: true }
+      );
+
+      if (!event) {
+        throw new Error('Event not found');
+      }
+
+      console.log(`Updated event maxSeats. New value: ${event.maxSeats}`);
+    }
 
     return NextResponse.json({ 
       message: cancelled ? 'Registration cancelled successfully' : 'Registration uncancelled successfully',

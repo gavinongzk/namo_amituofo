@@ -185,31 +185,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const pageCount = Math.ceil(registrations.length / usersPerPage);
 
   const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
-    setShowModal(true);
-    setModalMessage(cancelled ? 'Cancelling registration... 取消注册中...' : 'Uncancelling registration... 恢复注册中...');
-
     try {
-      const [orderId] = registrationId.split('_');
-      if (!orderId) {
-        throw new Error('Invalid registration ID');
-      }
-
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId, groupId, cancelled }),
+        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId, cancelled }),
       });
 
       if (res.ok) {
-        const data = await res.json();
+        // Update the local state
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
               const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
                 group.groupId === groupId 
-                  ? { ...group, cancelled: data.cancelled }
+                  ? { ...group, cancelled: cancelled }
                   : group
               );
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
@@ -217,31 +209,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             return r;
           })
         );
-        setMessage(data.message);
-        setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} for queue number ${queueNumber}`);
         
-        // Update counts
-        setTotalRegistrations(prevTotal => prevTotal + (cancelled ? -1 : 1));
-        
-        // If the registration was marked as attended, update the attendedUsersCount
-        const registration = registrations.find(r => r.id === registrationId);
-        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
-        if (group?.attendance) {
-          setAttendedUsersCount(prevCount => prevCount + (cancelled ? -1 : 1));
-        }
+        // Update the total registrations count
+        setTotalRegistrations(prev => prev + (cancelled ? -1 : 1));
       } else {
-        throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
+        throw new Error('Failed to update registration');
       }
     } catch (error) {
-      console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
-      setMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
-      setModalMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
+      console.error('Error updating registration:', error);
+      // Handle error (e.g., show an error message to the user)
     }
-
-    setTimeout(() => {
-      setShowModal(false);
-    }, 2000);
-  }, [registrations]);
+  }, []);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
     setShowDeleteConfirmation(true);
