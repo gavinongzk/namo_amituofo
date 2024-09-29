@@ -71,7 +71,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
       const data = await response.json();
       if (Array.isArray(data.attendees)) {
-        setRegistrations(data.attendees);
+        setRegistrations(data.attendees.map((registration: EventRegistration) => ({
+          ...registration,
+          order: {
+            ...registration.order,
+            customFieldValues: registration.order.customFieldValues.map((group) => ({
+              ...group,
+              cancelled: group.cancelled || false // Ensure cancelled is always a boolean
+            }))
+          }
+        })));
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
           return count + registration.order.customFieldValues.filter(group => group.attendance && !group.cancelled).length;
         }, 0);
