@@ -8,6 +8,7 @@ import {
   getPaginationRowModel,
   flexRender,
   createColumnHelper,
+  SortingState,
 } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [totalRegistrations, setTotalRegistrations] = useState(0);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -332,15 +334,50 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const columns = useMemo(() => [
     columnHelper.accessor('queueNumber', {
-      header: 'Queue Number 排队号码',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Queue Number 排队号码
+          {{
+            asc: ' 🔼',
+            desc: ' 🔽',
+          }[column.getIsSorted() as string] ?? null}
+        </Button>
+      ),
       cell: info => info.getValue() || 'N/A',
     }),
-    columnHelper.accessor(row => row.fields.find((f: any) => f.label.toLowerCase().includes('phone'))?.value, {
-      id: 'phoneNumber',
-      header: 'Phone Number 电话号码',
+    columnHelper.accessor('name', {
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Name 姓名
+          {{
+            asc: ' 🔼',
+            desc: ' 🔽',
+          }[column.getIsSorted() as string] ?? null}
+        </Button>
+      ),
       cell: info => info.getValue() || 'N/A',
     }),
-    // Add other columns based on your fields
+    columnHelper.accessor('phoneNumber', {
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Phone Number 电话号码
+          {{
+            asc: ' 🔼',
+            desc: ' 🔽',
+          }[column.getIsSorted() as string] ?? null}
+        </Button>
+      ),
+      cell: info => info.getValue() || 'N/A',
+    }),
     columnHelper.accessor('attendance', {
       header: 'Attendance 出席',
       cell: info => (
@@ -380,14 +417,20 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const data = useMemo(() => 
     registrations.flatMap(registration => 
-      registration.order.customFieldValues.map(group => ({
-        registrationId: registration.id,
-        groupId: group.groupId,
-        queueNumber: group.queueNumber,
-        fields: group.fields,
-        attendance: group.attendance,
-        cancelled: group.cancelled,
-      }))
+      registration.order.customFieldValues.map(group => {
+        const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+        const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
+        return {
+          registrationId: registration.id,
+          groupId: group.groupId,
+          queueNumber: group.queueNumber,
+          name: nameField ? nameField.value : 'N/A',
+          phoneNumber: phoneField ? phoneField.value : 'N/A',
+          fields: group.fields,
+          attendance: group.attendance,
+          cancelled: group.cancelled,
+        };
+      })
     ),
     [registrations]
   );
@@ -398,6 +441,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      sorting: [{ id: 'queueNumber', desc: false }],
+    },
+    state: {
+      sorting: sorting,
+    },
+    onSortingChange: setSorting,
   });
 
   return (
