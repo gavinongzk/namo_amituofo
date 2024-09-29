@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { CreateOrderParams } from "@/types"
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
-import PhoneInput from 'react-phone-number-input'
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { CustomField } from "@/types"
@@ -43,9 +43,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
             field.type === 'boolean'
               ? z.boolean()
               : field.type === 'phone'
-                ? z.string().regex(/^\+[1-9]\d{1,14}$/, { message: "Invalid phone number" })
+                ? z.string()
+                    .refine(
+                      (value) => isValidPhoneNumber(value),
+                      { message: "Invalid phone number" }
+                    )
                 : z.string().min(1, { message: "This field is required" })
-                
           ])
         )
       )
