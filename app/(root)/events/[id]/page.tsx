@@ -61,7 +61,7 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
             </div>
 
             <div className="flex flex-col gap-2">
-              <p className="p-bold-20 text-grey-600">What You'll Learn:</p>
+              <p className="p-bold-20 text-grey-600">Event Details / 活动详情：</p>
               <p className="p-medium-16 lg:p-regular-18">{event.description}</p>
               <p className="p-medium-16 lg:p-regular-18 truncate text-primary-500 underline">{event.url}</p>
             </div>
