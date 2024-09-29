@@ -45,14 +45,6 @@ type Event = {
   maxSeats: number;
 };
 
-interface Attendee {
-  order: {
-    customFieldValues: Array<{
-      attendance: boolean;
-    }>;
-  };
-}
-
 const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
@@ -64,7 +56,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const usersPerPage = 10;
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
-
+  const [totalRegistrations, setTotalRegistrations] = useState(0);
+  const [activeRegistrations, setActiveRegistrations] = useState(0);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -77,7 +70,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       if (Array.isArray(data.attendees)) {
         setRegistrations(data.attendees);
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
-          return count + registration.order.customFieldValues.filter(group => group.attendance).length;
+          return count + registration.order.customFieldValues.filter(group => group.attendance && !group.cancelled).length;
         }, 0);
         setAttendedUsersCount(attendedCount);
       } else {
@@ -189,9 +182,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const currentPageRegistrations = registrations.slice(offset, offset + usersPerPage);
   const pageCount = Math.ceil(registrations.length / usersPerPage);
 
-  const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
+  const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
     setShowModal(true);
-    setModalMessage('Cancelling registration... 取消注册中...');
+    setModalMessage(cancelled ? 'Cancelling registration... 取消注册中...' : 'Uncancelling registration... 恢复注册中...');
 
     try {
       const [orderId] = registrationId.split('_');
@@ -204,16 +197,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId, groupId }),
+        body: JSON.stringify({ orderId, groupId, cancelled }),
       });
 
       if (res.ok) {
+        const data = await res.json();
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
               const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
                 group.groupId === groupId 
-                  ? { ...group, cancelled: true }
+                  ? { ...group, cancelled: data.cancelled }
                   : group
               );
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
@@ -221,15 +215,26 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             return r;
           })
         );
-        setMessage(`Registration cancelled for ${registrationId}, group ${groupId}`);
-        setModalMessage(`Registration cancelled for queue number ${queueNumber}`);
+        setMessage(data.message);
+        setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} for queue number ${queueNumber}`);
+        
+        // Update counts
+        setTotalRegistrations(prevTotal => prevTotal + (cancelled ? -1 : 1));
+        setActiveRegistrations(prevActive => prevActive + (cancelled ? -1 : 1));
+        
+        // If the registration was marked as attended, update the attendedUsersCount
+        const registration = registrations.find(r => r.id === registrationId);
+        const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
+        if (group?.attendance) {
+          setAttendedUsersCount(prevCount => prevCount + (cancelled ? -1 : 1));
+        }
       } else {
-        throw new Error('Failed to cancel registration 取消注册失败');
+        throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
       }
     } catch (error) {
-      console.error('Error cancelling registration:', error);
-      setMessage('Failed to cancel registration. 取消注册失败。');
-      setModalMessage('Failed to cancel registration. 取消注册失败。');
+      console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
+      setMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
+      setModalMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
     }
 
     setTimeout(() => {
@@ -294,10 +299,33 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const phoneGroups = groupRegistrationsByPhone();
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch(`/api/events/${event._id}/counts`);
+        if (res.ok) {
+          const data = await res.json();
+          setTotalRegistrations(data.totalRegistrations);
+          setActiveRegistrations(data.activeRegistrations);
+          setAttendedUsersCount(data.attendedUsers);
+        } else {
+          console.error('Failed to fetch counts:', await res.text());
+        }
+      } catch (error) {
+        console.error('Error fetching registration counts:', error);
+      }
+    };
+
+    fetchCounts();
+  }, [event._id]);
+
   return (
     <div className="wrapper my-8">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-4">{event.title}</h2>
+        <h1 className="text-2xl font-bold mb-4">{event.title}</h1>
+        <p className="mb-2">Total Registrations 总注册: {totalRegistrations}</p>
+        <p className="mb-2">Active Registrations 活跃注册: {activeRegistrations}</p>
+        <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
         <p className="text-gray-600 mb-2">
           <span className="font-semibold">Date 日期:</span> {formatDateTime(new Date(event.startDateTime)).dateOnly}
         </p>
@@ -332,8 +360,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <p>Loading... 加载中...</p>
       ) : (
         <>
-          <p className="mb-2">Total Registrations 总注册: {registrations.reduce((count, registration) => count + registration.order.customFieldValues.length, 0)}</p>
-          <p className="mb-4">Attended Users 已出席用户: {attendedUsersCount}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead>
@@ -349,11 +375,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                       ))
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
+                  <th className="py-2 px-4 border-b text-center">Cancelled 已取消</th>
                   {user?.publicMetadata.role === 'superadmin' && (
-                    <>
-                      <th className="py-2 px-4 border-b text-center">Cancel 取消</th>
-                      <th className="py-2 px-4 border-b text-center">Delete 删除</th>
-                    </>
+                    <th className="py-2 px-4 border-b text-center">Delete 删除</th>
                   )}
                 </tr>
               </thead>
@@ -388,25 +412,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                             className="form-checkbox h-5 w-5 text-blue-600"
                           />
                         </td>
+                        <td className="py-2 px-4 border-b text-center">
+                          {user?.publicMetadata.role === 'superadmin' ? (
+                            <Checkbox
+                              checked={group.cancelled || false}
+                              onCheckedChange={(checked) => handleCancelRegistration(registration.id, group.groupId, group.queueNumber, checked as boolean)}
+                            />
+                          ) : (
+                            <span>{group.cancelled ? 'Yes' : 'No'}</span>
+                          )}
+                        </td>
                         {user?.publicMetadata.role === 'superadmin' && (
-                          <>
-                            <td className="py-2 px-4 border-b text-center">
-                              {!group.cancelled && (
-                                <Checkbox
-                                  checked={group.cancelled || false}
-                                  onCheckedChange={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
-                                />
-                              )}
-                            </td>
-                            <td className="py-2 px-4 border-b text-center">
-                              <button
-                                onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                              </button>
-                            </td>
-                          </>
+                          <td className="py-2 px-4 border-b text-center">
+                            <button
+                              onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                            </button>
+                          </td>
                         )}
                       </tr>
                     );

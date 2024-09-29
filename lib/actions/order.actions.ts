@@ -31,8 +31,17 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event not found');
     }
 
-    const currentRegistrations = await Order.countDocuments({ event: order.eventId });
-    if (currentRegistrations >= event.maxSeats) {
+    // Count only uncancelled registrations
+    const currentRegistrations = await Order.aggregate([
+      { $match: { event: new ObjectId(order.eventId) } },
+      { $unwind: "$customFieldValues" },
+      { $match: { "customFieldValues.cancelled": { $ne: true } } },
+      { $count: "total" }
+    ]);
+
+    const totalRegistrations = currentRegistrations[0]?.total || 0;
+
+    if (totalRegistrations >= event.maxSeats) {
       throw new Error('Event is fully booked');
     }
 
@@ -50,13 +59,13 @@ export async function createOrder(order: CreateOrderParams) {
       return {
         ...group,
         queueNumber: newQueueNumber,
-        __v: 0, // Add this line to set the initial version
+        cancelled: false,
+        __v: 0,
       };
     });
 
     const newOrder = await Order.create({
       ...order,
-      event: new ObjectId(order.eventId),
       customFieldValues: newCustomFieldValues,
     });
 
@@ -202,7 +211,7 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 
     const orders = await Order.find({ event: eventId });
     const totalRegistrations = orders.reduce((count, order) => {
-      return count + order.customFieldValues.length;
+      return count + order.customFieldValues.filter((group: { cancelled: boolean }) => !group.cancelled).length;
     }, 0);
 
     return totalRegistrations;
@@ -227,7 +236,8 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
                 { label: { $regex: /contact number/i }, value: phoneNumber }
               ]
             }
-          }
+          },
+          'cancelled': { $ne: true }
         }
       }
     }).populate('event', 'title imageUrl startDateTime endDateTime');

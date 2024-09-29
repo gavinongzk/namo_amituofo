@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
       customFieldValues: customFieldValues.map((group: CustomFieldGroup) => ({
         groupId: group.groupId,
+        cancelled: false,
         fields: group.fields.map((field) => ({
           id: field.id,
           label: field.label,
