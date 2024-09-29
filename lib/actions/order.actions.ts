@@ -7,14 +7,6 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
-import User from '../database/models/user.model';
-
-
-interface TypedOrder {
-  _id: { toString: () => string };
-  createdAt: Date;
-  event: { title: string };
-}
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -31,8 +23,17 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event not found');
     }
 
-    const currentRegistrations = await Order.countDocuments({ event: order.eventId });
-    if (currentRegistrations >= event.maxSeats) {
+    // Count only uncancelled registrations
+    const currentRegistrations = await Order.aggregate([
+      { $match: { event: new ObjectId(order.eventId) } },
+      { $unwind: "$customFieldValues" },
+      { $match: { "customFieldValues.cancelled": { $ne: true } } },
+      { $count: "total" }
+    ]);
+
+    const totalRegistrations = currentRegistrations[0]?.total || 0;
+
+    if (totalRegistrations >= event.maxSeats) {
       throw new Error('Event is fully booked');
     }
 
@@ -50,7 +51,8 @@ export async function createOrder(order: CreateOrderParams) {
       return {
         ...group,
         queueNumber: newQueueNumber,
-        __v: 0, // Add this line to set the initial version
+        cancelled: false,
+        __v: 0,
       };
     });
 
@@ -96,7 +98,6 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
 
     const orders = await Order.find(query)
       .populate('event', 'title imageUrl startDateTime endDateTime')
-      .select('_id createdAt event customFieldValues __v')
       .lean();
 
     console.log('Found orders:', orders.length);
@@ -116,6 +117,7 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
         queueNumber: field.queueNumber,
         fields: field.fields,
         attendance: field.attendance || false,
+        cancelled: field.cancelled || false,
         __v: field.__v || 0,
       })),
       __v: order.__v,
@@ -126,37 +128,6 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
     return formattedOrders;
   } catch (error) {
     console.error('Error in getOrdersByEvent:', error);
-    handleError(error);
-  }
-}
-
-// GET ORDERS BY USER
-export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUserParams) {
-  try {
-    await connectToDatabase();
-
-    const skipAmount = (Number(page) - 1) * limit;
-    const conditions = { buyer: userId };
-
-    const orders = await Order.distinct('event._id')
-      .find(conditions)
-      .sort({ createdAt: 'desc' })
-      .skip(skipAmount)
-      .limit(limit)
-      .populate({
-        path: 'event',
-        model: Event,
-        populate: {
-          path: 'organizer',
-          model: User,
-          select: '_id',
-        },
-      });
-
-    const ordersCount = await Order.distinct('event').countDocuments(conditions);
-
-    return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) };
-  } catch (error) {
     handleError(error);
   }
 }
@@ -202,7 +173,7 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 
     const orders = await Order.find({ event: eventId });
     const totalRegistrations = orders.reduce((count, order) => {
-      return count + order.customFieldValues.length;
+      return count + order.customFieldValues.filter((group: { cancelled: boolean }) => !group.cancelled).length;
     }, 0);
 
     return totalRegistrations;
@@ -227,7 +198,8 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
                 { label: { $regex: /contact number/i }, value: phoneNumber }
               ]
             }
-          }
+          },
+          'cancelled': { $ne: true }
         }
       }
     }).populate('event', 'title imageUrl startDateTime endDateTime');

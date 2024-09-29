@@ -162,6 +162,7 @@ export interface IRegistration {
     }[];
     queueNumber?: string;
     attendeeCount?: number;
+    cancelled?: boolean;
   };
   registrations: {
     queueNumber?: string;
@@ -175,6 +176,7 @@ export interface CustomFieldGroup {
   __v?: number;
   queueNumber?: string;
   attendance?: boolean;
+  cancelled?: boolean;
 }
 
 // Add this type definition

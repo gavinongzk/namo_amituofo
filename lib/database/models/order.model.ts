@@ -56,6 +56,7 @@ const OrderSchema = new Schema({
       ],
       queueNumber: { type: String, required: true },
       attendance: { type: Boolean, default: false },
+      cancelled: { type: Boolean, default: false },
       __v: { type: Number, default: 0 }, // Add version control at this level
     },
   ],

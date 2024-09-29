@@ -9,6 +9,7 @@ export interface ICustomFieldValue extends Document {
   value: string;
   queueNumber: string;
   attendance: boolean;
+  cancelled: boolean;
 }
 
 const CustomFieldValueSchema = new Schema({
@@ -42,6 +43,10 @@ const CustomFieldValueSchema = new Schema({
     required: true
   },
   attendance: {
+    type: Boolean,
+    default: false
+  },
+  cancelled: {
     type: Boolean,
     default: false
   }
