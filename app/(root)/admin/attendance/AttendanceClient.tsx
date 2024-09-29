@@ -244,7 +244,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage('Deleting registration... 删除注册中...');
 
     try {
-      const res = await fetch('/api/admin/delete-registration', {
+      const res = await fetch('/api/delete-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
