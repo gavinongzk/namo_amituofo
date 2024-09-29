@@ -9,7 +9,8 @@ import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import AttendanceDetailsCard from '@/components/shared/AttendanceDetailsCard';
+import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
+
 
 type EventRegistration = {
   id: string;
