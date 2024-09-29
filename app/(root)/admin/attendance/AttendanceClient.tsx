@@ -292,7 +292,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [deleteConfirmationData, registrations, setRegistrations, setMessage, setModalMessage, setTotalRegistrations, setAttendedUsersCount]);
 
   const groupRegistrationsByPhone = useCallback(() => {
-    const phoneGroups: { [key: string]: string[] } = {};
+    const phoneGroups: { [key: string]: { id: string; queueNumber: string }[] } = {};
     registrations.forEach(registration => {
       registration.order.customFieldValues.forEach(group => {
         const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
@@ -300,7 +300,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           if (!phoneGroups[phoneField.value]) {
             phoneGroups[phoneField.value] = [];
           }
-          phoneGroups[phoneField.value].push(`${registration.id}_${group.groupId}`);
+          phoneGroups[phoneField.value].push({
+            id: `${registration.id}_${group.groupId}`,
+            queueNumber: group.queueNumber || ''
+          });
         }
       });
     });
@@ -381,10 +384,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                       const phoneField = group.fields.find(field => field.label.toLowerCase().includes('phone'));
                       const phoneNumber = phoneField ? phoneField.value : '';
                       const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
+                      const rowId = `${registration.id}_${group.groupId}`;
                       
                       return (
                         <tr 
-                          key={`${registration.id}_${group.groupId}`} 
+                          key={rowId} 
                           className={`hover:bg-gray-50 ${isDuplicate ? 'bg-yellow-100' : ''}`}
                         >
                           <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
