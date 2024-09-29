@@ -59,6 +59,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
   const [totalRegistrations, setTotalRegistrations] = useState(0);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -243,6 +245,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [registrations]);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
+    setShowDeleteConfirmation(true);
+    setDeleteConfirmationData({ registrationId, groupId, queueNumber });
+  }, []);
+
+  const confirmDeleteRegistration = useCallback(async () => {
+    if (!deleteConfirmationData) return;
+
+    const { registrationId, groupId, queueNumber } = deleteConfirmationData;
+    setShowDeleteConfirmation(false);
     setShowModal(true);
     setModalMessage('Deleting registration... 删除注册中...');
 
@@ -267,6 +278,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         );
         setMessage(`Registration deleted for ${registrationId}, group ${groupId}`);
         setModalMessage(`Registration deleted for queue number ${queueNumber}`);
+        
+        // Update total registrations count
+        setTotalRegistrations(prev => prev - 1);
+        
+        // Update attended users count if the deleted registration was marked as attended
+        const deletedRegistration = registrations.find(r => r.id === registrationId);
+        const deletedGroup = deletedRegistration?.order.customFieldValues.find(g => g.groupId === groupId);
+        if (deletedGroup?.attendance) {
+          setAttendedUsersCount(prev => prev - 1);
+        }
       } else {
         throw new Error('Failed to delete registration 删除注册失败');
       }
@@ -279,7 +300,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [registrations]);
+  }, [deleteConfirmationData, registrations, setRegistrations, setMessage, setModalMessage, setTotalRegistrations, setAttendedUsersCount]);
 
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: string[] } = {};
@@ -450,6 +471,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         {showModal && (
           <Modal>
             <p>{modalMessage}</p>
+          </Modal>
+        )}
+
+        {showDeleteConfirmation && deleteConfirmationData && (
+          <Modal>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
+              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
+              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
+              <div className="flex justify-end space-x-4">
+                <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
+                  Cancel / 取消
+                </Button>
+                <Button onClick={confirmDeleteRegistration} variant="destructive">
+                  Delete / 删除
+                </Button>
+              </div>
+            </div>
           </Modal>
         )}
 
