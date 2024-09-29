@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 import ReactPaginate from 'react-paginate';
 import Modal from '@/components/ui/modal';
+import { useUser } from "@clerk/nextjs";
 
 type EventRegistration = {
   id: string;
@@ -24,6 +25,7 @@ type EventRegistration = {
         value: string;
       }[];
       __v: number;
+      cancelled: boolean;
     }[];
   };
 };
@@ -58,6 +60,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [modalMessage, setModalMessage] = useState('');
   const usersPerPage = 10;
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
+  const { user } = useUser();
+
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -182,6 +186,49 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const currentPageRegistrations = registrations.slice(offset, offset + usersPerPage);
   const pageCount = Math.ceil(registrations.length / usersPerPage);
 
+  const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
+    setShowModal(true);
+    setModalMessage('Cancelling registration... 取消注册中...');
+
+    try {
+      const res = await fetch('/api/admin/cancel-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId }),
+      });
+
+      if (res.ok) {
+        setRegistrations(prevRegistrations =>
+          prevRegistrations.map(r => {
+            if (r.id === registrationId) {
+              const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
+                group.groupId === groupId 
+                  ? { ...group, cancelled: true }
+                  : group
+              );
+              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
+            }
+            return r;
+          })
+        );
+        setMessage(`Registration cancelled for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Registration cancelled for queue number ${queueNumber}`);
+      } else {
+        throw new Error('Failed to cancel registration 取消注册失败');
+      }
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+      setMessage('Failed to cancel registration. 取消注册失败。');
+      setModalMessage('Failed to cancel registration. 取消注册失败。');
+    }
+
+    setTimeout(() => {
+      setShowModal(false);
+    }, 2000);
+  }, [registrations]);
+
   return (
     <div className="wrapper my-8">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -261,6 +308,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                           onChange={() => handleMarkAttendance(registration.id, group.groupId, !(group.attendance || false))}
                           className="form-checkbox h-5 w-5 text-blue-600"
                         />
+                        {user?.publicMetadata.role === 'superadmin' && !group.cancelled && (
+                          <button
+                            onClick={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
+                            className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
