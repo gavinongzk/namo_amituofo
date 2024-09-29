@@ -7,6 +7,8 @@ import { formatDateTime } from '@/lib/utils';
 import ReactPaginate from 'react-paginate';
 import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
+import { Checkbox } from '@/components/ui/checkbox';
+import Image from 'next/image';
 
 type EventRegistration = {
   id: string;
@@ -14,6 +16,7 @@ type EventRegistration = {
   eventStartDateTime: string;
   eventEndDateTime: string;
   order: {
+    _id: string;
     customFieldValues: {
       groupId: string;
       queueNumber: string;
@@ -191,12 +194,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage('Cancelling registration... 取消注册中...');
 
     try {
+      const registration = registrations.find(r => r.id === registrationId);
+      if (!registration) {
+        throw new Error('Registration not found');
+      }
+
+      const orderId = registration.order._id; // Assuming the order has an _id field
+
       const res = await fetch('/api/admin/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId }),
+        body: JSON.stringify({ orderId, groupId }),
       });
 
       if (res.ok) {
@@ -342,7 +352,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   }
                   <th className="py-2 px-4 border-b text-center">Attendance 出席</th>
                   {user?.publicMetadata.role === 'superadmin' && (
-                    <th className="py-2 px-4 border-b text-center">Actions</th>
+                    <>
+                      <th className="py-2 px-4 border-b text-center">Cancel 取消</th>
+                      <th className="py-2 px-4 border-b text-center">Delete 删除</th>
+                    </>
                   )}
                 </tr>
               </thead>
@@ -378,22 +391,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                           />
                         </td>
                         {user?.publicMetadata.role === 'superadmin' && (
-                          <td className="py-2 px-4 border-b text-center">
-                            {!group.cancelled && (
+                          <>
+                            <td className="py-2 px-4 border-b text-center">
+                              {!group.cancelled && (
+                                <Checkbox
+                                  checked={group.cancelled || false}
+                                  onCheckedChange={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
+                                />
+                              )}
+                            </td>
+                            <td className="py-2 px-4 border-b text-center">
                               <button
-                                onClick={() => handleCancelRegistration(registration.id, group.groupId, group.queueNumber)}
-                                className="mr-2 bg-yellow-500 text-white px-2 py-1 rounded"
+                                onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
+                                className="text-red-500 hover:text-red-700"
                               >
-                                Cancel
+                                <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
                               </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteRegistration(registration.id, group.groupId, group.queueNumber)}
-                              className="bg-red-500 text-white px-2 py-1 rounded"
-                            >
-                              Delete
-                            </button>
-                          </td>
+                            </td>
+                          </>
                         )}
                       </tr>
                     );
