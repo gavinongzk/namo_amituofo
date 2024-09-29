@@ -201,7 +201,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
       const orderId = registration.order._id; // Assuming the order has an _id field
 
-      const res = await fetch('/api/admin/cancel-registration', {
+      const res = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
