@@ -194,12 +194,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage('Cancelling registration... 取消注册中...');
 
     try {
-      const registration = registrations.find(r => r.id === registrationId);
-      if (!registration) {
-        throw new Error('Registration not found');
+      const [orderId] = registrationId.split('_');
+      if (!orderId) {
+        throw new Error('Invalid registration ID');
       }
-
-      const orderId = registration.order._id; // Assuming the order has an _id field
 
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',
