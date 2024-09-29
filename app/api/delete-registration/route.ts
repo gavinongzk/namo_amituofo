@@ -29,9 +29,6 @@ export async function POST(req: NextRequest) {
       await order.save();
     }
 
-    // Update event's available seats
-    await Event.findByIdAndUpdate(order.event, { $inc: { maxSeats: 1 } });
-
     return NextResponse.json({ message: 'Registration deleted successfully' });
   } catch (error) {
     console.error('Error deleting registration:', error);

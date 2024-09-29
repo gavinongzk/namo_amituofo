@@ -266,30 +266,22 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
 
       if (res.ok) {
-        setRegistrations(prevRegistrations =>
-          prevRegistrations.map(r => {
-            if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.filter(group => group.groupId !== groupId);
-              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
-            }
-            return r;
-          })
-        );
-        setMessage(`Registration deleted for ${registrationId}, group ${groupId}`);
-        setModalMessage(`Registration deleted for queue number ${queueNumber}`);
+        setModalMessage('Registration deleted successfully. Refreshing page... 注册已成功删除。正在刷新页面...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         throw new Error('Failed to delete registration 删除注册失败');
       }
     } catch (error) {
       console.error('Error deleting registration:', error);
-      setMessage('Failed to delete registration. 删除注册失败。');
       setModalMessage('Failed to delete registration. 删除注册失败。');
     }
 
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [deleteConfirmationData, setRegistrations, setMessage, setModalMessage]);
+  }, [deleteConfirmationData]);
 
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: string[] } = {};
@@ -460,23 +452,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         {showModal && (
           <Modal>
             <p>{modalMessage}</p>
-          </Modal>
-        )}
-
-        {showDeleteConfirmation && deleteConfirmationData && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
-              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
-              <div className="flex justify-end space-x-4">
-                <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
-                  Cancel
-                </Button>
-                <Button onClick={confirmDeleteRegistration} variant="destructive">
-                  Delete
-                </Button>
-              </div>
-            </div>
           </Modal>
         )}
 
