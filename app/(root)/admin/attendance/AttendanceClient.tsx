@@ -15,10 +15,11 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
-import { Checkbox } from '@/components/ui/checkbox';
+import * as Checkbox from '@radix-ui/react-checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
+import { Check } from 'lucide-react'; // Import the Check icon from lucide-react
 
 type EventRegistration = {
   id: string;
@@ -446,12 +447,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       columnHelper.accessor('attendance', {
         header: 'Attendance 出席',
         cell: ({ row }) => (
-          <Checkbox
+          <Checkbox.Root
+            className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
             checked={row.original.attendance}
             onCheckedChange={(checked) => 
               handleMarkAttendance(row.original.registrationId, row.original.groupId, checked as boolean)
             }
-          />
+          >
+            <Checkbox.Indicator className="text-current">
+              <Check className="h-4 w-4" />
+            </Checkbox.Indicator>
+          </Checkbox.Root>
         ),
       }),
     ];
@@ -477,10 +483,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         columnHelper.accessor('cancelled', {
           header: 'Cancelled 已取消',
           cell: info => (
-            <Checkbox
+            <Checkbox.Root
+              className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
               checked={info.getValue() || false}
               onCheckedChange={(checked) => handleCancelRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber, checked as boolean)}
-            />
+            >
+              <Checkbox.Indicator className="text-current">
+                <Check className="h-4 w-4" />
+              </Checkbox.Indicator>
+            </Checkbox.Root>
           ),
         }),
         columnHelper.accessor('delete', {
