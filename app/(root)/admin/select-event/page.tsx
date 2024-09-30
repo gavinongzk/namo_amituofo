@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { formatDateTime } from '@/lib/utils';
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 type Event = {
   _id: string;
@@ -20,7 +21,9 @@ type Event = {
     name: string;
   };
   maxSeats: number;
-  registeredCount: number;
+  totalRegistrations: number;
+  attendedUsers: number;
+  cannotReciteAndWalk: number;
 };
 
 const SelectEventPage = () => {
@@ -43,15 +46,24 @@ const SelectEventPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const timestamp = new Date().getTime();
-        const response = await fetch(`/api/events?t=${timestamp}`);
+        const response = await fetch('/api/events');
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
-          const upcomingEvents = result.data
+          const upcomingEvents = await Promise.all(result.data
             .filter((event: Event) => new Date(event.endDateTime) >= currentDate)
-            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
+            .map(async (event: Event) => {
+              const countsResponse = await fetch(`/api/events/${event._id}/counts`);
+              const countsData = await countsResponse.json();
+              return {
+                ...event,
+                totalRegistrations: countsData.totalRegistrations,
+                attendedUsers: countsData.attendedUsers,
+                cannotReciteAndWalk: countsData.cannotReciteAndWalk
+              };
+            }));
           setEvents(upcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
@@ -78,6 +90,19 @@ const SelectEventPage = () => {
     }
   };
 
+  const groupEventsByCategory = (events: Event[]) => {
+    return events.reduce((acc, event) => {
+      const category = event.category.name;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(event);
+      return acc;
+    }, {} as Record<string, Event[]>);
+  };
+
+  const groupedEvents = groupEventsByCategory(events);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Select an Event for Attendance</h1>
@@ -88,49 +113,76 @@ const SelectEventPage = () => {
               <SelectValue placeholder="Select an event" />
             </SelectTrigger>
             <SelectContent>
-              {events.map((event) => (
-                <SelectItem key={event._id} value={event._id}>
-                  {event.title}
-                </SelectItem>
-              ))}
+              <ScrollArea className="h-[300px]">
+                {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+                  <SelectGroup key={category}>
+                    <SelectLabel>{category}</SelectLabel>
+                    {categoryEvents.map((event) => (
+                      <SelectItem key={event._id} value={event._id} className="py-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{event.title}</span>
+                          <span className="text-sm text-gray-500">
+                            {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
+                            {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </ScrollArea>
             </SelectContent>
           </Select>
         </div>
         <div>
           {selectedEvent && (
-            <Card>
+            <Card className="h-full">
               <CardHeader>
-                <CardTitle>{selectedEvent.title}</CardTitle>
-                <CardDescription>{selectedEvent.category.name}</CardDescription>
+                <CardTitle className="text-2xl">{selectedEvent.title}</CardTitle>
+                <CardDescription className="text-lg">{selectedEvent.category.name}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2" />
-                    <span>{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
                   </div>
                   <div className="flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2" />
-                    <span>
+                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">
                       {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
                       {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <MapPinIcon className="h-5 w-5 mr-2" />
-                    <span>{selectedEvent.location}</span>
+                    <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">{selectedEvent.location}</span>
                   </div>
                   <div className="flex items-center">
-                    <UsersIcon className="h-5 w-5 mr-2" />
-                    <span>{selectedEvent.registeredCount} / {selectedEvent.maxSeats} registered</span>
+                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">
+                      {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">
+                      {selectedEvent.attendedUsers} attended
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <span className="text-lg">
+                      {selectedEvent.cannotReciteAndWalk} cannot recite and walk
+                    </span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
-                <Badge variant="outline" className="mr-2">
+                <Badge variant="outline" className="mr-2 text-sm">
                   {selectedEvent.category.name}
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-sm">
                   {new Date(selectedEvent.startDateTime) > new Date() ? 'Upcoming' : 'Ongoing'}
                 </Badge>
               </CardFooter>
@@ -142,7 +194,7 @@ const SelectEventPage = () => {
         <Button 
           onClick={handleGoToAttendance} 
           disabled={!selectedEventId}
-          className="w-full max-w-md"
+          className="w-full max-w-md text-lg py-6"
         >
           Go to Attendance
         </Button>
