@@ -339,3 +339,8 @@ body {
 .hover-scale {
   @apply transition-transform duration-300 hover:scale-105;
 }
+
+input[type=checkbox] {
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+}
