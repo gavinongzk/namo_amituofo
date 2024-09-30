@@ -88,16 +88,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-  }, []);
-
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
     let attended = 0;
@@ -456,16 +446,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       columnHelper.accessor('attendance', {
         header: 'Attendance 出席',
         cell: ({ row }) => (
-          <Checkbox
+          <input
+            type="checkbox"
             checked={row.original.attendance}
-            onCheckedChange={(checked) => 
-              handleMarkAttendance(row.original.registrationId, row.original.groupId, checked as boolean)
+            onChange={(e) => 
+              handleMarkAttendance(row.original.registrationId, row.original.groupId, e.target.checked)
             }
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
           />
         ),
       }),
