@@ -380,7 +380,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         ),
         cell: info => info.getValue() || 'N/A',
       }),
-      // ... other common columns ...
+      columnHelper.accessor('attendance', {
+        header: 'Attendance 出席',
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.original.attendance}
+            onCheckedChange={(checked) => 
+              handleMarkAttendance(row.original.registrationId, row.original.groupId, checked as boolean)
+            }
+          />
+        ),
+      }),
     ];
 
     if (isSuperAdmin) {
@@ -399,10 +409,37 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         ),
         cell: info => info.getValue() || 'N/A',
       }));
+
+      baseColumns.push(
+        columnHelper.accessor('cancelled', {
+          header: 'Cancel 取消',
+          cell: ({ row }) => (
+            <Button
+              onClick={() => handleCancelRegistration(row.original.registrationId, row.original.groupId, row.original.queueNumber, !row.original.cancelled)}
+              variant={row.original.cancelled ? "outline" : "destructive"}
+              size="sm"
+            >
+              {row.original.cancelled ? 'Uncancel 恢复' : 'Cancel 取消'}
+            </Button>
+          ),
+        }),
+        columnHelper.accessor('delete', {
+          header: 'Delete 删除',
+          cell: ({ row }) => (
+            <Button
+              onClick={() => handleDeleteRegistration(row.original.registrationId, row.original.groupId, row.original.queueNumber)}
+              variant="destructive"
+              size="sm"
+            >
+              Delete 删除
+            </Button>
+          ),
+        })
+      );
     }
 
     return baseColumns;
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
 
   const data = useDeepCompareMemo(() => 
     registrations.flatMap(registration => 
@@ -479,6 +516,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         </div>
 
         <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
+        
+        {/* Notes section */}
+        <div className="mb-4 space-y-2">
+          <p className="p-2 bg-orange-100 text-sm">
+            Rows highlighted in light orange indicate participants who cannot walk and recite.
+            <br />
+            橙色突出显示的行表示无法行走和诵经的参与者。
+          </p>
+          {isSuperAdmin && (
+            <p className="p-2 bg-red-100 text-sm">
+              Rows highlighted in light red indicate registrations with the same phone number.
+              <br />
+              浅红色突出显示的行表示具有相同电话号码的注册。
+            </p>
+          )}
+        </div>
+
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border border-gray-300">
             <thead>
@@ -601,13 +655,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           </Modal>
         )}
       </div>
-
-      {isSuperAdmin && (
-        <p className="mt-4 text-sm text-gray-600">
-          Note: Rows highlighted in light red indicate registrations with the same phone number. 
-          Rows highlighted in light orange indicate participants who cannot walk and recite.
-        </p>
-      )}
     </div>
   );
 });
