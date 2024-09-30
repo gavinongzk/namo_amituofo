@@ -14,9 +14,10 @@ type AttendanceDetailsCardProps = {
   };
   totalRegistrations: number;
   attendedUsersCount: number;
+  cannotReciteAndWalkCount: number;
 };
 
-const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, totalRegistrations, attendedUsersCount }) => {
+const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, totalRegistrations, attendedUsersCount, cannotReciteAndWalkCount }) => {
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
@@ -44,7 +45,7 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, to
           </div>
         </div>
         <div className="border-t pt-4 mt-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-600">Max Seats 最大座位数</p>
               <p className="font-semibold">{event.maxSeats}</p>
@@ -56,6 +57,10 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, to
             <div>
               <p className="text-sm text-gray-600">Attended Users 已出席用户</p>
               <p className="font-semibold">{attendedUsersCount}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Cannot Recite & Walk 不能绕佛</p>
+              <p className="font-semibold">{cannotReciteAndWalkCount}</p>
             </div>
           </div>
         </div>
