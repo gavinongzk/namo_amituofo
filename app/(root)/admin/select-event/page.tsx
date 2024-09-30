@@ -106,95 +106,105 @@ const SelectEventPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Select an Event for Attendance</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <Select onValueChange={handleSelectEvent} value={selectedEventId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an event" />
-            </SelectTrigger>
-            <SelectContent>
-              <ScrollArea className="h-[300px]">
-                {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
-                  <SelectGroup key={category}>
-                    <SelectLabel>{category}</SelectLabel>
-                    {categoryEvents.map((event) => (
-                      <SelectItem key={event._id} value={event._id} className="py-2">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{event.title}</span>
-                          <span className="text-sm text-gray-500">
-                            {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                            {formatDateTime(new Date(event.startDateTime)).timeOnly}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </ScrollArea>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          {selectedEvent && (
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="text-2xl">{selectedEvent.title}</CardTitle>
-                <CardDescription className="text-lg">{selectedEvent.category.name}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">
-                      {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
-                      {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">{selectedEvent.location}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">
-                      {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">
-                      {selectedEvent.attendedUsers} attended
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-lg">
-                      {selectedEvent.cannotReciteAndWalk} cannot recite and walk
-                    </span>
-                  </div>
+      <div className="max-w-2xl mx-auto">
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-xl">Choose an Event</CardTitle>
+            <CardDescription>Select an event to view details and manage attendance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select onValueChange={handleSelectEvent} value={selectedEventId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an event" />
+              </SelectTrigger>
+              <SelectContent>
+                <ScrollArea className="h-[300px]">
+                  {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                        {category}
+                      </SelectLabel>
+                      {categoryEvents.map((event) => (
+                        <SelectItem key={event._id} value={event._id} className="py-2">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{event.title}</span>
+                            <span className="text-sm text-gray-500">
+                              {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
+                              {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </ScrollArea>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        {selectedEvent ? (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-2xl">{selectedEvent.title}</CardTitle>
+              <CardDescription className="text-lg">{selectedEvent.category.name}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Badge variant="outline" className="mr-2 text-sm">
-                  {selectedEvent.category.name}
-                </Badge>
-                <Badge variant="outline" className="text-sm">
-                  {new Date(selectedEvent.startDateTime) > new Date() ? 'Upcoming' : 'Ongoing'}
-                </Badge>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
-      </div>
-      <div className="mt-8 flex justify-center">
+                <div className="flex items-center">
+                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">
+                    {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
+                    {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">{selectedEvent.location}</span>
+                </div>
+                <div className="flex items-center">
+                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">
+                    {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">
+                    {selectedEvent.attendedUsers} attended
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <span className="text-lg">
+                    {selectedEvent.cannotReciteAndWalk} cannot recite and walk
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Badge variant="outline" className="mr-2 text-sm">
+                {selectedEvent.category.name}
+              </Badge>
+              <Badge variant="outline" className="text-sm">
+                {new Date(selectedEvent.startDateTime) > new Date() ? 'Upcoming' : 'Ongoing'}
+              </Badge>
+            </CardFooter>
+          </Card>
+        ) : (
+          <Card className="mb-8 text-center p-8">
+            <CardDescription>Select an event to view its details</CardDescription>
+          </Card>
+        )}
+
         <Button 
           onClick={handleGoToAttendance} 
           disabled={!selectedEventId}
-          className="w-full max-w-md text-lg py-6"
+          className="w-full text-lg py-6"
         >
           Go to Attendance
         </Button>
