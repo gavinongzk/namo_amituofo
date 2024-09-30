@@ -85,7 +85,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -129,12 +128,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log('Fetching registrations for event:', event._id);
     fetchRegistrations();
   }, [fetchRegistrations]);
-
-  useEffect(() => {
-    if (registrations.length > 0) {
-      setIsDataReady(true);
-    }
-  }, [registrations]);
 
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
@@ -231,7 +224,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
       if (res.ok) {
         setModalMessage(cancelled 
-          ? 'Registration cancelled successfully. Refreshing page... ��已成功取消。正在刷新页面...' 
+          ? 'Registration cancelled successfully. Refreshing page... 已成功取消。正在刷新页面...' 
           : 'Registration uncancelled successfully. Refreshing page... 注册已成功恢复。正在刷新页面...'
         );
         
@@ -480,6 +473,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     onSortingChange: setSorting,
   });
 
+  if (isLoading) {
+    return <p>Loading... 加载中...</p>;
+  }
+
+  if (registrations.length === 0) {
+    return <p>No registrations found for this event. 未找到此活动的注册。</p>;
+  }
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -502,107 +503,97 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         </div>
 
         <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
-        {isLoading ? (
-          <p>Loading... 加载中...</p>
-        ) : (
-          <>
-            {isDataReady ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-300">
-                  <thead>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id} className="bg-gray-100">
-                        {headerGroup.headers.map(header => (
-                          <th key={header.id} className="py-2 px-4 border-b text-left">
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map(row => (
-                      <tr 
-                        key={row.id} 
-                        className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="py-2 px-4 border-b text-left">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p>Loading...</p>
-            )}
-            <div className="flex items-center gap-2 mt-4">
-              <Button
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                {'<<'}
-              </Button>
-              <Button
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                {'<'}
-              </Button>
-              <Button
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                {'>'}
-              </Button>
-              <Button
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                {'>>'}
-              </Button>
-              <span className="flex items-center gap-1">
-                <div>Page</div>
-                <strong>
-                  {table.getState().pagination.pageIndex + 1} of{' '}
-                  {table.getPageCount()}
-                </strong>
-              </span>
-              <span className="flex items-center gap-1">
-                | Go to page:
-                <Input
-                  type="number"
-                  defaultValue={table.getState().pagination.pageIndex + 1}
-                  onChange={e => {
-                    const page = e.target.value ? Number(e.target.value) - 1 : 0
-                    table.setPageIndex(page)
-                  }}
-                  className="border p-1 rounded w-16"
-                />
-              </span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={e => {
-                  table.setPageSize(Number(e.target.value))
-                }}
-              >
-                {[10, 20, 30, 40, 50].map(pageSize => (
-                  <option key={pageSize} value={pageSize}>
-                    Show {pageSize}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="bg-gray-100">
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="py-2 px-4 border-b text-left">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr 
+                  key={row.id} 
+                  className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="py-2 px-4 border-b text-left">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center gap-2 mt-4">
+          <Button
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {'<<'}
+          </Button>
+          <Button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {'<'}
+          </Button>
+          <Button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {'>'}
+          </Button>
+          <Button
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            {'>>'}
+          </Button>
+          <span className="flex items-center gap-1">
+            <div>Page</div>
+            <strong>
+              {table.getState().pagination.pageIndex + 1} of{' '}
+              {table.getPageCount()}
+            </strong>
+          </span>
+          <span className="flex items-center gap-1">
+            | Go to page:
+            <Input
+              type="number"
+              defaultValue={table.getState().pagination.pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                table.setPageIndex(page)
+              }}
+              className="border p-1 rounded w-16"
+            />
+          </span>
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={e => {
+              table.setPageSize(Number(e.target.value))
+            }}
+          >
+            {[10, 20, 30, 40, 50].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
 
