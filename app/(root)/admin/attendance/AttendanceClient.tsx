@@ -95,11 +95,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
     registrations.forEach(registration => {
       registration.order.customFieldValues.forEach(group => {
-        total += 1;
-        if (group.attendance && !group.cancelled) attended += 1;
-        const walkField = group.fields.find(field => field.label.toLowerCase().includes('walk'));
-        if (walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase())) {
-          cannotReciteAndWalk += 1;
+        if (!group.cancelled) {
+          total += 1;
+          if (group.attendance) attended += 1;
+          const walkField = group.fields.find(field => field.label.toLowerCase().includes('walk'));
+          if (walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase())) {
+            cannotReciteAndWalk += 1;
+          }
         }
       });
     });
