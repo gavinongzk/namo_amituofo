@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { formatDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Loader2 } from "lucide-react" // Import the loader icon
 
 type Event = {
   _id: string;
@@ -33,6 +34,7 @@ const SelectEventPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -45,6 +47,7 @@ const SelectEventPage = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      setIsLoading(true); // Set loading to true when fetching starts
       try {
         const response = await fetch('/api/events');
         const result = await response.json();
@@ -72,6 +75,8 @@ const SelectEventPage = () => {
       } catch (error) {
         console.error('Error fetching events:', error);
         setEvents([]);
+      } finally {
+        setIsLoading(false); // Set loading to false when fetching is done
       }
     };
 
@@ -113,33 +118,40 @@ const SelectEventPage = () => {
             <CardDescription>Select an event to view details and manage attendance</CardDescription>
           </CardHeader>
           <CardContent>
-            <Select onValueChange={handleSelectEvent} value={selectedEventId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an event" />
-              </SelectTrigger>
-              <SelectContent>
-                <ScrollArea className="h-[300px]">
-                  {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
-                    <SelectGroup key={category}>
-                      <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
-                        {category}
-                      </SelectLabel>
-                      {categoryEvents.map((event) => (
-                        <SelectItem key={event._id} value={event._id} className="py-2">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{event.title}</span>
-                            <span className="text-sm text-gray-500">
-                              {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                              {formatDateTime(new Date(event.startDateTime)).timeOnly}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
+            {isLoading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Loading events...</span>
+              </div>
+            ) : (
+              <Select onValueChange={handleSelectEvent} value={selectedEventId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an event" />
+                </SelectTrigger>
+                <SelectContent>
+                  <ScrollArea className="h-[300px]">
+                    {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+                      <SelectGroup key={category}>
+                        <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                          {category}
+                        </SelectLabel>
+                        {categoryEvents.map((event) => (
+                          <SelectItem key={event._id} value={event._id} className="py-2">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{event.title}</span>
+                              <span className="text-sm text-gray-500">
+                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
+                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </ScrollArea>
+                </SelectContent>
+              </Select>
+            )}
           </CardContent>
         </Card>
 
@@ -203,10 +215,17 @@ const SelectEventPage = () => {
 
         <Button 
           onClick={handleGoToAttendance} 
-          disabled={!selectedEventId}
+          disabled={!selectedEventId || isLoading}
           className="w-full text-lg py-6"
         >
-          Go to Attendance
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            'Go to Attendance'
+          )}
         </Button>
       </div>
     </div>
