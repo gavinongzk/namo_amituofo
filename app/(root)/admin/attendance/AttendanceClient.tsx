@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
+import { Loader2 } from 'lucide-react';
 
 type EventRegistration = {
   id: string;
@@ -528,131 +529,139 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead>
-              <tr className="bg-gray-100">
-                {renderHeader('Queue Number 排队号码', 'queueNumber')}
-                {renderHeader('Name 姓名', 'name')}
-                {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                <th className="py-2 px-4 border-b text-left">Remarks 备注</th>
-                <th className="py-2 px-4 border-b text-left">Attendance 出席</th>
-                {isSuperAdmin && (
-                  <>
-                    <th className="py-2 px-4 border-b text-left">Cancelled 已取消</th>
-                    <th className="py-2 px-4 border-b text-left">Delete 删除</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((row, index) => (
-                <tr 
-                  key={`${row.registrationId}_${row.groupId}`}
-                  className={`
-                    hover:bg-gray-50 
-                    ${isSuperAdmin && row.isDuplicate ? 'bg-red-100' : ''}
-                    ${row.cannotWalk ? 'bg-orange-100' : ''}
-                  `}
-                >
-                  <td className="py-2 px-4 border-b text-left">{row.queueNumber}</td>
-                  <td className="py-2 px-4 border-b text-left">{row.name}</td>
-                  {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{row.phoneNumber}</td>}
-                  <td className="py-2 px-4 border-b text-left">{row.remarks}</td>
-                  <td className="py-2 px-4 border-b text-left">
-                    <Checkbox
-                      checked={row.attendance}
-                      onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
-                    />
-                  </td>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            </div>
+          ) : (
+            <table className="min-w-full bg-white border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  {renderHeader('Queue Number 排队号码', 'queueNumber')}
+                  {renderHeader('Name 姓名', 'name')}
+                  {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
+                  <th className="py-2 px-4 border-b text-left">Remarks 备注</th>
+                  <th className="py-2 px-4 border-b text-left">Attendance 出席</th>
                   {isSuperAdmin && (
                     <>
-                      <td className="py-2 px-4 border-b text-left">
-                        <Checkbox
-                          checked={row.cancelled}
-                          onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                        />
-                      </td>
-                      <td className="py-2 px-4 border-b text-left">
-                        <button
-                          onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                        </button>
-                      </td>
+                      <th className="py-2 px-4 border-b text-left">Cancelled 已取消</th>
+                      <th className="py-2 px-4 border-b text-left">Delete 删除</th>
                     </>
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedData.map((row, index) => (
+                  <tr 
+                    key={`${row.registrationId}_${row.groupId}`}
+                    className={`
+                      hover:bg-gray-50 
+                      ${isSuperAdmin && row.isDuplicate ? 'bg-red-100' : ''}
+                      ${row.cannotWalk ? 'bg-orange-100' : ''}
+                    `}
+                  >
+                    <td className="py-2 px-4 border-b text-left">{row.queueNumber}</td>
+                    <td className="py-2 px-4 border-b text-left">{row.name}</td>
+                    {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{row.phoneNumber}</td>}
+                    <td className="py-2 px-4 border-b text-left">{row.remarks}</td>
+                    <td className="py-2 px-4 border-b text-left">
+                      <Checkbox
+                        checked={row.attendance}
+                        onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
+                      />
+                    </td>
+                    {isSuperAdmin && (
+                      <>
+                        <td className="py-2 px-4 border-b text-left">
+                          <Checkbox
+                            checked={row.cancelled}
+                            onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                          />
+                        </td>
+                        <td className="py-2 px-4 border-b text-left">
+                          <button
+                            onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                          </button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination controls */}
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              {'<<'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              {'<'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              {'>'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              {'>>'}
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap">
-              Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-            </span>
+        {!isLoading && (
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                {'<<'}
+              </Button>
+              <Button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                {'<'}
+              </Button>
+              <Button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                {'>'}
+              </Button>
+              <Button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                {'>>'}
+              </Button>
+            </div>
             
-            <span className="flex items-center gap-1">
-              <span className="whitespace-nowrap">Go to:</span>
-              <Input
-                type="number"
-                value={currentPage}
+            <div className="flex items-center gap-2">
+              <span className="whitespace-nowrap">
+                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+              </span>
+              
+              <span className="flex items-center gap-1">
+                <span className="whitespace-nowrap">Go to:</span>
+                <Input
+                  type="number"
+                  value={currentPage}
+                  onChange={e => {
+                    const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                    setCurrentPage(page);
+                  }}
+                  className="w-16"
+                />
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <select
+                value={pageSize}
                 onChange={e => {
-                  const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
-                  setCurrentPage(page);
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
                 }}
-                className="w-16"
-              />
-            </span>
+                className="border rounded p-1"
+              >
+                {[10, 20, 30, 40, 50].map(size => (
+                  <option key={size} value={size}>
+                    Show {size}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={e => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border rounded p-1"
-            >
-              {[10, 20, 30, 40, 50].map(size => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
 
