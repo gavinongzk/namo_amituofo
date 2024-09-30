@@ -9,15 +9,16 @@ type User = {
   phoneNumber: string;
   name: string;
   isNewUser: boolean;
+  remarks?: string;
 };
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [message, setMessage] = useState<string>('');
-  const [customDate, setCustomDate] = useState<string>('');
+  const [customDate, setCustomDate] = useState('');
+  const [message, setMessage] = useState('');
+  const [editingUser, setEditingUser] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set default date to one week ago
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const formattedDate = oneWeekAgo.toISOString().split('T')[0];
@@ -28,10 +29,32 @@ const UserManagement = () => {
   const fetchUsers = async (date?: string) => {
     try {
       const fetchedUsers = await getAllUniquePhoneNumbers(date);
-      setUsers(fetchedUsers);
+      const taggedUsers = await fetch('/api/tagged-users').then(res => res.json());
+      
+      const updatedUsers = fetchedUsers.map(user => {
+        const taggedUser = taggedUsers.find((tu: User) => tu.phoneNumber === user.phoneNumber);
+        return { ...user, remarks: taggedUser?.remarks || '' };
+      });
+      
+      setUsers(updatedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setMessage('Failed to fetch users. 获取用户失败。');
+      setMessage('Failed to fetch users');
+    }
+  };
+
+  const handleUpdateRemarks = async (phoneNumber: string, name: string, remarks: string) => {
+    try {
+      await fetch('/api/tagged-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, name, remarks }),
+      });
+      await fetchUsers(customDate);
+      setEditingUser(null);
+    } catch (error) {
+      console.error('Error updating remarks:', error);
+      setMessage('Failed to update remarks');
     }
   };
 
@@ -69,6 +92,7 @@ const UserManagement = () => {
             <th className="py-2 px-4 border-b text-left">Name</th>
             <th className="py-2 px-4 border-b text-left">Phone Number</th>
             <th className="py-2 px-4 border-b text-left">Status</th>
+            <th className="py-2 px-4 border-b text-left">Remarks</th>
           </tr>
         </thead>
         <tbody>
@@ -77,6 +101,31 @@ const UserManagement = () => {
               <td className="py-2 px-4 border-b text-left">{user.name}</td>
               <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
               <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
+              <td className="py-2 px-4 border-b text-left">
+                {editingUser === user.phoneNumber ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={user.remarks || ''}
+                      onChange={(e) => {
+                        setUsers(users.map(u => 
+                          u.phoneNumber === user.phoneNumber ? { ...u, remarks: e.target.value } : u
+                        ));
+                      }}
+                      className="w-full"
+                    />
+                    <Button onClick={() => handleUpdateRemarks(user.phoneNumber, user.name, user.remarks || '')}>
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span>{user.remarks || 'No remarks'}</span>
+                    <Button variant="outline" onClick={() => setEditingUser(user.phoneNumber)}>
+                      Edit
+                    </Button>
+                  </div>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

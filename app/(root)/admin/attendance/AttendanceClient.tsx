@@ -19,6 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
+import { Badge } from '@/components/ui/badge';
 
 
 type EventRegistration = {
@@ -87,6 +88,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+  const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -189,7 +191,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [event._id, registrations, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal]);
+  }, [event._id, registrations, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal, taggedUsers]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -346,6 +348,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     fetchCounts();
   }, [event._id]);
 
+  useEffect(() => {
+    const fetchTaggedUsers = async () => {
+      try {
+        const response = await fetch('/api/tagged-users');
+        const data = await response.json();
+        const taggedUsersMap = data.reduce((acc: Record<string, string>, user: { phoneNumber: string; remarks: string }) => {
+          acc[user.phoneNumber] = user.remarks;
+          return acc;
+        }, {});
+        setTaggedUsers(taggedUsersMap);
+      } catch (error) {
+        console.error('Error fetching tagged users:', error);
+      }
+    };
+
+    fetchTaggedUsers();
+  }, []);
+
   const columnHelper = createColumnHelper<any>();
 
   const columns = useMemo(() => {
@@ -390,6 +410,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             }
           />
         ),
+      }),
+      columnHelper.accessor('remarks', {
+        header: 'Remarks 备注',
+        cell: info => info.getValue() || 'N/A',
       }),
     ];
 
@@ -455,15 +479,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           groupId: group.groupId,
           queueNumber: group.queueNumber || '',
           name: nameField ? nameField.value : 'N/A',
-          ...(isSuperAdmin && { phoneNumber }),
+          phoneNumber, // Include phoneNumber for all users
           isDuplicate,
           cannotWalk,
           attendance: !!group.attendance,
           cancelled: !!group.cancelled,
+          remarks: taggedUsers[phoneNumber] || '',
         };
       })
     ),
-    [registrations, phoneGroups, isSuperAdmin]
+    [registrations, phoneGroups, isSuperAdmin, taggedUsers]
   );
 
   const table = useReactTable({
@@ -519,6 +544,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             Rows highlighted in light orange indicate participants who cannot walk and recite.
             <br />
             橙色突出显示的行表示无法行走和诵经的参与者。
+          </p>
+          <p className="p-2 bg-blue-100 text-sm">
+            The "Remarks" column shows additional notes for each participant.
+            <br />
+            "备注"列显示每个参与者的附加说明。
           </p>
           {isSuperAdmin && (
             <p className="p-2 bg-red-100 text-sm">
