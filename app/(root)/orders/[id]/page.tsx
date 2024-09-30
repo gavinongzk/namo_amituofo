@@ -14,52 +14,38 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
     : [order.customFieldValues];
 
   return (
-    <div className="wrapper my-8 max-w-6xl mx-auto">
-      <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-8 md:py-12 rounded-t-2xl animate-fadeIn">
-        <h3 className="text-3xl font-bold text-center text-primary-500">
+    <div className="wrapper my-8 max-w-4xl mx-auto">
+      <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
+        <h3 className="text-2xl font-bold text-center text-primary-500">
           Registration Successful 注册成功
         </h3>
       </section>
 
-      <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden transition-all duration-300 hover:shadow-xl">
-        <div className="p-8 space-y-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
-              <h4 className="text-xl font-bold mb-4 text-primary-700">Event Information 活动信息</h4>
-              <p className="mb-2"><span className="font-semibold">Event 活动:</span> {order.event.title}</p>
-              <p className="mb-2"><span className="font-semibold">Date 日期:</span> {formatDateTime(order.event.startDateTime).dateOnly} - {formatDateTime(order.event.endDateTime).dateOnly}</p>
-              <p><span className="font-semibold">Time 时间:</span> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
-              <h4 className="text-xl font-bold mb-4 text-primary-700">Order Summary 订单摘要</h4>
-              <p className="mb-2"><span className="font-semibold">Order ID 订单号:</span> {order._id}</p>
-              <p><span className="font-semibold">Order Date 订单日期:</span> {formatDateTime(order.createdAt).dateTime}</p>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-all duration-300">
-              <h4 className="text-xl font-bold mb-4 text-primary-700">Quick Info 快速信息</h4>
-              <p className="mb-2"><span className="font-semibold">Total Registrations 总注册人数:</span> {customFieldValuesArray.length}</p>
-              <p><span className="font-semibold">Event Location 活动地点:</span> {order.event.location || 'N/A'}</p>
-            </div>
+      <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
+        <div className="p-6 space-y-6">
+          <div className="bg-gray-50 p-4 rounded-xl">
+            <h4 className="text-lg font-bold mb-2 text-primary-700">Event: {order.event.title}</h4>
+            <p><span className="font-semibold">Date:</span> {formatDateTime(order.event.startDateTime).dateOnly}</p>
+            <p><span className="font-semibold">Time:</span> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
+            {order.event.location && <p><span className="font-semibold">Location:</span> {order.event.location}</p>}
           </div>
 
-          <div className="mt-8">
-            <h4 className="text-2xl font-bold mb-6 text-primary-700">Registration Details 注册详情</h4>
+          <div className="mt-6">
+            <h4 className="text-xl font-bold mb-4 text-primary-700">Registration Details 注册详情</h4>
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className="mb-8 pb-8 border-b last:border-b-0 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                  <h5 className="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">Person 人员 {index + 1}</h5>
+              <div key={group.groupId} className="mb-6 pb-6 border-b last:border-b-0">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-3">
                   {group.queueNumber && (
-                    <div className="bg-blue-100 p-3 rounded-xl text-center">
-                      <p className="text-sm text-blue-600 mb-1">Queue Number 队列号</p>
+                    <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
+                      <p className="text-sm text-blue-600">Queue Number 队列号</p>
                       <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                     </div>
                   )}
+                  <h5 className="text-lg font-semibold text-gray-800">Person 人员 {index + 1}</h5>
                 </div>
-                <dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
                   {group.fields.map((field: CustomField) => (
-                    <div key={field.id} className="flex flex-col hover:bg-gray-100 p-2 rounded transition-colors duration-200">
+                    <div key={field.id} className="flex flex-col">
                       <dt className="font-medium text-gray-600 mb-1">{field.label}</dt>
                       <dd className="text-gray-900 font-semibold">
                         {field.type === 'radio' 
