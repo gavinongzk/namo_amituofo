@@ -1,26 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  flexRender,
-  createColumnHelper,
-  SortingState,
-  Row,
-} from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { formatDateTime } from '@/lib/utils';
 import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
 import * as Checkbox from '@radix-ui/react-checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
-import { Check } from 'lucide-react'; // Import the Check icon from lucide-react
+import { Check } from 'lucide-react';
 
 type EventRegistration = {
   id: string;
@@ -73,6 +62,24 @@ function useDeepCompareMemo<T>(factory: () => T, dependencies: React.DependencyL
   return ref.current.obj;
 }
 
+interface AttendanceItem {
+  registrationId: string;
+  groupId: string;
+  queueNumber: string;
+  name: string;
+  phoneNumber: string;
+  isDuplicate: boolean;
+  cannotWalk: boolean | undefined;
+  attendance: boolean;
+  cancelled: boolean;
+  remarks: string;
+}
+
+interface SortConfig {
+  key: keyof AttendanceItem;
+  direction: 'asc' | 'desc';
+}
+
 const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
@@ -85,7 +92,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [totalRegistrations, setTotalRegistrations] = useState(0);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([]);
   const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
@@ -400,127 +406,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const phoneGroups = groupRegistrationsByPhone();
 
-  const columnHelper = createColumnHelper<any>();
-
-  // Optimize checkbox handling for mobile
-  const handleCheckboxChange = useCallback((registrationId: string, groupId: string, checked: boolean) => {
-    handleMarkAttendance(registrationId, groupId, checked);
-  }, [handleMarkAttendance]);
-
-  // Memoize the column definition
-  const columns = useMemo(() => {
-    const baseColumns = [
-      columnHelper.accessor('queueNumber', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Queue Number 排队号码
-            {{
-              asc: ' 🔼',
-              desc: ' 🔽',
-            }[column.getIsSorted() as string] ?? null}
-          </Button>
-        ),
-        cell: info => info.getValue() || 'N/A',
-      }),
-      columnHelper.accessor('name', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Name 姓名
-            {{
-              asc: ' 🔼',
-              desc: ' 🔽',
-            }[column.getIsSorted() as string] ?? null}
-          </Button>
-        ),
-        cell: info => info.getValue() || 'N/A',
-      }),
-      columnHelper.accessor('remarks', {
-        header: 'Remarks 备注',
-        cell: info => info.getValue() || 'N/A',
-      }),
-      columnHelper.accessor('attendance', {
-        header: 'Attendance 出席',
-        cell: ({ row }) => (
-          <div
-            role="checkbox"
-            aria-checked={row.original.attendance}
-            tabIndex={0}
-            className={`w-5 h-5 border border-gray-300 rounded cursor-pointer ${
-              row.original.attendance ? 'bg-blue-500' : 'bg-white'
-            }`}
-            onClick={() => handleCheckboxChange(row.original.registrationId, row.original.groupId, !row.original.attendance)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleCheckboxChange(row.original.registrationId, row.original.groupId, !row.original.attendance);
-              }
-            }}
-          >
-            {row.original.attendance && (
-              <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            )}
-          </div>
-        ),
-      }),
-    ];
-
-    if (isSuperAdmin) {
-      baseColumns.splice(2, 0, columnHelper.accessor('phoneNumber', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Phone Number 电话号码
-            {{
-              asc: ' 🔼',
-              desc: ' 🔽',
-            }[column.getIsSorted() as string] ?? null}
-          </Button>
-        ),
-        cell: info => info.getValue() || 'N/A',
-      }));
-
-      baseColumns.push(
-        columnHelper.accessor('cancelled', {
-          header: 'Cancelled 已取消',
-          cell: info => (
-            <Checkbox.Root
-              className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-              checked={info.getValue() || false}
-              onCheckedChange={(checked) => handleCancelRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber, checked as boolean)}
-            >
-              <Checkbox.Indicator className="text-current">
-                <Check className="h-4 w-4" />
-              </Checkbox.Indicator>
-            </Checkbox.Root>
-          ),
-        }),
-        columnHelper.accessor('delete', {
-          header: 'Delete 删除',
-          cell: info => (
-            <button
-              onClick={() => handleDeleteRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber)}
-              className="text-red-500 hover:text-red-700"
-            >
-              <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-            </button>
-          ),
-        })
-      );
-    }
-
-    return baseColumns;
-  }, [isSuperAdmin, handleCheckboxChange, handleCancelRegistration, handleDeleteRegistration]);
-
   const data = useDeepCompareMemo(() => 
     registrations.flatMap(registration => 
       registration.order.customFieldValues.map(group => {
@@ -539,7 +424,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           groupId: group.groupId,
           queueNumber: group.queueNumber || '',
           name: nameField ? nameField.value : 'N/A',
-          phoneNumber, // Include phoneNumber for all users
+          phoneNumber,
           isDuplicate,
           cannotWalk,
           attendance: !!group.attendance,
@@ -551,38 +436,57 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     [registrations, phoneGroups, isSuperAdmin, taggedUsers]
   );
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      sorting: [{ id: 'queueNumber', desc: false }],
-    },
-    state: {
-      sorting: sorting,
-    },
-    onSortingChange: setSorting,
-  });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'queueNumber', direction: 'asc' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Use a callback for row rendering to optimize performance
-  const renderRow = useCallback((row: Row<any>) => (
-    <tr 
-      key={row.id} 
-      className={`
-        hover:bg-gray-50 
-        ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
-        ${row.original.cannotWalk ? 'bg-orange-100' : ''}
-      `}
-    >
-      {row.getVisibleCells().map(cell => (
-        <td key={cell.id} className="py-2 px-4 border-b text-left">
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </td>
-      ))}
-    </tr>
-  ), [isSuperAdmin]);
+  const sortedData = useMemo(() => {
+    let sortableItems = [...data];
+    if (sortConfig.key) {
+      sortableItems.sort((a: AttendanceItem, b: AttendanceItem) => {
+        if ((a[sortConfig.key] ?? '') < (b[sortConfig.key] ?? '')) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if ((a[sortConfig.key] ?? '') > (b[sortConfig.key] ?? '')) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [data, sortConfig]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedData.slice(startIndex, startIndex + pageSize);
+  }, [sortedData, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+
+  const requestSort = (key: keyof AttendanceItem) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderHeader = (label: string, key: keyof AttendanceItem) => (
+    <th className="py-2 px-4 border-b text-left">
+      <Button
+        variant="ghost"
+        onClick={() => requestSort(key)}
+      >
+        {label}
+        {sortConfig.key === key && (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽')}
+      </Button>
+    </th>
+  );
+
+  // Optimize checkbox handling for mobile
+  const handleCheckboxChange = useCallback((registrationId: string, groupId: string, checked: boolean) => {
+    handleMarkAttendance(registrationId, groupId, checked);
+  }, [handleMarkAttendance]);
 
   return (
     <div className="wrapper my-8">
@@ -627,79 +531,140 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border border-gray-300">
             <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} className="bg-gray-100">
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className="py-2 px-4 border-b text-left">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
+              <tr className="bg-gray-100">
+                {renderHeader('Queue Number 排队号码', 'queueNumber')}
+                {renderHeader('Name 姓名', 'name')}
+                {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
+                <th className="py-2 px-4 border-b text-left">Remarks 备注</th>
+                <th className="py-2 px-4 border-b text-left">Attendance 出席</th>
+                {isSuperAdmin && (
+                  <>
+                    <th className="py-2 px-4 border-b text-left">Cancelled 已取消</th>
+                    <th className="py-2 px-4 border-b text-left">Delete 删除</th>
+                  </>
+                )}
+              </tr>
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(renderRow)}
+              {paginatedData.map((row, index) => (
+                <tr 
+                  key={`${row.registrationId}_${row.groupId}`}
+                  className={`
+                    hover:bg-gray-50 
+                    ${isSuperAdmin && row.isDuplicate ? 'bg-red-100' : ''}
+                    ${row.cannotWalk ? 'bg-orange-100' : ''}
+                  `}
+                >
+                  <td className="py-2 px-4 border-b text-left">{row.queueNumber}</td>
+                  <td className="py-2 px-4 border-b text-left">{row.name}</td>
+                  {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{row.phoneNumber}</td>}
+                  <td className="py-2 px-4 border-b text-left">{row.remarks}</td>
+                  <td className="py-2 px-4 border-b text-left">
+                    <div
+                      role="checkbox"
+                      aria-checked={row.attendance}
+                      tabIndex={0}
+                      className={`w-5 h-5 border border-gray-300 rounded cursor-pointer ${
+                        row.attendance ? 'bg-blue-500' : 'bg-white'
+                      }`}
+                      onClick={() => handleCheckboxChange(row.registrationId, row.groupId, !row.attendance)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleCheckboxChange(row.registrationId, row.groupId, !row.attendance);
+                        }
+                      }}
+                    >
+                      {row.attendance && (
+                        <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                  </td>
+                  {isSuperAdmin && (
+                    <>
+                      <td className="py-2 px-4 border-b text-left">
+                        <Checkbox.Root
+                          className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                          checked={row.cancelled}
+                          onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                        >
+                          <Checkbox.Indicator className="text-current">
+                            <Check className="h-4 w-4" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
+                      </td>
+                      <td className="py-2 px-4 border-b text-left">
+                        <button
+                          onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination controls */}
         <div className="flex items-center gap-2 mt-4">
           <Button
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
           >
             {'<<'}
           </Button>
           <Button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
           >
             {'<'}
           </Button>
           <Button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
           >
             {'>'}
           </Button>
           <Button
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
           >
             {'>>'}
           </Button>
           <span className="flex items-center gap-1">
             <div>Page</div>
             <strong>
-              {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
+              {currentPage} of {totalPages}
             </strong>
           </span>
           <span className="flex items-center gap-1">
             | Go to page:
             <Input
               type="number"
-              defaultValue={table.getState().pagination.pageIndex + 1}
+              value={currentPage}
               onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                table.setPageIndex(page)
+                const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                setCurrentPage(page);
               }}
               className="border p-1 rounded w-16"
             />
           </span>
           <select
-            value={table.getState().pagination.pageSize}
+            value={pageSize}
             onChange={e => {
-              table.setPageSize(Number(e.target.value))
+              setPageSize(Number(e.target.value));
+              setCurrentPage(1);
             }}
           >
-            {[10, 20, 30, 40, 50].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
+            {[10, 20, 30, 40, 50].map(size => (
+              <option key={size} value={size}>
+                Show {size}
               </option>
             ))}
           </select>
