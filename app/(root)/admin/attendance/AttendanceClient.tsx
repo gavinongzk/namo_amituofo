@@ -184,13 +184,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
     try {
       const [orderId] = registrationId.split('_');
-      const registration = registrations.find(reg => reg.id === registrationId);
-      const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
       
-      if (!registration || !group) {
-        throw new Error('Registration or group not found');
-      }
-
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
@@ -200,8 +194,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           orderId, 
           eventId: event._id, 
           groupId, 
-          attended, 
-          version: group.__v 
+          attended
         }),
       });
 
@@ -212,7 +205,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             if (r.id === registrationId) {
               const updatedCustomFieldValues = r.order.customFieldValues.map(g => 
                 g.groupId === groupId 
-                  ? { ...g, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                  ? { ...g, attendance: attended }
                   : g
               );
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
@@ -222,10 +215,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
 
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} successfully`);
         setTimeout(() => {
           setShowModal(false);
-        }, 1000); // Reduced timeout for faster feedback
+        }, 1000);
 
         // Update counts based on updated registrations
         const updatedRegistrations = registrations.map(r => {
@@ -236,7 +229,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 ...r.order,
                 customFieldValues: r.order.customFieldValues.map(g => 
                   g.groupId === groupId 
-                    ? { ...g, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                    ? { ...g, attendance: attended }
                     : g
                 )
               }
