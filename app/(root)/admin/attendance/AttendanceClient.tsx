@@ -249,8 +249,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
-      setMessage('Failed to update attendance. 更新出席情况失败。');
-      setModalMessage('Failed to update attendance. 更新出席情况失败。');
+      setMessage('Failed to update attendance. Refreshing page... 更新出席情况失败。正在刷新页面...');
+      setModalMessage('Failed to update attendance. Refreshing page... 更新出席情况失败。正在刷新页面...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } finally {
       setTimeout(() => {
         setShowModal(false);
       }, 2000);
