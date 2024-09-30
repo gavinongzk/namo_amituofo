@@ -21,6 +21,7 @@ import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Badge } from '@/components/ui/badge';
 import { debounce } from 'lodash';
+import { ErrorBoundary } from 'react-error-boundary';
 
 
 type EventRegistration = {
@@ -199,7 +200,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         }, 2000);
       }
     }, 300),
-    [event._id, registrations, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal]
+    [event._id, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal]
   );
 
   const handleQueueNumberSubmit = useCallback(async () => {
@@ -470,7 +471,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     return baseColumns;
   }, [isSuperAdmin, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
 
-  const data = useDeepCompareMemo(() => 
+  const memoizedData = useMemo(() => 
     registrations.flatMap(registration => 
       registration.order.customFieldValues.map(group => {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
@@ -501,7 +502,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   );
 
   const table = useReactTable({
-    data,
+    data: memoizedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -524,168 +525,172 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }
 
   return (
-    <div className="wrapper my-8">
-      <AttendanceDetailsCard 
-        event={event}
-        totalRegistrations={totalRegistrations}
-        attendedUsersCount={attendedUsersCount}
-        cannotReciteAndWalkCount={cannotReciteAndWalkCount}
-      />
+    <ErrorBoundary
+      fallback={<div>Something went wrong. Please try refreshing the page.</div>}
+    >
+      <div className="wrapper my-8">
+        <AttendanceDetailsCard 
+          event={event}
+          totalRegistrations={totalRegistrations}
+          attendedUsersCount={attendedUsersCount}
+          cannotReciteAndWalkCount={cannotReciteAndWalkCount}
+        />
 
-      <div className="mt-8">
-        <div className="flex space-x-2 mb-6">
-          <Input
-            placeholder="Enter Queue Number 输入排队号码"
-            value={queueNumber}
-            onChange={(e) => setQueueNumber(e.target.value)}
-            className="flex-grow"
-          />
-          <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
-            Mark Attendance 标记出席
-          </Button>
-        </div>
+        <div className="mt-8">
+          <div className="flex space-x-2 mb-6">
+            <Input
+              placeholder="Enter Queue Number 输入排队号码"
+              value={queueNumber}
+              onChange={(e) => setQueueNumber(e.target.value)}
+              className="flex-grow"
+            />
+            <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
+              Mark Attendance 标记出席
+            </Button>
+          </div>
 
-        <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
-        
-        {/* Notes section */}
-        <div className="mb-4 space-y-2">
-          <p className="p-2 bg-orange-100 text-sm">
-            Rows highlighted in light orange indicate participants who cannot walk and recite.
-            <br />
-            橙色突出显示的行表示无法行走和诵经的参与者。
-          </p>
-          {isSuperAdmin && (
-            <p className="p-2 bg-red-100 text-sm">
-              Rows highlighted in light red indicate registrations with the same phone number.
+          <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
+          
+          {/* Notes section */}
+          <div className="mb-4 space-y-2">
+            <p className="p-2 bg-orange-100 text-sm">
+              Rows highlighted in light orange indicate participants who cannot walk and recite.
               <br />
-              浅红色突出显示的行表示具有相同电话号码的注册。
+              橙色突出显示的行表示无法行走和诵经的参与者。
             </p>
+            {isSuperAdmin && (
+              <p className="p-2 bg-red-100 text-sm">
+                Rows highlighted in light red indicate registrations with the same phone number.
+                <br />
+                浅红色突出显示的行表示具有相同电话号码的注册。
+              </p>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-300">
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id} className="bg-gray-100">
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className="py-2 px-4 border-b text-left">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map(row => (
+                  <tr 
+                    key={row.id} 
+                    className={`
+                      hover:bg-gray-50 
+                      ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
+                      ${row.original.cannotWalk ? 'bg-orange-100' : ''}
+                    `}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="py-2 px-4 border-b text-left">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center gap-2 mt-4">
+            <Button
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              {'<<'}
+            </Button>
+            <Button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              {'<'}
+            </Button>
+            <Button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              {'>'}
+            </Button>
+            <Button
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              {'>>'}
+            </Button>
+            <span className="flex items-center gap-1">
+              <div>Page</div>
+              <strong>
+                {table.getState().pagination.pageIndex + 1} of{' '}
+                {table.getPageCount()}
+              </strong>
+            </span>
+            <span className="flex items-center gap-1">
+              | Go to page:
+              <Input
+                type="number"
+                defaultValue={table.getState().pagination.pageIndex + 1}
+                onChange={e => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0
+                  table.setPageIndex(page)
+                }}
+                className="border p-1 rounded w-16"
+              />
+            </span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={e => {
+                table.setPageSize(Number(e.target.value))
+              }}
+            >
+              {[10, 20, 30, 40, 50].map(pageSize => (
+                <option key={pageSize} value={pageSize}>
+                  Show {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+          {showModal && (
+            <Modal>
+              <p>{modalMessage}</p>
+            </Modal>
+          )}
+
+          {showDeleteConfirmation && deleteConfirmationData && (
+            <Modal>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
+                <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
+                <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
+                <div className="flex justify-end space-x-4">
+                  <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
+                    Cancel / 取消
+                  </Button>
+                  <Button onClick={confirmDeleteRegistration} variant="destructive">
+                    Delete / 删除
+                  </Button>
+                </div>
+              </div>
+            </Modal>
           )}
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} className="bg-gray-100">
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className="py-2 px-4 border-b text-left">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr 
-                  key={row.id} 
-                  className={`
-                    hover:bg-gray-50 
-                    ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
-                    ${row.original.cannotWalk ? 'bg-orange-100' : ''}
-                  `}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="py-2 px-4 border-b text-left">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center gap-2 mt-4">
-          <Button
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            {'<<'}
-          </Button>
-          <Button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            {'<'}
-          </Button>
-          <Button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            {'>'}
-          </Button>
-          <Button
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            {'>>'}
-          </Button>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
-            </strong>
-          </span>
-          <span className="flex items-center gap-1">
-            | Go to page:
-            <Input
-              type="number"
-              defaultValue={table.getState().pagination.pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                table.setPageIndex(page)
-              }}
-              className="border p-1 rounded w-16"
-            />
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={e => {
-              table.setPageSize(Number(e.target.value))
-            }}
-          >
-            {[10, 20, 30, 40, 50].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
-
-        {showModal && (
-          <Modal>
-            <p>{modalMessage}</p>
-          </Modal>
-        )}
-
-        {showDeleteConfirmation && deleteConfirmationData && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
-              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
-              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
-              <div className="flex justify-end space-x-4">
-                <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
-                  Cancel / 取消
-                </Button>
-                <Button onClick={confirmDeleteRegistration} variant="destructive">
-                  Delete / 删除
-                </Button>
-              </div>
-            </div>
-          </Modal>
-        )}
       </div>
-    </div>
+    </ErrorBoundary>
   );
 });
 
