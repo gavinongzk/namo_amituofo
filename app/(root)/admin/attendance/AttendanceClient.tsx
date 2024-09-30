@@ -589,62 +589,69 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         </div>
 
         {/* Pagination controls */}
-        <div className="flex items-center gap-2 mt-4">
-          <Button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-          >
-            {'<<'}
-          </Button>
-          <Button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            {'<'}
-          </Button>
-          <Button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            {'>'}
-          </Button>
-          <Button
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
-          >
-            {'>>'}
-          </Button>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {currentPage} of {totalPages}
-            </strong>
-          </span>
-          <span className="flex items-center gap-1">
-            | Go to page:
-            <Input
-              type="number"
-              value={currentPage}
+        <div className="flex flex-wrap items-center gap-2 mt-4">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              {'<<'}
+            </Button>
+            <Button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              {'<'}
+            </Button>
+            <Button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              {'>'}
+            </Button>
+            <Button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              {'>>'}
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="whitespace-nowrap">
+              Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+            </span>
+            
+            <span className="flex items-center gap-1">
+              <span className="whitespace-nowrap">Go to:</span>
+              <Input
+                type="number"
+                value={currentPage}
+                onChange={e => {
+                  const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                  setCurrentPage(page);
+                }}
+                className="w-16"
+              />
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <select
+              value={pageSize}
               onChange={e => {
-                const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
-                setCurrentPage(page);
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
               }}
-              className="border p-1 rounded w-16"
-            />
-          </span>
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            {[10, 20, 30, 40, 50].map(size => (
-              <option key={size} value={size}>
-                Show {size}
-              </option>
-            ))}
-          </select>
+              className="border rounded p-1"
+            >
+              {[10, 20, 30, 40, 50].map(size => (
+                <option key={size} value={size}>
+                  Show {size}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
