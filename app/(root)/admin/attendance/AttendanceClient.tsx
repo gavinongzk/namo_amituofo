@@ -249,12 +249,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
-      setMessage('Failed to update attendance. Refreshing page... 更新出席情况失败。正在刷新页面...');
-      setModalMessage('Failed to update attendance. Refreshing page... 更新出席情况失败。正在刷新页面...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } finally {
+      setMessage('Failed to update attendance. 更新出席情况失败。');
+      setModalMessage('Failed to update attendance. 更新出席情况失败。');
       setTimeout(() => {
         setShowModal(false);
       }, 2000);
@@ -450,11 +446,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       columnHelper.accessor('attendance', {
         header: 'Attendance 出席',
         cell: ({ row }) => (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={row.original.attendance}
-            onChange={(e) => 
-              handleMarkAttendance(row.original.registrationId, row.original.groupId, e.target.checked)
+            onCheckedChange={(checked) => 
+              handleMarkAttendance(row.original.registrationId, row.original.groupId, checked as boolean)
             }
           />
         ),
@@ -549,6 +544,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     },
     onSortingChange: setSorting,
   });
+
+  useEffect(() => {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+      });
+    });
+
+    return () => {
+      checkboxes.forEach(checkbox => {
+        checkbox.removeEventListener('touchstart', (e) => {
+          e.preventDefault();
+        });
+      });
+    };
+  }, []);
 
   if (isLoading) {
     return <p>Loading... 加载中...</p>;
