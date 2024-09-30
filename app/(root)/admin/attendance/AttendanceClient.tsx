@@ -412,27 +412,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
       baseColumns.push(
         columnHelper.accessor('cancelled', {
-          header: 'Cancel 取消',
-          cell: ({ row }) => (
-            <Button
-              onClick={() => handleCancelRegistration(row.original.registrationId, row.original.groupId, row.original.queueNumber, !row.original.cancelled)}
-              variant={row.original.cancelled ? "outline" : "destructive"}
-              size="sm"
-            >
-              {row.original.cancelled ? 'Uncancel 恢复' : 'Cancel 取消'}
-            </Button>
+          header: 'Cancelled 已取消',
+          cell: info => (
+            <Checkbox
+              checked={info.getValue() || false}
+              onCheckedChange={(checked) => handleCancelRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber, checked as boolean)}
+            />
           ),
         }),
         columnHelper.accessor('delete', {
           header: 'Delete 删除',
-          cell: ({ row }) => (
-            <Button
-              onClick={() => handleDeleteRegistration(row.original.registrationId, row.original.groupId, row.original.queueNumber)}
-              variant="destructive"
-              size="sm"
+          cell: info => (
+            <button
+              onClick={() => handleDeleteRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber)}
+              className="text-red-500 hover:text-red-700"
             >
-              Delete 删除
-            </Button>
+              <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+            </button>
           ),
         })
       );
