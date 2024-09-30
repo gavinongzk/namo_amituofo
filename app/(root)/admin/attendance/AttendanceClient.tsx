@@ -400,6 +400,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         ),
         cell: info => info.getValue() || 'N/A',
       }),
+      columnHelper.accessor('remarks', {
+        header: 'Remarks 备注',
+        cell: info => info.getValue() || 'N/A',
+      }),
       columnHelper.accessor('attendance', {
         header: 'Attendance 出席',
         cell: ({ row }) => (
@@ -410,10 +414,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             }
           />
         ),
-      }),
-      columnHelper.accessor('remarks', {
-        header: 'Remarks 备注',
-        cell: info => info.getValue() || 'N/A',
       }),
     ];
 
