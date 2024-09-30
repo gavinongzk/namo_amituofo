@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,6 +18,7 @@ import { useUser } from "@clerk/nextjs";
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
+import { isEqual } from 'lodash';
 
 
 type EventRegistration = {
@@ -55,6 +56,22 @@ type Event = {
   maxSeats: number;
 };
 
+function useDeepCompareMemo<T>(factory: () => T, dependencies: React.DependencyList) {
+  const ref = useRef<{ deps: React.DependencyList; obj: T; initialized: boolean }>({
+    deps: dependencies,
+    obj: undefined as unknown as T,
+    initialized: false,
+  });
+
+  if (ref.current.initialized === false || !isEqual(dependencies, ref.current.deps)) {
+    ref.current.deps = dependencies;
+    ref.current.obj = factory();
+    ref.current.initialized = true;
+  }
+
+  return ref.current.obj;
+}
+
 const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
@@ -68,6 +85,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [isDataReady, setIsDataReady] = useState(false);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -111,6 +129,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log('Fetching registrations for event:', event._id);
     fetchRegistrations();
   }, [fetchRegistrations]);
+
+  useEffect(() => {
+    if (registrations.length > 0) {
+      setIsDataReady(true);
+    }
+  }, [registrations]);
 
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
@@ -158,12 +182,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
-      } else if (res.status === 409) {
-        setModalMessage('Attendance update failed. Refreshing page... 更新出席情况失败。正在刷新页面...');
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-        return; // Exit the function early as we're refreshing the page
       } else {
         throw new Error('Failed to update attendance 更新出席情况失败');
       }
@@ -176,7 +194,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [event._id, registrations]);
+  }, [event._id, registrations, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -213,7 +231,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
       if (res.ok) {
         setModalMessage(cancelled 
-          ? 'Registration cancelled successfully. Refreshing page... 注已成功取消。正在刷新页面...' 
+          ? 'Registration cancelled successfully. Refreshing page... ��已成功取消。正在刷新页面...' 
           : 'Registration uncancelled successfully. Refreshing page... 注册已成功恢复。正在刷新页面...'
         );
         
@@ -382,10 +400,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }),
     columnHelper.accessor('attendance', {
       header: 'Attendance 出席',
-      cell: info => (
+      cell: ({ row }) => (
         <Checkbox
-          checked={info.getValue() || false}
-          onCheckedChange={(checked) => handleMarkAttendance(info.row.original.registrationId, info.row.original.groupId, checked as boolean)}
+          checked={row.original.attendance}
+          onCheckedChange={(checked) => {
+            handleMarkAttendance(
+              row.original.registrationId, 
+              row.original.groupId, 
+              checked as boolean
+            );
+          }}
         />
       ),
     }),
@@ -417,7 +441,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }),
   ], [user, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
 
-  const data = useMemo(() => 
+  const data = useDeepCompareMemo(() => 
     registrations.flatMap(registration => 
       registration.order.customFieldValues.map(group => {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
@@ -429,13 +453,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         return {
           registrationId: registration.id,
           groupId: group.groupId,
-          queueNumber: group.queueNumber,
+          queueNumber: group.queueNumber || '',
           name: nameField ? nameField.value : 'N/A',
-          phoneNumber: phoneNumber,
-          isDuplicate: isDuplicate,
-          fields: group.fields,
-          attendance: group.attendance,
-          cancelled: group.cancelled,
+          phoneNumber,
+          isDuplicate,
+          attendance: !!group.attendance,
+          cancelled: !!group.cancelled,
         };
       })
     ),
@@ -483,40 +506,44 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <p>Loading... 加载中...</p>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-300">
-                <thead>
-                  {table.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id} className="bg-gray-100">
-                      {headerGroup.headers.map(header => (
-                        <th key={header.id} className="py-2 px-4 border-b text-left">
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody>
-                  {table.getRowModel().rows.map(row => (
-                    <tr 
-                      key={row.id} 
-                      className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
-                    >
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id} className="py-2 px-4 border-b text-left">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {isDataReady ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-300">
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id} className="bg-gray-100">
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id} className="py-2 px-4 border-b text-left">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.map(row => (
+                      <tr 
+                        key={row.id} 
+                        className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
+                      >
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className="py-2 px-4 border-b text-left">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p>Loading...</p>
+            )}
             <div className="flex items-center gap-2 mt-4">
               <Button
                 onClick={() => table.setPageIndex(0)}
