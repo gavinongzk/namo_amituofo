@@ -85,6 +85,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -332,6 +333,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           const data = await res.json();
           setTotalRegistrations(data.totalRegistrations);
           setAttendedUsersCount(data.attendedUsers);
+          setCannotReciteAndWalkCount(data.cannotReciteAndWalk);
         } else {
           console.error('Failed to fetch counts:', await res.text());
         }
@@ -441,8 +443,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         const phoneField = group.fields.find(field => 
           field.label.toLowerCase().includes('phone') || field.type === 'phone'
         );
+        const walkField = group.fields.find(field => 
+          field.label.toLowerCase().includes('walk')
+        );
         const phoneNumber = phoneField ? phoneField.value : '';
         const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
+        const cannotWalk = walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase());
         return {
           registrationId: registration.id,
           groupId: group.groupId,
@@ -450,6 +456,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           name: nameField ? nameField.value : 'N/A',
           phoneNumber,
           isDuplicate,
+          cannotWalk,
           attendance: !!group.attendance,
           cancelled: !!group.cancelled,
         };
@@ -487,6 +494,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         event={event}
         totalRegistrations={totalRegistrations}
         attendedUsersCount={attendedUsersCount}
+        cannotReciteAndWalkCount={cannotReciteAndWalkCount}
       />
 
       <div className="mt-8">
@@ -525,7 +533,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               {table.getRowModel().rows.map(row => (
                 <tr 
                   key={row.id} 
-                  className={`hover:bg-gray-50 ${row.original.isDuplicate ? 'bg-yellow-100' : ''}`}
+                  className={`
+                    hover:bg-gray-50 
+                    ${row.original.isDuplicate ? 'bg-red-100' : ''}
+                    ${row.original.cannotWalk ? 'bg-orange-100' : ''}
+                  `}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id} className="py-2 px-4 border-b text-left">
@@ -622,9 +634,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         )}
       </div>
 
-      {/* Add this after the table */}
+      {/* Update this note */}
       <p className="mt-4 text-sm text-gray-600">
-        Note: Rows highlighted in yellow indicate registrations with the same phone number.
+        Note: Rows highlighted in light red indicate registrations with the same phone number. 
+        Rows highlighted in light orange indicate participants who cannot walk and recite.
       </p>
     </div>
   );

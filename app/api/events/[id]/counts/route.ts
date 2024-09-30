@@ -36,16 +36,44 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                 0
               ]
             }
+          },
+          cannotReciteAndWalk: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$customFieldValues.cancelled', false] },
+                    {
+                      $anyElementTrue: {
+                        $map: {
+                          input: "$customFieldValues.fields",
+                          as: "field",
+                          in: {
+                            $and: [
+                              { $regexMatch: { input: "$$field.label", regex: /walk/i } },
+                              { $in: ["$$field.value", ["no", "否", false]] }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
           }
         }
       }
     ]);
 
-    const counts = result[0] || { totalRegistrations: 0, attendedUsers: 0 };
+    const counts = result[0] || { totalRegistrations: 0, attendedUsers: 0, cannotReciteAndWalk: 0 };
 
     return NextResponse.json({
       totalRegistrations: counts.totalRegistrations,
-      attendedUsers: counts.attendedUsers
+      attendedUsers: counts.attendedUsers,
+      cannotReciteAndWalk: counts.cannotReciteAndWalk
     });
 
   } catch (error) {
