@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error updating attendance:', error);
-    return NextResponse.json({ message: 'Error updating attendance', error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Error updating attendance', error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
