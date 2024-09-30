@@ -5,11 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import { useUser } from "@clerk/nextjs";
-import * as Checkbox from '@radix-ui/react-checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
-import { Check } from 'lucide-react';
 
 type EventRegistration = {
   id: string;
@@ -560,40 +559,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{row.phoneNumber}</td>}
                   <td className="py-2 px-4 border-b text-left">{row.remarks}</td>
                   <td className="py-2 px-4 border-b text-left">
-                    <div
-                      role="checkbox"
-                      aria-checked={row.attendance}
-                      tabIndex={0}
-                      className={`w-5 h-5 border border-gray-300 rounded cursor-pointer ${
-                        row.attendance ? 'bg-blue-500' : 'bg-white'
-                      }`}
-                      onClick={() => handleCheckboxChange(row.registrationId, row.groupId, !row.attendance)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleCheckboxChange(row.registrationId, row.groupId, !row.attendance);
-                        }
-                      }}
-                    >
-                      {row.attendance && (
-                        <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
+                    <Checkbox
+                      checked={row.attendance}
+                      onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
+                    />
                   </td>
                   {isSuperAdmin && (
                     <>
                       <td className="py-2 px-4 border-b text-left">
-                        <Checkbox.Root
-                          className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                        <Checkbox
                           checked={row.cancelled}
                           onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                        >
-                          <Checkbox.Indicator className="text-current">
-                            <Check className="h-4 w-4" />
-                          </Checkbox.Indicator>
-                        </Checkbox.Root>
+                        />
                       </td>
                       <td className="py-2 px-4 border-b text-left">
                         <button
