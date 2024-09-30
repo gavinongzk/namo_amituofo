@@ -19,8 +19,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
-import { Badge } from '@/components/ui/badge';
-
 
 type EventRegistration = {
   id: string;
@@ -90,6 +88,29 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
 
+  const calculateCounts = useCallback((registrations: EventRegistration[]) => {
+    let total = 0;
+    let attended = 0;
+    let cannotReciteAndWalk = 0;
+
+    registrations.forEach(registration => {
+      registration.order.customFieldValues.forEach(group => {
+        if (!group.cancelled) {
+          total += 1;
+          if (group.attendance) attended += 1;
+          const walkField = group.fields.find(field => field.label.toLowerCase().includes('walk'));
+          if (walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase())) {
+            cannotReciteAndWalk += 1;
+          }
+        }
+      });
+    });
+
+    setTotalRegistrations(total);
+    setAttendedUsersCount(attended);
+    setCannotReciteAndWalkCount(cannotReciteAndWalk);
+  }, []);
+
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -133,13 +154,35 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
+  const fetchTaggedUsers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tagged-users');
+      const data = await response.json();
+      const taggedUsersMap = data.reduce((acc: Record<string, string>, user: { phoneNumber: string; remarks: string }) => {
+        acc[user.phoneNumber] = user.remarks;
+        return acc;
+      }, {});
+      setTaggedUsers(taggedUsersMap);
+    } catch (error) {
+      console.error('Error fetching tagged users:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTaggedUsers();
+  }, [fetchTaggedUsers]);
+
+  useEffect(() => {
+    calculateCounts(registrations);
+  }, [registrations, calculateCounts]);
+
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
     setShowModal(true);
     setModalMessage('Updating attendance... 更新出席情况...');
 
     try {
-      const [orderId, orderGroupId] = registrationId.split('_');
+      const [orderId] = registrationId.split('_');
       const registration = registrations.find(reg => reg.id === registrationId);
       const group = registration?.order.customFieldValues.find(g => g.groupId === groupId);
       
@@ -166,19 +209,41 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.map(group => 
-                group.groupId === groupId 
-                  ? { ...group, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
-                  : group
+              const updatedCustomFieldValues = r.order.customFieldValues.map(g => 
+                g.groupId === groupId 
+                  ? { ...g, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                  : g
               );
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
             }
             return r;
           })
         );
-        setAttendedUsersCount(prevCount => attended ? prevCount + 1 : prevCount - 1);
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
+
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for queue number ${group.queueNumber}`);
+        setTimeout(() => {
+          setShowModal(false);
+        }, 1000); // Reduced timeout for faster feedback
+
+        // Update counts based on updated registrations
+        const updatedRegistrations = registrations.map(r => {
+          if (r.id === registrationId) {
+            return {
+              ...r,
+              order: {
+                ...r.order,
+                customFieldValues: r.order.customFieldValues.map(g => 
+                  g.groupId === groupId 
+                    ? { ...g, attendance: attended, __v: updatedRegistration.order.customFieldValues[0].__v }
+                    : g
+                )
+              }
+            };
+          }
+          return r;
+        });
+        calculateCounts(updatedRegistrations);
       } else {
         throw new Error('Failed to update attendance 更新出席情况失败');
       }
@@ -186,12 +251,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       setMessage('Failed to update attendance. 更新出席情况失败。');
       setModalMessage('Failed to update attendance. 更新出席情况失败。');
+      setTimeout(() => {
+        setShowModal(false);
+      }, 2000);
     }
-
-    setTimeout(() => {
-      setShowModal(false);
-    }, 2000);
-  }, [event._id, registrations, setRegistrations, setAttendedUsersCount, setMessage, setModalMessage, setShowModal, taggedUsers]);
+  }, [event._id, registrations, calculateCounts]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -227,14 +291,33 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
 
       if (res.ok) {
-        setModalMessage(cancelled 
-          ? 'Registration cancelled successfully. Refreshing page... 已成功取消。正在刷新页面...' 
-          : 'Registration uncancelled successfully. Refreshing page... 注册已成功恢复。正在刷新页面...'
-        );
-        
-        // Refresh the page after a short delay
+        setMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for ${registrationId}, group ${groupId}`);
+        setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for queue number ${queueNumber}`);
+
+        // Update registrations state
+        const updatedRegistrations = registrations.map(r => {
+          if (r.id === registrationId) {
+            return {
+              ...r,
+              order: {
+                ...r.order,
+                customFieldValues: r.order.customFieldValues.map(g => 
+                  g.groupId === groupId 
+                    ? { ...g, cancelled }
+                    : g
+                )
+              }
+            };
+          }
+          return r;
+        });
+        setRegistrations(updatedRegistrations);
+
+        // Update counts based on updated registrations
+        calculateCounts(updatedRegistrations);
+
         setTimeout(() => {
-          window.location.reload();
+          setShowModal(false);
         }, 2000);
       } else {
         throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
@@ -242,10 +325,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     } catch (error) {
       console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
       setModalMessage(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration. 操作失败。`);
+      setTimeout(() => {
+        setShowModal(false);
+      }, 2000);
     }
-
-    // No need to hide the modal here as the page will refresh
-  }, []);
+  }, [registrations, calculateCounts]);
 
   const handleDeleteRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string) => {
     setShowDeleteConfirmation(true);
@@ -270,27 +354,20 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
 
       if (res.ok) {
-        setRegistrations(prevRegistrations =>
-          prevRegistrations.map(r => {
-            if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.filter(group => group.groupId !== groupId);
-              return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
-            }
-            return r;
-          })
-        );
         setMessage(`Registration deleted for ${registrationId}, group ${groupId}`);
         setModalMessage(`Registration deleted for queue number ${queueNumber}`);
-        
-        // Update total registrations count
-        setTotalRegistrations(prev => prev - 1);
-        
-        // Update attended users count if the deleted registration was marked as attended
-        const deletedRegistration = registrations.find(r => r.id === registrationId);
-        const deletedGroup = deletedRegistration?.order.customFieldValues.find(g => g.groupId === groupId);
-        if (deletedGroup?.attendance) {
-          setAttendedUsersCount(prev => prev - 1);
-        }
+
+        // Update registrations state
+        const updatedRegistrations = registrations.filter(r => {
+          if (r.id === registrationId) {
+            return !r.order.customFieldValues.some(g => g.groupId === groupId);
+          }
+          return true;
+        });
+        setRegistrations(updatedRegistrations);
+
+        // Update counts based on updated registrations
+        calculateCounts(updatedRegistrations);
       } else {
         throw new Error('Failed to delete registration 删除注册失败');
       }
@@ -303,7 +380,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTimeout(() => {
       setShowModal(false);
     }, 2000);
-  }, [deleteConfirmationData, registrations, setRegistrations, setMessage, setModalMessage, setTotalRegistrations, setAttendedUsersCount]);
+  }, [deleteConfirmationData, registrations, calculateCounts]);
 
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: { id: string; queueNumber: string }[] } = {};
@@ -327,44 +404,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [registrations]);
 
   const phoneGroups = groupRegistrationsByPhone();
-
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await fetch(`/api/events/${event._id}/counts`);
-        if (res.ok) {
-          const data = await res.json();
-          setTotalRegistrations(data.totalRegistrations);
-          setAttendedUsersCount(data.attendedUsers);
-          setCannotReciteAndWalkCount(data.cannotReciteAndWalk);
-        } else {
-          console.error('Failed to fetch counts:', await res.text());
-        }
-      } catch (error) {
-        console.error('Error fetching registration counts:', error);
-      }
-    };
-
-    fetchCounts();
-  }, [event._id]);
-
-  useEffect(() => {
-    const fetchTaggedUsers = async () => {
-      try {
-        const response = await fetch('/api/tagged-users');
-        const data = await response.json();
-        const taggedUsersMap = data.reduce((acc: Record<string, string>, user: { phoneNumber: string; remarks: string }) => {
-          acc[user.phoneNumber] = user.remarks;
-          return acc;
-        }, {});
-        setTaggedUsers(taggedUsersMap);
-      } catch (error) {
-        console.error('Error fetching tagged users:', error);
-      }
-    };
-
-    fetchTaggedUsers();
-  }, []);
 
   const columnHelper = createColumnHelper<any>();
 
