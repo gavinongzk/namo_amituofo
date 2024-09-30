@@ -5,15 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { formatDateTime } from '@/lib/utils';
 
 type Event = {
   _id: string;
   title: string;
   startDateTime: string;
-  endDateTime: string; // Add this line
+  endDateTime: string;
+  location: string;
   category: {
     name: string;
   };
+  maxSeats: number;
+  registeredCount: number;
 };
 
 const SelectEventPage = () => {
@@ -22,6 +29,7 @@ const SelectEventPage = () => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -58,32 +66,83 @@ const SelectEventPage = () => {
     fetchEvents();
   }, []);
 
-  const handleSelectEvent = () => {
+  const handleSelectEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    const event = events.find(e => e._id === eventId);
+    setSelectedEvent(event || null);
+  };
+
+  const handleGoToAttendance = () => {
     if (selectedEventId) {
       router.push(`/admin/attendance?eventId=${selectedEventId}`);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800">Select an Event for Attendance</h2>
-        <Select onValueChange={setSelectedEventId} value={selectedEventId}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an event" />
-          </SelectTrigger>
-          <SelectContent>
-            {events.map((event) => (
-              <SelectItem key={event._id} value={event._id}>
-                {event.title} | {new Date(event.startDateTime).toLocaleString()} | {event.category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-center mb-8">Select an Event for Attendance</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <Select onValueChange={handleSelectEvent} value={selectedEventId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an event" />
+            </SelectTrigger>
+            <SelectContent>
+              {events.map((event) => (
+                <SelectItem key={event._id} value={event._id}>
+                  {event.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          {selectedEvent && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{selectedEvent.title}</CardTitle>
+                <CardDescription>{selectedEvent.category.name}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <CalendarIcon className="h-5 w-5 mr-2" />
+                    <span>{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CalendarIcon className="h-5 w-5 mr-2" />
+                    <span>
+                      {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
+                      {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPinIcon className="h-5 w-5 mr-2" />
+                    <span>{selectedEvent.location}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <UsersIcon className="h-5 w-5 mr-2" />
+                    <span>{selectedEvent.registeredCount} / {selectedEvent.maxSeats} registered</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Badge variant="outline" className="mr-2">
+                  {selectedEvent.category.name}
+                </Badge>
+                <Badge variant="outline">
+                  {new Date(selectedEvent.startDateTime) > new Date() ? 'Upcoming' : 'Ongoing'}
+                </Badge>
+              </CardFooter>
+            </Card>
+          )}
+        </div>
+      </div>
+      <div className="mt-8 flex justify-center">
         <Button 
-          onClick={handleSelectEvent} 
+          onClick={handleGoToAttendance} 
           disabled={!selectedEventId}
-          className="w-full"
+          className="w-full max-w-md"
         >
           Go to Attendance
         </Button>
