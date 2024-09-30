@@ -9,6 +9,7 @@ import {
   flexRender,
   createColumnHelper,
   SortingState,
+  Row,
 } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -401,6 +402,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const columnHelper = createColumnHelper<any>();
 
+  // Optimize checkbox handling for mobile
+  const handleCheckboxChange = useCallback((registrationId: string, groupId: string, checked: boolean) => {
+    handleMarkAttendance(registrationId, groupId, checked);
+  }, [handleMarkAttendance]);
+
+  // Memoize the column definition
   const columns = useMemo(() => {
     const baseColumns = [
       columnHelper.accessor('queueNumber', {
@@ -440,17 +447,27 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       columnHelper.accessor('attendance', {
         header: 'Attendance 出席',
         cell: ({ row }) => (
-          <Checkbox.Root
-            className="flex h-4 w-4 appearance-none items-center justify-center rounded-sm border border-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-            checked={row.original.attendance}
-            onCheckedChange={(checked) => 
-              handleMarkAttendance(row.original.registrationId, row.original.groupId, checked as boolean)
-            }
+          <div
+            role="checkbox"
+            aria-checked={row.original.attendance}
+            tabIndex={0}
+            className={`w-5 h-5 border border-gray-300 rounded cursor-pointer ${
+              row.original.attendance ? 'bg-blue-500' : 'bg-white'
+            }`}
+            onClick={() => handleCheckboxChange(row.original.registrationId, row.original.groupId, !row.original.attendance)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCheckboxChange(row.original.registrationId, row.original.groupId, !row.original.attendance);
+              }
+            }}
           >
-            <Checkbox.Indicator className="text-current">
-              <Check className="h-4 w-4" />
-            </Checkbox.Indicator>
-          </Checkbox.Root>
+            {row.original.attendance && (
+              <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
         ),
       }),
     ];
@@ -502,7 +519,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
 
     return baseColumns;
-  }, [isSuperAdmin, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
+  }, [isSuperAdmin, handleCheckboxChange, handleCancelRegistration, handleDeleteRegistration]);
 
   const data = useDeepCompareMemo(() => 
     registrations.flatMap(registration => 
@@ -549,30 +566,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     onSortingChange: setSorting,
   });
 
-  useEffect(() => {
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-      });
-    });
-
-    return () => {
-      checkboxes.forEach(checkbox => {
-        checkbox.removeEventListener('touchstart', (e) => {
-          e.preventDefault();
-        });
-      });
-    };
-  }, []);
-
-  if (isLoading) {
-    return <p>Loading... 加载中...</p>;
-  }
-
-  if (registrations.length === 0) {
-    return <p>No registrations found for this event. 未找到此活动的注册。</p>;
-  }
+  // Use a callback for row rendering to optimize performance
+  const renderRow = useCallback((row: Row<any>) => (
+    <tr 
+      key={row.id} 
+      className={`
+        hover:bg-gray-50 
+        ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
+        ${row.original.cannotWalk ? 'bg-orange-100' : ''}
+      `}
+    >
+      {row.getVisibleCells().map(cell => (
+        <td key={cell.id} className="py-2 px-4 border-b text-left">
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </td>
+      ))}
+    </tr>
+  ), [isSuperAdmin]);
 
   return (
     <div className="wrapper my-8">
@@ -633,22 +643,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr 
-                  key={row.id} 
-                  className={`
-                    hover:bg-gray-50 
-                    ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
-                    ${row.original.cannotWalk ? 'bg-orange-100' : ''}
-                  `}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="py-2 px-4 border-b text-left">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {table.getRowModel().rows.map(renderRow)}
             </tbody>
           </table>
         </div>
