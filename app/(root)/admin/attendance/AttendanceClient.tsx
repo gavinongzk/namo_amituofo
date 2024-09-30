@@ -545,11 +545,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <br />
             橙色突出显示的行表示无法行走和诵经的参与者。
           </p>
-          <p className="p-2 bg-blue-100 text-sm">
-            The "Remarks" column shows additional notes for each participant.
-            <br />
-            "备注"列显示每个参与者的附加说明。
-          </p>
           {isSuperAdmin && (
             <p className="p-2 bg-red-100 text-sm">
               Rows highlighted in light red indicate registrations with the same phone number.
