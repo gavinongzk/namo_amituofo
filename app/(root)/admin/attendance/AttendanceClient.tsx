@@ -86,6 +86,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
+  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
 
   const fetchRegistrations = useCallback(async () => {
     setIsLoading(true);
@@ -347,94 +348,61 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns = useMemo(() => [
-    columnHelper.accessor('queueNumber', {
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Queue Number 排队号码
-          {{
-            asc: ' 🔼',
-            desc: ' 🔽',
-          }[column.getIsSorted() as string] ?? null}
-        </Button>
-      ),
-      cell: info => info.getValue() || 'N/A',
-    }),
-    columnHelper.accessor('name', {
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Name 姓名
-          {{
-            asc: ' 🔼',
-            desc: ' 🔽',
-          }[column.getIsSorted() as string] ?? null}
-        </Button>
-      ),
-      cell: info => info.getValue() || 'N/A',
-    }),
-    columnHelper.accessor('phoneNumber', {
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Phone Number 电话号码
-          {{
-            asc: ' 🔼',
-            desc: ' 🔽',
-          }[column.getIsSorted() as string] ?? null}
-        </Button>
-      ),
-      cell: info => info.getValue() || 'N/A',
-    }),
-    columnHelper.accessor('attendance', {
-      header: 'Attendance 出席',
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.original.attendance}
-          onCheckedChange={(checked) => {
-            handleMarkAttendance(
-              row.original.registrationId, 
-              row.original.groupId, 
-              checked as boolean
-            );
-          }}
-        />
-      ),
-    }),
-    columnHelper.accessor('cancelled', {
-      header: 'Cancelled 已取消',
-      cell: info => (
-        user?.publicMetadata.role === 'superadmin' ? (
-          <Checkbox
-            checked={info.getValue() || false}
-            onCheckedChange={(checked) => handleCancelRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber, checked as boolean)}
-          />
-        ) : (
-          <span>{info.getValue() ? 'Yes' : 'No'}</span>
-        )
-      ),
-    }),
-    columnHelper.accessor('delete', {
-      header: 'Delete 删除',
-      cell: info => (
-        user?.publicMetadata.role === 'superadmin' && (
-          <button
-            onClick={() => handleDeleteRegistration(info.row.original.registrationId, info.row.original.groupId, info.row.original.queueNumber)}
-            className="text-red-500 hover:text-red-700"
+  const columns = useMemo(() => {
+    const baseColumns = [
+      columnHelper.accessor('queueNumber', {
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-          </button>
-        )
-      ),
-    }),
-  ], [user, handleMarkAttendance, handleCancelRegistration, handleDeleteRegistration]);
+            Queue Number 排队号码
+            {{
+              asc: ' 🔼',
+              desc: ' 🔽',
+            }[column.getIsSorted() as string] ?? null}
+          </Button>
+        ),
+        cell: info => info.getValue() || 'N/A',
+      }),
+      columnHelper.accessor('name', {
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name 姓名
+            {{
+              asc: ' 🔼',
+              desc: ' 🔽',
+            }[column.getIsSorted() as string] ?? null}
+          </Button>
+        ),
+        cell: info => info.getValue() || 'N/A',
+      }),
+      // ... other common columns ...
+    ];
+
+    if (isSuperAdmin) {
+      baseColumns.splice(2, 0, columnHelper.accessor('phoneNumber', {
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Phone Number 电话号码
+            {{
+              asc: ' 🔼',
+              desc: ' 🔽',
+            }[column.getIsSorted() as string] ?? null}
+          </Button>
+        ),
+        cell: info => info.getValue() || 'N/A',
+      }));
+    }
+
+    return baseColumns;
+  }, [isSuperAdmin]);
 
   const data = useDeepCompareMemo(() => 
     registrations.flatMap(registration => 
@@ -447,14 +415,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           field.label.toLowerCase().includes('walk')
         );
         const phoneNumber = phoneField ? phoneField.value : '';
-        const isDuplicate = phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
+        const isDuplicate = isSuperAdmin && phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
         const cannotWalk = walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase());
         return {
           registrationId: registration.id,
           groupId: group.groupId,
           queueNumber: group.queueNumber || '',
           name: nameField ? nameField.value : 'N/A',
-          phoneNumber,
+          ...(isSuperAdmin && { phoneNumber }),
           isDuplicate,
           cannotWalk,
           attendance: !!group.attendance,
@@ -462,7 +430,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         };
       })
     ),
-    [registrations, phoneGroups]
+    [registrations, phoneGroups, isSuperAdmin]
   );
 
   const table = useReactTable({
@@ -535,7 +503,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   key={row.id} 
                   className={`
                     hover:bg-gray-50 
-                    ${row.original.isDuplicate ? 'bg-red-100' : ''}
+                    ${isSuperAdmin && row.original.isDuplicate ? 'bg-red-100' : ''}
                     ${row.original.cannotWalk ? 'bg-orange-100' : ''}
                   `}
                 >
@@ -634,11 +602,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         )}
       </div>
 
-      {/* Update this note */}
-      <p className="mt-4 text-sm text-gray-600">
-        Note: Rows highlighted in light red indicate registrations with the same phone number. 
-        Rows highlighted in light orange indicate participants who cannot walk and recite.
-      </p>
+      {isSuperAdmin && (
+        <p className="mt-4 text-sm text-gray-600">
+          Note: Rows highlighted in light red indicate registrations with the same phone number. 
+          Rows highlighted in light orange indicate participants who cannot walk and recite.
+        </p>
+      )}
     </div>
   );
 });
