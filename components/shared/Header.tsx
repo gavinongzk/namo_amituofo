@@ -1,4 +1,4 @@
-import { SignedIn, UserButton } from "@clerk/nextjs"
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
 import NavWrapper from "./NavWrapper"
@@ -8,21 +8,19 @@ const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
       <div className="wrapper flex items-center justify-between py-4">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="w-36 transition-transform hover:scale-105">
-            <Image 
-              src="/assets/images/logo.svg" width={64} height={24}
-              alt="Namo Amituofo logo" 
-              className="object-contain"
-            />
-          </Link>
+        <Link href="/" className="w-36 transition-transform hover:scale-105 ml-4 md:ml-6">
+          <Image 
+            src="/assets/images/logo.svg" width={64} height={24}
+            alt="Namo Amituofo logo" 
+            className="object-contain"
+          />
+        </Link>
 
-          <nav className="hidden md:block">
-            <NavWrapper />
-          </nav>
-        </div>
+        <nav className="md:flex-between hidden w-full max-w-xs">
+          <NavWrapper />
+        </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mr-4 md:mr-6">
           <SignedIn>
             <UserButton 
               afterSignOutUrl="/"
