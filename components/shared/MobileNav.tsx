@@ -19,13 +19,15 @@ const MobileNav = () => {
     <nav className="md:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger className="align-middle">
-          <Image 
-            src="/assets/icons/menu.svg"
-            alt="menu"
-            width={24}
-            height={24}
-            className="cursor-pointer transition-opacity hover:opacity-75"
-          />
+          <div className="p-2 rounded-full bg-primary-100 hover:bg-primary-200 transition-colors duration-200">
+            <Image 
+              src="/assets/icons/menu.svg"
+              alt="menu"
+              width={28}
+              height={28}
+              className="cursor-pointer transition-opacity hover:opacity-75"
+            />
+          </div>
         </SheetTrigger>
         <SheetContent className="flex flex-col gap-6 bg-white md:hidden">
           <Image 
