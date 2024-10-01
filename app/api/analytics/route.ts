@@ -32,18 +32,18 @@ export async function GET(req: NextRequest) {
     const Event = mongoose.models.Event || EventModel;
 
     console.log('Fetching orders...');
-    const orders = await Order.find();
+    const orders = await Order.find().populate('event');
     console.log(`Found ${orders.length} orders`);
     
     const attendeeMap = new Map<string, AttendeeData>();
 
     console.log('Processing orders...');
     orders.forEach(order => {
-      order.customFieldValues.forEach((value: { fields: Array<{ label: string; value: string }> }) => {
-        const name = value.fields.find((field) => field.label.toLowerCase().includes('name'))?.value || 'Unknown';
-        const phoneNumber = value.fields.find((field) => field.label.toLowerCase().includes('phone'))?.value || 'Unknown';
-        const eventDate = order.event.startDateTime;
-        const eventTitle = order.event.title;
+      order.customFieldValues.forEach((group) => {
+        const name = group.fields.find((field) => field.label.toLowerCase().includes('name'))?.value || 'Unknown';
+        const phoneNumber = group.fields.find((field) => field.label.toLowerCase().includes('phone'))?.value || 'Unknown';
+        const eventDate = order.event.startDateTime ? order.event.startDateTime.toISOString() : '';
+        const eventTitle = order.event.title || '';
 
         const key = `${name}-${phoneNumber}`;
         if (!attendeeMap.has(key)) {
@@ -61,9 +61,9 @@ export async function GET(req: NextRequest) {
       const lastEvent = attendee.events[attendee.events.length - 1];
       return {
         ...attendee,
-        lastEventDate: lastEvent.eventDate,
-        eventDate: lastEvent.eventDate,
-        eventTitle: lastEvent.eventTitle,
+        lastEventDate: lastEvent ? lastEvent.eventDate : '',
+        eventDate: lastEvent ? lastEvent.eventDate : '',
+        eventTitle: lastEvent ? lastEvent.eventTitle : '',
       };
     });
 

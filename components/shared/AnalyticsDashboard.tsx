@@ -53,7 +53,10 @@ const AnalyticsDashboard: React.FC = () => {
                     throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
                 }
                 const data = await response.json();
-                console.log('Received analytics data:', data);
+                console.log('Received analytics data:', JSON.stringify(data, null, 2));
+                if (!data.attendees || !Array.isArray(data.attendees)) {
+                    throw new Error('Invalid data structure received from API');
+                }
                 setAttendees(data.attendees);
                 processFrequentAttendees(data.attendees);
                 processPopularEvents(data.attendees);
@@ -70,13 +73,14 @@ const AnalyticsDashboard: React.FC = () => {
 
     const processFrequentAttendees = (attendees: Attendee[]) => {
         const sortedAttendees: FrequentAttendee[] = attendees
+            .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
             .sort((a, b) => b.eventCount - a.eventCount)
             .slice(0, 10)
             .map(attendee => ({
                 name: attendee.name,
                 phoneNumber: attendee.phoneNumber,
                 eventCount: attendee.eventCount,
-                lastEventDate: format(parseISO(attendee.lastEventDate), 'dd MMM yyyy')
+                lastEventDate: attendee.lastEventDate ? format(parseISO(attendee.lastEventDate), 'dd MMM yyyy') : 'Unknown'
             }));
 
         setFrequentAttendees(sortedAttendees);
@@ -84,9 +88,13 @@ const AnalyticsDashboard: React.FC = () => {
 
     const processPopularEvents = (attendees: Attendee[]) => {
         const eventCounts: Record<string, number> = attendees.reduce((acc, attendee) => {
-            attendee.events.forEach(event => {
-                acc[event.eventTitle] = (acc[event.eventTitle] || 0) + 1;
-            });
+            if (attendee.events && Array.isArray(attendee.events)) {
+                attendee.events.forEach(event => {
+                    if (event.eventTitle) {
+                        acc[event.eventTitle] = (acc[event.eventTitle] || 0) + 1;
+                    }
+                });
+            }
             return acc;
         }, {} as Record<string, number>);
 
