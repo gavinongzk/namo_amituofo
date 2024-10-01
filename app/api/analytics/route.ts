@@ -3,13 +3,31 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import Event from '@/lib/database/models/event.model';
 
+interface AttendeeEvent {
+  eventDate: string;
+  eventTitle: string;
+}
+
+interface AttendeeData {
+  name: string;
+  phoneNumber: string;
+  eventCount: number;
+  events: AttendeeEvent[];
+}
+
+interface Attendee extends AttendeeData {
+  lastEventDate: string;
+  eventDate: string;
+  eventTitle: string;
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
     const orders = await Order.find().populate('event');
     
-    const attendeeMap = new Map();
+    const attendeeMap = new Map<string, AttendeeData>();
 
     orders.forEach(order => {
       order.customFieldValues.forEach((value: { fields: Array<{ label: string; value: string }> }) => {
@@ -22,17 +40,21 @@ export async function GET(req: NextRequest) {
         if (!attendeeMap.has(key)) {
           attendeeMap.set(key, { name, phoneNumber, eventCount: 0, events: [] });
         }
-        attendeeMap.get(key).eventCount++;
-        attendeeMap.get(key).events.push({ eventDate, eventTitle });
+        const attendee = attendeeMap.get(key)!;
+        attendee.eventCount++;
+        attendee.events.push({ eventDate, eventTitle });
       });
     });
 
-    const attendees = Array.from(attendeeMap.values()).map(attendee => ({
-      ...attendee,
-      lastEventDate: attendee.events[attendee.events.length - 1].eventDate,
-      eventDate: attendee.events[attendee.events.length - 1].eventDate,
-      eventTitle: attendee.events[attendee.events.length - 1].eventTitle,
-    }));
+    const attendees: Attendee[] = Array.from(attendeeMap.values()).map(attendee => {
+      const lastEvent = attendee.events[attendee.events.length - 1];
+      return {
+        ...attendee,
+        lastEventDate: lastEvent.eventDate,
+        eventDate: lastEvent.eventDate,
+        eventTitle: lastEvent.eventTitle,
+      };
+    });
 
     return NextResponse.json({ attendees });
   } catch (error) {

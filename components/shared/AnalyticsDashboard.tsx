@@ -1,165 +1,183 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
-interface Attendee {
-  name: string;
-  phoneNumber: string;
-  eventCount: number;
-  lastEventDate: string;
-  eventDate: string; // Add this
-  eventTitle: string; // Add this
+interface AttendeeEvent {
+    eventDate: string;
+    eventTitle: string;
 }
 
-interface EventPopularity {
-  eventTitle: string;
-  attendeeCount: number;
+interface AttendeeData {
+    name: string;
+    phoneNumber: string;
+    eventCount: number;
+    events: AttendeeEvent[];
+}
+
+interface Attendee extends AttendeeData {
+    lastEventDate: string;
+}
+
+interface FrequentAttendee {
+    name: string;
+    phoneNumber: string;
+    eventCount: number;
+    lastEventDate: string;
+}
+
+interface PopularEvent {
+    eventTitle: string;
+    attendeeCount: number;
 }
 
 const AnalyticsDashboard: React.FC = () => {
-  const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [frequentAttendees, setFrequentAttendees] = useState<Attendee[]>([]);
-  const [popularEvents, setPopularEvents] = useState<EventPopularity[]>([]);
+    const [attendees, setAttendees] = useState<Attendee[]>([]);
+    const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
+    const [popularEvents, setPopularEvents] = useState<PopularEvent[]>([]);
+    const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
-
-  const fetchAnalyticsData = async () => {
-    try {
-      const response = await fetch('/api/analytics');
-      const data = await response.json();
-      processAttendanceTrend(data.attendees);
-      processFrequentAttendees(data.attendees);
-      processPopularEvents(data.attendees);
-    } catch (error) {
-      console.error('Error fetching analytics data:', error);
-    }
-  };
-
-  const processAttendanceTrend = (attendees: Attendee[]) => {
-    const sortedAttendees = attendees.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
-    const startDate = parseISO(sortedAttendees[0].eventDate);
-    const endDate = parseISO(sortedAttendees[sortedAttendees.length - 1].eventDate);
-    
-    const months = eachMonthOfInterval({ start: startDate, end: endDate });
-    const attendanceCounts = months.map(month => {
-      return attendees.filter(attendee => {
-        const attendeeDate = parseISO(attendee.eventDate);
-        return attendeeDate >= startOfMonth(month) && attendeeDate <= endOfMonth(month);
-      }).length;
-    });
-
-    setLabels(months.map(month => format(month, 'MMM yyyy')));
-    setAttendanceTrend(attendanceCounts);
-  };
-
-  const processFrequentAttendees = (attendees: Attendee[]) => {
-    const attendeeCounts = attendees.reduce((acc, attendee) => {
-      acc[attendee.phoneNumber] = (acc[attendee.phoneNumber] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const sortedAttendees = Object.entries(attendeeCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([phoneNumber]) => {
-        const attendeeEvents = attendees.filter(a => a.phoneNumber === phoneNumber);
-        return {
-          name: attendeeEvents[0].name,
-          phoneNumber,
-          eventCount: attendeeEvents.length,
-          lastEventDate: format(parseISO(attendeeEvents[attendeeEvents.length - 1].eventDate), 'dd MMM yyyy')
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                const response = await fetch('/api/analytics');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch analytics data');
+                }
+                const data = await response.json();
+                setAttendees(data.attendees);
+                processFrequentAttendees(data.attendees);
+                processPopularEvents(data.attendees);
+            } catch (error) {
+                console.error('Error fetching analytics data:', error);
+            }
         };
-      });
 
-    setFrequentAttendees(sortedAttendees.map(attendee => ({
-      ...attendee,
-      eventDate: attendee.lastEventDate, // Use lastEventDate or provide a default
-      eventTitle: 'N/A' // Provide a default or fetch the actual title if available
-    })));
-  };
+        fetchAnalytics();
+    }, []);
 
-  const processPopularEvents = (attendees: Attendee[]) => {
-    const eventCounts = attendees.reduce((acc, attendee) => {
-      acc[attendee.eventTitle] = (acc[attendee.eventTitle] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const processFrequentAttendees = (attendees: Attendee[]) => {
+        const sortedAttendees: FrequentAttendee[] = attendees
+            .sort((a, b) => b.eventCount - a.eventCount)
+            .slice(0, 10)
+            .map(attendee => ({
+                name: attendee.name,
+                phoneNumber: attendee.phoneNumber,
+                eventCount: attendee.eventCount,
+                lastEventDate: format(parseISO(attendee.lastEventDate), 'dd MMM yyyy')
+            }));
 
-    const sortedEvents = Object.entries(eventCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([eventTitle, attendeeCount]) => ({ eventTitle, attendeeCount }));
+        setFrequentAttendees(sortedAttendees);
+    };
 
-    setPopularEvents(sortedEvents);
-  };
+    const processPopularEvents = (attendees: Attendee[]) => {
+        const eventCounts: Record<string, number> = attendees.reduce((acc, attendee) => {
+            attendee.events.forEach(event => {
+                acc[event.eventTitle] = (acc[event.eventTitle] || 0) + 1;
+            });
+            return acc;
+        }, {} as Record<string, number>);
 
-  const attendanceTrendData = {
-    labels,
-    datasets: [
-      {
-        label: 'Attendance Trend',
-        data: attendanceTrend,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }
-    ]
-  };
+        const sortedEvents: PopularEvent[] = Object.entries(eventCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5)
+            .map(([eventTitle, attendeeCount]) => ({ eventTitle, attendeeCount }));
 
-  const popularEventsData = {
-    labels: popularEvents.map(event => event.eventTitle),
-    datasets: [
-      {
-        label: 'Attendee Count',
-        data: popularEvents.map(event => event.attendeeCount),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)'
-      }
-    ]
-  };
+        setPopularEvents(sortedEvents);
+    };
 
-  return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
-      
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">Attendance Trend</h3>
-        <Line data={attendanceTrendData} />
-      </div>
+    const calculateAttendanceTrend = (attendees: Attendee[]) => {
+        const now = new Date();
+        const sixMonthsAgo = subMonths(now, 5);
+        const months = eachMonthOfInterval({ start: sixMonthsAgo, end: now });
 
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">Popular Events</h3>
-        <Bar data={popularEventsData} />
-      </div>
+        const trend = months.map(month => {
+            return attendees.reduce((count, attendee) => {
+                return count + attendee.events.filter(event => 
+                    parseISO(event.eventDate).getMonth() === month.getMonth() &&
+                    parseISO(event.eventDate).getFullYear() === month.getFullYear()
+                ).length;
+            }, 0);
+        });
 
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Frequent Attendees</h3>
-        <table className="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b">Name</th>
-              <th className="py-2 px-4 border-b">Phone Number</th>
-              <th className="py-2 px-4 border-b">Event Count</th>
-              <th className="py-2 px-4 border-b">Last Attended</th>
-            </tr>
-          </thead>
-          <tbody>
-            {frequentAttendees.map((attendee, index) => (
-              <tr key={index}>
-                <td className="py-2 px-4 border-b">{attendee.name}</td>
-                <td className="py-2 px-4 border-b">{attendee.phoneNumber}</td>
-                <td className="py-2 px-4 border-b">{attendee.eventCount}</td>
-                <td className="py-2 px-4 border-b">{attendee.lastEventDate}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        setAttendanceTrend(trend);
+    };
+
+    useEffect(() => {
+        if (attendees.length > 0) {
+            calculateAttendanceTrend(attendees);
+        }
+    }, [attendees]);
+
+    const labels = eachMonthOfInterval({
+        start: subMonths(new Date(), 5),
+        end: new Date()
+    }).map(date => format(date, 'MMM yyyy'));
+
+    const attendanceTrendData = {
+        labels,
+        datasets: [
+            {
+                label: 'Attendance Trend',
+                data: attendanceTrend,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }
+        ]
+    };
+
+    const popularEventsData = {
+        labels: popularEvents.map(event => event.eventTitle),
+        datasets: [
+            {
+                label: 'Attendee Count',
+                data: popularEvents.map(event => event.attendeeCount),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            }
+        ]
+    };
+
+    return (
+        <div className="p-6 space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+            
+            <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-2">Attendance Trend</h3>
+                <Line data={attendanceTrendData} />
+            </div>
+
+            <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-2">Popular Events</h3>
+                <Bar data={popularEventsData} />
+            </div>
+
+            <div>
+                <h3 className="text-xl font-semibold mb-2">Frequent Attendees</h3>
+                <table className="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th className="py-2 px-4 border-b">Name</th>
+                            <th className="py-2 px-4 border-b">Phone Number</th>
+                            <th className="py-2 px-4 border-b">Event Count</th>
+                            <th className="py-2 px-4 border-b">Last Attended</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {frequentAttendees.map((attendee, index) => (
+                            <tr key={index}>
+                                <td className="py-2 px-4 border-b">{attendee.name}</td>
+                                <td className="py-2 px-4 border-b">{attendee.phoneNumber}</td>
+                                <td className="py-2 px-4 border-b">{attendee.eventCount}</td>
+                                <td className="py-2 px-4 border-b">{attendee.lastEventDate}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 };
 
 export default AnalyticsDashboard;
