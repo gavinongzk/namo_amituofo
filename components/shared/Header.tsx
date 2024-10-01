@@ -7,15 +7,16 @@ import MobileNav from "./MobileNav"
 const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <div className="wrapper flex items-center justify-between py-4 px-4 md:px-6">
-        <div className="flex items-center space-x-4">
-          <Link href="/" className="transition-transform hover:scale-105">
+      <div className="wrapper flex items-center justify-between py-4">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="w-36 transition-transform hover:scale-105">
             <Image 
               src="/assets/images/logo.svg" width={64} height={24}
               alt="Namo Amituofo logo" 
               className="object-contain"
             />
           </Link>
+
           <nav className="hidden md:block">
             <NavWrapper />
           </nav>
