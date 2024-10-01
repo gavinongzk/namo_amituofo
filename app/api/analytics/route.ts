@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const attendeeMap = new Map<string, AttendeeData>();
 
     console.log('Processing orders...');
-    orders.forEach((order: IOrder) => {
+    orders.forEach((order: any) => {
       order.customFieldValues.forEach((group: CustomFieldGroup) => {
         const name = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('name'))?.value?.toString() || 'Unknown';
         const phoneNumber = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('phone'))?.value?.toString() || 'Unknown';
