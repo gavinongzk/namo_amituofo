@@ -21,25 +21,23 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
   };
 
   const navItemClass = (href: string) => 
-    `flex flex-col items-center justify-center px-4 py-2 text-sm rounded-md transition-all duration-300 ${
+    `px-3 py-2 text-sm rounded-md transition-all duration-300 ${
       (pathname === href || (href === '/' && pathname === '/'))
-        ? 'bg-primary-50 text-primary-600 font-semibold border-b-2 border-primary-600 shadow-sm'
+        ? 'bg-primary-50 text-primary-600 font-semibold'
         : 'text-gray-600 hover:bg-gray-100 hover:text-primary-500'
     }`;
 
   return (
-    <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
+    <ul className={`flex items-center space-x-2 ${className}`}>
       <li>
         <Link href="/" className={navItemClass('/')} onClick={handleClick}>
-          <span className="font-medium">寺院活动</span>
-          <span className="text-xs mt-1">Events</span>
+          寺院活动
         </Link>
       </li>
       {!isSuperAdmin && !isNormalAdmin && (
         <li>
           <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
-            <span className="font-medium">活动查询</span>
-            <span className="text-xs mt-1">Event Lookup</span>
+            活动查询
           </Link>
         </li>
       )}
