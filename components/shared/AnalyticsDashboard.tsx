@@ -38,14 +38,19 @@ const AnalyticsDashboard: React.FC = () => {
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
     const [popularEvents, setPopularEvents] = useState<PopularEvent[]>([]);
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
+                setIsLoading(true);
+                setError(null);
                 console.log('Fetching analytics data...');
                 const response = await fetch('/api/analytics');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch analytics data');
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
                 }
                 const data = await response.json();
                 console.log('Received analytics data:', data);
@@ -54,6 +59,9 @@ const AnalyticsDashboard: React.FC = () => {
                 processPopularEvents(data.attendees);
             } catch (error) {
                 console.error('Error fetching analytics data:', error);
+                setError(error instanceof Error ? error.message : 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -140,6 +148,20 @@ const AnalyticsDashboard: React.FC = () => {
             }
         ]
     };
+
+    if (isLoading) {
+        return <div className="p-6">Loading analytics data...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Error Loading Analytics</h2>
+                <p className="text-red-500">{error}</p>
+                <p>Please try refreshing the page or contact support if the problem persists.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-6">

@@ -66,7 +66,10 @@ export async function GET(req: NextRequest) {
     console.log('Sending response with attendees data');
     return NextResponse.json({ attendees });
   } catch (error) {
-    console.error('Error fetching analytics data:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error in GET /api/analytics:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
