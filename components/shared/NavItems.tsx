@@ -22,15 +22,15 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
 
   const navItemClass = (href: string) => 
     `flex flex-col items-center justify-center px-3 py-2 text-sm rounded-md transition-colors duration-200 ${
-      (pathname === href || (href === '/' && pathname === '/')) // Add this condition
-        ? 'bg-primary-100 text-primary-600'
+      (pathname === href || (href === '/' && pathname === '/'))
+        ? 'bg-primary-100 text-primary-600 border-b-2 border-primary-600'
         : 'hover:bg-gray-100'
     }`;
 
   return (
     <ul className={`flex flex-col md:flex-row gap-2 ${className}`}>
       <li>
-        <Link href="/" className={navItemClass('/')} onClick={handleClick}>
+        <Link href="/" className={`${navItemClass('/')} pb-1`} onClick={handleClick}>
           <span className="font-medium">寺院活动</span>
           <span className="text-xs">Events</span>
         </Link>
