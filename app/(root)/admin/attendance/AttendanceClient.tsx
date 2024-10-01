@@ -472,13 +472,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   };
 
   const renderHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-2 px-4 border-b text-left">
+    <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
+        className="hover:bg-gray-200 transition-colors duration-200"
       >
         {label}
-        {sortConfig.key === key && (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽')}
+        {sortConfig.key === key && (
+          <span className="ml-1">
+            {sortConfig.direction === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
       </Button>
     </th>
   );
@@ -498,14 +503,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       />
 
       <div className="mt-8">
-        <div className="flex space-x-2 mb-6">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
           <Input
             placeholder="Enter Queue Number 输入排队号码"
             value={queueNumber}
             onChange={(e) => setQueueNumber(e.target.value)}
-            className="flex-grow"
+            className="flex-grow text-lg p-3"
           />
-          <Button onClick={handleQueueNumberSubmit} className="bg-blue-500 text-white">
+          <Button 
+            onClick={handleQueueNumberSubmit} 
+            className="bg-blue-500 text-white text-lg p-3 w-full sm:w-auto"
+          >
             Mark Attendance 标记出席
           </Button>
         </div>
@@ -528,24 +536,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <table className="min-w-full bg-white border border-gray-300">
+            <table className="min-w-full bg-white">
               <thead>
-                <tr className="bg-gray-100">
+                <tr>
                   {renderHeader('Queue Number 排队号码', 'queueNumber')}
                   {renderHeader('Name 姓名', 'name')}
                   {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                  <th className="py-2 px-4 border-b text-left">Remarks 备注</th>
-                  <th className="py-2 px-4 border-b text-left">Attendance 出席</th>
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Remarks 备注</th>
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Attendance 出席</th>
                   {isSuperAdmin && (
                     <>
-                      <th className="py-2 px-4 border-b text-left">Cancelled 已取消</th>
-                      <th className="py-2 px-4 border-b text-left">Delete 删除</th>
+                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Cancelled 已取消</th>
+                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">Delete 删除</th>
                     </>
                   )}
                 </tr>
@@ -555,16 +563,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   <tr 
                     key={`${row.registrationId}_${row.groupId}`}
                     className={`
-                      hover:bg-gray-50 
-                      ${isSuperAdmin && row.isDuplicate ? 'bg-red-100' : ''}
-                      ${row.cannotWalk ? 'bg-orange-100' : ''}
+                      hover:bg-gray-50 transition-colors duration-150
+                      ${isSuperAdmin && row.isDuplicate ? 'bg-red-50' : ''}
+                      ${row.cannotWalk ? 'bg-orange-50' : ''}
                     `}
                   >
-                    <td className="py-2 px-4 border-b text-left">{row.queueNumber}</td>
-                    <td className="py-2 px-4 border-b text-left">{row.name}</td>
-                    {isSuperAdmin && <td className="py-2 px-4 border-b text-left">{row.phoneNumber}</td>}
-                    <td className="py-2 px-4 border-b text-left">{row.remarks}</td>
-                    <td className="py-2 px-4 border-b text-left">
+                    <td className="py-3 px-4 border-b border-r">{row.queueNumber}</td>
+                    <td className="py-3 px-4 border-b border-r">{row.name}</td>
+                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r">{row.phoneNumber}</td>}
+                    <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
+                    <td className="py-3 px-4 border-b border-r">
                       <Checkbox
                         checked={row.attendance}
                         onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
@@ -572,16 +580,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     </td>
                     {isSuperAdmin && (
                       <>
-                        <td className="py-2 px-4 border-b text-left">
+                        <td className="py-3 px-4 border-b border-r">
                           <Checkbox
                             checked={row.cancelled}
                             onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
                           />
                         </td>
-                        <td className="py-2 px-4 border-b text-left">
+                        <td className="py-3 px-4 border-b">
                           <button
                             onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 transition-colors duration-200"
                           >
                             <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
                           </button>
