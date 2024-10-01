@@ -15,6 +15,11 @@ const AdminActions = () => {
           Manage Users
         </Button>
       </Link>
+      <Link href="/admin/analytics">
+        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white transition duration-200">
+          Analytics
+        </Button>
+      </Link>
     </div>
   );
 };
