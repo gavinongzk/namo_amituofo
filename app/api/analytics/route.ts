@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
-import Event from '@/lib/database/models/event.model';
+import EventModel from '@/lib/database/models/event.model';
+import mongoose from 'mongoose';
 
 interface AttendeeEvent {
   eventDate: string;
@@ -26,6 +27,9 @@ export async function GET(req: NextRequest) {
     console.log('Connecting to database...');
     await connectToDatabase();
     console.log('Database connected successfully');
+
+    // Ensure Event model is registered
+    const Event = mongoose.models.Event || EventModel;
 
     console.log('Fetching orders...');
     const orders = await Order.find().populate('event');
