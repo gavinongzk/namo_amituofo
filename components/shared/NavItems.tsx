@@ -21,7 +21,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
   };
 
   const navItemClass = (href: string) => 
-    `flex flex-col items-center justify-center px-4 py-2 text-sm rounded-md transition-all duration-300 ${
+    `flex flex-col items-start justify-center px-4 py-2 text-sm rounded-md transition-all duration-300 ${
       (pathname === href || (href === '/' && pathname === '/'))
         ? 'bg-primary-50 text-primary-600 font-semibold border-b-2 border-primary-600 shadow-sm'
         : 'text-gray-600 hover:bg-gray-100 hover:text-primary-500'
