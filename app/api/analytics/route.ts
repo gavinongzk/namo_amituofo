@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const Event = mongoose.models.Event || EventModel;
 
     console.log('Fetching orders...');
-    const orders = await Order.find().populate('event');
+    const orders = await Order.find();
     console.log(`Found ${orders.length} orders`);
     
     const attendeeMap = new Map<string, AttendeeData>();
