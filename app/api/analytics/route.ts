@@ -23,12 +23,17 @@ interface Attendee extends AttendeeData {
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('Connecting to database...');
     await connectToDatabase();
+    console.log('Database connected successfully');
 
+    console.log('Fetching orders...');
     const orders = await Order.find().populate('event');
+    console.log(`Found ${orders.length} orders`);
     
     const attendeeMap = new Map<string, AttendeeData>();
 
+    console.log('Processing orders...');
     orders.forEach(order => {
       order.customFieldValues.forEach((value: { fields: Array<{ label: string; value: string }> }) => {
         const name = value.fields.find((field) => field.label.toLowerCase().includes('name'))?.value || 'Unknown';
@@ -46,6 +51,8 @@ export async function GET(req: NextRequest) {
       });
     });
 
+    console.log(`Processed ${attendeeMap.size} unique attendees`);
+
     const attendees: Attendee[] = Array.from(attendeeMap.values()).map(attendee => {
       const lastEvent = attendee.events[attendee.events.length - 1];
       return {
@@ -56,6 +63,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    console.log('Sending response with attendees data');
     return NextResponse.json({ attendees });
   } catch (error) {
     console.error('Error fetching analytics data:', error);

@@ -42,11 +42,13 @@ const AnalyticsDashboard: React.FC = () => {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
+                console.log('Fetching analytics data...');
                 const response = await fetch('/api/analytics');
                 if (!response.ok) {
                     throw new Error('Failed to fetch analytics data');
                 }
                 const data = await response.json();
+                console.log('Received analytics data:', data);
                 setAttendees(data.attendees);
                 processFrequentAttendees(data.attendees);
                 processPopularEvents(data.attendees);
