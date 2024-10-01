@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, model, models } from "mongoose";
+import { Document, Schema, model, models } from "mongoose";
 import { CustomField } from "@/types";
 
 
@@ -39,6 +39,6 @@ const EventSchema = new Schema({
   registrationSuccessMessage: { type: String}
 })
 
-const Event = mongoose.models.Event || mongoose.model('Event', EventSchema);
+const Event = models.Event || model('Event', EventSchema);
 
 export default Event;
