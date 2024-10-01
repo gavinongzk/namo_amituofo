@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
-import Order from '@/lib/database/models/order.model';
-import EventModel from '@/lib/database/models/event.model';
+import Order, { IOrder } from '@/lib/database/models/order.model';
+import Event, { IEvent } from '@/lib/database/models/event.model';
+import { CustomFieldGroup, CustomField } from '@/types';
 import mongoose from 'mongoose';
 
 interface AttendeeEvent {
@@ -28,20 +29,18 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     console.log('Database connected successfully');
 
-    // Ensure Event model is registered
-    const Event = mongoose.models.Event || EventModel;
-
     console.log('Fetching orders...');
-    const orders = await Order.find().populate('event');
+    const orders = await Order.find().populate<{ event: IEvent }>('event');
     console.log(`Found ${orders.length} orders`);
-    
+    console.log('Sample order:', JSON.stringify(orders[0], null, 2));
+
     const attendeeMap = new Map<string, AttendeeData>();
 
     console.log('Processing orders...');
-    orders.forEach(order => {
-      order.customFieldValues.forEach((group) => {
-        const name = group.fields.find((field) => field.label.toLowerCase().includes('name'))?.value || 'Unknown';
-        const phoneNumber = group.fields.find((field) => field.label.toLowerCase().includes('phone'))?.value || 'Unknown';
+    orders.forEach((order: IOrder) => {
+      order.customFieldValues.forEach((group: CustomFieldGroup) => {
+        const name = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('name'))?.value?.toString() || 'Unknown';
+        const phoneNumber = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('phone'))?.value?.toString() || 'Unknown';
         const eventDate = order.event.startDateTime ? order.event.startDateTime.toISOString() : '';
         const eventTitle = order.event.title || '';
 
