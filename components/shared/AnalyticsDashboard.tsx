@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -40,6 +42,9 @@ const AnalyticsDashboard: React.FC = () => {
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [nameFilter, setNameFilter] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -129,6 +134,20 @@ const AnalyticsDashboard: React.FC = () => {
         }
     }, [attendees]);
 
+    const filteredAttendees = frequentAttendees.filter(attendee =>
+        attendee.name.toLowerCase().includes(nameFilter.toLowerCase())
+    );
+
+    const pageCount = Math.ceil(filteredAttendees.length / itemsPerPage);
+    const paginatedAttendees = filteredAttendees.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+    };
+
     const labels = eachMonthOfInterval({
         start: subMonths(new Date(), 5),
         end: new Date()
@@ -140,10 +159,44 @@ const AnalyticsDashboard: React.FC = () => {
             {
                 label: 'Attendance Trend',
                 data: attendanceTrend,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
+                borderColor: 'rgb(53, 162, 235)',
+                backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                tension: 0.3,
+                fill: true,
             }
         ]
+    };
+
+    const attendanceTrendOptions: ChartOptions<'line'> = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Monthly Attendance Trend',
+                font: {
+                    size: 16,
+                    weight: 'bold',
+                }
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Attendees',
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Month',
+                }
+            }
+        },
     };
 
     const popularEventsData = {
@@ -152,9 +205,55 @@ const AnalyticsDashboard: React.FC = () => {
             {
                 label: 'Attendee Count',
                 data: popularEvents.map(event => event.attendeeCount),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                ],
+                borderWidth: 1,
             }
         ]
+    };
+
+    const popularEventsOptions: ChartOptions<'bar'> = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Top 5 Popular Events',
+                font: {
+                    size: 16,
+                    weight: 'bold',
+                }
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Attendees',
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Event Title',
+                }
+            }
+        },
     };
 
     if (isLoading) {
@@ -172,32 +271,41 @@ const AnalyticsDashboard: React.FC = () => {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+        <div className="p-6 space-y-8">
+            <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
             
-            <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-2">Attendance Trend</h3>
-                <Line data={attendanceTrendData} />
+            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
+                <Line data={attendanceTrendData} options={attendanceTrendOptions} />
             </div>
 
-            <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-2">Popular Events</h3>
-                <Bar data={popularEventsData} />
+            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
+                <Bar data={popularEventsData} options={popularEventsOptions} />
             </div>
 
-            <div>
-                <h3 className="text-xl font-semibold mb-2">Frequent Attendees</h3>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Frequent Attendees</h3>
+                <div className="mb-4">
+                    <Input
+                        type="text"
+                        placeholder="Filter by name"
+                        value={nameFilter}
+                        onChange={(e) => setNameFilter(e.target.value)}
+                        className="max-w-xs"
+                    />
+                </div>
                 <table className="min-w-full bg-white">
                     <thead>
                         <tr>
-                            <th className="py-2 px-4 border-b">Name</th>
-                            <th className="py-2 px-4 border-b">Phone Number</th>
-                            <th className="py-2 px-4 border-b">Event Count</th>
-                            <th className="py-2 px-4 border-b">Last Attended</th>
+                            <th className="py-2 px-4 border-b text-left">Name</th>
+                            <th className="py-2 px-4 border-b text-left">Phone Number</th>
+                            <th className="py-2 px-4 border-b text-left">Event Count</th>
+                            <th className="py-2 px-4 border-b text-left">Last Attended</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {frequentAttendees.map((attendee, index) => (
+                        {paginatedAttendees.map((attendee, index) => (
                             <tr key={index}>
                                 <td className="py-2 px-4 border-b">{attendee.name}</td>
                                 <td className="py-2 px-4 border-b">{attendee.phoneNumber}</td>
@@ -207,6 +315,26 @@ const AnalyticsDashboard: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
+                <div className="mt-4 flex justify-between items-center">
+                    <div>
+                        <span>Page {currentPage} of {pageCount}</span>
+                    </div>
+                    <div>
+                        <Button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="mr-2"
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === pageCount}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

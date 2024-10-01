@@ -40,7 +40,9 @@ export async function GET(req: NextRequest) {
     orders.forEach((order: any) => {
       order.customFieldValues.forEach((group: CustomFieldGroup) => {
         const name = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('name'))?.value?.toString() || 'Unknown';
-        const phoneNumber = group.fields.find((field: CustomField) => field.label.toLowerCase().includes('phone'))?.value?.toString() || 'Unknown';
+        const phoneNumber = group.fields.find((field: CustomField) => 
+          field.label.toLowerCase().includes('phone') || field.type === 'phone'
+        )?.value?.toString() || 'Unknown';
         const eventDate = order.event.startDateTime ? order.event.startDateTime.toISOString() : '';
         const eventTitle = order.event.title || '';
 
