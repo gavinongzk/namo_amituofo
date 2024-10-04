@@ -3,35 +3,41 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { setCookie } from 'cookies-next';
+import { setCookie, getCookie } from 'cookies-next';
 
 const countryFlags: { [key: string]: string } = {
-  'SG': '🇸🇬',
-  'MY': '🇲🇾',
+  'Singapore': '🇸🇬',
+  'Malaysia': '🇲🇾',
 };
 
 const CountrySelector = () => {
   const { user, isLoaded } = useUser();
-  const [country, setCountry] = useState<string | null>(null);
+  const [country, setCountry] = useState<string>('Singapore'); // Default to Singapore
 
   useEffect(() => {
     const detectCountry = async () => {
       try {
-        // First, try to detect country using GeoJS
+        // First, check cookie
+        const cookieCountry = getCookie('userCountry') as string | undefined;
+        if (cookieCountry && countryFlags[cookieCountry]) {
+          setCountry(cookieCountry);
+          return;
+        }
+
+        // Then, try to detect country using GeoJS
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
-        const detectedCountry = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
+        const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : null;
 
         if (detectedCountry) {
           setCountry(detectedCountry);
-          localStorage.setItem('userCountry', detectedCountry);
           setCookie('userCountry', detectedCountry);
           return;
         }
 
         // If GeoJS fails, check localStorage
         const storedCountry = localStorage.getItem('userCountry');
-        if (storedCountry) {
+        if (storedCountry && countryFlags[storedCountry]) {
           setCountry(storedCountry);
           setCookie('userCountry', storedCountry);
           return;
@@ -39,9 +45,11 @@ const CountrySelector = () => {
 
         // Finally, check Clerk's publicMetadata
         if (isLoaded && user && user.publicMetadata.country) {
-          setCountry(user.publicMetadata.country as string);
-          localStorage.setItem('userCountry', user.publicMetadata.country as string);
-          setCookie('userCountry', user.publicMetadata.country as string);
+          const clerkCountry = user.publicMetadata.country as string;
+          if (countryFlags[clerkCountry]) {
+            setCountry(clerkCountry);
+            setCookie('userCountry', clerkCountry);
+          }
         }
       } catch (error) {
         console.error('Error detecting country:', error);
@@ -51,21 +59,15 @@ const CountrySelector = () => {
     detectCountry();
   }, [isLoaded, user]);
 
-  const changeCountry = async (newCountry: string) => {
-    try {
-      setCountry(newCountry);
-      localStorage.setItem('userCountry', newCountry);
-      setCookie('userCountry', newCountry);
-    } catch (error) {
-      console.error('Error updating country:', error);
-    }
+  const changeCountry = (newCountry: string) => {
+    setCountry(newCountry);
+    localStorage.setItem('userCountry', newCountry);
+    setCookie('userCountry', newCountry);
   };
-
-  if (!country) return null;
 
   return (
     <Select value={country} onValueChange={changeCountry}>
-      <SelectTrigger className="w-[60px]">
+      <SelectTrigger className="w-[40px] h-[40px] p-0 border-none">
         <SelectValue>
           {countryFlags[country]}
         </SelectValue>

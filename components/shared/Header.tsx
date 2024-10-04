@@ -23,16 +23,21 @@ const Header = () => {
 
         <div className="flex items-center gap-3 mr-4 md:mr-6">
           <SignedIn>
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "h-10 w-10"
-                }
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <CountrySelector />
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "h-10 w-10"
+                  }
+                }}
+              />
+            </div>
           </SignedIn>
-          <CountrySelector />
+          <SignedOut>
+            <CountrySelector />
+          </SignedOut>
           <MobileNav />
         </div>
       </div>
