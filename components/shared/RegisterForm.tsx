@@ -78,7 +78,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     resolver: zodResolver(formSchema),
     defaultValues: {
       groups: [Object.fromEntries(
-        customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+        customFields.map(field => [
+          field.id, 
+          field.type === 'boolean' ? false : 
+          field.type === 'phone' ? (userCountry === 'Singapore' ? '+65' : userCountry === 'Malaysia' ? '+60' : '') : 
+          ''
+        ])
       )]
     },
   });
