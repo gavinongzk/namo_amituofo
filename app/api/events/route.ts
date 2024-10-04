@@ -4,15 +4,15 @@ import { useUser } from '@clerk/nextjs';
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, isLoaded } = useUser();
+    // const { user, isLoaded } = useUser();
     let country = 'Singapore'; // Default to Singapore
 
-    if (isLoaded) {
-      if (user?.publicMetadata.country) {
-        country = user.publicMetadata.country as string;
-      }
-    }
-    
+    // if (isLoaded) {
+    //   if (user?.publicMetadata.country) {
+    //     country = user.publicMetadata.country as string;
+    //   }
+    // }
+
     console.log('Country:', country);
 
     const events = await getAllEvents({
