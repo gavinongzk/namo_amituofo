@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
-import CountrySelector from './CountrySelector';
+import CountrySelector from '@/components/shared/CountrySelector';
 
 const Header = () => {
   return (
