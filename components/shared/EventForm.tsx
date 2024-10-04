@@ -36,6 +36,29 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
 
+  const form = useForm<z.infer<typeof eventFormSchema>>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: event && type === 'Update'
+      ? {
+          ...event,
+          country: event.country || "",
+          startDateTime: new Date(event.startDateTime),
+          endDateTime: new Date(event.endDateTime),
+          categoryId: event.category._id,
+          customFields: event.customFields.map(field => ({
+            id: field.id,
+            label: field.label,
+            type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
+            value: field.value,
+            options: field.options?.map(option => 
+              typeof option === 'string' ? option : option.value
+            )
+          })) || [],
+          registrationSuccessMessage: event.registrationSuccessMessage || "",
+        }
+      : { ...eventDefaultValues, country: "" }
+  })
+
   useEffect(() => {
     const detectCountry = async () => {
       try {
@@ -43,42 +66,20 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         const data = await response.json();
         const country = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
         setDetectedCountry(country);
+        if (country && !form.getValues('country')) {
+          form.setValue('country', country);
+        }
       } catch (error) {
         console.error('Error detecting country:', error);
       }
     };
 
     detectCountry();
-  }, []);
+  }, [form]);
 
-  const initialValues = event && type === 'Update'
-    ? {
-        ...event,
-        startDateTime: new Date(event.startDateTime),
-        endDateTime: new Date(event.endDateTime),
-        categoryId: event.category._id,
-        customFields: event.customFields.map(field => ({
-          id: field.id,
-          label: field.label,
-          type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
-          value: field.value,
-          options: field.options?.map(option => 
-            typeof option === 'string' ? option : option.value
-          )
-        })) || [],
-        registrationSuccessMessage: event.registrationSuccessMessage || "",
-        country: event.country || detectedCountry || ""
-      }
-    : { ...eventDefaultValues, country: detectedCountry || "" };
-
-  const router = useRouter();
+  const router = useRouter()
 
   const { startUpload } = useUploadThing('imageUploader')
-
-  const form = useForm<z.infer<typeof eventFormSchema>>({
-    resolver: zodResolver(eventFormSchema),
-    defaultValues: initialValues as z.infer<typeof eventFormSchema>
-  })
 
   const { fields: customFields, append, remove } = useFieldArray({
     control: form.control,
@@ -215,45 +216,53 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               )}
             />
         </div>
-        <FormField
-          control={form.control}
-          name="country"
-          render={({ field }) => (
-            <FormItem className="w-full">
-              <FormControl>
-                <select {...field} className="input-field rounded-full bg-grey-50 px-4 py-2">
-                  <option value="">Select Country</option>
-                  <option value="Singapore">Singapore</option>
-                  <option value="Malaysia">Malaysia</option>
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                      <Image
-                        src="/assets/icons/location-grey.svg"
-                        alt="calendar"
-                        width={24}
-                        height={24}
-                      />
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/location-grey.svg"
+                      alt="location"
+                      width={24}
+                      height={24}
+                    />
+                    <select {...field} className="input-field bg-transparent border-none focus:outline-none">
+                      <option value="">Select Country</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="Malaysia">Malaysia</option>
+                    </select>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <Input placeholder="Event location or Online" {...field} className="input-field" />
-                    </div>
-
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/location-grey.svg"
+                      alt="location"
+                      width={24}
+                      height={24}
+                    />
+                    <Input placeholder="Event location or Online" {...field} className="input-field bg-transparent border-none focus:outline-none" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row">

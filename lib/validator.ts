@@ -25,5 +25,5 @@ export const eventFormSchema = z.object({
     options: z.array(z.string()).optional()
   })),
   registrationSuccessMessage: z.string().optional(),
-  country: z.enum(['Singapore', 'Malaysia']),
+  country: z.string(),
 })
