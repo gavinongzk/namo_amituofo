@@ -36,9 +36,9 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
                 <div className="flex justify-between items-center">
                   <h5 className="text-lg font-semibold text-primary-700">Person 人员 {index + 1}</h5>
                   {group.queueNumber && (
-                    <div className="bg-primary-500 text-white px-4 py-2 rounded-full">
-                      <p className="text-sm">Queue Number 队列号</p>
-                      <p className="text-2xl font-bold text-center">{group.queueNumber}</p>
+                    <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
+                      <p className="text-sm text-blue-600">Queue Number 队列号</p>
+                      <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                     </div>
                   )}
                 </div>
