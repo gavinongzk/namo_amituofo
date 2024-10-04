@@ -344,3 +344,13 @@ input[type=checkbox] {
   -webkit-appearance: checkbox;
   appearance: checkbox;
 }
+
+.country-selector [data-radix-select-trigger] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.country-selector [data-radix-select-trigger] svg {
+  display: none;
+}
