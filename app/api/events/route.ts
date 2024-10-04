@@ -4,14 +4,8 @@ import { useUser } from '@clerk/nextjs';
 
 export async function GET(request: NextRequest) {
   try {
-    // const { user, isLoaded } = useUser();
-    let country = 'Singapore'; // Default to Singapore
-
-    // if (isLoaded) {
-    //   if (user?.publicMetadata.country) {
-    //     country = user.publicMetadata.country as string;
-    //   }
-    // }
+    const { searchParams } = new URL(request.url);
+    const country = searchParams.get('country') || '';
 
     console.log('Country:', country);
 
