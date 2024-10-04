@@ -17,6 +17,7 @@ export interface IEvent extends Document {
   maxSeats: number;
   registrationSuccessMessage?: string;
   attendeeCount?: number;
+  country: string;
 }
 
 const EventSchema = new Schema({

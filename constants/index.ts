@@ -21,6 +21,7 @@ export const eventDefaultValues = {
   startDateTime: new Date(),
   endDateTime: new Date(),
   categoryId: '',
+  maxSeats: 300,
   registrationSuccessMessage: `
     📣 通知
     🪷 已收到您的报名

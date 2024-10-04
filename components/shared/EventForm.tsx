@@ -11,7 +11,7 @@ import { eventDefaultValues } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUploader } from "./FileUploader"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
@@ -23,6 +23,7 @@ import { Checkbox } from "../ui/checkbox"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 type EventFormProps = {
@@ -34,33 +35,51 @@ type EventFormProps = {
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
-  const initialValues = event && type === 'Update'
-    ? {
-        ...event,
-        startDateTime: new Date(event.startDateTime),
-        endDateTime: new Date(event.endDateTime),
-        categoryId: event.category._id,
-        customFields: event.customFields.map(field => ({
-          id: field.id,
-          label: field.label,
-          type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
-          value: field.value,
-          options: field.options?.map(option => 
-            typeof option === 'string' ? option : option.value
-          )
-        })) || [],
-        registrationSuccessMessage: event.registrationSuccessMessage || ""
-      }
-    : eventDefaultValues;
-
-  const router = useRouter();
-
-  const { startUpload } = useUploadThing('imageUploader')
+  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: initialValues as z.infer<typeof eventFormSchema>
+    defaultValues: event && type === 'Update'
+      ? {
+          ...event,
+          country: event.country || "",
+          startDateTime: new Date(event.startDateTime),
+          endDateTime: new Date(event.endDateTime),
+          categoryId: event.category._id,
+          customFields: event.customFields.map(field => ({
+            id: field.id,
+            label: field.label,
+            type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
+            value: field.value,
+            options: field.options?.map(option => 
+              typeof option === 'string' ? option : option.value
+            )
+          })) || [],
+          registrationSuccessMessage: event.registrationSuccessMessage || "",
+        }
+      : { ...eventDefaultValues, country: "" }
   })
+
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await fetch('https://get.geojs.io/v1/ip/country.json');
+        const data = await response.json();
+        const country = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
+        if (country && !form.getValues('country')) {
+          form.setValue('country', country);
+        }
+      } catch (error) {
+        console.error('Error detecting country:', error);
+      }
+    };
+
+    detectCountry();
+  }, [form]);
+
+  const router = useRouter()
+
+  const { startUpload } = useUploadThing('imageUploader')
 
   const { fields: customFields, append, remove } = useFieldArray({
     control: form.control,
@@ -200,27 +219,68 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                      <Image
-                        src="/assets/icons/location-grey.svg"
-                        alt="calendar"
-                        width={24}
-                        height={24}
-                      />
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/world.svg"
+                      alt="globe"
+                      width={24}
+                      height={24}
+                      className="filter-grey"
+                    />
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Singapore">
+                          <div className="flex items-center gap-2">
+                            <Image src="/assets/flags/sg.svg" alt="Singapore flag" width={20} height={15} />
+                            <span>Singapore</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Malaysia">
+                          <div className="flex items-center gap-2">
+                            <Image src="/assets/flags/my.svg" alt="Malaysia flag" width={20} height={15} />
+                            <span>Malaysia</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </FormControl>
+                <FormDescription className="text-xs text-gray-500 mt-1 ml-4">
+                  Select the country where the event will take place.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <Input placeholder="Event location or Online" {...field} className="input-field" />
-                    </div>
-
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/location-grey.svg"
+                      alt="location"
+                      width={24}
+                      height={24}
+                    />
+                    <Input placeholder="Event Address or Online" {...field} className="input-field bg-transparent border-none focus:outline-none" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row">
@@ -373,6 +433,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             Add Question
           </Button>
         </div>
+
 
         <Button 
           type="submit"

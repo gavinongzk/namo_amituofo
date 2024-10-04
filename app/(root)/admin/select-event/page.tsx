@@ -37,19 +37,11 @@ const SelectEventPage = () => {
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   useEffect(() => {
-    if (isLoaded && user) {
-      const role = user.publicMetadata.role as string;
-      if (role !== 'admin' && role !== 'superadmin') {
-        router.push('/');
-      }
-    }
-  }, [isLoaded, user, router]);
-
-  useEffect(() => {
     const fetchEvents = async () => {
-      setIsLoading(true); // Set loading to true when fetching starts
+      setIsLoading(true);
       try {
-        const response = await fetch('/api/events');
+        const country = user?.publicMetadata.country as string | undefined;
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
@@ -76,12 +68,14 @@ const SelectEventPage = () => {
         console.error('Error fetching events:', error);
         setEvents([]);
       } finally {
-        setIsLoading(false); // Set loading to false when fetching is done
+        setIsLoading(false);
       }
     };
 
-    fetchEvents();
-  }, []);
+    if (isLoaded && user) {
+      fetchEvents();
+    }
+  }, [isLoaded, user]);
 
   const handleSelectEvent = (eventId: string) => {
     setSelectedEventId(eventId);

@@ -17,12 +17,16 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { CustomField } from "@/types"
+import { useUser } from '@clerk/nextjs';
+import { getCookie } from 'cookies-next';
 
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
   const [message, setMessage] = useState('');
+  const { user, isLoaded } = useUser();
+  const [userCountry, setUserCountry] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrderCount() {
@@ -31,6 +35,21 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     }
     fetchOrderCount();
   }, [event._id]);
+
+  useEffect(() => {
+    const detectCountry = () => {
+      if (isLoaded && user && user.publicMetadata.country) {
+        setUserCountry(user.publicMetadata.country as string);
+      } else {
+        const cookieCountry = getCookie('userCountry');
+        if (cookieCountry) {
+          setUserCountry(cookieCountry as string);
+        }
+      }
+    };
+
+    detectCountry();
+  }, [isLoaded, user]);
 
   const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
@@ -59,7 +78,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     resolver: zodResolver(formSchema),
     defaultValues: {
       groups: [Object.fromEntries(
-        customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
+        customFields.map(field => [
+          field.id, 
+          field.type === 'boolean' ? false : 
+          field.type === 'phone' ? (userCountry === 'Singapore' ? '+65' : userCountry === 'Malaysia' ? '+60' : '') : 
+          ''
+        ])
       )]
     },
   });
@@ -147,7 +171,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                             <PhoneInput
                               value={formField.value as string}
                               onChange={(value) => formField.onChange(value || '')}
-                              defaultCountry="SG"
+                              defaultCountry={userCountry === 'Singapore' ? 'SG' : userCountry === 'Malaysia' ? 'MY' : undefined}
                               countries={["SG", "MY"]}
                               international
                               countryCallingCodeEditable={false}

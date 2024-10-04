@@ -49,6 +49,7 @@ function getAllowedRoles(pathname: string): string[] {
     '/api/cancel-registration': ['superadmin', 'admin'],
     '/api/delete-registration': ['superadmin'],
     '/api/events/:id/attendees': ['superadmin'],
+    '/api/download-users-csv': ['superadmin'],
   };
 
   return routeRoles[pathname] || ['user', 'admin', 'superadmin'];

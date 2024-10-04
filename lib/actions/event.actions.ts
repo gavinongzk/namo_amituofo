@@ -118,47 +118,46 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS
-export async function getAllEvents({ query, limit = 6, page, category }: GetAllEventsParams) {
+export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
   try {
-    await connectToDatabase();
+    await connectToDatabase()
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
-    const categoryCondition = category ? await getCategoryByName(category) : null;
-    const currentDate = new Date();
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+    const categoryCondition = category ? await getCategoryByName(category) : null
     const conditions = {
       $and: [
         titleCondition,
         categoryCondition ? { category: categoryCondition._id } : {},
-        { endDateTime: { $gte: currentDate } } // Filter out past events
-      ],
-    };
+        { country: country }
+      ]
+    }
 
-    const skipAmount = (Number(page) - 1) * limit;
+    const skipAmount = (Number(page) - 1) * limit
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
       .populate({ path: 'organizer', model: User, select: '_id' })
-      .populate({ path: 'category', model: Category, select: '_id name' });
+      .populate({ path: 'category', model: Category, select: '_id name' })
 
-    const events = (await eventsQuery.exec()) as IEvent[];
+    const events = (await eventsQuery.exec()) as IEvent[]
     const eventsWithCount = await Promise.all(
       events.map(async (event) => {
-        const orders = await Order.find({ event: event._id });
-        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0);
+        const orders = await Order.find({ event: event._id })
+        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0)
         return {
           ...JSON.parse(JSON.stringify(event)),
           registrationCount,
-        };
+        }
       })
-    );
+    )
 
-    const eventsCount = await Event.countDocuments(conditions);
+    const eventsCount = await Event.countDocuments(conditions)
 
-    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) };
+    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) }
   } catch (error) {
-    handleError(error);
-    return { data: [], totalPages: 0 };
+    handleError(error)
+    return { data: [], totalPages: 0 }
   }
 }
 

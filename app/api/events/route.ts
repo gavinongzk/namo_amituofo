@@ -1,15 +1,22 @@
-import { NextResponse } from 'next/server';
-import { getAllEvents } from '@/lib/actions/event.actions'; // Adjust the import based on your project structure
+import { NextRequest, NextResponse } from 'next/server';
+import { getAllEvents } from '@/lib/actions/event.actions';
+import { useUser } from '@clerk/nextjs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const country = searchParams.get('country') || '';
+
+    console.log('Country:', country);
+
     const events = await getAllEvents({
-      query: '', // No search query
-      category: '', // No category filter
-      page: 1, // Starting from the first page
-      limit: 1000 // Set a high limit to fetch all events
+      query: '',
+      category: '',
+      page: 1,
+      limit: 1000,
+      country: country
     });
-    console.log('Fetched Events:', events); // Add this line
+    console.log('Fetched Events:', events);
     
     return NextResponse.json(events, {
       headers: {
