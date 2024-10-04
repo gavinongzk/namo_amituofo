@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents } from '@/lib/actions/event.actions';
-import { getCookie } from 'cookies-next';
+import { useUser } from '@clerk/nextjs';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the country from the cookie
-    const country = getCookie('country', { req: request }) || 'US'; // Default to 'US' if not set
+    const { user, isLoaded } = useUser();
+    let country = 'Singapore'; // Default to Singapore
+
+    if (isLoaded) {
+      if (user?.publicMetadata.country) {
+        country = user.publicMetadata.country as string;
+      }
+    } else {
+      // If no user is authenticated, try to get country from cookie
+      const cookieCountry = request.cookies.get('userCountry')?.value;
+      if (cookieCountry) {
+        country = cookieCountry;
+      }
+    }
 
     const events = await getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 1000,
-      country: country as string // Add the country to the query
+      country: country
     });
     console.log('Fetched Events:', events);
     
