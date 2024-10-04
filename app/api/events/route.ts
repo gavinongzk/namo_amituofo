@@ -11,14 +11,8 @@ export async function GET(request: NextRequest) {
       if (user?.publicMetadata.country) {
         country = user.publicMetadata.country as string;
       }
-    } else {
-      // If no user is authenticated, try to get country from cookie
-      const cookieCountry = request.cookies.get('userCountry')?.value;
-      if (cookieCountry) {
-        country = cookieCountry;
-      }
     }
-
+    
     console.log('Country:', country);
 
     const events = await getAllEvents({
