@@ -23,6 +23,7 @@ import { Checkbox } from "../ui/checkbox"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 type EventFormProps = {
@@ -223,21 +224,31 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             name="country"
             render={({ field }) => (
               <FormItem className="w-full">
+                <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                    <Image
-                      src="/assets/icons/location-grey.svg"
-                      alt="location"
-                      width={24}
-                      height={24}
-                    />
-                    <select {...field} className="input-field bg-transparent border-none focus:outline-none">
-                      <option value="">Select Country</option>
-                      <option value="Singapore">Singapore</option>
-                      <option value="Malaysia">Malaysia</option>
-                    </select>
-                  </div>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Singapore">
+                        <div className="flex items-center gap-2">
+                          <Image src="/assets/flags/sg.svg" alt="Singapore flag" width={20} height={15} />
+                          <span>Singapore</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Malaysia">
+                        <div className="flex items-center gap-2">
+                          <Image src="/assets/flags/my.svg" alt="Malaysia flag" width={20} height={15} />
+                          <span>Malaysia</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
+                <FormDescription>
+                  Select the country where the event will take place.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -256,7 +267,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       width={24}
                       height={24}
                     />
-                    <Input placeholder="Event location or Online" {...field} className="input-field bg-transparent border-none focus:outline-none" />
+                    <Input placeholder="Event Address or Online" {...field} className="input-field bg-transparent border-none focus:outline-none" />
                   </div>
                 </FormControl>
                 <FormMessage />
