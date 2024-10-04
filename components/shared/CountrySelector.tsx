@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { setCookie } from 'cookies-next';
 
 const countryFlags: { [key: string]: string } = {
-  'Singapore': '🇸🇬',
-  'Malaysia': '🇲🇾',
+  'SG': '🇸🇬',
+  'MY': '🇲🇾',
 };
 
 const CountrySelector = () => {
