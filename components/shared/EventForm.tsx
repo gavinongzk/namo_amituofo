@@ -66,7 +66,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
         const country = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
-        setDetectedCountry(country);
         if (country && !form.getValues('country')) {
           form.setValue('country', country);
         }
@@ -224,29 +223,37 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             name="country"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel>Country</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Singapore">
-                        <div className="flex items-center gap-2">
-                          <Image src="/assets/flags/sg.svg" alt="Singapore flag" width={20} height={15} />
-                          <span>Singapore</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Malaysia">
-                        <div className="flex items-center gap-2">
-                          <Image src="/assets/flags/my.svg" alt="Malaysia flag" width={20} height={15} />
-                          <span>Malaysia</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/globe.svg"
+                      alt="globe"
+                      width={24}
+                      height={24}
+                      className="filter-grey"
+                    />
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Singapore">
+                          <div className="flex items-center gap-2">
+                            <Image src="/assets/flags/sg.svg" alt="Singapore flag" width={20} height={15} />
+                            <span>Singapore</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Malaysia">
+                          <div className="flex items-center gap-2">
+                            <Image src="/assets/flags/my.svg" alt="Malaysia flag" width={20} height={15} />
+                            <span>Malaysia</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs text-gray-500 mt-1 ml-4">
                   Select the country where the event will take place.
                 </FormDescription>
                 <FormMessage />
