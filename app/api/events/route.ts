@@ -1,15 +1,20 @@
-import { NextResponse } from 'next/server';
-import { getAllEvents } from '@/lib/actions/event.actions'; // Adjust the import based on your project structure
+import { NextRequest, NextResponse } from 'next/server';
+import { getAllEvents } from '@/lib/actions/event.actions';
+import { getCookie } from 'cookies-next';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get the country from the cookie
+    const country = getCookie('country', { req: request }) || 'US'; // Default to 'US' if not set
+
     const events = await getAllEvents({
-      query: '', // No search query
-      category: '', // No category filter
-      page: 1, // Starting from the first page
-      limit: 1000 // Set a high limit to fetch all events
+      query: '',
+      category: '',
+      page: 1,
+      limit: 1000,
+      country: country as string // Add the country to the query
     });
-    console.log('Fetched Events:', events); // Add this line
+    console.log('Fetched Events:', events);
     
     return NextResponse.json(events, {
       headers: {

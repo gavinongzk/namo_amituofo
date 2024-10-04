@@ -5,11 +5,16 @@ import Search from '@/components/shared/Search';
 import { getAllEvents } from '@/lib/actions/event.actions';
 import { SearchParamProps } from '@/types';
 import Loading from '@/components/shared/Loader';
+import { cookies } from 'next/headers';
 
 export default async function Home({ searchParams }: SearchParamProps) {
   const page = Number(searchParams?.page) || 1;
   const searchText = (searchParams?.query as string) || '';
   const category = (searchParams?.category as string) || '';
+  
+  // Get the country from cookies
+  const cookieStore = cookies();
+  const country = cookieStore.get('userCountry')?.value || 'Singapore'; // Default to Singapore if not set
 
   return (
     <>
@@ -26,6 +31,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
             page={page}
             searchText={searchText}
             category={category}
+            country={country}
           />
         </Suspense>
       </section>
@@ -33,12 +39,13 @@ export default async function Home({ searchParams }: SearchParamProps) {
   )
 }
 
-async function EventList({ page, searchText, category }: { page: number, searchText: string, category: string }) {
+async function EventList({ page, searchText, category, country }: { page: number, searchText: string, category: string, country: string }) {
   const events = await getAllEvents({
     query: searchText,
     category,
     page,
-    limit: 6
+    limit: 6,
+    country
   });
 
   const currentDate = new Date();

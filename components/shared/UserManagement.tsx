@@ -13,7 +13,7 @@ type User = {
   remarks?: string;
 };
 
-const UserManagement = () => {
+const UserManagement = ({ country }: { country: string }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [customDate, setCustomDate] = useState('');
   const [message, setMessage] = useState('');
@@ -32,7 +32,7 @@ const UserManagement = () => {
   const fetchUsers = async (date?: string) => {
     setIsLoading(true);
     try {
-      const fetchedUsers = await getAllUniquePhoneNumbers(date);
+      const fetchedUsers = await getAllUniquePhoneNumbers(country, date);
       const taggedUsers = await fetch('/api/tagged-users').then(res => res.json());
       
       const updatedUsers = fetchedUsers.map(user => {

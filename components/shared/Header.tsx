@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
+import CountrySelector from './CountrySelector';
 
 const Header = () => {
   return (
@@ -31,6 +32,7 @@ const Header = () => {
               }}
             />
           </SignedIn>
+          <CountrySelector />
           <MobileNav />
         </div>
       </div>

@@ -55,6 +55,7 @@ export type GetAllEventsParams = {
   category: string
   limit: number
   page: number
+  country: string
 }
 
 export type GetEventsByUserParams = {
@@ -76,6 +77,7 @@ export type Event = {
   description: string
   imageUrl: string
   location: string
+  country: string
   startDateTime: Date
   endDateTime: Date
   organizer: {

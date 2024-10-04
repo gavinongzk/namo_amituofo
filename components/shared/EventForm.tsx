@@ -11,7 +11,7 @@ import { eventDefaultValues } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUploader } from "./FileUploader"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
@@ -34,6 +34,23 @@ type EventFormProps = {
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
+  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
+
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await fetch('https://get.geojs.io/v1/ip/country.json');
+        const data = await response.json();
+        const country = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
+        setDetectedCountry(country);
+      } catch (error) {
+        console.error('Error detecting country:', error);
+      }
+    };
+
+    detectCountry();
+  }, []);
+
   const initialValues = event && type === 'Update'
     ? {
         ...event,
@@ -49,9 +66,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             typeof option === 'string' ? option : option.value
           )
         })) || [],
-        registrationSuccessMessage: event.registrationSuccessMessage || ""
+        registrationSuccessMessage: event.registrationSuccessMessage || "",
+        country: event.country || detectedCountry || ""
       }
-    : eventDefaultValues;
+    : { ...eventDefaultValues, country: detectedCountry || "" };
 
   const router = useRouter();
 
@@ -197,7 +215,22 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               )}
             />
         </div>
-
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormControl>
+                <select {...field} className="input-field rounded-full bg-grey-50 px-4 py-2">
+                  <option value="">Select Country</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Malaysia">Malaysia</option>
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
               control={form.control}
@@ -373,6 +406,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             Add Question
           </Button>
         </div>
+
 
         <Button 
           type="submit"

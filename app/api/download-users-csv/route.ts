@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stringify } from 'csv-stringify/sync';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
+import { currentUser } from '@clerk/nextjs';
 
 export async function GET(request: NextRequest) {
   try {
-    const users = await getAllUniquePhoneNumbers();
+    const user = await currentUser();
+    if (!user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Fetch the user's country from Clerk
+    const superadminCountry = user.publicMetadata.country as string;
+
+    if (!superadminCountry) {
+      return new NextResponse('Country not set for superadmin', { status: 400 });
+    }
+
+    const users = await getAllUniquePhoneNumbers(superadminCountry);
 
     const headers = ['Name', 'Phone Number', 'Status'];
     const data = users.map(user => [
