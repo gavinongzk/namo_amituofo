@@ -1,45 +1,18 @@
-'use client'
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.actions';
-import { formatDateTime } from '@/lib/utils';
-import { SearchParamProps } from '@/types';
-import Image from 'next/image';
 import CheckoutButton from '@/components/shared/CheckoutButton';
 import Collection from '@/components/shared/Collection';
-import { getCookie } from 'cookies-next';
+import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.actions'
+import { formatDateTime } from '@/lib/utils';
+import { SearchParamProps } from '@/types'
+import Image from 'next/image';
 
-const EventDetails = ({ params: { id }, searchParams }: SearchParamProps) => {
-  const router = useRouter();
-  const [event, setEvent] = useState<any>(null);
-  const [relatedEvents, setRelatedEvents] = useState<any>(null);
-  const [userCountry, setUserCountry] = useState<string | null>(null);
+const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) => {
+  const event = await getEventById(id);
 
-  useEffect(() => {
-    const cookieCountry = getCookie('userCountry') as string | undefined;
-    setUserCountry(cookieCountry || null);
-
-    const fetchEventData = async () => {
-      const eventData = await getEventById(id);
-      if (eventData.country && eventData.country !== cookieCountry) {
-        router.push('/');
-        return;
-      }
-      setEvent(eventData);
-
-      const relatedEventsData = await getRelatedEventsByCategory({
-        categoryId: eventData.category._id,
-        eventId: eventData._id,
-        page: searchParams.page as string,
-      });
-      setRelatedEvents(relatedEventsData);
-    };
-
-    fetchEventData();
-  }, [id, searchParams.page, router]);
-
-  if (!event) return null;
+  const relatedEvents = await getRelatedEventsByCategory({
+    categoryId: event.category._id,
+    eventId: event._id,
+    page: searchParams.page as string,
+  })
 
   return (
     <>
