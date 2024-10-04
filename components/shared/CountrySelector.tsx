@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from 'next/navigation';
 
 const countryFlags: { [key: string]: string } = {
   'Singapore': '🇸🇬',
@@ -58,11 +59,15 @@ const CountrySelector = () => {
     detectCountry();
   }, [isLoaded, user]);
 
+  const router = useRouter();
+
   const changeCountry = (newCountry: string) => {
     setCountry(newCountry);
     try {
       sessionStorage.setItem('userCountry', newCountry);
       localStorage.setItem('userCountry', newCountry);
+      // Use Next.js router to refresh the current page
+      router.refresh();
     } catch (error) {
       console.error('Error setting country preference:', error);
     }
