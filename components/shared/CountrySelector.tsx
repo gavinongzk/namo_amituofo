@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { setCookie, getCookie } from 'cookies-next';
 
 const countryFlags: { [key: string]: string } = {
   'Singapore': '🇸🇬',
@@ -17,21 +16,21 @@ const CountrySelector = () => {
   useEffect(() => {
     const detectCountry = async () => {
       try {
-        // First, check cookie
-        const cookieCountry = getCookie('userCountry') as string | undefined;
-        if (cookieCountry && countryFlags[cookieCountry]) {
-          setCountry(cookieCountry);
+        // First, check sessionStorage
+        const sessionCountry = sessionStorage.getItem('userCountry');
+        if (sessionCountry && countryFlags[sessionCountry]) {
+          setCountry(sessionCountry);
           return;
         }
 
-        // Then, try to detect country using GeoJS
+        // If sessionStorage fails, try to detect country using GeoJS
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
         const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : null;
 
         if (detectedCountry) {
           setCountry(detectedCountry);
-          setCookie('userCountry', detectedCountry);
+          sessionStorage.setItem('userCountry', detectedCountry);
           return;
         }
 
@@ -39,7 +38,7 @@ const CountrySelector = () => {
         const storedCountry = localStorage.getItem('userCountry');
         if (storedCountry && countryFlags[storedCountry]) {
           setCountry(storedCountry);
-          setCookie('userCountry', storedCountry);
+          sessionStorage.setItem('userCountry', storedCountry);
           return;
         }
 
@@ -48,7 +47,7 @@ const CountrySelector = () => {
           const clerkCountry = user.publicMetadata.country as string;
           if (countryFlags[clerkCountry]) {
             setCountry(clerkCountry);
-            setCookie('userCountry', clerkCountry);
+            sessionStorage.setItem('userCountry', clerkCountry);
           }
         }
       } catch (error) {
@@ -61,8 +60,12 @@ const CountrySelector = () => {
 
   const changeCountry = (newCountry: string) => {
     setCountry(newCountry);
-    localStorage.setItem('userCountry', newCountry);
-    setCookie('userCountry', newCountry);
+    try {
+      sessionStorage.setItem('userCountry', newCountry);
+      localStorage.setItem('userCountry', newCountry);
+    } catch (error) {
+      console.error('Error setting country preference:', error);
+    }
   };
 
   return (
