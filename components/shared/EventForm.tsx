@@ -354,13 +354,16 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <Input
-                    placeholder="Maximum Seats"
-                    type="number"
-                    {...field}
-                    className="input-field"
-                    onChange={(e) => field.onChange(Number(e.target.value))} // Convert to number
-                  />
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <p className="mr-3 whitespace-nowrap text-grey-600">Max Seats:</p>
+                    <Input
+                      placeholder="Enter number"
+                      type="number"
+                      {...field}
+                      className="input-field bg-transparent border-none focus:outline-none"
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
