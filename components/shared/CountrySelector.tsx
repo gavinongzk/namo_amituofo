@@ -81,6 +81,8 @@ const CountrySelector = () => {
     try {
       localStorage.setItem('userCountry', newCountry);
       setCookie('userCountry', newCountry);
+      // Refresh the page
+      window.location.reload();
     } catch (error) {
       console.error('Error setting country preference:', error);
     }
