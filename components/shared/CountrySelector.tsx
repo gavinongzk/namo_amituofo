@@ -17,7 +17,36 @@ const CountrySelector = () => {
   useEffect(() => {
     const detectCountry = async () => {
       try {
-        // First, try to detect country using GeoJS
+        // First, check cookie
+        const cookieCountry = getCookie('userCountry') as string | undefined;
+        if (cookieCountry && countryFlags[cookieCountry]) {
+          setCountry(cookieCountry);
+          return;
+        }
+
+        // If cookie fails, check localStorage
+        const storedCountry = localStorage.getItem('userCountry');
+        if (storedCountry && countryFlags[storedCountry]) {
+          setCountry(storedCountry);
+          return;
+        }
+
+        // If localStorage fails, check Clerk's publicMetadata
+        if (isLoaded && user && user.publicMetadata.country) {
+          const clerkCountry = user.publicMetadata.country as string;
+          if (countryFlags[clerkCountry]) {
+            setCountry(clerkCountry);
+            try {
+              setCookie('userCountry', clerkCountry);
+              localStorage.setItem('userCountry', clerkCountry);
+            } catch (error) {
+              console.error('Error setting cookie or localStorage:', error);
+            }
+            return;
+          }
+        }
+
+        // Only if all above methods fail, use GeoJS
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
         const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : null;
@@ -29,43 +58,6 @@ const CountrySelector = () => {
             localStorage.setItem('userCountry', detectedCountry);
           } catch (error) {
             console.error('Error setting cookie or localStorage:', error);
-          }
-          return;
-        }
-
-        // If GeoJS fails, check cookie
-        try {
-          const cookieCountry = getCookie('userCountry') as string | undefined;
-          if (cookieCountry && countryFlags[cookieCountry]) {
-            setCountry(cookieCountry);
-            return;
-          }
-        } catch (error) {
-          console.error('Error reading cookie:', error);
-        }
-
-        // If cookie fails, check localStorage
-        try {
-          const storedCountry = localStorage.getItem('userCountry');
-          if (storedCountry && countryFlags[storedCountry]) {
-            setCountry(storedCountry);
-            return;
-          }
-        } catch (error) {
-          console.error('Error reading localStorage:', error);
-        }
-
-        // Finally, check Clerk's publicMetadata
-        if (isLoaded && user && user.publicMetadata.country) {
-          const clerkCountry = user.publicMetadata.country as string;
-          if (countryFlags[clerkCountry]) {
-            setCountry(clerkCountry);
-            try {
-              setCookie('userCountry', clerkCountry);
-              localStorage.setItem('userCountry', clerkCountry);
-            } catch (error) {
-              console.error('Error setting cookie or localStorage:', error);
-            }
           }
         }
       } catch (error) {
