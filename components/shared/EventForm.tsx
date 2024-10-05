@@ -355,6 +355,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               <FormItem className="w-full">
                 <FormControl>
                   <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/seats.svg"
+                      alt="seats"
+                      width={24}
+                      height={24}
+                      className="filter-grey mr-3"
+                    />
                     <p className="mr-3 whitespace-nowrap text-grey-600">Max Seats:</p>
                     <Input
                       placeholder="Enter number"
