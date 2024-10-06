@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
           value: field.value,
         })),
         __v: group.__v,
+        qrCode: group.qrCode,
       })),
     });
 
