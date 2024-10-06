@@ -4,9 +4,17 @@ import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
-  <div className="mt-4">
-    <h6 className="text-sm font-semibold mb-2">QR Code</h6>
-    <Image src={qrCode} alt="QR Code" width={100} height={100} />
+  <div className="w-full max-w-sm mx-auto mb-6">
+    <h6 className="text-lg font-semibold mb-2 text-center">QR Code</h6>
+    <div className="relative aspect-square w-full">
+      <Image 
+        src={qrCode} 
+        alt="QR Code" 
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className="object-contain"
+      />
+    </div>
   </div>
 );
 
@@ -40,6 +48,8 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
 
           {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
             <div key={group.groupId} className="mt-6 bg-white shadow-md rounded-xl overflow-hidden">
+              {group.qrCode && <QRCodeDisplay qrCode={group.qrCode} />}
+              
               <div className="bg-primary-100 p-4">
                 <div className="flex justify-between items-center">
                   <h5 className="text-lg font-semibold text-primary-700">Person 人员 {index + 1}</h5>
@@ -64,7 +74,6 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
                     </div>
                   ))}
                 </dl>
-                {group.qrCode && <QRCodeDisplay qrCode={group.qrCode} />}
               </div>
             </div>
           ))}
