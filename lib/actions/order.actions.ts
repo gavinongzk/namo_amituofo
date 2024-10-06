@@ -54,7 +54,7 @@ export async function createOrder(order: CreateOrderParams) {
       return {
         ...group,
         queueNumber: newQueueNumber,
-        qrCode,
+        qrCode: qrCode,
         cancelled: false,
         __v: 0,
       };
