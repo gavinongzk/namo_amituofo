@@ -1,42 +1,45 @@
-import React, { useEffect, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface QrCodeScannerProps {
-  onScan: (decodedText: string, decodedResult: any) => void;
-  onError?: (errorMessage: string) => void;
+  onScan: (decodedText: string) => void;
+  onError: (errorMessage: string) => void;
 }
 
-const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+export interface QrCodeScannerRef {
+  pause: () => void;
+  resume: () => void;
+}
 
-const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+const QrCodeScanner = forwardRef<QrCodeScannerRef, QrCodeScannerProps>(({ onScan, onError }, ref) => {
+  const scannerRef = React.useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
-    scannerRef.current = new Html5Qrcode('reader');
+    scannerRef.current = new Html5QrcodeScanner(
+      'reader',
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      /* verbose= */ false
+    );
 
-    const startScanner = async () => {
-      try {
-        await scannerRef.current?.start(
-          { facingMode: 'environment' },
-          qrConfig,
-          onScan,
-          onError
-        );
-      } catch (err) {
-        console.error('Failed to start scanner:', err);
-      }
-    };
-
-    startScanner();
+    scannerRef.current.render(onScan, onError);
 
     return () => {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(err => console.error('Failed to stop scanner:', err));
-      }
+      scannerRef.current?.clear().catch(error => {
+        console.error('Failed to clear scanner', error);
+      });
     };
   }, [onScan, onError]);
 
-  return <div id="reader" style={{ width: '100%' }} />;
-};
+  useImperativeHandle(ref, () => ({
+    pause: () => {
+      scannerRef.current?.pause();
+    },
+    resume: () => {
+      scannerRef.current?.resume();
+    },
+  }));
+
+  return <div id="reader" />;
+});
 
 export default QrCodeScanner;
