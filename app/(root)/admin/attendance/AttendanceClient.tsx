@@ -12,7 +12,6 @@ import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import { toast } from 'react-hot-toast';
-import { Html5QrcodeScanner } from 'html5-qrcode';
 
 type EventRegistration = {
   id: string;
@@ -101,9 +100,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showScanner, setShowScanner] = useState(false);
   const [recentScans, setRecentScans] = useState<string[]>([]);
   const lastScanTime = useRef<number>(0);
-  const [lastScannedQueueNumber, setLastScannedQueueNumber] = useState<string | null>(null);
-  const [isReadyForNextScan, setIsReadyForNextScan] = useState(true);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -527,10 +523,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             toast.success(`Marked attendance for: ${queueNumber}`);
             // Add to recent scans
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
-            setLastScannedQueueNumber(queueNumber);
-            setIsReadyForNextScan(false);
-            // Pause the scanner
-            scannerRef.current?.pause();
           } else {
             // Attendance already marked
             toast.error(`Attendance already marked for: ${queueNumber}`);
@@ -549,13 +541,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const handleScanError = useCallback((errorMessage: string) => {
     console.error('QR scan error:', errorMessage);
     setMessage('Error scanning QR code');
-  }, []);
-
-  const handleNextScan = useCallback(() => {
-    setLastScannedQueueNumber(null);
-    setIsReadyForNextScan(true);
-    // Resume the scanner
-    scannerRef.current?.resume();
   }, []);
 
   return (
@@ -591,22 +576,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         {showScanner && (
           <div className="mb-6">
-            <QrCodeScanner 
-              onScan={handleScan} 
-              onError={handleScanError}
-              ref={scannerRef}
-            />
-            {lastScannedQueueNumber && !isReadyForNextScan && (
-              <div className="mt-4">
-                <p className="text-lg font-semibold">Last scanned: {lastScannedQueueNumber}</p>
-                <Button 
-                  onClick={handleNextScan}
-                  className="mt-2 bg-green-500 text-white"
-                >
-                  Next Scan
-                </Button>
-              </div>
-            )}
+            <QrCodeScanner onScan={handleScan} onError={handleScanError} />
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
               <ul className="list-disc pl-5">
