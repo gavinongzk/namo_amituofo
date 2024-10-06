@@ -19,7 +19,7 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
         <p className="p-2 text-red-400">Sorry, registration is closed.</p>
       ) : (
         <Button onClick={handleRegisterClick} className="button rounded-full" size="lg">
-          Register
+          Register 报名
         </Button>
       )}
     </div>
