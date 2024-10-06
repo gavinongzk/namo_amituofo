@@ -1,6 +1,14 @@
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
+import Image from 'next/image';
+
+const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
+  <div className="mt-4">
+    <h6 className="text-sm font-semibold mb-2">QR Code</h6>
+    <Image src={qrCode} alt="QR Code" width={100} height={100} />
+  </div>
+);
 
 const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) => {
   const order = await getOrderById(id);
@@ -56,6 +64,7 @@ const OrderDetailsPage = async ({ params: { id } }: { params: { id: string } }) 
                     </div>
                   ))}
                 </dl>
+                {group.qrCode && <QRCodeDisplay qrCode={group.qrCode} />}
               </div>
             </div>
           ))}
