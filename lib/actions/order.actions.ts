@@ -7,6 +7,7 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
+import QRCode from 'qrcode';
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -46,15 +47,18 @@ export async function createOrder(order: CreateOrderParams) {
       lastQueueNumber = Math.max(...allQueueNumbers);
     }
 
-    const newCustomFieldValues = order.customFieldValues.map((group, index) => {
+    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
       const newQueueNumber = `A${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
+      const qrCodeData = `${order.eventId}_${newQueueNumber}`;
+      const qrCode = await QRCode.toDataURL(qrCodeData);
       return {
         ...group,
         queueNumber: newQueueNumber,
+        qrCode,
         cancelled: false,
         __v: 0,
       };
-    });
+    }));
 
     const newOrder = await Order.create({
       ...order,

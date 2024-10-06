@@ -179,6 +179,7 @@ export interface CustomFieldGroup {
   queueNumber?: string;
   attendance?: boolean;
   cancelled?: boolean;
+  qrCode?: string;
 }
 
 // Add this type definition

@@ -10,6 +10,7 @@ import Image from 'next/image';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
+import QrCodeScanner from '@/components/shared/QrCodeScanner';
 
 type EventRegistration = {
   id: string;
@@ -95,6 +96,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
+  const [showScanner, setShowScanner] = useState(false);
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -493,6 +495,22 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     handleMarkAttendance(registrationId, groupId, checked);
   }, [handleMarkAttendance]);
 
+  const handleScan = useCallback((decodedText: string) => {
+    const [scannedEventId, queueNumber] = decodedText.split('_');
+    if (scannedEventId === event._id) {
+      setQueueNumber(queueNumber);
+      handleQueueNumberSubmit();
+      setShowScanner(false);
+    } else {
+      setMessage('Invalid QR code for this event');
+    }
+  }, [event._id, handleQueueNumberSubmit]);
+
+  const handleScanError = useCallback((errorMessage: string) => {
+    console.error('QR scan error:', errorMessage);
+    setMessage('Error scanning QR code');
+  }, []);
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -516,7 +534,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           >
             Mark Attendance 标记出席
           </Button>
+          <Button
+            onClick={() => setShowScanner(!showScanner)}
+            className="bg-green-500 text-white text-lg p-3 w-full sm:w-auto"
+          >
+            {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
+          </Button>
         </div>
+
+        {showScanner && (
+          <div className="mb-6">
+            <QrCodeScanner onScan={handleScan} onError={handleScanError} />
+          </div>
+        )}
 
         <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
         
