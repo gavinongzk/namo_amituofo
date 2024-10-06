@@ -104,7 +104,7 @@ export type CheckoutOrderParams = {
 export interface CreateOrderParams {
   eventId: string;
   createdAt: Date;
-  customFieldValues: CustomFieldGroup[];
+  customFieldValues: Omit<CustomFieldGroup, 'qrCode'>[];  // Exclude qrCode from client-side submission
 }
 
 export type GetOrdersByEventParams = {

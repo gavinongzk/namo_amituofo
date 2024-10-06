@@ -11,6 +11,7 @@ import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
+import { toast } from 'react-hot-toast';
 
 type EventRegistration = {
   id: string;
@@ -97,6 +98,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
   const [showScanner, setShowScanner] = useState(false);
+  const [recentScans, setRecentScans] = useState<string[]>([]);
+  const lastScanTime = useRef<number>(0);
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -496,13 +499,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [handleMarkAttendance]);
 
   const handleScan = useCallback((decodedText: string) => {
+    const now = Date.now();
+    if (now - lastScanTime.current < 1500) { // 1.5 seconds cooldown
+      return;
+    }
+    lastScanTime.current = now;
+
     const [scannedEventId, queueNumber] = decodedText.split('_');
     if (scannedEventId === event._id) {
       setQueueNumber(queueNumber);
       handleQueueNumberSubmit();
-      setShowScanner(false);
+      // Play a success sound
+      new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+      // Show a success toast
+      toast.success(`Scanned: ${queueNumber}`);
+      // Add to recent scans
+      setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
     } else {
       setMessage('Invalid QR code for this event');
+      toast.error('Invalid QR code');
     }
   }, [event._id, handleQueueNumberSubmit]);
 
@@ -545,6 +560,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         {showScanner && (
           <div className="mb-6">
             <QrCodeScanner onScan={handleScan} onError={handleScanError} />
+            <div className="mt-4">
+              <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
+              <ul className="list-disc pl-5">
+                {recentScans.map((scan, index) => (
+                  <li key={index}>{scan}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
