@@ -50,7 +50,7 @@ export async function createOrder(order: CreateOrderParams) {
     const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
       const newQueueNumber = `A${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
       const qrCodeData = `${order.eventId}_${newQueueNumber}`;
-      const qrCode = await QRCode.toString(qrCodeData);
+      const qrCode = await QRCode.toDataURL(qrCodeData); // Change to toDataURL
       return {
         ...group,
         queueNumber: newQueueNumber,
