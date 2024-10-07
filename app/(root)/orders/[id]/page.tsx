@@ -48,23 +48,40 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
 
   const generatePDF = async () => {
     setIsGeneratingPDF(true);
-    const element = document.getElementById('order-details');
-    if (!element) {
-      setIsGeneratingPDF(false);
-      return;
-    }
-
+    
     try {
-      const canvas = await html2canvas(element);
+      const canvas = await html2canvas(document.body, {
+        scale: 2, // Increase scale for better quality
+        useCORS: true, // Enable CORS for external images
+        logging: false, // Disable logging for better performance
+      });
       const imgData = canvas.toDataURL('image/png');
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('order-details.pdf');
+      let heightLeft = pdfHeight;
+      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('order-details-full-page.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
       // Optionally, you can show an error message to the user here
@@ -92,7 +109,7 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
         className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
         disabled={isGeneratingPDF}
       >
-        {isGeneratingPDF ? 'Generating...' : 'Download PDF 下载PDF'}
+        {isGeneratingPDF ? 'Generating...' : 'Download Full Page PDF 下载完整页面PDF'}
       </button>
 
       {isGeneratingPDF && <LoadingModal />}
