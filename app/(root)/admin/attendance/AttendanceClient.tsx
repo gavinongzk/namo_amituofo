@@ -505,6 +505,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
+    console.log("Scanned QR Code:", decodedText); // Add this line for debugging
+
     const [scannedEventId, queueNumber] = decodedText.split('_');
     if (scannedEventId === event._id) {
       const registration = registrations.find(r => 

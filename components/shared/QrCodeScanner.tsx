@@ -14,30 +14,39 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
 
   useEffect(() => {
     let retryCount = 0;
-    const maxRetries = 5;
+    const maxRetries = 10; // Increased max retries
 
     const initializeScanner = async () => {
       if (retryCount >= maxRetries) {
-        onError("Failed to initialize camera after multiple attempts");
+        onError("Failed to initialize camera after multiple attempts. Please check camera permissions and try again.");
         return;
       }
 
       try {
-        scannerRef.current = new Html5Qrcode("qr-reader");
-        await scannerRef.current.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-          },
-          (decodedText) => {
-            onScan(decodedText);
-          },
-          (errorMessage) => {
-            console.log(errorMessage);
-          }
-        );
-        setIsInitialized(true);
+        if (!scannerRef.current) {
+          scannerRef.current = new Html5Qrcode("qr-reader");
+        }
+
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          const cameraId = cameras[cameras.length - 1].id; // Use the last camera (usually back camera on mobile)
+          await scannerRef.current.start(
+            cameraId,
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            (decodedText) => {
+              onScan(decodedText);
+            },
+            (errorMessage) => {
+              console.log("QR Code scanning error:", errorMessage);
+            }
+          );
+          setIsInitialized(true);
+        } else {
+          throw new Error("No cameras found on the device.");
+        }
       } catch (err) {
         console.error("Error initializing scanner:", err);
         retryCount++;
@@ -45,10 +54,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
       }
     };
 
-    const timer = setTimeout(initializeScanner, 1000); // Initial delay before first attempt
+    initializeScanner();
 
     return () => {
-      clearTimeout(timer);
       if (scannerRef.current) {
         scannerRef.current.stop().catch(console.error);
       }
@@ -58,7 +66,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
   return (
     <div>
       <div id="qr-reader" style={{ width: '100%', maxWidth: '500px' }} />
-      {!isInitialized && <p>Initializing camera...</p>}
+      {!isInitialized && <p>Initializing camera... Please grant camera permissions if prompted.</p>}
     </div>
   );
 };
