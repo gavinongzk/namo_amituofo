@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import React, { useEffect, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface QrCodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -9,35 +9,58 @@ interface QrCodeScannerProps {
 }
 
 const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    scannerRef.current = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: 250,
-        aspectRatio: 1.0,
-        disableFlip: false,
-        videoConstraints: {
-          facingMode: { exact: "environment" }
-        }
-      },
-      false
-    );
+    let retryCount = 0;
+    const maxRetries = 5;
 
-    scannerRef.current.render(onScan, onError);
+    const initializeScanner = async () => {
+      if (retryCount >= maxRetries) {
+        onError("Failed to initialize camera after multiple attempts");
+        return;
+      }
+
+      try {
+        scannerRef.current = new Html5Qrcode("qr-reader");
+        await scannerRef.current.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+          },
+          (decodedText) => {
+            onScan(decodedText);
+          },
+          (errorMessage) => {
+            console.log(errorMessage);
+          }
+        );
+        setIsInitialized(true);
+      } catch (err) {
+        console.error("Error initializing scanner:", err);
+        retryCount++;
+        setTimeout(initializeScanner, 1000); // Retry after 1 second
+      }
+    };
+
+    const timer = setTimeout(initializeScanner, 1000); // Initial delay before first attempt
 
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(error => {
-          console.error("Failed to clear scanner", error);
-        });
+        scannerRef.current.stop().catch(console.error);
       }
     };
   }, [onScan, onError]);
 
-  return <div id="qr-reader" style={{ width: '100%', maxWidth: '500px' }} />;
+  return (
+    <div>
+      <div id="qr-reader" style={{ width: '100%', maxWidth: '500px' }} />
+      {!isInitialized && <p>Initializing camera...</p>}
+    </div>
+  );
 };
 
 export default QrCodeScanner;
