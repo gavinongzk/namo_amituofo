@@ -501,7 +501,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
-    if (now - lastScanTime.current < 1500) { // 1.5 seconds cooldown
+    if (now - lastScanTime.current < 3000) { // 1.5 seconds cooldown
       return;
     }
     lastScanTime.current = now;
@@ -509,10 +509,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log("Scanned QR Code:", decodedText);
 
     const [scannedEventId, queueNumber] = decodedText.split('_');
+
     if (scannedEventId === event._id) {
       const registration = registrations.find(r => 
         r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
       );
+      console.log("Registration:", registration);
 
       if (registration) {
         const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
