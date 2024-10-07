@@ -505,7 +505,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
-    console.log("Scanned QR Code:", decodedText); // Add this line for debugging
+    console.log("Scanned QR Code:", decodedText);
 
     const [scannedEventId, queueNumber] = decodedText.split('_');
     if (scannedEventId === event._id) {
@@ -517,21 +517,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
         if (group) {
           if (!group.attendance) {
-            // Only mark attendance if it's not already marked
             handleMarkAttendance(registration.id, group.groupId, true);
-            // Play a success sound
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
-            // Show a success toast
             toast.success(`Marked attendance for: ${queueNumber}`);
-            // Add to recent scans
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
-            // Attendance already marked
             toast.error(`Attendance already marked for: ${queueNumber}`);
           }
         }
       } else {
-        // Registration not found
         toast.error(`Registration not found for: ${queueNumber}`);
       }
     } else {
@@ -539,11 +533,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       toast.error('Invalid QR code');
     }
   }, [event._id, registrations, handleMarkAttendance]);
-
-  const handleScanError = useCallback((errorMessage: string) => {
-    console.error('QR scan error:', errorMessage);
-    setMessage('Error scanning QR code');
-  }, []);
 
   return (
     <div className="wrapper my-8">
@@ -578,7 +567,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         {showScanner && (
           <div className="mb-6">
-            <QrCodeScanner onScan={handleScan} onError={handleScanError} />
+            <QrCodeScanner onScan={handleScan} />
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
               <ul className="list-disc pl-5">
