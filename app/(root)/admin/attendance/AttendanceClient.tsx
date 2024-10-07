@@ -522,7 +522,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             toast.success(`Marked attendance for: ${queueNumber}`);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
-            toast.error(`Attendance already marked for: ${queueNumber}`);
+            // Custom informational toast for already marked attendance
+            toast(`Attendance already marked for: ${queueNumber}`, {
+              icon: '🔔',
+              duration: 3000,
+              style: {
+                background: '#3498db',
+                color: '#fff',
+              },
+            });
+            // Optionally, you can still add this to recent scans
+            setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           }
         }
       } else {
