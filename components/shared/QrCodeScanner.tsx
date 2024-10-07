@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface QrCodeScannerProps {
@@ -10,13 +10,21 @@ interface QrCodeScannerProps {
 
 const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    scannerRef.current = new Html5Qrcode("qr-reader");
+    let retryCount = 0;
+    const maxRetries = 5;
 
-    const startScanning = async () => {
+    const initializeScanner = async () => {
+      if (retryCount >= maxRetries) {
+        onError("Failed to initialize camera after multiple attempts");
+        return;
+      }
+
       try {
-        await scannerRef.current?.start(
+        scannerRef.current = new Html5Qrcode("qr-reader");
+        await scannerRef.current.start(
           { facingMode: "environment" },
           {
             fps: 10,
@@ -29,14 +37,18 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
             console.log(errorMessage);
           }
         );
+        setIsInitialized(true);
       } catch (err) {
-        onError(err instanceof Error ? err.message : String(err));
+        console.error("Error initializing scanner:", err);
+        retryCount++;
+        setTimeout(initializeScanner, 1000); // Retry after 1 second
       }
     };
 
-    startScanning();
+    const timer = setTimeout(initializeScanner, 1000); // Initial delay before first attempt
 
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current) {
         scannerRef.current.stop().catch(console.error);
       }
@@ -46,6 +58,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
   return (
     <div>
       <div id="qr-reader" style={{ width: '100%', maxWidth: '500px' }} />
+      {!isInitialized && <p>Initializing camera...</p>}
     </div>
   );
 };
