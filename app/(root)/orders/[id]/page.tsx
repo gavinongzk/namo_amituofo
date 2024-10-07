@@ -23,9 +23,24 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   </div>
 );
 
+const DownloadModal = ({ isOpen }: { isOpen: boolean }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl">
+        <h3 className="text-lg font-semibold mb-2">Downloading PDF</h3>
+        <p>Please wait while we generate your PDF...</p>
+        <div className="mt-4 w-12 h-12 border-t-2 border-b-2 border-gray-900 rounded-full animate-spin"></div>
+      </div>
+    </div>
+  );
+};
+
 const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -36,20 +51,36 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     fetchOrder();
   }, [id]);
 
+  useEffect(() => {
+    if (order) {
+      generatePDF();
+    }
+  }, [order]);
+
   const generatePDF = async () => {
+    setIsDownloading(true);
     const element = document.getElementById('order-details');
-    if (!element) return;
+    if (!element) {
+      setIsDownloading(false);
+      return;
+    }
 
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL('image/png');
+    try {
+      const canvas = await html2canvas(element);
+      const imgData = canvas.toDataURL('image/png');
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('order-details.pdf');
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('order-details.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -66,13 +97,7 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <button
-        onClick={generatePDF}
-        className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-      >
-        Download PDF 下载PDF
-      </button>
-
+      <DownloadModal isOpen={isDownloading} />
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
           <h3 className="text-2xl font-bold text-center text-primary-500">
