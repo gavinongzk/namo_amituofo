@@ -14,7 +14,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
 
   useEffect(() => {
     let retryCount = 0;
-    const maxRetries = 10; // Increased max retries
+    const maxRetries = 10;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeScanner = async () => {
       if (retryCount >= maxRetries) {
@@ -23,13 +24,18 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
       }
 
       try {
+        const qrReaderElement = document.getElementById("qr-reader");
+        if (!qrReaderElement) {
+          throw new Error("QR reader element not found");
+        }
+
         if (!scannerRef.current) {
           scannerRef.current = new Html5Qrcode("qr-reader");
         }
 
         const cameras = await Html5Qrcode.getCameras();
         if (cameras && cameras.length > 0) {
-          const cameraId = cameras[cameras.length - 1].id; // Use the last camera (usually back camera on mobile)
+          const cameraId = cameras[cameras.length - 1].id;
           await scannerRef.current.start(
             cameraId,
             {
@@ -50,15 +56,19 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onError }) => {
       } catch (err) {
         console.error("Error initializing scanner:", err);
         retryCount++;
-        setTimeout(initializeScanner, 1000); // Retry after 1 second
+        timeoutId = setTimeout(initializeScanner, 1000);
       }
     };
 
-    initializeScanner();
+    // Delay the initial scanner initialization
+    timeoutId = setTimeout(initializeScanner, 1000);
 
     return () => {
+      clearTimeout(timeoutId);
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error);
+        scannerRef.current.stop().catch((err) => {
+          console.warn("Error stopping scanner:", err);
+        });
       }
     };
   }, [onScan, onError]);
