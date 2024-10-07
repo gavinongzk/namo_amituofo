@@ -482,9 +482,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
-        className="hover:bg-gray-200 transition-colors duration-200"
+        className="hover:bg-gray-200 transition-colors duration-200 flex flex-col items-start"
       >
-        {label}
+        <span>{label.split(' ')[0]}</span>
+        <span className="text-sm font-normal">{label.split(' ')[1]}</span>
         {sortConfig.key === key && (
           <span className="ml-1">
             {sortConfig.direction === 'asc' ? '▲' : '▼'}
@@ -617,15 +618,31 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  {renderHeader('Queue Number 排队号码', 'queueNumber')}
-                  {renderHeader('Name 姓名', 'name')}
-                  {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Remarks 备注</th>
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Attendance 出席</th>
+                  {renderHeader('Queue Number\n排队号码', 'queueNumber')}
+                  {renderHeader('Name\n姓名', 'name')}
+                  {isSuperAdmin && renderHeader('Phone Number\n电话号码', 'phoneNumber')}
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span>Remarks</span>
+                    <br />
+                    <span className="text-sm font-normal">备注</span>
+                  </th>
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span>Attendance</span>
+                    <br />
+                    <span className="text-sm font-normal">出席</span>
+                  </th>
                   {isSuperAdmin && (
                     <>
-                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Cancelled 已取消</th>
-                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">Delete 删除</th>
+                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                        <span>Cancelled</span>
+                        <br />
+                        <span className="text-sm font-normal">已取消</span>
+                      </th>
+                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                        <span>Delete</span>
+                        <br />
+                        <span className="text-sm font-normal">删除</span>
+                      </th>
                     </>
                   )}
                 </tr>
