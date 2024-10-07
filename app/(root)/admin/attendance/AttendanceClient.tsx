@@ -100,6 +100,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showScanner, setShowScanner] = useState(false);
   const [recentScans, setRecentScans] = useState<string[]>([]);
   const lastScanTime = useRef<number>(0);
+  const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
+  const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -522,15 +524,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             toast.success(`Marked attendance for: ${queueNumber}`);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
-            // Custom informational toast for already marked attendance
-            toast(`Attendance already marked for: ${queueNumber}`, {
-              icon: '🔔',
-              duration: 3000,
-              style: {
-                background: '#3498db',
-                color: '#fff',
-              },
-            });
+            // Show modal for already marked attendance
+            setAlreadyMarkedQueueNumber(queueNumber);
+            setShowAlreadyMarkedModal(true);
             // Optionally, you can still add this to recent scans
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           }
@@ -762,6 +758,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 </Button>
                 <Button onClick={confirmDeleteRegistration} variant="destructive">
                   Delete / 删除
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {showAlreadyMarkedModal && (
+          <Modal>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Attendance Already Marked</h3>
+              <p className="mb-4">
+                Attendance for queue number {alreadyMarkedQueueNumber} has already been marked.
+              </p>
+              <p className="mb-4">
+                队列号 {alreadyMarkedQueueNumber} 的出席已经被标记。
+              </p>
+              <div className="flex justify-end">
+                <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
+                  Close / 关闭
                 </Button>
               </div>
             </div>
