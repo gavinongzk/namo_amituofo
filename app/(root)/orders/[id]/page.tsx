@@ -5,8 +5,6 @@ import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -51,31 +49,30 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     fetchOrder();
   }, [id]);
 
-  useEffect(() => {
-    if (order) {
-      generatePDF();
-    }
-  }, [order]);
-
   const generatePDF = async () => {
     setIsDownloading(true);
-    const element = document.getElementById('order-details');
-    if (!element) {
-      setIsDownloading(false);
-      return;
-    }
-
     try {
-      const canvas = await html2canvas(element);
-      const imgData = canvas.toDataURL('image/png');
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: window.location.href }),
+      });
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('order-details.pdf');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'order-details.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
@@ -98,6 +95,12 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
       <DownloadModal isOpen={isDownloading} />
+      <button
+        onClick={generatePDF}
+        className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+      >
+        Download PDF 下载PDF
+      </button>
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
           <h3 className="text-2xl font-bold text-center text-primary-500">
