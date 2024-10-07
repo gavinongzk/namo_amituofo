@@ -11,7 +11,6 @@ import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
-import { toast } from 'react-hot-toast';
 
 type EventRegistration = {
   id: string;
@@ -89,6 +88,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
   const [attendedUsersCount, setAttendedUsersCount] = useState(0);
   const { user } = useUser();
   const [totalRegistrations, setTotalRegistrations] = useState(0);
@@ -193,8 +193,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
-    setShowModal(true);
+    setModalTitle('Updating / 更新中');
     setModalMessage('Updating attendance... 更新出席情况...');
+    setShowModal(true);
 
     try {
       const [orderId] = registrationId.split('_');
@@ -229,10 +230,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
 
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} successfully`);
+        setModalTitle('Success / 成功');
+        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} successfully\n出席情况${attended ? '已标记' : '已取消标记'}`);
         setTimeout(() => {
           setShowModal(false);
-        }, 1000);
+        }, 2000);
 
         // Update counts based on updated registrations
         const updatedRegistrations = registrations.map(r => {
@@ -257,11 +259,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
-      setMessage('Failed to update attendance. 更新出席情况失败。');
+      setModalTitle('Error / 错误');
       setModalMessage('Failed to update attendance. 更新出席情况失败。');
-      setTimeout(() => {
-        setShowModal(false);
-      }, 2000);
     }
   }, [event._id, registrations, calculateCounts]);
 
@@ -521,22 +520,26 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           if (!group.attendance) {
             handleMarkAttendance(registration.id, group.groupId, true);
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
-            toast.success(`Marked attendance for: ${queueNumber}`);
+            setModalTitle('Success / 成功');
+            setModalMessage(`Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`);
+            setShowModal(true);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
-            // Show modal for already marked attendance
-            setAlreadyMarkedQueueNumber(queueNumber);
-            setShowAlreadyMarkedModal(true);
-            // Optionally, you can still add this to recent scans
+            setModalTitle('Already Marked / 已标记');
+            setModalMessage(`Attendance already marked for: ${queueNumber}\n队列号 ${queueNumber} 的出席已经被标记`);
+            setShowModal(true);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           }
         }
       } else {
-        toast.error(`Registration not found for: ${queueNumber}`);
+        setModalTitle('Error / 错误');
+        setModalMessage(`Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`);
+        setShowModal(true);
       }
     } else {
-      setMessage('Invalid QR code for this event');
-      toast.error('Invalid QR code');
+      setModalTitle('Error / 错误');
+      setModalMessage('Invalid QR code for this event\n此活动的二维码无效');
+      setShowModal(true);
     }
   }, [event._id, registrations, handleMarkAttendance]);
 
@@ -742,7 +745,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         {showModal && (
           <Modal>
-            <p>{modalMessage}</p>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">{modalTitle}</h3>
+              <p className="mb-4 whitespace-pre-line">{modalMessage}</p>
+              <div className="flex justify-end">
+                <Button onClick={() => setShowModal(false)} variant="outline">
+                  Close / 关闭
+                </Button>
+              </div>
+            </div>
           </Modal>
         )}
 
