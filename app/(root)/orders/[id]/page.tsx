@@ -5,8 +5,6 @@ import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -23,19 +21,9 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   </div>
 );
 
-const LoadingModal = () => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-xl">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
-      <p className="mt-4 text-center text-gray-700">Generating PDF...</p>
-    </div>
-  </div>
-);
-
 const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -46,85 +34,44 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     fetchOrder();
   }, [id]);
 
-  const generatePDF = async () => {
-    setIsGeneratingPDF(true);
-    
-    try {
-      const canvas = await html2canvas(document.body, {
-        scale: 2, // Increase scale for better quality
-        useCORS: true, // Enable CORS for external images
-        logging: false, // Disable logging for better performance
-      });
-      const imgData = canvas.toDataURL('image/png');
+  const downloadAllQRCodes = () => {
+    const qrCodes = order.customFieldValues.map((group: CustomFieldGroup, index: number) => ({
+      qrCode: group.qrCode,
+      personNumber: index + 1
+    })).filter((item: { qrCode: string }) => item.qrCode);
 
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>QR Codes</title>
+        <style>
+          body { font-family: Arial, sans-serif; }
+          .qr-code { margin-bottom: 20px; text-align: center; }
+          img { max-width: 200px; }
+        </style>
+      </head>
+      <body>
+        <h1>QR Codes</h1>
+        ${qrCodes.map(({ qrCode, personNumber }: { qrCode: string, personNumber: number }) => `
+          <div class="qr-code">
+            <h2>Person ${personNumber}</h2>
+            <img src="${qrCode}" alt="QR Code for Person ${personNumber}">
+          </div>
+        `).join('')}
+      </body>
+      </html>
+    `;
 
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-      let heightLeft = pdfHeight;
-      let position = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save('order-details-full-page.pdf');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      // Optionally, you can show an error message to the user here
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
-  const downloadAllQRCodes = async () => {
-    setIsGeneratingPDF(true);
-    const pdf = new jsPDF();
-    const qrCodes = document.querySelectorAll('.qr-code-container');
-    
-    try {
-      for (let i = 0; i < qrCodes.length; i++) {
-        const qrCode = qrCodes[i] as HTMLElement;
-        const canvas = await html2canvas(qrCode, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-        });
-        const imgData = canvas.toDataURL('image/png');
-        
-        if (i > 0) pdf.addPage();
-        
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        
-        // Add person number below the QR code
-        pdf.setFontSize(16);
-        pdf.text(`Person ${i + 1}`, pdfWidth / 2, pdfHeight + 10, { align: 'center' });
-      }
-      
-      pdf.save('all-qr-codes.pdf');
-    } catch (error) {
-      console.error('Error generating QR codes PDF:', error);
-      // Optionally, show an error message to the user
-    } finally {
-      setIsGeneratingPDF(false);
-    }
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'qr-codes.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (isLoading) {
@@ -141,24 +88,12 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <div className="flex space-x-4 mb-4">
-        <button
-          onClick={generatePDF}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          disabled={isGeneratingPDF}
-        >
-          {isGeneratingPDF ? 'Generating...' : 'Download Full Page PDF 下载完整页面PDF'}
-        </button>
-        <button
-          onClick={downloadAllQRCodes}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          disabled={isGeneratingPDF}
-        >
-          {isGeneratingPDF ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
-        </button>
-      </div>
-
-      {isGeneratingPDF && <LoadingModal />}
+      <button
+        onClick={downloadAllQRCodes}
+        className="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+      >
+        Download All QR Codes 下载所有二维码
+      </button>
 
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
