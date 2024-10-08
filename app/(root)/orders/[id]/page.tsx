@@ -90,6 +90,43 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     }
   };
 
+  const downloadAllQRCodes = async () => {
+    setIsGeneratingPDF(true);
+    const pdf = new jsPDF();
+    const qrCodes = document.querySelectorAll('.qr-code-container');
+    
+    try {
+      for (let i = 0; i < qrCodes.length; i++) {
+        const qrCode = qrCodes[i] as HTMLElement;
+        const canvas = await html2canvas(qrCode, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        if (i > 0) pdf.addPage();
+        
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        
+        // Add person number below the QR code
+        pdf.setFontSize(16);
+        pdf.text(`Person ${i + 1}`, pdfWidth / 2, pdfHeight + 10, { align: 'center' });
+      }
+      
+      pdf.save('all-qr-codes.pdf');
+    } catch (error) {
+      console.error('Error generating QR codes PDF:', error);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">Loading...</div>;
   }
@@ -104,13 +141,22 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <button
-        onClick={generatePDF}
-        className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-        disabled={isGeneratingPDF}
-      >
-        {isGeneratingPDF ? 'Generating...' : 'Download Full Page PDF 下载完整页面PDF'}
-      </button>
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={generatePDF}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          disabled={isGeneratingPDF}
+        >
+          {isGeneratingPDF ? 'Generating...' : 'Download Full Page PDF 下载完整页面PDF'}
+        </button>
+        <button
+          onClick={downloadAllQRCodes}
+          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+          disabled={isGeneratingPDF}
+        >
+          {isGeneratingPDF ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
+        </button>
+      </div>
 
       {isGeneratingPDF && <LoadingModal />}
 
@@ -132,7 +178,11 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
               <div key={group.groupId} className="mt-6 bg-white shadow-md rounded-xl overflow-hidden">
-                {group.qrCode && <QRCodeDisplay qrCode={group.qrCode} />}
+                {group.qrCode && (
+                  <div className="qr-code-container">
+                    <QRCodeDisplay qrCode={group.qrCode} />
+                  </div>
+                )}
                 
                 <div className="bg-primary-100 p-4">
                   <div className="flex justify-between items-center">
