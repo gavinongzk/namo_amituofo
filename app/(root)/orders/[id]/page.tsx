@@ -71,7 +71,7 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
         const y = row * (qrSize + padding) + padding;
 
         // Load and draw QR code
-        const img = new Image();
+        const img = new HTMLImageElement();
         img.src = qrCode;
         await new Promise((resolve) => {
           img.onload = resolve;
