@@ -5,6 +5,8 @@ import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -45,59 +47,39 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
           personNumber: index + 1
         }));
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        throw new Error('Unable to create canvas context');
-      }
-
-      const qrSize = 200; // Size of each QR code
-      const padding = 20; // Padding between QR codes
-      const cols = 2; // Number of columns
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      const margin = 10;
+      const qrSize = 80;
+      const cols = 2;
       const rows = Math.ceil(qrCodes.length / cols);
 
-      canvas.width = cols * qrSize + (cols + 1) * padding;
-      canvas.height = rows * qrSize + (rows + 1) * padding + 40; // Extra 40px for labels
-
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      pdf.setFontSize(16);
+      pdf.text('QR Codes', pageWidth / 2, 20, { align: 'center' });
 
       for (let i = 0; i < qrCodes.length; i++) {
         const { qrCode, personNumber } = qrCodes[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
 
-        const x = col * (qrSize + padding) + padding;
-        const y = row * (qrSize + padding) + padding;
+        const x = margin + col * (qrSize + margin);
+        const y = 30 + row * (qrSize + margin + 20);
 
-        // Load and draw QR code
-        const img = new HTMLImageElement();
-        img.src = qrCode;
-        await new Promise((resolve) => {
-          img.onload = resolve;
-        });
-        ctx.drawImage(img, x, y, qrSize, qrSize);
+        pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
+        pdf.setFontSize(12);
+        pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
 
-        // Draw label
-        ctx.fillStyle = 'black';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 20);
+        if (y + qrSize + 30 > pageHeight && i < qrCodes.length - 1) {
+          pdf.addPage();
+          pdf.setFontSize(16);
+          pdf.text('QR Codes (Continued)', pageWidth / 2, 20, { align: 'center' });
+        }
       }
 
-      // Convert canvas to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'all-qr-codes.png';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      }, 'image/png');
+      pdf.save('all-qr-codes.pdf');
     } catch (error) {
-      console.error('Error creating QR codes image:', error);
+      console.error('Error creating QR codes PDF:', error);
       // Optionally show an error message to the user
     } finally {
       setIsDownloading(false);
