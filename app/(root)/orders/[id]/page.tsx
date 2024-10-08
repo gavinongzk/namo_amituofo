@@ -5,6 +5,8 @@ import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -24,6 +26,7 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
 const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -34,44 +37,53 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     fetchOrder();
   }, [id]);
 
-  const downloadAllQRCodes = () => {
-    const qrCodes = order.customFieldValues.map((group: CustomFieldGroup, index: number) => ({
-      qrCode: group.qrCode,
-      personNumber: index + 1
-    })).filter((item: { qrCode: string }) => item.qrCode);
+  const downloadAllQRCodes = async () => {
+    setIsDownloading(true);
+    try {
+      const qrCodes = order.customFieldValues
+        .filter((group: CustomFieldGroup) => group.qrCode)
+        .map((group: CustomFieldGroup, index: number) => ({
+          qrCode: group.qrCode,
+          personNumber: index + 1
+        }));
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>QR Codes</title>
-        <style>
-          body { font-family: Arial, sans-serif; }
-          .qr-code { margin-bottom: 20px; text-align: center; }
-          img { max-width: 200px; }
-        </style>
-      </head>
-      <body>
-        <h1>QR Codes</h1>
-        ${qrCodes.map(({ qrCode, personNumber }: { qrCode: string, personNumber: number }) => `
-          <div class="qr-code">
-            <h2>Person ${personNumber}</h2>
-            <img src="${qrCode}" alt="QR Code for Person ${personNumber}">
-          </div>
-        `).join('')}
-      </body>
-      </html>
-    `;
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      const margin = 10;
+      const qrSize = 80;
+      const cols = 2;
+      const rows = Math.ceil(qrCodes.length / cols);
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'qr-codes.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      pdf.setFontSize(16);
+      pdf.text('QR Codes', pageWidth / 2, 20, { align: 'center' });
+
+      for (let i = 0; i < qrCodes.length; i++) {
+        const { qrCode, personNumber } = qrCodes[i];
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+
+        const x = margin + col * (qrSize + margin);
+        const y = 30 + row * (qrSize + margin + 20);
+
+        pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
+        pdf.setFontSize(12);
+        pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
+
+        if (y + qrSize + 30 > pageHeight && i < qrCodes.length - 1) {
+          pdf.addPage();
+          pdf.setFontSize(16);
+          pdf.text('QR Codes (Continued)', pageWidth / 2, 20, { align: 'center' });
+        }
+      }
+
+      pdf.save('all-qr-codes.pdf');
+    } catch (error) {
+      console.error('Error creating QR codes PDF:', error);
+      // Optionally show an error message to the user
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -91,8 +103,9 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
       <button
         onClick={downloadAllQRCodes}
         className="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+        disabled={isDownloading}
       >
-        Download All QR Codes 下载所有二维码
+        {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
       </button>
 
       <div id="order-details">
