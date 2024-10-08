@@ -24,6 +24,7 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
 const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -34,44 +35,73 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     fetchOrder();
   }, [id]);
 
-  const downloadAllQRCodes = () => {
-    const qrCodes = order.customFieldValues.map((group: CustomFieldGroup, index: number) => ({
-      qrCode: group.qrCode,
-      personNumber: index + 1
-    })).filter((item: { qrCode: string }) => item.qrCode);
+  const downloadAllQRCodes = async () => {
+    setIsDownloading(true);
+    try {
+      const qrCodes = order.customFieldValues
+        .filter((group: CustomFieldGroup) => group.qrCode)
+        .map((group: CustomFieldGroup, index: number) => ({
+          qrCode: group.qrCode,
+          personNumber: index + 1
+        }));
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>QR Codes</title>
-        <style>
-          body { font-family: Arial, sans-serif; }
-          .qr-code { margin-bottom: 20px; text-align: center; }
-          img { max-width: 200px; }
-        </style>
-      </head>
-      <body>
-        <h1>QR Codes</h1>
-        ${qrCodes.map(({ qrCode, personNumber }: { qrCode: string, personNumber: number }) => `
-          <div class="qr-code">
-            <h2>Person ${personNumber}</h2>
-            <img src="${qrCode}" alt="QR Code for Person ${personNumber}">
-          </div>
-        `).join('')}
-      </body>
-      </html>
-    `;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Unable to create canvas context');
+      }
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'qr-codes.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const qrSize = 200; // Size of each QR code
+      const padding = 20; // Padding between QR codes
+      const cols = 2; // Number of columns
+      const rows = Math.ceil(qrCodes.length / cols);
+
+      canvas.width = cols * qrSize + (cols + 1) * padding;
+      canvas.height = rows * qrSize + (rows + 1) * padding + 40; // Extra 40px for labels
+
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < qrCodes.length; i++) {
+        const { qrCode, personNumber } = qrCodes[i];
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+
+        const x = col * (qrSize + padding) + padding;
+        const y = row * (qrSize + padding) + padding;
+
+        // Load and draw QR code
+        const img = new Image();
+        img.src = qrCode;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+        ctx.drawImage(img, x, y, qrSize, qrSize);
+
+        // Draw label
+        ctx.fillStyle = 'black';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 20);
+      }
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'all-qr-codes.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error creating QR codes image:', error);
+      // Optionally show an error message to the user
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -91,8 +121,9 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
       <button
         onClick={downloadAllQRCodes}
         className="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+        disabled={isDownloading}
       >
-        Download All QR Codes 下载所有二维码
+        {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
       </button>
 
       <div id="order-details">
