@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
 
     const data = orders.flatMap(order => 
       order.customFieldValues.map(group => {
-        const phoneNumberField = group.fields.find(f => f.label.toLowerCase() === 'phone number');
-        const phoneNumber = typeof phoneNumberField?.value === 'string' ? phoneNumberField.value : '';
         return fields.map((field: string) => {
           switch (field) {
             case 'queueNumber':
@@ -39,7 +37,9 @@ export async function GET(request: NextRequest) {
             case 'name':
               return group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A';
             case 'phoneNumber':
-              return phoneNumber || 'N/A';
+              return group.fields.find(f => 
+                f.label.toLowerCase() === 'phone number' || f.type === 'phone'
+              )?.value || 'N/A';
             case 'attendance':
               return group.attendance ? 'Yes' : 'No';
             case 'cancelled':
