@@ -108,7 +108,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [pageSize, setPageSize] = useState(100);  // Default to 100 rows per page
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationData, setConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string; currentAttendance: boolean } | null>(null);
+  const [confirmationData, setConfirmationData] = useState<{
+    registrationId: string;
+    groupId: string;
+    queueNumber: string;
+    currentAttendance: boolean;
+    name: string; // Add name to confirmation data
+  } | null>(null);
 
   const headers = [
     'Queue Number',
@@ -309,11 +315,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     if (registration) {
       const group = registration.order.customFieldValues[0];
       if (group) {
+        const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
         setConfirmationData({
           registrationId: registration.id,
           groupId: group.groupId,
           queueNumber: group.queueNumber || '',
-          currentAttendance: !!group.attendance
+          currentAttendance: !!group.attendance,
+          name: nameField ? nameField.value : 'N/A' // Set name in confirmation data
         });
         setShowConfirmation(true);
       }
@@ -923,8 +931,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <h3 className="text-lg font-semibold mb-4">Confirm Attendance Change / 确认出席变更</h3>
               <p className="mb-4">
                 {confirmationData.currentAttendance
-                  ? `Are you sure you want to unmark attendance for queue number ${confirmationData.queueNumber}?`
-                  : `Are you sure you want to mark attendance for queue number ${confirmationData.queueNumber}?`}
+                  ? `Are you sure you want to unmark attendance for queue number ${confirmationData.queueNumber} for ${confirmationData.name}?`
+                  : `Are you sure you want to mark attendance for queue number ${confirmationData.queueNumber} for ${confirmationData.name}?`}
               </p>
               <p className="mb-4">
                 {confirmationData.currentAttendance
