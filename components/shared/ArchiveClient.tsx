@@ -631,12 +631,14 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
     <div className="wrapper my-8">
       <EventSelector onEventSelect={handleEventSelect} />
 
-      <AttendanceDetailsCard 
-        event={selectedEvent}
-        totalRegistrations={totalRegistrations}
-        attendedUsersCount={attendedUsersCount}
-        cannotReciteAndWalkCount={cannotReciteAndWalkCount}
-      />
+      {selectedEvent && (
+        <AttendanceDetailsCard 
+          event={selectedEvent}
+          totalRegistrations={totalRegistrations}
+          attendedUsersCount={attendedUsersCount}
+          cannotReciteAndWalkCount={cannotReciteAndWalkCount}
+        />
+      )}
 
       <div className="mt-8">
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
