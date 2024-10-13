@@ -778,98 +778,102 @@ const ArchiveClient = React.memo(() => {
         </div>
       )}
 
-      {/* Pagination controls */}
-      {!isLoading && (
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              {'<<'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              {'<'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              {'>'}
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              {'>>'}
-            </Button>
+      {selectedEvent && (
+        <>
+          {/* Pagination controls */}
+          {!isLoading && (
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  {'<<'}
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  {'<'}
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  {'>'}
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  {'>>'}
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="whitespace-nowrap">
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                </span>
+                
+                <span className="flex items-center gap-1">
+                  <span className="whitespace-nowrap">Go to:</span>
+                  <Input
+                    type="number"
+                    value={currentPage}
+                    onChange={e => {
+                      const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                      setCurrentPage(page);
+                    }}
+                    className="w-16"
+                  />
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={e => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded p-1"
+                >
+                  {[100, 200, 300].map(size => (
+                    <option key={size} value={size}>
+                      Show {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+          {/* Notes section moved here */}
+          <div className="mt-6 space-y-2">
+            <p className="p-2 bg-orange-100 text-sm">
+              Rows highlighted in light orange indicate participants who cannot walk and recite.
+              <br />
+              橙色突出显示的行表示无法绕佛者。
+            </p>
+            {isSuperAdmin && (
+              <>
+                <p className="p-2 bg-red-100 text-sm">
+                  Rows highlighted in light red indicate registrations with the same phone number.
+                  <br />
+                  浅红色突出显示的行表示具有相同电话号码的注册。
+                </p>
+                <p className="p-2 bg-blue-100 text-sm">
+                  Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
+                  <br />
+                  浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
+                </p>
+              </>
+            )}
           </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap">
-              Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-            </span>
-            
-            <span className="flex items-center gap-1">
-              <span className="whitespace-nowrap">Go to:</span>
-              <Input
-                type="number"
-                value={currentPage}
-                onChange={e => {
-                  const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
-                  setCurrentPage(page);
-                }}
-                className="w-16"
-              />
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={e => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border rounded p-1"
-            >
-              {[100, 200, 300].map(size => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        </>
       )}
-
-      {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
-
-      {/* Notes section moved here */}
-      <div className="mt-6 space-y-2">
-        <p className="p-2 bg-orange-100 text-sm">
-          Rows highlighted in light orange indicate participants who cannot walk and recite.
-          <br />
-          橙色突出显示的行表示无法绕佛者。
-        </p>
-        {isSuperAdmin && (
-          <>
-            <p className="p-2 bg-red-100 text-sm">
-              Rows highlighted in light red indicate registrations with the same phone number.
-              <br />
-              浅红色突出显示的行表示具有相同电话号码的注册。
-            </p>
-            <p className="p-2 bg-blue-100 text-sm">
-              Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
-              <br />
-              浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
-            </p>
-          </>
-        )}
-      </div>
 
       {showModal && (
         <Modal>
