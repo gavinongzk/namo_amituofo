@@ -12,6 +12,8 @@ import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import EventSelector from '@/components/shared/EventSelector';
+import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
+import { cn } from "@/lib/utils";
 
 type EventRegistration = {
   id: string;
@@ -104,6 +106,7 @@ const ArchiveClient = React.memo(() => {
   const lastScanTime = useRef<number>(0);
   const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const handleEventSelect = (event: Event) => {
     setSelectedEvent(event);
@@ -114,7 +117,8 @@ const ArchiveClient = React.memo(() => {
     setTotalRegistrations(0);
     setCannotReciteAndWalkCount(0);
     setRecentScans([]);
-    // Reset other states as needed
+    setSearchText('');
+    // Add any other state resets here
   };
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
