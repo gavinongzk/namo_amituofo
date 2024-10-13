@@ -257,9 +257,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         setModalTitle('Success / 成功');
         setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} successfully\n出席情况${attended ? '已标记' : '已取消标记'}`);
-        setTimeout(() => {
-          setShowModal(false);
-        }, 2000);
+        setModalType('success'); // Add this line
+        setShowModal(true);
 
         // Update counts based on updated registrations
         const updatedRegistrations = registrations.map(r => {
@@ -286,6 +285,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       setModalTitle('Error / 错误');
       setModalMessage('Failed to update attendance. 更新出席情况失败。');
+      setModalType('error'); // Add this line
     }
   }, [event._id, registrations, calculateCounts]);
 
@@ -556,11 +556,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
             setModalTitle('Success / 成功');
             setModalMessage(`Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`);
+            setModalType('success'); // Add this line
             setShowModal(true);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
             setModalTitle('Already Marked / 已标记');
             setModalMessage(`Attendance already marked for: ${queueNumber}\n队列号 ${queueNumber} 的出席已经被标记`);
+            setModalType('error'); // Add this line
             setShowModal(true);
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           }
@@ -568,6 +570,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       } else {
         setModalTitle('Error / 错误');
         setModalMessage(`Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`);
+        setModalType('error'); // Add this line
         setShowModal(true);
       }
     } else {
@@ -647,29 +650,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full text-lg p-3"
           />
-        </div>
-
-        {/* Notes section */}
-        <div className="mb-4 space-y-2">
-          <p className="p-2 bg-orange-100 text-sm">
-            Rows highlighted in light orange indicate participants who cannot walk and recite.
-            <br />
-            橙色突出显示的行表示无法绕佛者。
-          </p>
-          {isSuperAdmin && (
-            <>
-              <p className="p-2 bg-red-100 text-sm">
-                Rows highlighted in light red indicate registrations with the same phone number.
-                <br />
-                浅红色突出显示的行表示具有相同电话号码的注册。
-              </p>
-              <p className="p-2 bg-blue-100 text-sm">
-                Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
-                <br />
-                浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
-              </p>
-            </>
-          )}
         </div>
 
         <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
@@ -821,6 +801,29 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         )}
 
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+        {/* Notes section moved here */}
+        <div className="mt-6 space-y-2">
+          <p className="p-2 bg-orange-100 text-sm">
+            Rows highlighted in light orange indicate participants who cannot walk and recite.
+            <br />
+            橙色突出显示的行表示无法绕佛者。
+          </p>
+          {isSuperAdmin && (
+            <>
+              <p className="p-2 bg-red-100 text-sm">
+                Rows highlighted in light red indicate registrations with the same phone number.
+                <br />
+                浅红色突出显示的行表示具有相同电话号码的注册。
+              </p>
+              <p className="p-2 bg-blue-100 text-sm">
+                Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
+                <br />
+                浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
+              </p>
+            </>
+          )}
+        </div>
 
         {showModal && (
           <Modal>
