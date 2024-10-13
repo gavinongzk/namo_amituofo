@@ -931,13 +931,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <h3 className="text-lg font-semibold mb-4">Confirm Attendance Change / 确认出席变更</h3>
               <p className="mb-4">
                 {confirmationData.currentAttendance
-                  ? `Are you sure you want to unmark attendance for queue number ${confirmationData.queueNumber} for ${confirmationData.name}?`
-                  : `Are you sure you want to mark attendance for queue number ${confirmationData.queueNumber} for ${confirmationData.name}?`}
+                  ? `Unmark attendance for <strong>${confirmationData.name}</strong> | queue number ${confirmationData.queueNumber}?`
+                  : `Mark attendance for <strong>${confirmationData.name}</strong> | queue number ${confirmationData.queueNumber}?`}
               </p>
               <p className="mb-4">
                 {confirmationData.currentAttendance
-                  ? `您确定要取消标记队列号 ${confirmationData.queueNumber} 的出席吗？`
-                  : `您确定要标记队列号 ${confirmationData.queueNumber} 的出席吗？`}
+                  ? `您确定要取消标记<strong>${confirmationData.name}</strong> | 队列号 ${confirmationData.queueNumber} 的出席吗？`
+                  : `您确定要标记<strong>${confirmationData.name}</strong> | 队列号 ${confirmationData.queueNumber} 的出席吗？`}
               </p>
               <div className="flex justify-end space-x-4">
                 <Button onClick={() => setShowConfirmation(false)} variant="outline">
