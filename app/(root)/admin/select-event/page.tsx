@@ -11,6 +11,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline
 import { formatDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react" // Import the loader icon
+import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
 
 type Event = {
   _id: string;
@@ -46,8 +47,12 @@ const SelectEventPage = () => {
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
-          const upcomingEvents = await Promise.all(result.data
-            .filter((event: Event) => new Date(event.endDateTime) >= currentDate)
+          const fiveDaysAgo = addDays(currentDate, -5);
+          const recentAndUpcomingEvents = await Promise.all(result.data
+            .filter((event: Event) => {
+              const endDate = parseISO(event.endDateTime);
+              return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
+            })
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
               const countsResponse = await fetch(`/api/events/${event._id}/counts`);
@@ -59,7 +64,7 @@ const SelectEventPage = () => {
                 cannotReciteAndWalk: countsData.cannotReciteAndWalk
               };
             }));
-          setEvents(upcomingEvents);
+          setEvents(recentAndUpcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
           setEvents([]);

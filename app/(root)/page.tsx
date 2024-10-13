@@ -6,6 +6,7 @@ import { getAllEvents } from '@/lib/actions/event.actions';
 import { SearchParamProps } from '@/types';
 import Loading from '@/components/shared/Loader';
 import { cookies } from 'next/headers';
+import { addDays } from 'date-fns';
 
 export default async function Home({ searchParams }: SearchParamProps) {
   const page = Number(searchParams?.page) || 1;
@@ -49,11 +50,15 @@ async function EventList({ page, searchText, category, country }: { page: number
   });
 
   const currentDate = new Date();
-  const upcomingEvents = events.data.filter(event => new Date(event.endDateTime) >= currentDate);
+  const fiveDaysAgo = addDays(currentDate, -5);
+
+  const recentAndUpcomingEvents = events.data.filter(event => 
+    new Date(event.endDateTime) >= fiveDaysAgo
+  );
 
   return (
     <Collection 
-      data={upcomingEvents}
+      data={recentAndUpcomingEvents}
       emptyTitle="No Events Found"
       emptyStateSubtext="Come back later"
       collectionType="All_Events"
