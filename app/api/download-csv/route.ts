@@ -15,40 +15,68 @@ export async function GET(request: NextRequest) {
   try {
     const orders = await getOrdersByEvent({ eventId, searchString: searchText });
 
-    const headers = ['Queue Number', 'Event Title', 'Registration Date'];
-
-    if (orders && orders.length > 0 && orders[0]?.customFieldValues?.[0]?.fields) {
-      headers.push(
-        ...orders[0].customFieldValues[0].fields
-          .filter(field => !['name'].includes(field.label.toLowerCase()))
-          .map(field => field.label)
-      );
-    }
-
     if (!orders || orders.length === 0) {
       return new NextResponse('No orders found', { status: 404 });
     }
 
+    const headers = [
+      'Queue Number',
+      'Event Title',
+      'Registration Date',
+      'Name',
+      'Phone Number',
+      'Attendance',
+      'Cancelled'
+    ];
+
     const data = orders.flatMap(order => 
-      order.customFieldValues.map(group => [
-        group.queueNumber || 'N/A',
-        order.event.title,
-        formatDateTime(order.createdAt).dateTime,
-        ...group.fields
-          .filter(field => !['name'].includes(field.label.toLowerCase()))
-          .map(field => field.type === 'radio' ? (field.value === 'yes' ? '是 Yes' : '否 No') : (field.value || 'N/A'))
-      ])
+      order.customFieldValues.map(group => {
+        const nameField = group.fields.find(f => f.label.toLowerCase().includes('name'));
+        const phoneField = group.fields.find(f => 
+          f.label.toLowerCase().includes('phone number') || 
+          f.label.toLowerCase().includes('contact number') || 
+          f.type === 'phone'
+        );
+
+        const row = [
+          group.queueNumber || 'N/A',
+          order.event.title,
+          formatDateTime(order.createdAt).dateTime,
+          nameField?.value || 'N/A',
+          phoneField?.value || 'N/A',
+          group.attendance ? 'Yes' : 'No',
+          group.cancelled ? 'Yes' : 'No'
+        ];
+
+        // Add all custom fields
+        group.fields.forEach(field => {
+          if (!headers.includes(field.label) && 
+              field !== nameField && 
+              field !== phoneField) {
+            headers.push(field.label);
+          }
+          const index = headers.indexOf(field.label);
+          if (index > -1) {
+            row[index] = field.type === 'radio' ? (field.value === 'yes' ? '是 Yes' : '否 No') : field.value || 'N/A';
+          }
+        });
+
+        return row;
+      })
     );
 
-    const csvString = stringify([headers, ...data]);
+    // Add BOM for UTF-8
+    const BOM = '\uFEFF';
+    const csvString = BOM + stringify([headers, ...data]);
 
     const eventTitle = orders[0]?.event.title || 'Untitled';
-    
+    const encodedEventTitle = encodeURIComponent(eventTitle);
+
     return new NextResponse(csvString, {
       status: 200,
       headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename=${eventTitle}_orders.csv`,
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename=${encodedEventTitle}_data.csv`,
       },
     });
   } catch (error) {

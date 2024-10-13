@@ -4,15 +4,11 @@ import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { SearchParamProps } from '@/types'
 import { IOrderItem } from '@/lib/database/models/order.model'
 import { formatDateTime } from '@/lib/utils'
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
+import DownloadCsvButton from '@/components/shared/DownloadCsvButton'
 
 const Orders = async ({ searchParams }: SearchParamProps) => {
   const eventId = searchParams?.eventId as string | undefined
   const searchText = (searchParams?.query as string) || ''
-
-  console.log('Fetching orders with eventId:', eventId, 'and searchText:', searchText)
 
   let orders: IOrderItem[] = []
   if (eventId) {
@@ -21,36 +17,21 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
     } catch (error) {
       console.error('Error fetching orders:', error)
     }
-  } else {
-    console.log('No eventId provided, skipping order fetch')
   }
 
-  console.log('Fetched orders:', orders)
-
   const filteredOrders = orders.filter(order => {
-    if (searchText === '') {
-      console.log(`Order ${order._id} included due to empty search string`);
-      return true;
-    }
-
-    const hasMatchingName = order.customFieldValues.some(group => 
-      group.fields.some(field => {
-        const isNameField = field.label.toLowerCase().includes('name');
-        const matchesSearch = typeof field.value === 'string' && field.value.toLowerCase().includes(searchText.toLowerCase());
-        console.log(`Field: ${field.label}, Is Name: ${isNameField}, Matches Search: ${matchesSearch}`);
-        return isNameField && matchesSearch;
-      })
+    if (searchText === '') return true;
+    return order.customFieldValues.some(group => 
+      group.fields.some(field => 
+        field.label.toLowerCase().includes('name') && 
+        typeof field.value === 'string' && 
+        field.value.toLowerCase().includes(searchText.toLowerCase())
+      )
     );
-    console.log(`Order ${order._id} matches filter: ${hasMatchingName}`);
-    return hasMatchingName;
   })
-
-  console.log('Filtered orders:', filteredOrders)
 
   const totalCustomFieldValues = filteredOrders.reduce((total, order) => 
     total + order.customFieldValues.length, 0);
-
-  console.log('Total custom field values:', totalCustomFieldValues)
 
   return (
     <>
@@ -76,7 +57,10 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
             <div className="bg-white shadow-md rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-4">Event Orders</h2>
               <p className="mb-2">Total Orders: {totalCustomFieldValues}</p>
-              <DownloadCsvButton eventId={eventId} searchText={searchText} />
+              <DownloadCsvButton 
+                eventId={eventId} 
+                searchText={searchText} 
+              />
             </div>
 
             <div className="overflow-x-auto">

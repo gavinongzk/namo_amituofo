@@ -10,6 +10,11 @@ const AdminActions = () => {
           Take Attendance
         </Button>
       </Link>
+      <Link href="/admin/events_archive">
+        <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white transition duration-200">
+          Event Archive
+        </Button>
+      </Link>
       <Link href="/admin/users">
         <Button className="w-full bg-green-600 hover:bg-green-700 text-white transition duration-200">
           Manage Users
