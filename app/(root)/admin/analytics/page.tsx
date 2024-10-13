@@ -23,7 +23,6 @@ const AdminAnalyticsPage = () => {
 
   return (
     <div className="wrapper my-8">
-      <h1 className="h2-bold mb-8">Analytics Dashboard</h1>
       <AnalyticsDashboard />
     </div>
   );
