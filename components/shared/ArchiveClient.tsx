@@ -84,7 +84,7 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
-const ArchiveClient = React.memo(({ event }: { event: Event }) => {
+const ArchiveClient = React.memo(() => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
@@ -170,9 +170,10 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
   }, []);
 
   const fetchRegistrations = useCallback(async () => {
+    if (!selectedEvent) return; // Ensure selectedEvent is not null
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/events/${event._id}/attendees`);
+      const response = await fetch(`/api/events/${selectedEvent._id}/attendees`);
       if (!response.ok) {
         throw new Error('Failed to fetch registrations');
       }
@@ -205,11 +206,13 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [event._id]);
+  }, [selectedEvent?._id]);
 
   useEffect(() => {
-    console.log('Fetching registrations for event:', event._id);
-    fetchRegistrations();
+    if (selectedEvent) { // Check if selectedEvent is not null
+      console.log('Fetching registrations for event:', selectedEvent._id);
+      fetchRegistrations();
+    }
   }, [fetchRegistrations]);
 
   const fetchTaggedUsers = useCallback(async () => {
@@ -263,7 +266,7 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
         },
         body: JSON.stringify({ 
           orderId, 
-          eventId: event._id, 
+          eventId: selectedEvent?._id, 
           groupId, 
           attended
         }),
@@ -317,7 +320,7 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
     }
-  }, [event._id, registrations, calculateCounts, showModalWithMessage]);
+  }, [selectedEvent?._id, registrations, calculateCounts, showModalWithMessage]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -584,7 +587,7 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
 
     const [scannedEventId, queueNumber] = decodedText.split('_');
 
-    if (scannedEventId === event._id) {
+    if (scannedEventId === selectedEvent?._id) {
       const registration = registrations.find(r => 
         r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
       );
@@ -625,7 +628,7 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
         'error'
       );
     }
-  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage]);
+  }, [selectedEvent?._id, registrations, handleMarkAttendance, showModalWithMessage]);
 
   return (
     <div className="wrapper my-8">
@@ -660,10 +663,10 @@ const ArchiveClient = React.memo(({ event }: { event: Event }) => {
           >
             {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
           </Button>
-          {isSuperAdmin && (
+          {isSuperAdmin && selectedEvent && (
             <div className="w-full sm:w-auto">
               <DownloadCsvButton 
-                eventId={event._id} 
+                eventId={selectedEvent._id} 
                 searchText={searchText}
               />
             </div>
