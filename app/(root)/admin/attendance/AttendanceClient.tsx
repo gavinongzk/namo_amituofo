@@ -12,6 +12,7 @@ import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
+import { cn } from "@/lib/utils";
 
 type EventRegistration = {
   id: string;
@@ -104,6 +105,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
   const [searchText, setSearchText] = useState('');
+  const [pageSize, setPageSize] = useState(100);  // Default to 100 rows per page
+  const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
 
   const headers = [
     'Queue Number',
@@ -466,10 +469,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'queueNumber', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+
+  const filteredData = useMemo(() => {
+    return data.filter(item => 
+      item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.phoneNumber.includes(searchText)
+    );
+  }, [data, searchText]);
 
   const sortedData = useMemo(() => {
-    let sortableItems = [...data];
+    let sortableItems = [...filteredData];
     if (sortConfig.key) {
       sortableItems.sort((a: AttendanceItem, b: AttendanceItem) => {
         if ((a[sortConfig.key] ?? '') < (b[sortConfig.key] ?? '')) {
@@ -482,7 +491,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       });
     }
     return sortableItems;
-  }, [data, sortConfig]);
+  }, [filteredData, sortConfig]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -500,13 +509,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   };
 
   const renderHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+    <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100 whitespace-normal">
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
-        className="hover:bg-gray-200 transition-colors duration-200"
+        className="hover:bg-gray-200 transition-colors duration-200 w-full text-left"
       >
-        {label}
+        <span className="block">{label.split(' ')[0]}</span>
+        <span className="block text-sm">{label.split(' ')[1]}</span>
         {sortConfig.key === key && (
           <span className="ml-1">
             {sortConfig.direction === 'asc' ? '▲' : '▼'}
@@ -567,6 +577,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [event._id, registrations, handleMarkAttendance]);
 
+  const showModalWithMessage = (title: string, message: string, type: 'loading' | 'success' | 'error') => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalType(type);
+    setShowModal(true);
+  };
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -622,6 +639,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
         
+        {/* Search input */}
+        <div className="mb-4">
+          <Input
+            placeholder="Search by name or phone number 按姓名或电话号码搜索"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full text-lg p-3"
+          />
+        </div>
+
         {/* Notes section */}
         <div className="mb-4 space-y-2">
           <p className="p-2 bg-orange-100 text-sm">
@@ -657,12 +684,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   {renderHeader('Queue Number 排队号码', 'queueNumber')}
                   {renderHeader('Name 姓名', 'name')}
                   {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Remarks 备注</th>
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Attendance 出席</th>
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block">Remarks</span>
+                    <span className="block text-sm">备注</span>
+                  </th>
+                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block">Attendance</span>
+                    <span className="block text-sm">出席</span>
+                  </th>
                   {isSuperAdmin && (
                     <>
-                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Cancelled 已取消</th>
-                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">Delete 删除</th>
+                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                        <span className="block">Cancelled</span>
+                        <span className="block text-sm">已取消</span>
+                      </th>
+                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                        <span className="block">Delete</span>
+                        <span className="block text-sm">删除</span>
+                      </th>
                     </>
                   )}
                 </tr>
@@ -678,9 +717,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         row.cannotWalk ? 'bg-orange-50' : ''}
                     `}
                   >
-                    <td className="py-3 px-4 border-b border-r">{row.queueNumber}</td>
+                    <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
                     <td className="py-3 px-4 border-b border-r">{row.name}</td>
-                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r">{row.phoneNumber}</td>}
+                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
                     <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
                     <td className="py-3 px-4 border-b border-r">
                       <Checkbox
@@ -771,7 +810,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 }}
                 className="border rounded p-1"
               >
-                {[10, 20, 30, 40, 50].map(size => (
+                {[100, 200, 300].map(size => (
                   <option key={size} value={size}>
                     Show {size}
                   </option>
@@ -785,11 +824,28 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         {showModal && (
           <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">{modalTitle}</h3>
-              <p className="mb-4 whitespace-pre-line">{modalMessage}</p>
+            <div className={cn(
+              "p-6 rounded-lg",
+              modalType === 'success' ? 'bg-green-100' : 'bg-white'
+            )}>
+              <h3 className={cn(
+                "text-lg font-semibold mb-4",
+                modalType === 'success' ? 'text-green-800' : 'text-gray-900'
+              )}>
+                {modalTitle}
+              </h3>
+              <p className={cn(
+                "mb-4 whitespace-pre-line",
+                modalType === 'success' ? 'text-green-700' : 'text-gray-700'
+              )}>
+                {modalMessage}
+              </p>
               <div className="flex justify-end">
-                <Button onClick={() => setShowModal(false)} variant="outline">
+                <Button 
+                  onClick={() => setShowModal(false)} 
+                  variant={modalType === 'success' ? 'outline' : 'default'}
+                  className={modalType === 'success' ? 'text-green-700 border-green-300 hover:bg-green-50' : ''}
+                >
                   Close / 关闭
                 </Button>
               </div>
