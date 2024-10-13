@@ -115,6 +115,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     currentAttendance: boolean;
     name: string; // Add name to confirmation data
   } | null>(null);
+  const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
 
   const headers = [
     'Queue Number',
@@ -619,6 +620,21 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [event._id, registrations, handleMarkAttendance, showModalWithMessage]);
 
+  const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
+    const remark = remarks[registrationId]; // Get the remark for the specific registrationId
+    if (!remark) return; // Ensure remarks are provided
+    try {
+      await fetch('/api/tagged-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, name, remarks: remark }),
+      });
+      setRemarks((prev) => ({ ...prev, [registrationId]: '' })); // Clear remarks for that registrationId
+    } catch (error) {
+      console.error('Error updating remarks:', error);
+    }
+  };
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -728,7 +744,27 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
                     <td className="py-3 px-4 border-b border-r">{row.name}</td>
                     {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
-                    <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
+                    <td className="py-3 px-4 border-b border-r">
+                      {isSuperAdmin ? (
+                        <>
+                          <input
+                            type="text"
+                            value={remarks[row.registrationId] || row.remarks} // Use existing remarks as default
+                            onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
+                            className="border rounded p-1"
+                            placeholder="Enter remarks"
+                          />
+                          <Button
+                            onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
+                            className="bg-blue-500 text-white text-sm ml-2"
+                          >
+                            Save
+                          </Button>
+                        </>
+                      ) : (
+                        <span>{row.remarks}</span> // Display remarks as text for non-superadmin users
+                      )}
+                    </td>
                     <td className="py-3 px-4 border-b border-r">
                       <Checkbox
                         checked={row.attendance}
