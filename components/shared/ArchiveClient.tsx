@@ -11,6 +11,7 @@ import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
+import EventSelector from '@/components/shared/EventSelector';
 
 type EventRegistration = {
   id: string;
@@ -81,7 +82,8 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
-const AttendanceClient = React.memo(({ event }: { event: Event }) => {
+const ArchiveClient = React.memo(() => {
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [queueNumber, setQueueNumber] = useState('');
   const [message, setMessage] = useState('');
@@ -102,6 +104,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const lastScanTime = useRef<number>(0);
   const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
+
+  const handleEventSelect = (event: Event) => {
+    setSelectedEvent(event);
+    setRegistrations([]);
+    setQueueNumber('');
+    setMessage('');
+    setAttendedUsersCount(0);
+    setTotalRegistrations(0);
+    setCannotReciteAndWalkCount(0);
+    setRecentScans([]);
+    // Reset other states as needed
+  };
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -127,9 +141,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, []);
 
   const fetchRegistrations = useCallback(async () => {
+    if (!selectedEvent) return;
+
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/events/${event._id}/attendees`);
+      const response = await fetch(`/api/events/${selectedEvent._id}/attendees`);
       if (!response.ok) {
         throw new Error('Failed to fetch registrations');
       }
@@ -141,7 +157,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             ...registration.order,
             customFieldValues: registration.order.customFieldValues.map((group) => ({
               ...group,
-              cancelled: group.cancelled || false // Ensure cancelled is always a boolean
+              cancelled: group.cancelled || false
             }))
           }
         })));
@@ -162,12 +178,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [event._id]);
+  }, [selectedEvent]);
 
   useEffect(() => {
-    console.log('Fetching registrations for event:', event._id);
-    fetchRegistrations();
-  }, [fetchRegistrations]);
+    if (selectedEvent) {
+      console.log('Fetching registrations for event:', selectedEvent._id);
+      fetchRegistrations();
+    }
+  }, [fetchRegistrations, selectedEvent]);
 
   const fetchTaggedUsers = useCallback(async () => {
     try {
@@ -207,7 +225,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         },
         body: JSON.stringify({ 
           orderId, 
-          eventId: event._id, 
+          eventId: selectedEvent?._id, 
           groupId, 
           attended
         }),
@@ -262,7 +280,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       setModalTitle('Error / 错误');
       setModalMessage('Failed to update attendance. 更新出席情况失败。');
     }
-  }, [event._id, registrations, calculateCounts]);
+  }, [selectedEvent, registrations, calculateCounts]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -510,7 +528,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
     const [scannedEventId, queueNumber] = decodedText.split('_');
 
-    if (scannedEventId === event._id) {
+    if (scannedEventId === selectedEvent?._id) {
       const registration = registrations.find(r => 
         r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
       );
@@ -543,269 +561,285 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       setModalMessage('Invalid QR code for this event\n此活动的二维码无效');
       setShowModal(true);
     }
-  }, [event._id, registrations, handleMarkAttendance]);
+  }, [selectedEvent, registrations, handleMarkAttendance]);
 
   return (
     <div className="wrapper my-8">
-      <AttendanceDetailsCard 
-        event={event}
-        totalRegistrations={totalRegistrations}
-        attendedUsersCount={attendedUsersCount}
-        cannotReciteAndWalkCount={cannotReciteAndWalkCount}
-      />
+      <EventSelector onEventSelect={handleEventSelect} />
 
-      <div className="mt-8">
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-          <Input
-            placeholder="Enter Queue Number 输入排队号码"
-            value={queueNumber}
-            onChange={(e) => setQueueNumber(e.target.value)}
-            className="flex-grow text-lg p-3"
+      {selectedEvent ? (
+        <>
+          <AttendanceDetailsCard 
+            event={selectedEvent}
+            totalRegistrations={totalRegistrations}
+            attendedUsersCount={attendedUsersCount}
+            cannotReciteAndWalkCount={cannotReciteAndWalkCount}
           />
-          <Button 
-            onClick={handleQueueNumberSubmit} 
-            className="bg-blue-500 text-white text-lg p-3 w-full sm:w-auto"
-          >
-            Mark Attendance 标记出席
-          </Button>
-          <Button
-            onClick={() => setShowScanner(!showScanner)}
-            className="bg-green-500 text-white text-lg p-3 w-full sm:w-auto"
-          >
-            {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
-          </Button>
-        </div>
 
-        {showScanner && (
-          <div className="mb-6">
-            <QrCodeScanner onScan={handleScan} />
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
-              <ul className="list-disc pl-5">
-                {recentScans.map((scan, index) => (
-                  <li key={index}>{scan}</li>
-                ))}
-              </ul>
+          <div className="mt-8">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+              <Input
+                placeholder="Enter Queue Number 输入排队号码"
+                value={queueNumber}
+                onChange={(e) => setQueueNumber(e.target.value)}
+                className="flex-grow text-lg p-3"
+              />
+              <Button 
+                onClick={handleQueueNumberSubmit} 
+                className="bg-blue-500 text-white text-lg p-3 w-full sm:w-auto"
+              >
+                Mark Attendance 标记出席
+              </Button>
+              <Button
+                onClick={() => setShowScanner(!showScanner)}
+                className="bg-green-500 text-white text-lg p-3 w-full sm:w-auto"
+              >
+                {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
+              </Button>
             </div>
-          </div>
-        )}
 
-        <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
-        
-        {/* Notes section */}
-        <div className="mb-4 space-y-2">
-          <p className="p-2 bg-orange-100 text-sm">
-            Rows highlighted in light orange indicate participants who cannot walk and recite.
-            <br />
-            橙色突出显示的行表示无法绕佛者。
-          </p>
-          {isSuperAdmin && (
-            <>
-              <p className="p-2 bg-red-100 text-sm">
-                Rows highlighted in light red indicate registrations with the same phone number.
-                <br />
-                浅红色突出显示的行表示具有相同电话号码的注册。
-              </p>
-              <p className="p-2 bg-blue-100 text-sm">
-                Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
-                <br />
-                浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
-              </p>
-            </>
-          )}
-        </div>
+            {showScanner && (
+              <div className="mb-6">
+                <QrCodeScanner onScan={handleScan} />
+                <div className="mt-4">
+                  <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
+                  <ul className="list-disc pl-5">
+                    {recentScans.map((scan, index) => (
+                      <li key={index}>{scan}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
 
-        <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
+            
+            {/* Notes section */}
+            <div className="mb-4 space-y-2">
+              <p className="p-2 bg-orange-100 text-sm">
+                Rows highlighted in light orange indicate participants who cannot walk and recite.
+                <br />
+                橙色突出显示的行表示无法绕佛的参与者。
+              </p>
+              {isSuperAdmin && (
+                <>
+                  <p className="p-2 bg-red-100 text-sm">
+                    Rows highlighted in light red indicate registrations with the same phone number.
+                    <br />
+                    浅红色突出显示的行表示具有相同电话号码的注册。
+                  </p>
+                  <p className="p-2 bg-blue-100 text-sm">
+                    Rows highlighted in light blue indicate registrations that meet both criteria: cannot walk/recite and have a duplicate phone number.
+                    <br />
+                    浅蓝色突出显示的行表示同时满足两个条件的注册：无法绕佛且电话号码重复。
+                  </p>
+                </>
+              )}
             </div>
-          ) : (
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr>
-                  {renderHeader('Queue Number 排队号码', 'queueNumber')}
-                  {renderHeader('Name 姓名', 'name')}
-                  {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Remarks 备注</th>
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Attendance 出席</th>
-                  {isSuperAdmin && (
-                    <>
-                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Cancelled 已取消</th>
-                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">Delete 删除</th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map((row, index) => (
-                  <tr 
-                    key={`${row.registrationId}_${row.groupId}`}
-                    className={`
-                      hover:bg-gray-50 transition-colors duration-150
-                      ${isSuperAdmin && row.isDuplicate && row.cannotWalk ? 'bg-blue-50' : 
-                        isSuperAdmin && row.isDuplicate ? 'bg-red-50' : 
-                        row.cannotWalk ? 'bg-orange-50' : ''}
-                    `}
+
+            <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : (
+                <table className="min-w-full bg-white">
+                  <thead>
+                    <tr>
+                      {renderHeader('Queue Number 排队号码', 'queueNumber')}
+                      {renderHeader('Name 姓名', 'name')}
+                      {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
+                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Remarks 备注</th>
+                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Attendance 出席</th>
+                      {isSuperAdmin && (
+                        <>
+                          <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">Cancelled 已取消</th>
+                          <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">Delete 删除</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((row, index) => {
+                      const isDuplicate = isSuperAdmin && phoneGroups[row.phoneNumber] && phoneGroups[row.phoneNumber].length > 1;
+                      const cannotWalk = row.cannotWalk;
+                      const highlightBlue = isDuplicate && cannotWalk;
+
+                      return (
+                        <tr 
+                          key={`${row.registrationId}_${row.groupId}`}
+                          className={`
+                            hover:bg-gray-50 transition-colors duration-150
+                            ${highlightBlue ? 'bg-blue-100' : 
+                              isDuplicate ? 'bg-red-50' : 
+                              cannotWalk ? 'bg-orange-50' : ''}
+                          `}
+                        >
+                          <td className="py-3 px-4 border-b border-r">{row.queueNumber}</td>
+                          <td className="py-3 px-4 border-b border-r">{row.name}</td>
+                          {isSuperAdmin && <td className="py-3 px-4 border-b border-r">{row.phoneNumber}</td>}
+                          <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
+                          <td className="py-3 px-4 border-b border-r">
+                            <Checkbox
+                              checked={row.attendance}
+                              onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
+                            />
+                          </td>
+                          {isSuperAdmin && (
+                            <>
+                              <td className="py-3 px-4 border-b border-r">
+                                <Checkbox
+                                  checked={row.cancelled}
+                                  onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                                />
+                              </td>
+                              <td className="py-3 px-4 border-b">
+                                <button
+                                  onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                                  className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                                >
+                                  <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                                </button>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination controls */}
+            {!isLoading && (
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
                   >
-                    <td className="py-3 px-4 border-b border-r">{row.queueNumber}</td>
-                    <td className="py-3 px-4 border-b border-r">{row.name}</td>
-                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r">{row.phoneNumber}</td>}
-                    <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
-                    <td className="py-3 px-4 border-b border-r">
-                      <Checkbox
-                        checked={row.attendance}
-                        onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
-                      />
-                    </td>
-                    {isSuperAdmin && (
-                      <>
-                        <td className="py-3 px-4 border-b border-r">
-                          <Checkbox
-                            checked={row.cancelled}
-                            onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                          />
-                        </td>
-                        <td className="py-3 px-4 border-b">
-                          <button
-                            onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                            className="text-red-500 hover:text-red-700 transition-colors duration-200"
-                          >
-                            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                          </button>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                    {'<<'}
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    {'<'}
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    {'>'}
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    {'>>'}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="whitespace-nowrap">
+                    Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                  </span>
+                
+                  <span className="flex items-center gap-1">
+                    <span className="whitespace-nowrap">Go to:</span>
+                    <Input
+                      type="number"
+                      value={currentPage}
+                      onChange={e => {
+                        const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                        setCurrentPage(page);
+                      }}
+                      className="w-16"
+                    />
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <select
+                    value={pageSize}
+                    onChange={e => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border rounded p-1"
+                  >
+                    {[10, 20, 30, 40, 50].map(size => (
+                      <option key={size} value={size}>
+                        Show {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
-        {/* Pagination controls */}
-        {!isLoading && (
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                {'<<'}
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                {'<'}
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                {'>'}
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                {'>>'}
-              </Button>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="whitespace-nowrap">
-                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-              </span>
-              
-              <span className="flex items-center gap-1">
-                <span className="whitespace-nowrap">Go to:</span>
-                <Input
-                  type="number"
-                  value={currentPage}
-                  onChange={e => {
-                    const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
-                    setCurrentPage(page);
-                  }}
-                  className="w-16"
-                />
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <select
-                value={pageSize}
-                onChange={e => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="border rounded p-1"
-              >
-                {[10, 20, 30, 40, 50].map(size => (
-                  <option key={size} value={size}>
-                    Show {size}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+            {showModal && (
+              <Modal>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">{modalTitle}</h3>
+                  <p className="mb-4 whitespace-pre-line">{modalMessage}</p>
+                  <div className="flex justify-end">
+                    <Button onClick={() => setShowModal(false)} variant="outline">
+                      Close / 关闭
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {showDeleteConfirmation && deleteConfirmationData && (
+              <Modal>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
+                  <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
+                  <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
+                  <div className="flex justify-end space-x-4">
+                    <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
+                      Cancel / 取消
+                    </Button>
+                    <Button onClick={confirmDeleteRegistration} variant="destructive">
+                      Delete / 删除
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {showAlreadyMarkedModal && (
+              <Modal>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Attendance Already Marked</h3>
+                  <p className="mb-4">
+                    Attendance for queue number {alreadyMarkedQueueNumber} has already been marked.
+                  </p>
+                  <p className="mb-4">
+                    队列号 {alreadyMarkedQueueNumber} 的出席已经被标记。
+                  </p>
+                  <div className="flex justify-end">
+                    <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
+                      Close / 关闭
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )}
           </div>
-        )}
-
-        {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
-
-        {showModal && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">{modalTitle}</h3>
-              <p className="mb-4 whitespace-pre-line">{modalMessage}</p>
-              <div className="flex justify-end">
-                <Button onClick={() => setShowModal(false)} variant="outline">
-                  Close / 关闭
-                </Button>
-              </div>
-            </div>
-          </Modal>
-        )}
-
-        {showDeleteConfirmation && deleteConfirmationData && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
-              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
-              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
-              <div className="flex justify-end space-x-4">
-                <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
-                  Cancel / 取消
-                </Button>
-                <Button onClick={confirmDeleteRegistration} variant="destructive">
-                  Delete / 删除
-                </Button>
-              </div>
-            </div>
-          </Modal>
-        )}
-
-        {showAlreadyMarkedModal && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Attendance Already Marked</h3>
-              <p className="mb-4">
-                Attendance for queue number {alreadyMarkedQueueNumber} has already been marked.
-              </p>
-              <p className="mb-4">
-                队列号 {alreadyMarkedQueueNumber} 的出席已经被标记。
-              </p>
-              <div className="flex justify-end">
-                <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
-                  Close / 关闭
-                </Button>
-              </div>
-            </div>
-          </Modal>
-        )}
-      </div>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-xl">Please select an event to manage attendance.</p>
+        </div>
+      )}
     </div>
   );
 });
 
-export default AttendanceClient;
+export default ArchiveClient;
