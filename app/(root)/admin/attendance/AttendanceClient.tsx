@@ -11,6 +11,7 @@ import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
+import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
 
 type EventRegistration = {
   id: string;
@@ -102,6 +103,27 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const lastScanTime = useRef<number>(0);
   const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
+  const [searchText, setSearchText] = useState('');
+
+  const headers = [
+    'Queue Number',
+    'Name',
+    'Phone Number',
+    'Remarks',
+    'Attendance',
+    'Cancelled',
+    'Registration Date'
+  ];
+
+  const fields = [
+    'queueNumber',
+    'name',
+    'phoneNumber',
+    'remarks',
+    'attendance',
+    'cancelled',
+    'registrationDate'
+  ];
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -574,6 +596,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           >
             {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
           </Button>
+          <DownloadCsvButton 
+            eventId={event._id} 
+            searchText={searchText} 
+            headers={headers}
+            fields={fields}
+          />
         </div>
 
         {showScanner && (

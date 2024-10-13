@@ -6,15 +6,19 @@ import { useRouter } from 'next/navigation';
 interface DownloadButtonProps {
   eventId: string;
   searchText: string;
+  headers: string[];
+  fields: string[];
 }
 
-const DownloadCsvButton: React.FC<DownloadButtonProps> = ({ eventId, searchText }) => {
+const DownloadCsvButton: React.FC<DownloadButtonProps> = ({ eventId, searchText, headers, fields }) => {
   const router = useRouter();
 
   const handleDownloadCsv = () => {
     const queryParams = new URLSearchParams({
       eventId: eventId || '',
       searchText: searchText || '',
+      headers: encodeURIComponent(JSON.stringify(headers)),
+      fields: encodeURIComponent(JSON.stringify(fields)),
     }).toString();
 
     // Navigate to the API route
