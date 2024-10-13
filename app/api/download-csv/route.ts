@@ -24,14 +24,6 @@ export async function GET(request: NextRequest) {
 
     const orders = await getOrdersByEvent({ eventId, searchString: searchText });
 
-    // Fetch tagged users
-    const response = await fetch('/api/tagged-users');
-    const taggedUsersData = await response.json();
-    const taggedUsersMap: Record<string, string> = taggedUsersData.reduce((acc: Record<string, string>, user: { phoneNumber: string; remarks: string }) => {
-      acc[user.phoneNumber] = user.remarks;
-      return acc;
-    }, {});
-
     if (!orders || orders.length === 0) {
       return new NextResponse('No orders found', { status: 404 });
     }
@@ -40,7 +32,6 @@ export async function GET(request: NextRequest) {
       order.customFieldValues.map(group => {
         const phoneNumberField = group.fields.find(f => f.label.toLowerCase() === 'phone number');
         const phoneNumber = typeof phoneNumberField?.value === 'string' ? phoneNumberField.value : '';
-        const remarks = phoneNumber && taggedUsersMap[phoneNumber] ? taggedUsersMap[phoneNumber] : '';
         return fields.map((field: string) => {
           switch (field) {
             case 'queueNumber':
@@ -49,8 +40,6 @@ export async function GET(request: NextRequest) {
               return group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A';
             case 'phoneNumber':
               return phoneNumber || 'N/A';
-            case 'remarks':
-              return remarks;
             case 'attendance':
               return group.attendance ? 'Yes' : 'No';
             case 'cancelled':
