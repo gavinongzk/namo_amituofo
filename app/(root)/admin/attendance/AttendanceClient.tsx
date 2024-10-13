@@ -596,10 +596,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           >
             {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
           </Button>
-          <DownloadCsvButton 
-            eventId={event._id} 
-            searchText={searchText} 
-          />
+          {isSuperAdmin && (
+            <div className="w-full sm:w-auto">
+              <DownloadCsvButton 
+                eventId={event._id} 
+                searchText={searchText}
+              />
+            </div>
+          )}
         </div>
 
         {showScanner && (
