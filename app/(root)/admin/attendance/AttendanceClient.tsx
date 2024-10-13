@@ -713,7 +713,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     className={`
                       hover:bg-gray-50 transition-colors duration-150
                       ${isSuperAdmin && row.isDuplicate && row.cannotWalk ? 'bg-blue-50' : 
-                        isSuperAdmin && row.isDuplicate ? 'bg-red-50' : 
+                        isSuperAdmin && row.isDuplicate ? 'bg-green-50' : 
                         row.cannotWalk ? 'bg-orange-50' : ''}
                     `}
                   >
@@ -831,10 +831,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           </p>
           {isSuperAdmin && (
             <>
-              <p className="p-2 bg-red-100 text-sm">
-                Rows highlighted in light red indicate registrations with the same phone number.
+              <p className="p-2 bg-green-100 text-sm">
+                Rows highlighted in light green indicate registrations with the same phone number.
                 <br />
-                浅红色突出显示的行表示具有相同电话号码的注册。
+                浅绿色突出显示的行表示具有相同电话号码的注册。
               </p>
               <p className="p-2 bg-blue-100 text-sm">
                 Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
