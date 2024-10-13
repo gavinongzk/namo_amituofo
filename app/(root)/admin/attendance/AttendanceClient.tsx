@@ -122,7 +122,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     'remarks',
     'attendance',
     'cancelled',
-    'registrationDate'
+    'createdAt'
   ];
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
