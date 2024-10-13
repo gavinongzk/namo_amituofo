@@ -501,7 +501,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
-    if (now - lastScanTime.current < 3000) { // 1.5 seconds cooldown
+    if (now - lastScanTime.current < 1500) { // 1.5 seconds cooldown
       return;
     }
     lastScanTime.current = now;
