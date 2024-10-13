@@ -56,12 +56,13 @@ export async function GET(request: NextRequest) {
     const csvString = stringify([headers, ...data]);
 
     const eventTitle = orders[0]?.event.title || 'Untitled';
-    
+    const encodedEventTitle = encodeURIComponent(eventTitle);
+
     return new NextResponse(csvString, {
       status: 200,
       headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename=${eventTitle}_data.csv`,
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename=${encodedEventTitle}_data.csv`,
       },
     });
   } catch (error) {
