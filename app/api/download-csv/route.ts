@@ -7,49 +7,50 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const eventId = searchParams.get('eventId');
   const searchText = searchParams.get('searchText') || '';
-  const headersParam = searchParams.get('headers');
-  const fieldsParam = searchParams.get('fields');
 
   if (!eventId) {
     return new NextResponse('Event ID is required', { status: 400 });
   }
 
-  if (!headersParam || !fieldsParam) {
-    return new NextResponse('Headers and fields are required', { status: 400 });
-  }
-
   try {
-    const headers = JSON.parse(decodeURIComponent(headersParam));
-    const fields = JSON.parse(decodeURIComponent(fieldsParam));
-
     const orders = await getOrdersByEvent({ eventId, searchString: searchText });
 
     if (!orders || orders.length === 0) {
       return new NextResponse('No orders found', { status: 404 });
     }
 
+    const headers = [
+      'Queue Number',
+      'Event Title',
+      'Registration Date',
+      'Name',
+      'Phone Number',
+      'Attendance',
+      'Cancelled'
+    ];
+
     const data = orders.flatMap(order => 
       order.customFieldValues.map(group => {
-        return fields.map((field: string) => {
-          switch (field) {
-            case 'queueNumber':
-              return group.queueNumber || 'N/A';
-            case 'name':
-              return group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A';
-            case 'phoneNumber':
-              return group.fields.find(f => 
-                f.label.toLowerCase() === 'phone number' || f.type === 'phone'
-              )?.value || 'N/A';
-            case 'attendance':
-              return group.attendance ? 'Yes' : 'No';
-            case 'cancelled':
-              return group.cancelled ? 'Yes' : 'No';
-            case 'registrationDate':
-              return formatDateTime(order.createdAt).dateTime;
-            default:
-              return group.fields.find(f => f.label.toLowerCase() === field.toLowerCase())?.value || 'N/A';
+        const row = [
+          group.queueNumber || 'N/A',
+          order.event.title,
+          formatDateTime(order.createdAt).dateTime,
+          group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A',
+          group.fields.find(f => f.label.toLowerCase() === 'phone number' || f.type === 'phone')?.value || 'N/A',
+          group.attendance ? 'Yes' : 'No',
+          group.cancelled ? 'Yes' : 'No'
+        ];
+
+        // Add all custom fields
+        group.fields.forEach(field => {
+          if (!headers.includes(field.label)) {
+            headers.push(field.label);
           }
+          const index = headers.indexOf(field.label);
+          row[index] = field.type === 'radio' ? (field.value === 'yes' ? '是 Yes' : '否 No') : field.value || 'N/A';
         });
+
+        return row;
       })
     );
 

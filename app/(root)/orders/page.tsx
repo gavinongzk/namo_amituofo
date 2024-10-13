@@ -33,28 +33,6 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
   const totalCustomFieldValues = filteredOrders.reduce((total, order) => 
     total + order.customFieldValues.length, 0);
 
-  // Dynamically prepare headers and fields for DownloadCsvButton
-  const headers: string[] = ['Queue Number', 'Event Title', 'Registration Date'];
-  const fields: string[] = ['queueNumber', 'eventTitle', 'createdAt'];
-
-  if (filteredOrders.length > 0 && filteredOrders[0].customFieldValues.length > 0) {
-    const firstGroup = filteredOrders[0].customFieldValues[0];
-    firstGroup.fields.forEach(field => {
-      headers.push(field.label);
-      fields.push(field.label.toLowerCase().replace(/\s+/g, '_'));
-    });
-
-    // Add attendance and cancelled fields if they exist in the data
-    if ('attendance' in firstGroup) {
-      headers.push('Attendance');
-      fields.push('attendance');
-    }
-    if ('cancelled' in firstGroup) {
-      headers.push('Cancelled');
-      fields.push('cancelled');
-    }
-  }
-
   return (
     <>
       <section className="bg-primary-50 bg-dotted-pattern bg-cover bg-center py-5 md:py-10">
@@ -82,8 +60,6 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
               <DownloadCsvButton 
                 eventId={eventId} 
                 searchText={searchText} 
-                headers={headers}
-                fields={fields}
               />
             </div>
 

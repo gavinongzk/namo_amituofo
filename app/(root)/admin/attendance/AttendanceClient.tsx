@@ -599,8 +599,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <DownloadCsvButton 
             eventId={event._id} 
             searchText={searchText} 
-            headers={headers}
-            fields={fields}
           />
         </div>
 
