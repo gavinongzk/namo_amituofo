@@ -43,8 +43,10 @@ export async function GET(req: NextRequest) {
         const phoneNumber = group.fields.find((field: CustomField) => 
           field.label.toLowerCase().includes('phone') || field.type === 'phone'
         )?.value?.toString() || 'Unknown';
-        const eventDate = order.event.startDateTime ? order.event.startDateTime.toISOString() : '';
-        const eventTitle = order.event.title || '';
+
+        // Check if order.event is not null before accessing its properties
+        const eventDate = order.event ? order.event.startDateTime?.toISOString() : '';
+        const eventTitle = order.event ? order.event.title : '';
 
         const key = `${name}-${phoneNumber}`;
         if (!attendeeMap.has(key)) {
