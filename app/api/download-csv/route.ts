@@ -31,30 +31,43 @@ export async function GET(request: NextRequest) {
 
     const data = orders.flatMap(order => 
       order.customFieldValues.map(group => {
+        const nameField = group.fields.find(f => f.label.toLowerCase().includes('name'));
+        const phoneField = group.fields.find(f => 
+          f.label.toLowerCase().includes('phone number') || 
+          f.label.toLowerCase().includes('contact number') || 
+          f.type === 'phone'
+        );
+
         const row = [
           group.queueNumber || 'N/A',
           order.event.title,
           formatDateTime(order.createdAt).dateTime,
-          group.fields.find(f => f.label.toLowerCase() === 'name')?.value || 'N/A',
-          group.fields.find(f => f.label.toLowerCase() === 'phone number' || f.type === 'phone')?.value || 'N/A',
+          nameField?.value || 'N/A',
+          phoneField?.value || 'N/A',
           group.attendance ? 'Yes' : 'No',
           group.cancelled ? 'Yes' : 'No'
         ];
 
         // Add all custom fields
         group.fields.forEach(field => {
-          if (!headers.includes(field.label)) {
+          if (!headers.includes(field.label) && 
+              field !== nameField && 
+              field !== phoneField) {
             headers.push(field.label);
           }
           const index = headers.indexOf(field.label);
-          row[index] = field.type === 'radio' ? (field.value === 'yes' ? '是 Yes' : '否 No') : field.value || 'N/A';
+          if (index > -1) {
+            row[index] = field.type === 'radio' ? (field.value === 'yes' ? '是 Yes' : '否 No') : field.value || 'N/A';
+          }
         });
 
         return row;
       })
     );
 
-    const csvString = stringify([headers, ...data]);
+    // Add BOM for UTF-8
+    const BOM = '\uFEFF';
+    const csvString = BOM + stringify([headers, ...data]);
 
     const eventTitle = orders[0]?.event.title || 'Untitled';
     const encodedEventTitle = encodeURIComponent(eventTitle);
