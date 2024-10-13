@@ -107,6 +107,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [searchText, setSearchText] = useState('');
   const [pageSize, setPageSize] = useState(100);  // Default to 100 rows per page
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string; currentAttendance: boolean } | null>(null);
 
   const headers = [
     'Queue Number',
@@ -216,11 +218,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     calculateCounts(registrations);
   }, [registrations, calculateCounts]);
 
+  const showModalWithMessage = useCallback((title: string, message: string, type: 'loading' | 'success' | 'error') => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalType(type);
+    setShowModal(true);
+
+    // Auto-close the modal after 2 seconds for success and error messages
+    if (type !== 'loading') {
+      setTimeout(() => {
+        setShowModal(false);
+        setModalType('loading'); // Reset for next use
+      }, 2000);
+    }
+  }, []);
+
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
     console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
-    setModalTitle('Updating / 更新中');
-    setModalMessage('Updating attendance... 更新出席情况...');
-    setShowModal(true);
+    showModalWithMessage('Updating / 更新中', 'Updating attendance... 更新出席情况...', 'loading');
 
     try {
       const [orderId] = registrationId.split('_');
@@ -255,10 +270,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         );
         setMessage(`Attendance ${attended ? 'marked' : 'unmarked'} for ${registrationId}, group ${groupId}`);
 
-        setModalTitle('Success / 成功');
-        setModalMessage(`Attendance ${attended ? 'marked' : 'unmarked'} successfully\n出席情况${attended ? '已标记' : '已取消标记'}`);
-        setModalType('success'); // Add this line
-        setShowModal(true);
+        showModalWithMessage(
+          'Success / 成功', 
+          `Attendance ${attended ? 'marked' : 'unmarked'} successfully\n出席情况${attended ? '已标记' : '已取消标记'}`,
+          'success'
+        );
 
         // Update counts based on updated registrations
         const updatedRegistrations = registrations.map(r => {
@@ -283,11 +299,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
-      setModalTitle('Error / 错误');
-      setModalMessage('Failed to update attendance. 更新出席情况失败。');
-      setModalType('error'); // Add this line
+      showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
     }
-  }, [event._id, registrations, calculateCounts]);
+  }, [event._id, registrations, calculateCounts, showModalWithMessage]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -295,14 +309,27 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     if (registration) {
       const group = registration.order.customFieldValues[0];
       if (group) {
-        await handleMarkAttendance(registration.id, group.groupId, !group.attendance);
-        setQueueNumber('');
+        setConfirmationData({
+          registrationId: registration.id,
+          groupId: group.groupId,
+          queueNumber: group.queueNumber || '',
+          currentAttendance: !!group.attendance
+        });
+        setShowConfirmation(true);
       }
     } else {
       setMessage('Registration not found with this queue number. 未找到此排队号码的注册。');
       console.log('Registration not found with this queue number:', queueNumber);
     }
-  }, [queueNumber, registrations, handleMarkAttendance]);
+  }, [queueNumber, registrations]);
+
+  const handleConfirmAttendance = useCallback(async () => {
+    if (confirmationData) {
+      await handleMarkAttendance(confirmationData.registrationId, confirmationData.groupId, !confirmationData.currentAttendance);
+      setQueueNumber('');
+      setShowConfirmation(false);
+    }
+  }, [confirmationData, handleMarkAttendance]);
 
   const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
     setShowModal(true);
@@ -509,14 +536,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   };
 
   const renderHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100 whitespace-normal">
+    <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100 whitespace-normal">
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
-        className="hover:bg-gray-200 transition-colors duration-200 w-full text-left"
+        className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
       >
-        <span className="block">{label.split(' ')[0]}</span>
-        <span className="block text-sm">{label.split(' ')[1]}</span>
+        <span className="block text-xs">{label}</span>
         {sortConfig.key === key && (
           <span className="ml-1">
             {sortConfig.direction === 'asc' ? '▲' : '▼'}
@@ -554,38 +580,36 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           if (!group.attendance) {
             handleMarkAttendance(registration.id, group.groupId, true);
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
-            setModalTitle('Success / 成功');
-            setModalMessage(`Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`);
-            setModalType('success'); // Add this line
-            setShowModal(true);
+            showModalWithMessage(
+              'Success / 成功',
+              `Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`,
+              'success'
+            );
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           } else {
-            setModalTitle('Already Marked / 已标记');
-            setModalMessage(`Attendance already marked for: ${queueNumber}\n队列号 ${queueNumber} 的出席已经被标记`);
-            setModalType('error'); // Add this line
-            setShowModal(true);
+            showModalWithMessage(
+              'Already Marked / 已标记',
+              `Attendance already marked for: ${queueNumber}\n队列号 ${queueNumber} 的出席已经被标记`,
+              'error'
+            );
             setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
           }
         }
       } else {
-        setModalTitle('Error / 错误');
-        setModalMessage(`Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`);
-        setModalType('error'); // Add this line
-        setShowModal(true);
+        showModalWithMessage(
+          'Error / 错误',
+          `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
+          'error'
+        );
       }
     } else {
-      setModalTitle('Error / 错误');
-      setModalMessage('Invalid QR code for this event\n此活动的二维码无效');
-      setShowModal(true);
+      showModalWithMessage(
+        'Error / 错误',
+        'Invalid QR code for this event\n此活动的二维码无效',
+        'error'
+      );
     }
-  }, [event._id, registrations, handleMarkAttendance]);
-
-  const showModalWithMessage = (title: string, message: string, type: 'loading' | 'success' | 'error') => {
-    setModalTitle(title);
-    setModalMessage(message);
-    setModalType(type);
-    setShowModal(true);
-  };
+  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage]);
 
   return (
     <div className="wrapper my-8">
@@ -661,26 +685,22 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  {renderHeader('Queue Number 排队号码', 'queueNumber')}
-                  {renderHeader('Name 姓名', 'name')}
-                  {isSuperAdmin && renderHeader('Phone Number 电话号码', 'phoneNumber')}
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block">Remarks</span>
-                    <span className="block text-sm">备注</span>
+                  {renderHeader('Queue\n排队号', 'queueNumber')}
+                  {renderHeader('Name\n姓名', 'name')}
+                  {isSuperAdmin && renderHeader('Phone\n电话', 'phoneNumber')}
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block text-xs">Remarks<br/>备注</span>
                   </th>
-                  <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block">Attendance</span>
-                    <span className="block text-sm">出席</span>
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block text-xs">Attendance<br/>出席</span>
                   </th>
                   {isSuperAdmin && (
                     <>
-                      <th className="py-3 px-4 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block">Cancelled</span>
-                        <span className="block text-sm">已取消</span>
+                      <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                        <span className="block text-xs">Cancelled<br/>已取消</span>
                       </th>
-                      <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block">Delete</span>
-                        <span className="block text-sm">删除</span>
+                      <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                        <span className="block text-xs">Delete<br/>删除</span>
                       </th>
                     </>
                   )}
@@ -829,29 +849,33 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <Modal>
             <div className={cn(
               "p-6 rounded-lg",
-              modalType === 'success' ? 'bg-green-100' : 'bg-white'
+              modalType === 'success' ? 'bg-green-100' : 
+              modalType === 'error' ? 'bg-red-100' : 'bg-white'
             )}>
               <h3 className={cn(
                 "text-lg font-semibold mb-4",
-                modalType === 'success' ? 'text-green-800' : 'text-gray-900'
+                modalType === 'success' ? 'text-green-800' : 
+                modalType === 'error' ? 'text-red-800' : 'text-gray-900'
               )}>
                 {modalTitle}
               </h3>
               <p className={cn(
                 "mb-4 whitespace-pre-line",
-                modalType === 'success' ? 'text-green-700' : 'text-gray-700'
+                modalType === 'success' ? 'text-green-700' : 
+                modalType === 'error' ? 'text-red-700' : 'text-gray-700'
               )}>
                 {modalMessage}
               </p>
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => setShowModal(false)} 
-                  variant={modalType === 'success' ? 'outline' : 'default'}
-                  className={modalType === 'success' ? 'text-green-700 border-green-300 hover:bg-green-50' : ''}
-                >
-                  Close / 关闭
-                </Button>
-              </div>
+              {modalType === 'loading' && (
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={() => setShowModal(false)} 
+                    variant="outline"
+                  >
+                    Close / 关闭
+                  </Button>
+                </div>
+              )}
             </div>
           </Modal>
         )}
@@ -887,6 +911,32 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <div className="flex justify-end">
                 <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
                   Close / 关闭
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {showConfirmation && confirmationData && (
+          <Modal>
+            <div className="p-6 bg-white rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Confirm Attendance Change / 确认出席变更</h3>
+              <p className="mb-4">
+                {confirmationData.currentAttendance
+                  ? `Are you sure you want to unmark attendance for queue number ${confirmationData.queueNumber}?`
+                  : `Are you sure you want to mark attendance for queue number ${confirmationData.queueNumber}?`}
+              </p>
+              <p className="mb-4">
+                {confirmationData.currentAttendance
+                  ? `您确定要取消标记队列号 ${confirmationData.queueNumber} 的出席吗？`
+                  : `您确定要标记队列号 ${confirmationData.queueNumber} 的出席吗？`}
+              </p>
+              <div className="flex justify-end space-x-4">
+                <Button onClick={() => setShowConfirmation(false)} variant="outline">
+                  Cancel / 取消
+                </Button>
+                <Button onClick={handleConfirmAttendance} variant="default">
+                  Confirm / 确认
                 </Button>
               </div>
             </div>
