@@ -610,9 +610,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber, name, remarks: remark }),
       });
-      setRemarks((prev) => ({ ...prev, [registrationId]: '' })); // Clear remarks for that registrationId
-      // Refresh the registrations after updating remarks
-      fetchRegistrations();
+      // Update the local remarks state immediately after saving
+      setRemarks((prev) => ({ ...prev, [registrationId]: remark })); // Update the remarks for the specific registrationId
     } catch (error) {
       console.error('Error updating remarks:', error);
     }
