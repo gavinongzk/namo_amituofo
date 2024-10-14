@@ -117,25 +117,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   } | null>(null);
   const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
 
-  const headers = [
-    'Queue Number',
-    'Name',
-    'Phone Number',
-    'Remarks',
-    'Attendance',
-    'Cancelled',
-    'Registration Date'
-  ];
-
-  const fields = [
-    'queueNumber',
-    'name',
-    'phoneNumber',
-    'remarks',
-    'attendance',
-    'cancelled',
-    'createdAt'
-  ];
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -630,6 +611,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         body: JSON.stringify({ phoneNumber, name, remarks: remark }),
       });
       setRemarks((prev) => ({ ...prev, [registrationId]: '' })); // Clear remarks for that registrationId
+      // Refresh the registrations after updating remarks
+      fetchRegistrations();
     } catch (error) {
       console.error('Error updating remarks:', error);
     }
