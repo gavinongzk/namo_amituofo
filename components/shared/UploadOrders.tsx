@@ -126,25 +126,16 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>
           <tr>
-            <th className="border border-gray-300 p-2">Header</th>
+            <th className="border border-gray-300 p-2">Queue Number</th>
+            <th className="border border-gray-300 p-2">参加者名字 Participant's Name</th>
+            <th className="border border-gray-300 p-2">联系号码 Contact number</th>
+            {eventCategory === '念佛共修' && (
+              <th className="border border-gray-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</th>
+            )}
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className="border border-gray-300 p-2">Queue Number</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2">参加者名字 Participant's Name</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2">联系号码 Contact number</td>
-          </tr>
-          {/* Add other headers based on the custom fields */}
-          {eventCategory === '念佛共修' && (
-            <tr>
-              <td className="border border-gray-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</td>
-            </tr>
-          )}
+          {/* You can add example data rows here if needed */}
         </tbody>
       </table>
       <input
