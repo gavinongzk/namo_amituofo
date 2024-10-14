@@ -242,3 +242,20 @@ export async function getEventWithAttendeeCount(eventId: string) {
     handleError(error)
   }
 }
+
+export const getEventCategory = async (eventId: string): Promise<string | null> => {
+  try {
+    await connectToDatabase();
+
+    const event = await Event.findById(eventId).populate('category', 'name');
+    
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    return event.category?.name || null; // Return the category name or null if not found
+  } catch (error) {
+    console.error('Error fetching event category:', error);
+    return null; // Return null in case of an error
+  }
+};

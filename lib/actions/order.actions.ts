@@ -8,6 +8,7 @@ import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
 import QRCode from 'qrcode';
+import { CustomFieldGroup } from '@/types'
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -217,5 +218,21 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;
+  }
+};
+
+export const getGroupIdsByEventId = async (eventId: string): Promise<string[]> => {
+  try {
+    await connectToDatabase();
+
+    const orders = await Order.find({ event: eventId }).exec();
+    const groupIds = orders.flatMap(order => 
+      order.customFieldValues.map( (group: CustomFieldGroup) => group.groupId)
+    );
+
+    return groupIds;
+  } catch (error) {
+    console.error('Error fetching group IDs:', error);
+    throw new Error('Failed to fetch group IDs');
   }
 };
