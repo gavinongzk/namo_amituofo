@@ -8,6 +8,12 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
     const { eventId, ordersData } = await req.json(); // Destructure eventId and ordersData from the request body
 
+    console.log('Received data:', { eventId, ordersData }); // Log the received data
+
+    if (!eventId || !ordersData || ordersData.length === 0) {
+      return NextResponse.json({ message: 'Event ID and orders data are required' }, { status: 400 });
+    }
+
     const orders = ordersData.map((data: any) => {
       const customFieldValues: CustomFieldGroup[] = data.customFieldValues.map((group: any) => ({
         groupId: group.groupId,
