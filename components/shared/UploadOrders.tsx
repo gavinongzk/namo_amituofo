@@ -86,13 +86,13 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
           }));
 
           return {
-            queueNumber: row['Queue Number'],
+            queueNumber: `uploaded_queue_${index + 1}`,
             customFieldValues: [
               {
                 groupId: `uploaded_group_${index + 1}`,
                 fields: customFieldValues,
-                attendance: 'Yes',
-                cancelled: 'No',
+                attendance: true,
+                cancelled: false,
               },
             ],
           };
@@ -126,7 +126,6 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>
           <tr>
-            <th className="border border-gray-300 p-2">Queue Number</th>
             <th className="border border-gray-300 p-2">参加者名字 Participant's Name</th>
             <th className="border border-gray-300 p-2">联系号码 Contact number</th>
             {eventCategory === '念佛共修' && (
