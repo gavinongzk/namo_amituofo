@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { showModalWithMessage } from '@/lib/utils'; // Assume this is a utility to show messages
@@ -22,6 +22,16 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
   const [modalMessage, setModalMessage] = useState<string>('');
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [eventCategory, setEventCategory] = useState<string | null>(null); // Add state for eventCategory
+
+  useEffect(() => {
+    const fetchEventCategory = async () => {
+      const category = await getEventCategory(eventId);
+      setEventCategory(category); // Set the fetched category
+    };
+
+    fetchEventCategory(); // Call the function to fetch the category
+  }, [eventId]); // Dependency on eventId
 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -65,7 +75,6 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
         };
 
 
-        const eventCategory = await getEventCategory(eventId); // Implement this function to fetch the category
         const customFields = eventCategory && categoryCustomFields[eventCategory] ? categoryCustomFields[eventCategory] : []; // Check for null
 
         const orders = jsonData.map((row: any, index: number) => {
@@ -109,15 +118,25 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
     };
 
     reader.readAsArrayBuffer(file);
-  }, [eventId]); // Add eventId as a dependency
+  }, [eventId, eventCategory]); // Add eventCategory as a dependency
 
   return (
     <div className="mb-4">
+      <h4 className="font-semibold mb-2">Required Excel File Headers:</h4>
+      <ul className="list-disc list-inside mb-4">
+        <li>Queue Number</li>
+        <li>参加者名字 Participant's Name</li>
+        <li>联系号码 Contact number</li>
+        {/* Add other headers based on the custom fields */}
+        {eventCategory === '念佛共修' && (
+          <li>请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</li>
+        )}
+      </ul>
       <input
         type="file"
         accept=".xlsx, .xls"
         onChange={handleFileChange}
-        className="hidden"
+        className="block"
         id="upload-orders"
       />
       <label htmlFor="upload-orders">
