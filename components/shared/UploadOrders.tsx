@@ -23,6 +23,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
   const [showModal, setShowModal] = useState<boolean>(false);
   const [eventCategory, setEventCategory] = useState<string | null>(null); // Add state for eventCategory
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // Add state for the selected file
 
   useEffect(() => {
     const fetchEventCategory = async () => {
@@ -33,9 +34,15 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
     fetchEventCategory(); // Call the function to fetch the category
   }, [eventId]); // Dependency on eventId
 
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      setSelectedFile(file); // Store the selected file
+    }
+  };
+
+  const handleUpload = useCallback(async () => { // New function to handle upload
+    if (!selectedFile) return; // Ensure a file is selected
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -119,8 +126,8 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       }
     };
 
-    reader.readAsArrayBuffer(file);
-  }, [eventId, eventCategory]); // Add eventCategory as a dependency
+    reader.readAsArrayBuffer(selectedFile); // Read the selected file
+  }, [eventId, eventCategory, selectedFile]); // Add selectedFile as a dependency
 
   return (
     <div className="mb-4">
@@ -143,12 +150,16 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
         type="file"
         accept=".xlsx, .xls"
         onChange={handleFileChange}
-        className="block"
+        className="block mb-2"
         id="upload-orders"
       />
-      <label htmlFor="upload-orders">
-        <Button className="bg-blue-500 text-white">Upload Orders Excel</Button>
-      </label>
+      <Button 
+        className="bg-blue-500 text-white" 
+        onClick={handleUpload} // Trigger upload on button click
+        disabled={!selectedFile} // Disable button if no file is selected
+      >
+        Upload Orders Excel
+      </Button>
       {showModal && (
         <Modal>
           <div className={cn(
