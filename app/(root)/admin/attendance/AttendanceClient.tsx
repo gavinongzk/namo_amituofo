@@ -115,7 +115,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     currentAttendance: boolean;
     name: string; // Add name to confirmation data
   } | null>(null);
-  const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
+  const [editableNames, setEditableNames] = useState<Record<string, string>>({});
+  const [editablePhoneNumbers, setEditablePhoneNumbers] = useState<Record<string, string>>({});
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -647,6 +649,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   };
 
+  // Function to set name
+  const setName = (registrationId: string, value: string) => {
+    setEditableNames((prev) => ({ ...prev, [registrationId]: value }));
+  };
+
+  // Function to set phone number
+  const setPhoneNumber = (registrationId: string, value: string) => {
+    setEditablePhoneNumbers((prev) => ({ ...prev, [registrationId]: value }));
+  };
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -755,32 +767,36 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   >
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
                     <td className="py-3 px-4 border-b border-r">
-                      <input
-                        type="text"
-                        value={row.name}
-                        onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
-                        onBlur={() => handleUpdateUserInfo(row.registrationId, row.name, row.phoneNumber)} // Save on blur
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleUpdateUserInfo(row.registrationId, e.currentTarget.value, row.phoneNumber); // Save on Enter
-                          }
-                        }}
-                        className="border rounded p-1"
-                      />
+                      <div className="flex items-center">
+                        <input
+                          type="text"
+                          value={editableNames[row.registrationId] || row.name} // Use editable name or fallback to original
+                          onChange={(e) => setName(row.registrationId, e.target.value)} // Update name directly
+                          className="border rounded p-1 flex-grow"
+                        />
+                        <Button
+                          onClick={() => handleUpdateUserInfo(row.registrationId, editableNames[row.registrationId] || row.name, row.phoneNumber)} // Save on button click
+                          className="bg-blue-500 text-white text-sm ml-2"
+                        >
+                          Save
+                        </Button>
+                      </div>
                     </td>
                     {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">
-                      <input
-                        type="text"
-                        value={row.phoneNumber}
-                        onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
-                        onBlur={() => handleUpdateUserInfo(row.registrationId, row.name, row.phoneNumber)} // Save on blur
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleUpdateUserInfo(row.registrationId, row.name, e.currentTarget.value); // Save on Enter
-                          }
-                        }}
-                        className="border rounded p-1"
-                      />
+                      <div className="flex items-center">
+                        <input
+                          type="text"
+                          value={editablePhoneNumbers[row.registrationId] || row.phoneNumber} // Use editable phone number or fallback to original
+                          onChange={(e) => setPhoneNumber(row.registrationId, e.target.value)} // Update phone number directly
+                          className="border rounded p-1 flex-grow"
+                        />
+                        <Button
+                          onClick={() => handleUpdateUserInfo(row.registrationId, editableNames[row.registrationId] || row.name, editablePhoneNumbers[row.registrationId] || row.phoneNumber)} // Save on button click
+                          className="bg-blue-500 text-white text-sm ml-2"
+                        >
+                          Save
+                        </Button>
+                      </div>
                     </td>}
                     <td className="py-3 px-4 border-b border-r">
                       {isSuperAdmin ? (
@@ -989,7 +1005,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 Attendance for queue number {alreadyMarkedQueueNumber} has already been marked.
               </p>
               <p className="mb-4">
-                队列号 {alreadyMarkedQueueNumber} 的出��已经被标记。
+                队列号 {alreadyMarkedQueueNumber} 的出席已经被标记。
               </p>
               <div className="flex justify-end">
                 <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
