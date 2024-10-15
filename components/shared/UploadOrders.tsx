@@ -86,10 +86,10 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
           }));
 
           return {
-            queueNumber: `uploaded_queue_${index + 1}`,
             customFieldValues: [
               {
                 groupId: `uploaded_group_${index + 1}`,
+                queueNumber: `uploaded_queue_${index + 1}`,
                 fields: customFieldValues,
                 attendance: true,
                 cancelled: false,
