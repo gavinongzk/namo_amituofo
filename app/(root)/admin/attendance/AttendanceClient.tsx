@@ -731,23 +731,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
                     <td className="py-3 px-4 border-b border-r">
                       {isSuperAdmin ? (
-                        <>
+                        <div className="flex flex-col sm:flex-row items-center">
                           <input
                             type="text"
-                            value={remarks[row.registrationId] || row.remarks} // Use existing remarks as default
+                            value={remarks[row.registrationId] || row.remarks}
                             onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
-                            className="border rounded p-1"
+                            className="border rounded p-1 flex-grow mb-2 sm:mb-0 sm:mr-2"
+                         
                             placeholder="Enter remarks"
                           />
                           <Button
                             onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
-                            className="bg-blue-500 text-white text-sm ml-2"
+                            className="bg-blue-500 text-white text-sm"
                           >
                             Save
                           </Button>
-                        </>
+                        </div>
                       ) : (
-                        <span>{row.remarks}</span> // Display remarks as text for non-superadmin users
+                        <span>{row.remarks}</span>
                       )}
                     </td>
                     <td className="py-3 px-4 border-b border-r">

@@ -92,3 +92,28 @@ export const handleError = (error: unknown) => {
   console.error(error)
   throw new Error(typeof error === 'string' ? error : JSON.stringify(error))
 }
+
+// ... existing code ...
+export const showModalWithMessage = (
+  setModalTitle: React.Dispatch<React.SetStateAction<string>>,
+  setModalMessage: React.Dispatch<React.SetStateAction<string>>,
+  setModalType: React.Dispatch<React.SetStateAction<'loading' | 'success' | 'error'>>,
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>,
+  title: string,
+  message: string,
+  type: 'loading' | 'success' | 'error'
+) => {
+  setModalTitle(title);
+  setModalMessage(message);
+  setModalType(type);
+  setShowModal(true);
+
+  // Auto-close the modal after 2 seconds for success and error messages
+  if (type !== 'loading') {
+    setTimeout(() => {
+      setShowModal(false);
+      setModalType('loading'); // Reset for next use
+    }, 2000);
+  }
+};
+// ... existing code ...

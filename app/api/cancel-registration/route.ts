@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       await order.save();
 
       // Update event's max seats
-      const seatChange = cancelled ? -1 : 1;
+      const seatChange = cancelled ? 1 : -1;
       const event = await Event.findByIdAndUpdate(
         order.event,
         { $inc: { maxSeats: seatChange } },
