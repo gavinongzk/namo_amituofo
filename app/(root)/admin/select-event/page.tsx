@@ -51,7 +51,9 @@ const SelectEventPage = () => {
           const recentAndUpcomingEvents = await Promise.all(result.data
             .filter((event: Event) => {
               const endDate = parseISO(event.endDateTime);
-              return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
+              // Check if the user is a superadmin
+              const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+              return isSuperAdmin || isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
             })
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {

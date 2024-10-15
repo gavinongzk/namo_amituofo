@@ -117,7 +117,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   } | null>(null);
   const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
 
-
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
     let attended = 0;
@@ -620,6 +619,34 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   };
 
+  const handleUpdateUserInfo = async (registrationId: string, updatedName: string, updatedPhoneNumber: string) => {
+    try {
+        const res = await fetch('/api/update-user-info', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ registrationId, updatedName, updatedPhoneNumber }),
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to update user info');
+        }
+
+        // Update the local state here
+        setRegistrations(prev => 
+            prev.map(reg => 
+                reg.id === registrationId ? { ...reg, name: updatedName, phoneNumber: updatedPhoneNumber } : reg
+            )
+        );
+
+        showModalWithMessage('Success', 'User info updated successfully', 'success');
+    } catch (error) {
+        console.error('Error updating user info:', error);
+        showModalWithMessage('Error', 'Failed to update user info', 'error');
+    }
+  };
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -727,8 +754,34 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     `}
                   >
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
-                    <td className="py-3 px-4 border-b border-r">{row.name}</td>
-                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
+                    <td className="py-3 px-4 border-b border-r">
+                      <input
+                        type="text"
+                        value={row.name}
+                        onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
+                        onBlur={() => handleUpdateUserInfo(row.registrationId, row.name, row.phoneNumber)} // Save on blur
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleUpdateUserInfo(row.registrationId, e.currentTarget.value, row.phoneNumber); // Save on Enter
+                          }
+                        }}
+                        className="border rounded p-1"
+                      />
+                    </td>
+                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">
+                      <input
+                        type="text"
+                        value={row.phoneNumber}
+                        onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
+                        onBlur={() => handleUpdateUserInfo(row.registrationId, row.name, row.phoneNumber)} // Save on blur
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleUpdateUserInfo(row.registrationId, row.name, e.currentTarget.value); // Save on Enter
+                          }
+                        }}
+                        className="border rounded p-1"
+                      />
+                    </td>}
                     <td className="py-3 px-4 border-b border-r">
                       {isSuperAdmin ? (
                         <div className="flex flex-col sm:flex-row items-center">
@@ -936,7 +989,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 Attendance for queue number {alreadyMarkedQueueNumber} has already been marked.
               </p>
               <p className="mb-4">
-                队列号 {alreadyMarkedQueueNumber} 的出席已经被标记。
+                队列号 {alreadyMarkedQueueNumber} 的出��已经被标记。
               </p>
               <div className="flex justify-end">
                 <Button onClick={() => setShowAlreadyMarkedModal(false)} variant="outline">
