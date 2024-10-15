@@ -28,7 +28,6 @@ const UploadOrdersPage = () => {
     <div>
       <EventSelector onEventSelect={handleEventSelect} />
 
-      <h1 className="text-3xl font-bold">Upload Orders</h1>
       {selectedEvent && <UploadOrders eventId={selectedEvent._id} />}
     </div>
   );

@@ -131,6 +131,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
   return (
     <div className="mb-4">
+      <h2 className="text-3xl font-bold">Upload Orders</h2>
       <h4 className="font-semibold mb-2">Required Excel File Headers:</h4>
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>

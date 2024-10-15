@@ -24,7 +24,7 @@ export default authMiddleware({
 
     const role = auth.sessionClaims?.role as string;
 
-    if (req.nextUrl.pathname.startsWith('/api/')) {
+    if ((req.nextUrl.pathname.startsWith('/api/')) || (req.nextUrl.pathname.startsWith('/admin/'))) {
       const allowedRoles = getAllowedRoles(req.nextUrl.pathname);
       if (!allowedRoles.includes(role)) {
         return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
@@ -50,6 +50,11 @@ function getAllowedRoles(pathname: string): string[] {
     '/api/delete-registration': ['superadmin'],
     '/api/events/:id/attendees': ['superadmin'],
     '/api/download-users-csv': ['superadmin'],
+    '/admin/events_archive': ['superadmin'],
+    '/admin/upload_orders': ['superadmin'],
+    '/admin/users': ['superadmin'],
+    '/admin/analytics': ['superadmin']
+
   };
 
   return routeRoles[pathname] || ['user', 'admin', 'superadmin'];
