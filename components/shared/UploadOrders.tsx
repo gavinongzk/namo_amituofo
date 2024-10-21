@@ -6,17 +6,17 @@ import { cn } from "@/lib/utils";
 import Modal from '@/components/ui/modal';
 import { categoryCustomFields } from '@/constants'; // Import the category custom fields
 import { getEventCategory } from '@/lib/actions/event.actions';
-
+import { Event } from '@/types'
 
 interface UploadOrdersProps {
-  eventId: string; // Define the eventId prop type
+  event: Event; // Change to accept the entire Event object
 }
 
 interface CategoryCustomFields {
     [key: string]: { id: string; label: string; type: string; options?: { value: string; label: string; }[] }[];
 }
 
-const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update component signature
+const UploadOrders: React.FC<UploadOrdersProps> = ({ event }) => { // Update component signature
   // State for modal management
   const [modalTitle, setModalTitle] = useState<string>('');
   const [modalMessage, setModalMessage] = useState<string>('');
@@ -27,12 +27,12 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
   useEffect(() => {
     const fetchEventCategory = async () => {
-      const category = await getEventCategory(eventId);
+      const category = await getEventCategory(event._id);
       setEventCategory(category); // Set the fetched category
     };
 
     fetchEventCategory(); // Call the function to fetch the category
-  }, [eventId]); // Dependency on eventId
+  }, [event._id]); // Dependency on eventId
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -102,6 +102,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
                 cancelled: false,
               },
             ],
+            event: event, // Use the entire event object
           };
         });
 
@@ -112,7 +113,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ eventId, ordersData: orders }), // Change 'orders' to 'ordersData'
+          body: JSON.stringify({ eventId: event._id, ordersData: orders }), // Change 'orders' to 'ordersData'
         });
 
         if (!response.ok) {
@@ -127,7 +128,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
     };
 
     reader.readAsArrayBuffer(selectedFile); // Read the selected file
-  }, [eventId, eventCategory, selectedFile]); // Add selectedFile as a dependency
+  }, [event._id, eventCategory, selectedFile]); // Add selectedFile as a dependency
 
   return (
     <div className="mb-4">

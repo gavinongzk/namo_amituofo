@@ -3,19 +3,7 @@
 import { useState } from 'react';
 import UploadOrders from '@/components/shared/UploadOrders';
 import EventSelector from '@/components/shared/EventSelector'; // Import your event selector component
-
-type Event = {
-    _id: string;
-    title: string;
-    startDateTime: string;
-    endDateTime: string;
-    location: string;
-    category: {
-      name: string;
-    };
-    maxSeats: number;
-  };
-
+import { Event } from '@/types'
 
 const UploadOrdersPage = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -28,7 +16,7 @@ const UploadOrdersPage = () => {
     <div>
       <EventSelector onEventSelect={handleEventSelect} />
 
-      {selectedEvent && <UploadOrders eventId={selectedEvent._id} />}
+      {selectedEvent && <UploadOrders event={selectedEvent} />} // Pass the entire event object
     </div>
   );
 };

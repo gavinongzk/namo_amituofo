@@ -87,6 +87,10 @@ export type Event = {
     name: string
   }
   customFields: CustomField[]
+  maxSeats: number;
+  totalRegistrations: number;
+  attendedUsers: number;
+  cannotReciteAndWalk: number;
 }
 
 // ====== CATEGORY PARAMS
