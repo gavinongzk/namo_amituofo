@@ -50,6 +50,7 @@ function getAllowedRoles(pathname: string): string[] {
     '/api/delete-registration': ['superadmin'],
     '/api/events/:id/attendees': ['superadmin'],
     '/api/download-users-csv': ['superadmin'],
+    '/api/update-user-info': ['superadmin'],
     '/admin/events_archive': ['superadmin'],
     '/admin/upload_orders': ['superadmin'],
     '/admin/users': ['superadmin'],

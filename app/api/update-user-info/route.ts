@@ -1,30 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
-import User from '@/lib/database/models/user.model';
+import Order from '@/lib/database/models/order.model';
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDatabase();
-        const { registrationId, updatedName, updatedPhoneNumber } = await req.json();
+        const { orderId, updatedFields } = await req.json();
 
-        if (!registrationId || !updatedName || !updatedPhoneNumber) {
+        if (!orderId || !updatedFields) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const user = await User.findOneAndUpdate(
-            { registrationId },
-            { name: updatedName, phoneNumber: updatedPhoneNumber },
+        const order = await Order.findOneAndUpdate(
+            { _id: orderId },
+            updatedFields,
             { new: true }
         );
 
-        if (!user) {
-            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        if (!order) {
+            return NextResponse.json({ message: 'Order not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ message: 'User info updated successfully', user });
+        return NextResponse.json({ message: 'Order info updated successfully', order });
     } catch (error) {
-        console.error('Error updating user info:', error);
+        console.error('Error updating order info:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
 }
-

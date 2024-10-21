@@ -623,12 +623,24 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleUpdateUserInfo = async (registrationId: string, updatedName: string, updatedPhoneNumber: string) => {
     try {
+        const updatedFields = {
+            customFieldValues: [
+                {
+                    groupId: 'default', // Assuming a default groupId; adjust as necessary
+                    fields: [
+                        { id: 'name', value: updatedName },
+                        { id: 'phone', value: updatedPhoneNumber }
+                    ]
+                }
+            ]
+        };
+
         const res = await fetch('/api/update-user-info', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ registrationId, updatedName, updatedPhoneNumber }),
+            body: JSON.stringify({ orderId: registrationId, updatedFields }), // Ensure the structure matches the expected format
         });
 
         if (!res.ok) {
