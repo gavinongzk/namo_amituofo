@@ -207,7 +207,12 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
           'cancelled': { $ne: true }
         }
       }
-    }).populate('event', 'title imageUrl startDateTime endDateTime');
+    }).populate('event', '_id title imageUrl startDateTime endDateTime organizer');
+
+    const eventExists = await Event.findById(orders[0].event);
+    if (!eventExists) {
+      console.error('Event not found for order:', orders[0]._id);
+    }
 
     console.log('Found orders:', orders);
 
