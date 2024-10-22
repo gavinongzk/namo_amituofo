@@ -603,12 +603,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId
-    if (!remark) return; // Ensure remarks are provided
     try {
         await fetch('/api/tagged-users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phoneNumber, name, remarks: remark }),
+            body: JSON.stringify({ phoneNumber, name, remarks: remark }), // Allow empty remarks
         });
         // Update the local remarks state immediately after saving
         setRemarks((prev) => ({ ...prev, [registrationId]: remark })); // Update the remarks for the specific registrationId
@@ -737,7 +736,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                             value={remarks[row.registrationId] || row.remarks}
                             onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
                             className="border rounded p-1 flex-grow mb-2 sm:mb-0 sm:mr-2"
-                         
                             placeholder="Enter remarks"
                           />
                           <Button

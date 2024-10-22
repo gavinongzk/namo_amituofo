@@ -7,9 +7,10 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const { phoneNumber, name, remarks } = await req.json();
     
+    // Ensure remarks can be an empty string
     const taggedUser = await TaggedUser.findOneAndUpdate(
       { phoneNumber },
-      { phoneNumber, name, remarks },
+      { phoneNumber, name, remarks: remarks || '' }, // Save as empty string if remarks is undefined
       { upsert: true, new: true }
     );
 
