@@ -111,6 +111,9 @@ const ArchiveClient = React.memo(() => {
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationData, setConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string; currentAttendance: boolean } | null>(null);
+  const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
+
+
 
   const handleEventSelect = (event: Event) => {
     setSelectedEvent(event);
@@ -460,6 +463,25 @@ const ArchiveClient = React.memo(() => {
     }, 2000);
   }, [deleteConfirmationData, registrations, calculateCounts]);
 
+
+  const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
+    const remark = remarks[registrationId]; // Get the remark for the specific registrationId
+    try {
+        await fetch('/api/tagged-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber, name, remarks: remark }), // Allow empty remarks
+        });
+        // Update the local remarks state immediately after saving
+        setRemarks((prev) => ({ ...prev, [registrationId]: remark })); // Update the remarks for the specific registrationId
+        
+        // Show success modal after saving remarks
+        showModalWithMessage('Success / 成功', 'Remarks saved successfully. 备注已成功保存。', 'success');
+    } catch (error) {
+        console.error('Error updating remarks:', error);
+    }
+  };
+
   const groupRegistrationsByPhone = useCallback(() => {
     const phoneGroups: { [key: string]: { id: string; queueNumber: string }[] } = {};
     registrations.forEach(registration => {
@@ -744,7 +766,27 @@ const ArchiveClient = React.memo(() => {
                       <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
                       <td className="py-3 px-4 border-b border-r">{row.name}</td>
                       {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
-                      <td className="py-3 px-4 border-b border-r">{row.remarks}</td>
+                      <td className="py-3 px-4 border-b border-r">
+                      {isSuperAdmin ? (
+                        <div className="flex flex-col sm:flex-row items-center">
+                          <input
+                            type="text"
+                            value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : row.remarks}
+                            onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
+                            className="border rounded p-1 flex-grow mb-2 sm:mb-0 sm:mr-2"
+                            placeholder="Enter remarks"
+                          />
+                          <Button
+                            onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
+                            className="bg-blue-500 text-white text-sm"
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      ) : (
+                        <span>{row.remarks}</span>
+                      )}
+                    </td>
                       <td className="py-3 px-4 border-b border-r">
                         <Checkbox
                           checked={row.attendance}
