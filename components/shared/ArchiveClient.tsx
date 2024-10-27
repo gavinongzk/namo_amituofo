@@ -767,26 +767,27 @@ const ArchiveClient = React.memo(() => {
                       <td className="py-3 px-4 border-b border-r">{row.name}</td>
                       {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
                       <td className="py-3 px-4 border-b border-r">
-                      {isSuperAdmin ? (
-                        <div className="flex flex-col sm:flex-row items-center">
-                          <input
-                            type="text"
-                            value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : row.remarks}
-                            onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
-                            className="border rounded p-1 flex-grow mb-2 sm:mb-0 sm:mr-2"
-                            placeholder="Enter remarks"
-                          />
-                          <Button
-                            onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
-                            className="bg-blue-500 text-white text-sm"
-                          >
-                            Save
-                          </Button>
-                        </div>
-                      ) : (
-                        <span>{row.remarks}</span>
-                      )}
-                    </td>
+                        {isSuperAdmin ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="text"
+                              value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : row.remarks}
+                              onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
+                              className="h-8 text-sm min-w-[120px]"
+                              placeholder="Add remarks"
+                            />
+                            <Button
+                              onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
+                              className="h-8 px-3 bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                              size="sm"
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 border-b border-r">
                         <Checkbox
                           checked={row.attendance}
