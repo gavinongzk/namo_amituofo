@@ -20,6 +20,18 @@ import { CustomField } from "@/types"
 import { useUser } from '@clerk/nextjs';
 import { getCookie } from 'cookies-next';
 
+
+const isValidName = (name: string) => {
+  // Regex to match only standard letters, spaces, and common punctuation
+  const nameRegex = /^[a-zA-Z\s\-.']+$/;
+  return nameRegex.test(name);
+};
+
+const sanitizeName = (name: string) => {
+  // Remove emojis and other non-standard characters
+  return name.replace(/[^\p{L}\p{N}\s\-.']/gu, '');
+};
+
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +79,14 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                       (value) => isValidPhoneNumber(value),
                       { message: "Invalid phone number" }
                     )
-                : z.string().min(1, { message: "This field is required" })
+                : field.label.toLowerCase().includes('name')
+                  ? z.string()
+                      .min(1, { message: "This field is required" })
+                      .refine(
+                        (value) => isValidName(value),
+                        { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                      )
+                  : z.string().min(1, { message: "This field is required" })
           ])
         )
       )
@@ -193,7 +212,20 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                               ))}
                             </div>
                           ) : (
-                            <Input {...formField} value={String(formField.value)} />
+                            <Input 
+                              {...formField} 
+                              value={String(formField.value)}
+                              onChange={(e) => {
+                                const sanitized = sanitizeName(e.target.value);
+                                formField.onChange(sanitized);
+                              }}
+                              onPaste={(e) => {
+                                e.preventDefault();
+                                const text = e.clipboardData.getData('text');
+                                const sanitized = sanitizeName(text);
+                                formField.onChange(sanitized);
+                              }}
+                            />
                           )}
                         </FormControl>
                         <FormMessage />
