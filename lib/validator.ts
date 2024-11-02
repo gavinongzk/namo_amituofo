@@ -3,8 +3,8 @@ import * as z from "zod"
 const customFieldSchema = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(['text', 'boolean', 'phone', 'radio']),
-  value: z.union([z.string(), z.boolean()]).optional(),
+  type: z.enum(['text', 'boolean', 'phone', 'radio', 'checkbox']),
+  value: z.union([z.string(), z.boolean(), z.array(z.string())]).optional(),
   options: z.array(z.string()).optional(),
 })
 
@@ -20,8 +20,8 @@ export const eventFormSchema = z.object({
   customFields: z.array(z.object({
     id: z.string(),
     label: z.string(),
-    type: z.enum(["boolean", "text", "phone", "radio"]),
-    value: z.union([z.string(), z.boolean()]).optional(),
+    type: z.enum(["boolean", "text", "phone", "radio", "checkbox"]),
+    value: z.union([z.string(), z.boolean(), z.array(z.string())]).optional(),
     options: z.array(z.string()).optional()
   })),
   registrationSuccessMessage: z.string().optional(),

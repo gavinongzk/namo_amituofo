@@ -1,5 +1,3 @@
-
-
 // ====== USER PARAMS
 export type CreateUserParams = {
   clerkId: string
@@ -134,12 +132,17 @@ export type SearchParamProps = {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
+type Option = {
+  value: string;
+  label: string;
+} | string;
+
 export type CustomField = {
   id: string;
   label: string;
-  type: "boolean" | "text" | "phone" | "radio";
-  value?: string | boolean;
-  options?: { value: string; label: string }[];
+  type: 'text' | 'boolean' | 'phone' | 'radio' | 'checkbox';
+  value?: string | boolean | string[];
+  options?: Option[];
 };
 
 export interface IRegistration {

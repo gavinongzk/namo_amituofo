@@ -32,7 +32,7 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.']/gu, '');
 };
 
-const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
+const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } } ) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
@@ -210,6 +210,30 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                   {option.label}
                                 </label>
                               ))}
+                            </div>
+                          ) : customField.type === 'checkbox' ? (
+                            <div className="flex flex-col gap-2">
+                              {('options' in customField) && customField.options?.map((option) => {
+                                const optionValue = typeof option === 'string' ? option : option.value;
+                                const optionLabel = typeof option === 'string' ? option : option.label;
+                                
+                                return (
+                                  <label key={optionValue} className="flex items-center gap-2">
+                                    <Checkbox
+                                      checked={Array.isArray(formField.value) && formField.value.includes(optionValue)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValue = Array.isArray(formField.value) ? formField.value : [];
+                                        if (checked) {
+                                          formField.onChange([...currentValue, optionValue]);
+                                        } else {
+                                          formField.onChange(currentValue.filter((val) => val !== optionValue));
+                                        }
+                                      }}
+                                    />
+                                    <span>{optionLabel}</span>
+                                  </label>
+                                );
+                              })}
                             </div>
                           ) : (
                             <Input 

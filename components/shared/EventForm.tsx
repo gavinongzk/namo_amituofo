@@ -33,11 +33,32 @@ type EventFormProps = {
   eventId?: string
 }
 
+// Add this interface to ensure form values match schema
+interface EventFormData {
+  title: string
+  description: string
+  location: string
+  imageUrl: string
+  startDateTime: Date
+  endDateTime: Date
+  categoryId: string
+  maxSeats: number
+  customFields: Array<{
+    id: string
+    label: string
+    type: "boolean" | "text" | "phone" | "radio" | "checkbox"
+    value?: string | boolean | string[]
+    options?: string[]
+  }>
+  registrationSuccessMessage?: string
+  country: string
+}
+
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof eventFormSchema>>({
+  const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: event && type === 'Update'
       ? {
@@ -49,7 +70,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           customFields: event.customFields.map(field => ({
             id: field.id,
             label: field.label,
-            type: field.type as 'boolean' | 'text' | 'phone' | 'radio',
+            type: field.type as "boolean" | "text" | "phone" | "radio" | "checkbox",
             value: field.value,
             options: field.options?.map(option => 
               typeof option === 'string' ? option : option.value
@@ -86,7 +107,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     name: "customFields",
   });
 
-  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+  async function onSubmit(values: EventFormData) {
     let uploadedImageUrl = values.imageUrl;
 
     if(files.length > 0) {
@@ -406,40 +427,93 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         <option value="boolean">Boolean</option>
                         <option value="phone">Phone Number</option>
                         <option value="radio">Radio</option>
+                        <option value="checkbox">Checkbox (Multiple Selection)</option>
                       </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {field.type === 'radio' && (
-                <FormField
-                  control={form.control}
-                  name={`customFields.${index}.options`}
-                  render={({ field: optionsField }) => (
-                    <FormItem className="w-full">
-                      <FormControl>
-                        <Input
-                          placeholder="Options (comma-separated)"
-                          value={Array.isArray(optionsField.value) ? optionsField.value.join(', ') : String(optionsField.value ?? '')}
-                          onChange={(e) => {
-                            const inputValue = e.target.value;
-                            const optionsArray = inputValue.split(',').map(option => option.trim()).filter(Boolean);
-                            optionsField.onChange(optionsArray);
-                          }}
-                          onBlur={optionsField.onBlur}
-                          name={optionsField.name}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {(field.type === 'radio' || field.type === 'checkbox') && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name={`customFields.${index}.options`}
+                    render={({ field: optionsField }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Options (one per line)</FormLabel>
+                        <FormControl>
+                          <textarea
+                            className="w-full min-h-[100px] input-field rounded-lg p-3"
+                            placeholder="Enter each option on a new line"
+                            value={Array.isArray(optionsField.value) 
+                              ? optionsField.value.map((opt: string | { value: string }) => 
+                                  typeof opt === 'string' ? opt : opt.value
+                                ).join('\n') 
+                              : ''}
+                            onChange={(e) => {
+                              const inputValue = e.target.value;
+                              const optionsArray = inputValue
+                                .split('\n')
+                                .map(option => option.trim())
+                                .filter(Boolean)
+                                .map(option => ({
+                                  value: option,
+                                  label: option
+                                }));
+                              optionsField.onChange(optionsArray);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Enter each option on a new line. For example:
+                          {field.type === 'radio' ? '\nOption 1\nOption 2' : '\n[ ] Option 1\n[ ] Option 2'}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Preview Section */}
+                  <div className="mt-2 p-4 bg-grey-50 rounded-lg">
+                    <p className="text-sm font-medium mb-3 text-grey-600">Preview:</p>
+                    <div className="space-y-3">
+                      {Array.isArray(form.getValues(`customFields.${index}.options`)) && 
+                        form.getValues(`customFields.${index}.options`)?.map((option: { label: string } | string, optionIndex) => {
+                          const optionLabel = typeof option === 'string' ? option : option?.label;
+                          
+                          return (
+                            <div key={optionIndex} className="flex items-center gap-3">
+                              {field.type === 'radio' ? (
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    disabled
+                                    className="h-4 w-4 border-gray-300"
+                                  />
+                                  <label className="text-sm text-gray-600">{optionLabel}</label>
+                                </div>
+                              ) : (
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox disabled />
+                                  <label className="text-sm text-gray-600">{optionLabel}</label>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      }
+                      {(!form.getValues(`customFields.${index}.options`)?.length) && (
+                        <p className="text-sm text-gray-500 italic">No options added yet</p>
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
               <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
             </div>
           ))}
-          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="small-button bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+          <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text", options: [] })} className="small-button bg-blue-500 hover:bg-blue-600 text-white rounded-md">
             Add Question
           </Button>
         </div>
