@@ -439,35 +439,28 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   <FormField
                     control={form.control}
                     name={`customFields.${index}.options`}
-                    render={({ field: optionsField }) => (
+                    render={({ field }) => (
                       <FormItem className="w-full">
                         <FormLabel>Options (one per line)</FormLabel>
                         <FormControl>
-                          <textarea
-                            className="w-full min-h-[100px] input-field rounded-lg p-3"
+                          <Textarea
                             placeholder="Enter each option on a new line"
-                            value={Array.isArray(optionsField.value) 
-                              ? optionsField.value.map((opt: string | { value: string }) => 
-                                  typeof opt === 'string' ? opt : opt.value
-                                ).join('\n') 
-                              : ''}
+                            className="input-field min-h-[100px]"
+                            value={Array.isArray(field.value) ? field.value.join('\n') : ''}
                             onChange={(e) => {
-                              const inputValue = e.target.value;
-                              const optionsArray = inputValue
+                              const options = e.target.value
                                 .split('\n')
                                 .map(option => option.trim())
-                                .filter(Boolean)
-                                .map(option => ({
-                                  value: option,
-                                  label: option
-                                }));
-                              optionsField.onChange(optionsArray);
+                                .filter(Boolean);
+                              field.onChange(options);
                             }}
                           />
                         </FormControl>
                         <FormDescription>
                           Enter each option on a new line. For example:
-                          {field.type === 'radio' ? '\nOption 1\nOption 2' : '\n[ ] Option 1\n[ ] Option 2'}
+                          {customFields[index].type === 'radio' ? 
+                            '\nOption 1\nOption 2' : 
+                            '\n[ ] Option 1\n[ ] Option 2'}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -484,25 +477,56 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                           
                           return (
                             <div key={optionIndex} className="flex items-center gap-3">
-                              {field.type === 'radio' ? (
+                              {customFields[index].type === 'radio' ? (
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
                                     disabled
                                     className="h-4 w-4 border-gray-300"
                                   />
-                                  <label className="text-sm text-gray-600">{optionLabel}</label>
+                                  <Input 
+                                    value={optionLabel}
+                                    onChange={(e) => {
+                                      const currentOptions = form.getValues(`customFields.${index}.options`) || [];
+                                      const newOptions = [...currentOptions];
+                                      newOptions[optionIndex] = e.target.value;
+                                      form.setValue(`customFields.${index}.options`, newOptions);
+                                    }}
+                                    className="input-field"
+                                    placeholder={`Option ${optionIndex + 1}`}
+                                  />
                                 </div>
                               ) : (
                                 <div className="flex items-center space-x-2">
                                   <Checkbox disabled />
-                                  <label className="text-sm text-gray-600">{optionLabel}</label>
+                                  <Input 
+                                    value={optionLabel}
+                                    onChange={(e) => {
+                                      const currentOptions = form.getValues(`customFields.${index}.options`) || [];
+                                      const newOptions = [...currentOptions];
+                                      newOptions[optionIndex] = e.target.value;
+                                      form.setValue(`customFields.${index}.options`, newOptions);
+                                    }}
+                                    className="input-field"
+                                    placeholder={`Option ${optionIndex + 1}`}
+                                  />
                                 </div>
                               )}
                             </div>
                           );
                         })
                       }
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const currentOptions = form.getValues(`customFields.${index}.options`) || [];
+                          form.setValue(`customFields.${index}.options`, [...currentOptions, '']);
+                        }}
+                        className="mt-2 text-sm"
+                        variant="outline"
+                      >
+                        Add Option
+                      </Button>
                       {(!form.getValues(`customFields.${index}.options`)?.length) && (
                         <p className="text-sm text-gray-500 italic">No options added yet</p>
                       )}
