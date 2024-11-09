@@ -22,14 +22,14 @@ import { getCookie } from 'cookies-next';
 
 
 const isValidName = (name: string) => {
-  // Regex to match only standard letters, spaces, and common punctuation
-  const nameRegex = /^[a-zA-Z\s\-.']+$/;
+  // Regex to match letters (including Chinese), spaces, brackets, and common punctuation
+  const nameRegex = /^[\p{L}\p{N}\s\-.'()\[\]{}]+$/u;
   return nameRegex.test(name);
 };
 
 const sanitizeName = (name: string) => {
-  // Remove emojis and other non-standard characters
-  return name.replace(/[^\p{L}\p{N}\s\-.']/gu, '');
+  // Remove emojis and other non-standard characters while keeping Chinese characters and brackets
+  return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
 const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
