@@ -9,6 +9,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -25,10 +26,10 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   </div>
 );
 
-const CancelButton = ({ groupId, orderId, onCancel }: { groupId: string; orderId: string; onCancel: () => void }) => {
+const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel }) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCancel = async () => {
+  const handleCancel = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/cancel-registration', {
@@ -79,10 +80,19 @@ const CancelButton = ({ groupId, orderId, onCancel }: { groupId: string; orderId
   );
 };
 
-const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
-  const [order, setOrder] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
+const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) => {
+  const [order, setOrder] = useState<{
+    event: {
+      title: string;
+      startDateTime: string;
+      endDateTime: string;
+      location?: string;
+      registrationSuccessMessage?: string;
+    };
+    customFieldValues: CustomFieldGroup[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -142,6 +152,18 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     }
   };
 
+  const handleCancellation = (groupId: string): void => {
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+      return {
+        ...prevOrder,
+        customFieldValues: prevOrder.customFieldValues.map(group =>
+          group.groupId === groupId ? { ...group, cancelled: true } : group
+        )
+      };
+    });
+  };
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">Loading...</div>;
   }
@@ -181,7 +203,7 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className="mt-6 bg-white shadow-md rounded-xl overflow-hidden">
+              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
                     <QRCodeDisplay qrCode={group.qrCode} />
@@ -213,11 +235,23 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
                     ))}
                   </dl>
                 </div>
-                <CancelButton groupId={group.groupId} orderId={order.id} onCancel={() => setOrder(prevOrder => ({
-                  ...prevOrder,
-                  customFieldValues: prevOrder.customFieldValues.map(group =>
-                    group.groupId === group.groupId ? { ...group, cancelled: true } : group
-                }))} />
+                {!group.cancelled && (
+                  <div className="p-4 bg-gray-50">
+                    <CancelButton 
+                      groupId={group.groupId} 
+                      orderId={id} 
+                      onCancel={() => handleCancellation(group.groupId)} 
+                    />
+                  </div>
+                )}
+                
+                {group.cancelled && (
+                  <div className="p-4 bg-red-50">
+                    <p className="text-red-600 text-center font-semibold">
+                      Registration Cancelled 注册已取消
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
 

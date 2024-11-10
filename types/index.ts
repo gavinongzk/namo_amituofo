@@ -1,5 +1,3 @@
-
-
 // ====== USER PARAMS
 export type CreateUserParams = {
   clerkId: string
@@ -187,3 +185,27 @@ export type UniquePhoneNumber = {
   isNewUser: boolean;
   name: string;
 };
+
+// Add these to your existing types
+export interface CancelButtonProps {
+  groupId: string;
+  orderId: string;
+  onCancel: () => void;
+}
+
+export interface OrderDetailsPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export interface CancellationResponse {
+  message: string;
+  cancelled: boolean;
+}
+
+export interface CancellationRequest {
+  orderId: string;
+  groupId: string;
+  cancelled: boolean;
+}
