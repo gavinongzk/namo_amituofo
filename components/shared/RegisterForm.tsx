@@ -299,23 +299,35 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       </Form>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Duplicate Registration Found / 发现重复注册</DialogTitle>
-            <DialogDescription>
-              The following phone numbers have already registered for this event:
-              <br />
-              以下电话号码已经注册过此活动：
-              <br /><br />
-              {duplicatePhoneNumbers.join(', ')}
-              <br /><br />
-              Do you want to continue with the registration?
-              <br />
-              您要继续注册吗？
+        <DialogContent className="bg-white border-2 border-gray-200 shadow-xl max-w-md w-[90vw]">
+          <DialogHeader className="space-y-4">
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Duplicate Registration Found / 发现重复注册
+            </DialogTitle>
+            <DialogDescription className="text-gray-700 space-y-4">
+              <p className="text-base">
+                The following phone numbers have already registered for this event:
+                <br />
+                以下电话号码已经注册过此活动：
+              </p>
+              <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                <p className="text-red-600 font-medium text-lg">
+                  {duplicatePhoneNumbers.join(', ')}
+                </p>
+              </div>
+              <p className="text-base pt-2">
+                Do you want to continue with the registration?
+                <br />
+                您要继续注册吗？
+              </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+          <DialogFooter className="sm:justify-end gap-3 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmation(false)}
+              className="flex-1 sm:flex-none border-gray-300 hover:bg-gray-100"
+            >
               Cancel / 取消
             </Button>
             <Button 
@@ -325,6 +337,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                   submitForm(formValues);
                 }
               }}
+              className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
             >
               Continue / 继续
             </Button>
