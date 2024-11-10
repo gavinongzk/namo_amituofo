@@ -117,3 +117,16 @@ export const showModalWithMessage = (
   }
 };
 // ... existing code ...
+
+export function isValidPhoneNumber(phoneNumber: string): boolean {
+  // Basic format check for SG/MY numbers
+  const sgRegex = /^\+65[689][0-9]{7}$/;  // Singapore format
+  const myRegex = /^\+60[123456789][0-9]{8,9}$/;  // Malaysia format
+  
+  return sgRegex.test(phoneNumber) || myRegex.test(phoneNumber);
+}
+
+export function formatPhoneNumber(phoneNumber: string): string {
+  // Remove all non-digit characters except '+'
+  return phoneNumber.replace(/[^\d+]/g, '');
+}

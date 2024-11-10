@@ -10,6 +10,8 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
+import { Pencil, X, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -93,6 +95,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [editingField, setEditingField] = useState<{
+    groupId: string;
+    field: string;
+  } | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -167,6 +174,63 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     });
   };
 
+  const handleEdit = (groupId: string, field: string, currentValue: string) => {
+    setEditingField({ groupId, field });
+    setEditValue(currentValue);
+  };
+
+  const handleSave = async (groupId: string) => {
+    if (!editingField) return;
+    
+    try {
+      const response = await fetch('/api/update-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: id,
+          groupId,
+          field: editingField.field,
+          value: editValue,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update field');
+
+      // Update local state
+      setOrder(prevOrder => {
+        if (!prevOrder) return null;
+        return {
+          ...prevOrder,
+          customFieldValues: prevOrder.customFieldValues.map(group =>
+            group.groupId === groupId
+              ? {
+                  ...group,
+                  fields: group.fields.map(field =>
+                    field.id === editingField.field
+                      ? { ...field, value: editValue }
+                      : field
+                  ),
+                }
+              : group
+          ),
+        };
+      });
+    } catch (error) {
+      console.error('Error updating field:', error);
+      // Optionally show error message to user
+    }
+    
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const handleCancel = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">Loading...</div>;
   }
@@ -229,10 +293,45 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     {group.fields.map((field: CustomField) => (
                       <div key={field.id} className="flex flex-col">
                         <dt className="font-medium text-gray-600 mb-1">{field.label}</dt>
-                        <dd className="text-gray-900 font-semibold">
-                          {field.type === 'radio' 
-                            ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                            : (field.value || 'N/A')}
+                        <dd className="flex items-center gap-2">
+                          {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="max-w-[200px]"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleSave(group.groupId)}
+                                className="p-1 hover:bg-green-100 rounded"
+                              >
+                                <Check className="h-4 w-4 text-green-600" />
+                              </button>
+                              <button
+                                onClick={handleCancel}
+                                className="p-1 hover:bg-red-100 rounded"
+                              >
+                                <X className="h-4 w-4 text-red-600" />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-gray-900 font-semibold">
+                                {field.type === 'radio' 
+                                  ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                                  : (field.value || 'N/A')}
+                              </span>
+                              {(field.id === 'name' || field.id === 'phone') && !group.cancelled && (
+                                <button
+                                  onClick={() => handleEdit(group.groupId, field.id, field.value)}
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                  <Pencil className="h-4 w-4 text-gray-500" />
+                                </button>
+                              )}
+                            </>
+                          )}
                         </dd>
                       </div>
                     ))}
