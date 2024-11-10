@@ -7,6 +7,8 @@ import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -22,6 +24,60 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
     </div>
   </div>
 );
+
+const CancelButton = ({ groupId, orderId, onCancel }: { groupId: string; orderId: string; onCancel: () => void }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCancel = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/cancel-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId, groupId, cancelled: true }),
+      });
+
+      if (!response.ok) throw new Error('Failed to cancel registration');
+      onCancel();
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button 
+          variant="destructive" 
+          className="w-full sm:w-auto mt-4"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Cancelling...' : 'Cancel Registration 取消注册'}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this registration? This action cannot be undone.
+            <br />
+            您确定要取消此注册吗？此操作无法撤消。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel 取消</AlertDialogCancel>
+          <AlertDialogAction onClick={handleCancel}>
+            Confirm 确认
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   const [order, setOrder] = useState<any>(null);
@@ -157,6 +213,11 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
                     ))}
                   </dl>
                 </div>
+                <CancelButton groupId={group.groupId} orderId={order.id} onCancel={() => setOrder(prevOrder => ({
+                  ...prevOrder,
+                  customFieldValues: prevOrder.customFieldValues.map(group =>
+                    group.groupId === group.groupId ? { ...group, cancelled: true } : group
+                }))} />
               </div>
             ))}
 

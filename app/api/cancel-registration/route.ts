@@ -7,10 +7,6 @@ import { auth } from '@clerk/nextjs';
 export async function POST(req: NextRequest) {
   console.log('Cancel/Uncancel registration request received');
   try {
-    const { userId } = auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     await connectToDatabase();
 
