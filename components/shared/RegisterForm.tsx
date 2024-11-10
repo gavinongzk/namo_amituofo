@@ -125,6 +125,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     )
   });
 
+  // Helper function to get default country code
+  const getDefaultCountry = (country: string | null) => {
+    return country === 'Malaysia' ? 'MY' : 'SG';
+  };
+
+  // Update form initialization with detected country
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -132,7 +138,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : 
-          field.type === 'phone' ? '+65' : 
+          field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
           ''
         ])
       )]
@@ -227,6 +233,18 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   const isFullyBooked = currentRegistrations >= event.maxSeats;
 
+  // Update the append function
+  const handleAddPerson = () => {
+    append(Object.fromEntries(
+      customFields.map(field => [
+        field.id,
+        field.type === 'boolean' ? false :
+        field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') :
+        ''
+      ])
+    ));
+  };
+
   return (
     <>
       {isCountryLoading ? (
@@ -266,7 +284,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                   <PhoneInput
                                     value={formField.value as string}
                                     onChange={(value) => formField.onChange(value || '')}
-                                    defaultCountry="SG"
+                                    defaultCountry={getDefaultCountry(userCountry)}
                                     countries={["SG", "MY"]}
                                     international
                                     countryCallingCodeEditable={false}
@@ -321,9 +339,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                   <div className="flex gap-4 mt-6">
                     <Button
                       type="button"
-                      onClick={() => append(Object.fromEntries(
-                        customFields.map(field => [field.id, field.type === 'boolean' ? false : ''])
-                      ))}
+                      onClick={handleAddPerson}
                       className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
                     >
                       Add Another Person 添加另一位
