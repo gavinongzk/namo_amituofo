@@ -63,12 +63,11 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, to
               <p className="text-sm text-gray-600">Cannot Recite & Walk 不能绕佛</p>
               <p className="font-semibold">{cannotReciteAndWalkCount}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600">Cancelled Users 已取消用户</p>
+              <p className="font-semibold">{cancelledUsersCount}</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-red-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-red-700">Cancelled Users</h3>
-          <p className="text-3xl font-bold text-red-800">{cancelledUsersCount}</p>
-          <p className="text-sm text-red-600">已取消用户</p>
         </div>
       </div>
     </div>
