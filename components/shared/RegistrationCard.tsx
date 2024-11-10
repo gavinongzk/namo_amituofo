@@ -13,7 +13,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={`/events/${event._id}`}
+        href={`/orders/${event.orderId}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500 transition-transform duration-300 group-hover:scale-105"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
@@ -35,11 +35,9 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           ))}
         </div>
 
-        {event.orderId && (
-          <Link href={`/orders/${event.orderId}`} className="flex gap-2 mt-4 text-primary-500 underline hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2">
-            <p>View Order Details</p>
-          </Link>
-        )}
+        <Link href={`/orders/${event.orderId}`} className="flex gap-2 mt-4 text-primary-500 underline hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2">
+          <p>View Order Details</p>
+        </Link>
       </div>
     </div>
   )

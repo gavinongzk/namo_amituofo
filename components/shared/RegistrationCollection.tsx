@@ -30,7 +30,8 @@ const RegistrationCollection: React.FC<CollectionProps> = ({
               <li key={registration.event._id} className="flex justify-center">
                 <RegistrationCard 
                   event={{
-                    ...registration.event
+                    ...registration.event,
+                    orderId: registration.event.orderId
                   }}
                   registrations={registration.registrations.map(r => ({
                     queueNumber: r.queueNumber ?? '',
