@@ -7,6 +7,9 @@ import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -23,10 +26,73 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   </div>
 );
 
-const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
-  const [order, setOrder] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
+const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCancel = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/cancel-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId, groupId, cancelled: true }),
+      });
+
+      if (!response.ok) throw new Error('Failed to cancel registration');
+      onCancel();
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button 
+          variant="destructive" 
+          className="w-full sm:w-auto mt-4"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Cancelling...' : 'Cancel Registration 取消注册'}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this registration? This action cannot be undone.
+            <br />
+            您确定要取消此注册吗？此操作无法撤消。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel 取消</AlertDialogCancel>
+          <AlertDialogAction onClick={handleCancel}>
+            Confirm 确认
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) => {
+  const [order, setOrder] = useState<{
+    event: {
+      title: string;
+      startDateTime: string;
+      endDateTime: string;
+      location?: string;
+      registrationSuccessMessage?: string;
+    };
+    customFieldValues: CustomFieldGroup[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -38,6 +104,7 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
   }, [id]);
 
   const downloadAllQRCodes = async () => {
+    if (!order) return;
     setIsDownloading(true);
     try {
       const qrCodes = order.customFieldValues
@@ -66,9 +133,11 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
         const x = margin + col * (qrSize + margin);
         const y = 30 + row * (qrSize + margin + 20);
 
-        pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
-        pdf.setFontSize(12);
-        pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
+        if (qrCode) {
+          pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
+          pdf.setFontSize(12);
+          pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
+        }
 
         if (y + qrSize + 30 > pageHeight && i < qrCodes.length - 1) {
           pdf.addPage();
@@ -84,6 +153,18 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleCancellation = (groupId: string): void => {
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+      return {
+        ...prevOrder,
+        customFieldValues: prevOrder.customFieldValues.map(group =>
+          group.groupId === groupId ? { ...group, cancelled: true } : group
+        )
+      };
+    });
   };
 
   if (isLoading) {
@@ -119,13 +200,13 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
               <h4 className="text-lg font-bold mb-2 text-primary-700">Event: {order.event.title}</h4>
-              <p><span className="font-semibold">Date:</span> {formatDateTime(order.event.startDateTime).dateOnly}</p>
-              <p><span className="font-semibold">Time:</span> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
+              <p><span className="font-semibold">Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
+              <p><span className="font-semibold">Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
               {order.event.location && <p><span className="font-semibold">Location:</span> {order.event.location}</p>}
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className="mt-6 bg-white shadow-md rounded-xl overflow-hidden">
+              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
                     <QRCodeDisplay qrCode={group.qrCode} />
@@ -157,6 +238,23 @@ const OrderDetailsPage = ({ params: { id } }: { params: { id: string } }) => {
                     ))}
                   </dl>
                 </div>
+                {!group.cancelled && (
+                  <div className="p-4 bg-gray-50">
+                    <CancelButton 
+                      groupId={group.groupId} 
+                      orderId={id} 
+                      onCancel={() => handleCancellation(group.groupId)} 
+                    />
+                  </div>
+                )}
+                
+                {group.cancelled && (
+                  <div className="p-4 bg-red-50">
+                    <p className="text-red-600 text-center font-semibold">
+                      Registration Cancelled 注册已取消
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
 
