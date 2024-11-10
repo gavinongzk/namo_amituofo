@@ -322,13 +322,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   ? (field.value === 'yes' ? '是 Yes' : '否 No')
                                   : (field.value || 'N/A')}
                               </span>
-                              {(field.id === 'name' || field.id === 'phone') && (
+                              {(field.label.toLowerCase().includes('name') || field.label.toLowerCase().includes('contact')) && !group.cancelled && (
                                 <button
                                   onClick={() => handleEdit(group.groupId, field.id, field.value?.toString() ?? '')}
                                   className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600"
                                 >
                                   <Pencil className="h-4 w-4" />
-                                  <span className="text-sm">Edit</span>
+                                  <span className="text-sm">Edit 编辑</span>
                                 </button>
                               )}
                             </>
