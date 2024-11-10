@@ -220,29 +220,6 @@ export async function getRelatedEventsByCategory({
   }
 }
 
-export async function getEventWithAttendeeCount(eventId: string) {
-  try {
-    await connectToDatabase()
-
-    const event = await populateEvent(Event.findById(eventId))
-
-    if (!event) throw new Error('Event not found')
-
-    const attendeeCount = await getOrderCountByEvent(eventId)
-    const totalRegistrations = await getTotalRegistrationsByEvent(eventId)
-
-    const eventWithCount = {
-      ...JSON.parse(JSON.stringify(event)),
-      attendeeCount,
-      totalRegistrations
-    }
-
-    return eventWithCount
-  } catch (error) {
-    handleError(error)
-  }
-}
-
 export const getEventCategory = async (eventId: string): Promise<string | null> => {
   try {
     await connectToDatabase();

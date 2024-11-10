@@ -18,7 +18,7 @@ import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { CustomField } from "@/types"
 import { useUser } from '@clerk/nextjs';
-import { getCookie } from 'cookies-next';
+import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 
@@ -33,7 +33,7 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
-const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
+const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } } ) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
@@ -53,14 +53,36 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   }, [event._id]);
 
   useEffect(() => {
-    const detectCountry = () => {
-      if (isLoaded && user && user.publicMetadata.country) {
-        setUserCountry(user.publicMetadata.country as string);
-      } else {
+    const detectCountry = async () => {
+      try {
+        // First check if we have a country in cookie
         const cookieCountry = getCookie('userCountry');
         if (cookieCountry) {
           setUserCountry(cookieCountry as string);
+          return;
         }
+
+        // Then check if user is logged in and has country in metadata
+        if (isLoaded && user && user.publicMetadata.country) {
+          setUserCountry(user.publicMetadata.country as string);
+          return;
+        }
+
+        // If no cookie or user metadata, use IP detection
+        const response = await fetch('https://get.geojs.io/v1/ip/country.json');
+        const data = await response.json();
+        const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : 'Singapore';
+        
+        setUserCountry(detectedCountry);
+        try {
+          setCookie('userCountry', detectedCountry);
+        } catch (error) {
+          console.error('Error setting cookie:', error);
+        }
+      } catch (error) {
+        console.error('Error detecting country:', error);
+        // Default to Singapore if detection fails
+        setUserCountry('Singapore');
       }
     };
 
@@ -104,7 +126,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : 
-          field.type === 'phone' ? (userCountry === 'Singapore' ? '+65' : userCountry === 'Malaysia' ? '+60' : '') : 
+          field.type === 'phone' ? '+65' : 
           ''
         ])
       )]
