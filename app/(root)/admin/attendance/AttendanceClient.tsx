@@ -116,12 +116,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     name: string; // Add name to confirmation data
   } | null>(null);
   const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
+  const [cancelledUsersCount, setCancelledUsersCount] = useState(0);
 
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
     let attended = 0;
     let cannotReciteAndWalk = 0;
+    let cancelled = 0;
 
     registrations.forEach(registration => {
       registration.order.customFieldValues.forEach(group => {
@@ -132,6 +134,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           if (walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase())) {
             cannotReciteAndWalk += 1;
           }
+        } else {
+          cancelled += 1;
         }
       });
     });
@@ -139,6 +143,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setTotalRegistrations(total);
     setAttendedUsersCount(attended);
     setCannotReciteAndWalkCount(cannotReciteAndWalk);
+    setCancelledUsersCount(cancelled);
   }, []);
 
   const fetchRegistrations = useCallback(async () => {
@@ -626,6 +631,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         totalRegistrations={totalRegistrations}
         attendedUsersCount={attendedUsersCount}
         cannotReciteAndWalkCount={cannotReciteAndWalkCount}
+        cancelledUsersCount={cancelledUsersCount}
       />
 
       <div className="mt-8">
