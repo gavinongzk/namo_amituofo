@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatDateTime } from '@/lib/utils';
 
-type AttendanceDetailsCardProps = {
+interface AttendanceDetailsCardProps {
   event: {
     title: string;
     startDateTime: string;
@@ -15,9 +15,10 @@ type AttendanceDetailsCardProps = {
   totalRegistrations: number;
   attendedUsersCount: number;
   cannotReciteAndWalkCount: number;
-};
+  cancelledUsersCount: number;
+}
 
-const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, totalRegistrations, attendedUsersCount, cannotReciteAndWalkCount }) => {
+const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, totalRegistrations, attendedUsersCount, cannotReciteAndWalkCount, cancelledUsersCount }) => {
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
@@ -63,6 +64,11 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, to
               <p className="font-semibold">{cannotReciteAndWalkCount}</p>
             </div>
           </div>
+        </div>
+        <div className="bg-red-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold text-red-700">Cancelled Users</h3>
+          <p className="text-3xl font-bold text-red-800">{cancelledUsersCount}</p>
+          <p className="text-sm text-red-600">已取消用户</p>
         </div>
       </div>
     </div>

@@ -50,6 +50,7 @@ const SelectEventPage = () => {
           const fiveDaysAgo = addDays(currentDate, -5);
           const recentAndUpcomingEvents = await Promise.all(result.data
             .filter((event: Event) => {
+              if (user?.publicMetadata?.role === 'superadmin') return true;
               const endDate = parseISO(event.endDateTime);
               return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
             })

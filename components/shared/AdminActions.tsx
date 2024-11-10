@@ -10,11 +10,6 @@ const AdminActions = () => {
           Take Attendance
         </Button>
       </Link>
-      <Link href="/admin/events_archive">
-        <Button className="w-full h-12 bg-green-600 hover:bg-green-700 text-white transition duration-300 transform hover:scale-105 rounded-md">
-          Event Archive
-        </Button>
-      </Link>
       <Link href="/admin/upload_orders">
         <Button className="w-full h-12 bg-yellow-600 hover:bg-yellow-700 text-white transition duration-300 transform hover:scale-105 rounded-md">
           Upload Orders
