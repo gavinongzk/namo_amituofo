@@ -324,7 +324,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                               </span>
                               {(field.id === 'name' || field.id === 'phone') && !group.cancelled && (
                                 <button
-                                  onClick={() => handleEdit(group.groupId, field.id, field.value)}
+                                  onClick={() => handleEdit(group.groupId, field.id, field.value?.toString() ?? '')}
                                   className="p-1 hover:bg-gray-100 rounded"
                                 >
                                   <Pencil className="h-4 w-4 text-gray-500" />
