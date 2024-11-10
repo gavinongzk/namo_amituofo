@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { orderId, groupId, field, value } = await req.json();
 
     // Add phone number validation
-    if (field === 'phone' || field.toLowerCase().includes('contact')) {
+    if (field.label.toLowerCase().includes('phone') || field.label.toLowerCase().includes('contact')) {
       const formattedPhone = formatPhoneNumber(value);
       if (!isValidPhoneNumber(formattedPhone)) {
         return NextResponse.json(
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     let formattedValue = value;
-    if (field === 'phone' || field.toLowerCase().includes('contact')) {
+    if (field.label.toLowerCase().includes('phone') || field.label.toLowerCase().includes('contact')) {
       formattedValue = formatPhoneNumber(value);
     }
 
