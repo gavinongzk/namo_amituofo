@@ -104,6 +104,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   }, [id]);
 
   const downloadAllQRCodes = async () => {
+    if (!order) return;
     setIsDownloading(true);
     try {
       const qrCodes = order.customFieldValues
@@ -132,9 +133,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         const x = margin + col * (qrSize + margin);
         const y = 30 + row * (qrSize + margin + 20);
 
-        pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
-        pdf.setFontSize(12);
-        pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
+        if (qrCode) {
+          pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
+          pdf.setFontSize(12);
+          pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
+        }
 
         if (y + qrSize + 30 > pageHeight && i < qrCodes.length - 1) {
           pdf.addPage();
@@ -197,8 +200,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
               <h4 className="text-lg font-bold mb-2 text-primary-700">Event: {order.event.title}</h4>
-              <p><span className="font-semibold">Date:</span> {formatDateTime(order.event.startDateTime).dateOnly}</p>
-              <p><span className="font-semibold">Time:</span> {formatDateTime(order.event.startDateTime).timeOnly} - {formatDateTime(order.event.endDateTime).timeOnly}</p>
+              <p><span className="font-semibold">Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
+              <p><span className="font-semibold">Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
               {order.event.location && <p><span className="font-semibold">Location:</span> {order.event.location}</p>}
             </div>
 
