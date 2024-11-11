@@ -28,7 +28,7 @@ const UserManagement = ({ country }: { country: string }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'serialNumber', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [filterText, setFilterText] = useState('');
   const pageSize = 100;
@@ -233,23 +233,25 @@ const UserManagement = ({ country }: { country: string }) => {
   };
 
   const sortedData = useMemo(() => {
-    const sortableItems = [...users].filter(user =>
+    // First filter the items
+    const filteredItems = users.filter(user =>
       user.name.toLowerCase().includes(filterText.toLowerCase()) ||
-      user.phoneNumber.includes(filterText) ||
-      user.remarks?.toLowerCase().includes(filterText.toLowerCase())
+      user.phoneNumber.toLowerCase().includes(filterText.toLowerCase()) ||
+      (user.remarks?.toLowerCase() || '').includes(filterText.toLowerCase())
     );
 
+    // Then sort the filtered items
     if (sortConfig.key === 'serialNumber') {
-      return sortConfig.direction === 'asc' ? sortableItems : [...sortableItems].reverse();
+      return sortConfig.direction === 'asc' ? filteredItems : [...filteredItems].reverse();
     }
 
-    return sortableItems.sort((a, b) => {
+    return filteredItems.sort((a, b) => {
       const aValue = String(a[sortConfig.key as keyof User] || '');
       const bValue = String(b[sortConfig.key as keyof User] || '');
       
       return sortConfig.direction === 'asc'
-        ? aValue < bValue ? -1 : 1
-        : aValue > bValue ? -1 : 1;
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
     });
   }, [users, sortConfig, filterText]);
 
@@ -420,7 +422,7 @@ const UserManagement = ({ country }: { country: string }) => {
           <tbody>
             {paginatedData.map((user, index) => (
               <tr key={user.phoneNumber} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
-                <td className="py-2 px-4 border-b text-left">{index + 1}</td>
+                <td className="py-2 px-4 border-b text-left">{((currentPage - 1) * pageSize) + index + 1}</td>
                 <td className="py-2 px-4 border-b text-left">{user.name}</td>
                 <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
                 <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
