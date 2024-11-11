@@ -474,6 +474,44 @@ const UserManagement = ({ country }: { country: string }) => {
           </tbody>
         </table>
       )}
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="mx-2">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
+          </Button>
+        </div>
+      )}
+      <div className="mt-2 text-sm text-gray-600">
+        Total Records: {sortedData.length}
+      </div>
       {showDeleteModal && userToDelete && (
         <Modal>
           <div className="p-6 bg-white rounded-lg">
