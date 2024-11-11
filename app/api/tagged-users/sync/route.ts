@@ -11,7 +11,10 @@ export async function POST(req: Request) {
 
     // 1. Get users from Orders
     const query = {
-        isDeleted: false,
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }
+      ]
     };
 
     const orders = await Order.find(query);
@@ -49,7 +52,10 @@ export async function POST(req: Request) {
 
     // 2. Get users from TaggedUsers collection
     const taggedUsers = await TaggedUser.find({ 
-      isDeleted: false,
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }
+      ]
     });
 
     // 3. Merge users from both sources
