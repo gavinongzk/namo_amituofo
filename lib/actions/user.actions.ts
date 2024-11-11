@@ -15,6 +15,7 @@ import { Types } from 'mongoose';
 interface TaggedUserDocument {
   _id: Types.ObjectId;
   phoneNumber: string;
+  name: string;
   remarks: string;
   createdAt: Date;
   updatedAt: Date;
@@ -173,6 +174,11 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
   try {
     await connectToDatabase();
 
+    // Get tagged users first
+    const taggedUsers = await TaggedUser.find({ isDeleted: false }).lean<TaggedUserDocument[]>();
+    const taggedUsersMap = new Map(taggedUsers.map(user => [user.phoneNumber, user]));
+    
+    // Get users from orders
     const cutoffDate = customDate ? new Date(customDate) : new Date();
     cutoffDate.setHours(0, 0, 0, 0);
 
@@ -180,13 +186,10 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
     const countryEventIds = countryEvents.map(event => event._id);
     const orders = await Order.find({ event: { $in: countryEventIds } }).select('customFieldValues createdAt');
     
-    // Fetch tagged users
-    const taggedUsers = await TaggedUser.find().lean<TaggedUserDocument[]>();
-    const taggedUsersMap = new Map(taggedUsers.map(user => [user.phoneNumber, user]));
-    
-    const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
     const userList: UniquePhoneNumber[] = [];
+    const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
 
+    // Add users from orders
     orders.forEach(order => {
       order.customFieldValues.forEach((group: CustomFieldGroup) => {
         const phoneField = group.fields.find(field => 
@@ -210,7 +213,8 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
       });
     });
 
-    for (const [phoneNumber, data] of Array.from(phoneMap)) {
+    // Process orders and add to userList
+    for (const [phoneNumber, data] of phoneMap.entries()) {
       const order = orders.find(order => 
         order.customFieldValues.some((group: CustomFieldGroup) => 
           group.fields.some(field => 
@@ -243,6 +247,20 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
         }
       }
     }
+
+    // Add tagged users that aren't already in the list
+    taggedUsers.forEach(user => {
+      if (!userList.some(u => u.phoneNumber === user.phoneNumber)) {
+        userList.push({
+          phoneNumber: user.phoneNumber,
+          isNewUser: false,
+          name: user.name || 'Unknown',
+          remarks: user.remarks || '',
+          createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
+          updatedAt: user.updatedAt?.toISOString() || new Date().toISOString()
+        });
+      }
+    });
 
     return userList;
   } catch (error) {

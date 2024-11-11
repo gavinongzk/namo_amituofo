@@ -30,28 +30,32 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     await connectToDatabase();
-    const taggedUsers = await TaggedUser.find();
-    return NextResponse.json(taggedUsers);
+    
+    const users = await TaggedUser.find({ isDeleted: false });
+    return NextResponse.json(users);
   } catch (error) {
-    console.error('Error fetching tagged users:', error);
-    return NextResponse.json({ error: 'Failed to fetch tagged users' }, { status: 500 });
+    console.error('Error fetching users:', error);
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request) {
   try {
-    await connectToDatabase();
     const { phoneNumber } = await req.json();
     
-    const deletedUser = await TaggedUser.findOneAndDelete({ phoneNumber });
-    
-    if (!deletedUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    await TaggedUser.updateOne(
+      { phoneNumber },
+      { 
+        $set: { 
+          isDeleted: true,
+          updatedAt: new Date()
+        }
+      }
+    );
 
-    return NextResponse.json({ message: 'User deleted successfully' });
+    return NextResponse.json({ message: 'User successfully deleted' });
   } catch (error) {
-    console.error('Error deleting tagged user:', error);
+    console.error('Error deleting user:', error);
     return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
   }
 }

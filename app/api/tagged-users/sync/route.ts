@@ -7,11 +7,13 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const { users } = await req.json();
     
-    // Use bulkWrite with upsert for efficient updates
     await TaggedUser.bulkWrite(
       users.map((user: { phoneNumber: string; name: string; remarks: string }) => ({
         updateOne: {
-          filter: { phoneNumber: user.phoneNumber },
+          filter: { 
+            phoneNumber: user.phoneNumber,
+            isDeleted: false
+          },
           update: { 
             $setOnInsert: {
               ...user,
