@@ -33,7 +33,7 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
-const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
+const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } } ) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
@@ -262,7 +262,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
           value={userCountry || ''}
           onChange={(e) => {
             setUserCountry(e.target.value);
-            onChange('');
+            onChange(e.target.value === 'Malaysia' ? '+60' : 
+                    e.target.value === 'Singapore' ? '+65' : 
+                    '');
           }}
         >
           <option value="Singapore">Singapore</option>
@@ -275,7 +277,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
           onChange={onChange}
           defaultCountry={getDefaultCountry(userCountry)}
           international
-          countryCallingCodeEditable={userCountry === 'Others'}
           countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
           className="input-field"
           withCountryCallingCode
