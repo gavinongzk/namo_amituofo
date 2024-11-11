@@ -92,13 +92,15 @@ export default function FAQPage() {
       1. 检查网络连接是否正常
       2. 确保所有必填信息都已填写完整
       3. 刷新页面重试
-      4. 如果问题持续，请联系寺院工作人员获取帮助
+      4. 如果问题持续，请通过WhatsApp联系寺院工作人员获取帮助：
+         <a href="https://wa.me/6588184848" target="_blank" class="text-blue-600 hover:underline">+65 8818 4848</a>
       
       If you encounter issues:
       1. Check your internet connection
       2. Ensure all required fields are filled correctly
       3. Refresh the page and try again
-      4. If the problem persists, contact temple staff for assistance`
+      4. If the problem persists, contact temple staff via WhatsApp:
+         <a href="https://wa.me/6588184848" target="_blank" class="text-blue-600 hover:underline">+65 8818 4848</a>`
     }
   ];
 
