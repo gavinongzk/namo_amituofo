@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Card } from "@/components/ui/card"
 
 export default function FAQPage() {
   const faqs = [
@@ -88,45 +89,95 @@ export default function FAQPage() {
     },
     {
       question: "7. 无法成功报名，该怎么做？ What to do if registration fails?",
-      answer: `如遇到问题：
-      1. 检查网络连接是否正常
-      2. 确保所有必填信息都已填写完整
-      3. 刷新页面重试
-      4. 如果问题持续，请通过WhatsApp联系寺院工作人员获取帮助：
-         <a href="https://wa.me/6588184848" target="_blank" class="text-blue-600 hover:underline">+65 8818 4848</a>
-      
-      If you encounter issues:
-      1. Check your internet connection
-      2. Ensure all required fields are filled correctly
-      3. Refresh the page and try again
-      4. If the problem persists, contact temple staff via WhatsApp:
-         <a href="https://wa.me/6588184848" target="_blank" class="text-blue-600 hover:underline">+65 8818 4848</a>`
+      answer: (
+        <>
+          如遇到问题：
+          1. 检查网络连接是否正常
+          2. 确保所有必填信息都已填写完整
+          3. 刷新页面重试
+          4. 如果问题持续，请通过WhatsApp联系寺院工作人员获取帮助：
+          <a 
+            href="https://wa.me/6588184848" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-blue-600 hover:underline"
+          >
+            +65 8818 4848
+          </a>
+          
+          If you encounter issues:
+          1. Check your internet connection
+          2. Ensure all required fields are filled correctly
+          3. Refresh the page and try again
+          4. If the problem persists, contact temple staff via WhatsApp: 
+          <a 
+            href="https://wa.me/6588184848" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-blue-600 hover:underline"
+          >
+            +65 8818 4848
+          </a>
+        </>
+      )
     }
   ];
 
   return (
-    <div className="wrapper my-8">
-      <h1 className="text-3xl font-bold text-center mb-8 text-primary-500">
-        常见问题 / Frequently Asked Questions
-      </h1>
-      
-      <div className="max-w-3xl mx-auto">
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem 
-              key={index} 
-              value={`item-${index}`}
-              className="bg-white rounded-lg shadow-sm border border-gray-200"
+    <div className="wrapper my-12 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-primary-600 mb-4">
+            常见问题 / FAQ
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Find answers to commonly asked questions about registration and events
+          </p>
+        </div>
+
+        {/* FAQ Section */}
+        <Card className="p-6 bg-white/50 backdrop-blur-sm shadow-xl rounded-xl">
+          <Accordion type="single" collapsible className="w-full space-y-6">
+            {faqs.map((faq, index) => (
+              <AccordionItem 
+                key={index} 
+                value={`item-${index}`}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
+              >
+                <AccordionTrigger className="px-6 py-5 hover:bg-gray-50 text-left [&[data-state=open]]:bg-primary-50">
+                  <h3 className="text-lg font-medium text-gray-900">{faq.question}</h3>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 py-5 bg-white">
+                  <div className="prose prose-gray max-w-none">
+                    <div className="text-gray-600 leading-relaxed">
+                      {typeof faq.answer === 'string' ? (
+                        <div className="whitespace-pre-line">{faq.answer}</div>
+                      ) : (
+                        faq.answer
+                      )}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Card>
+
+        {/* Contact Section */}
+        <div className="mt-12 text-center">
+          <p className="text-gray-600">
+            Still have questions? Contact us via WhatsApp at{' '}
+            <a 
+              href="https://wa.me/6588184848" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary-600 hover:underline font-medium"
             >
-              <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 text-left">
-                <h3 className="text-lg font-semibold">{faq.question}</h3>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 py-4 bg-gray-50">
-                <p className="whitespace-pre-line text-gray-700">{faq.answer}</p>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+              +65 8818 4848
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

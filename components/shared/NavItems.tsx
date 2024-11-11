@@ -28,7 +28,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     }`;
 
   return (
-    <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
+    <ul className={`flex flex-col md:flex-row md:items-center gap-4 md:gap-6 ${className}`}>
       <li>
         <Link href="/" className={navItemClass('/')} onClick={handleClick}>
           <span className="font-medium">寺院活动</span>
