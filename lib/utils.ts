@@ -131,16 +131,6 @@ export function formatPhoneNumber(phoneNumber: string): string {
   return phoneNumber.replace(/[^\d+]/g, '');
 }
 
-export function getWhatsAppLink(phoneNumber: string): string {
-  // Remove any spaces, dashes, or other characters except numbers and plus sign
-  const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
-  return `https://wa.me/${cleanNumber}`;
-}
-
-export function getMonasteryWhatsAppLink(): string {
-  return 'https://wa.me/6588184848';
-}
-
 export function convertPhoneNumbersToLinks(text: string): string {
   // Match Singapore phone numbers (+65 XXXX XXXX or +65-XXXX-XXXX)
   const phoneRegex = /(\+65[-\s]?[689]\d{3}[-\s]?\d{4})/g;

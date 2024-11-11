@@ -4,7 +4,6 @@ import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.ac
 import { formatDateTime } from '@/lib/utils';
 import { SearchParamProps } from '@/types'
 import Image from 'next/image';
-import { MonasteryContact } from '@/components/shared/MonasteryContact';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 
 const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) => {

@@ -31,8 +31,8 @@ export const eventDefaultValues = {
 
     ▫▫▫▫▫▫▫▫
     ⧉ 净土宗弥陀寺（新加坡）⧉
-    ≡ 27, Lor 27, Geylang, S'pore 388163 ≡
-    ≡ WhatsApp: <a href="https://wa.me/6588184848">+65-8818 4848</a> ≡
+    ≡ 27, Lor 27, Geylang, S‘pore 388163 ≡
+    ≡ +65-8818 4848 ≡
     Nearby Aljunied Mrt (阿裕尼地铁站附近)
     Google Map：https://goo.gl/maps/9LsNw8fSLmqRD64X6
   `

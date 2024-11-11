@@ -376,11 +376,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             {order.event.registrationSuccessMessage && (
               <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-                <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重���信息</h4>
+                <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
                 <div 
                   className="whitespace-pre-wrap text-green-800"
                   dangerouslySetInnerHTML={{ 
-                    __html: order.event.registrationSuccessMessage 
+                    __html: convertPhoneNumbersToLinks(order.event.registrationSuccessMessage) 
                   }}
                 />
               </div>
