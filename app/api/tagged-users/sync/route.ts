@@ -11,7 +11,6 @@ export async function POST(req: Request) {
 
     // 1. Get users from Orders
     const query = {
-      'metadata.country': country,
       createdAt: { $gte: new Date(date) }
     };
 
