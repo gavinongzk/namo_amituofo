@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+import * as XLSX from 'xlsx';
 
 type User = {
   phoneNumber: string;
@@ -81,6 +83,97 @@ const UserManagement = ({ country }: { country: string }) => {
     fetchUsers(customDate);
   };
 
+  const handleFileUpload = async (file: File) => {
+    setIsLoading(true);
+    try {
+      const data = await readExcelFile(file);
+      const response = await fetch('/api/tagged-users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: data })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error);
+      }
+
+      setMessage(result.message);
+      await fetchUsers(customDate); // Refresh the list
+    } catch (error: unknown) {
+      console.error('Error uploading file:', error);
+      setMessage(error instanceof Error ? error.message : 'Failed to upload file');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const readExcelFile = (file: File): Promise<Array<{ phoneNumber: string; name: string }>> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
+
+          // Check if the file has any data
+          if (jsonData.length === 0) {
+            throw new Error('File is empty');
+          }
+
+          // Get the first row to check headers
+          const headers = Object.keys(jsonData[0]);
+          const phoneNumberHeader = headers.find(h => 
+            h.toLowerCase().includes('phone') || 
+            h.toLowerCase() === 'phonenumber' || 
+            h.toLowerCase() === 'contact'
+          );
+          const nameHeader = headers.find(h => 
+            h.toLowerCase().includes('name')
+          );
+
+          if (!phoneNumberHeader) {
+            throw new Error(
+              'Missing phone number column. Expected one of these headers: ' +
+              '"Phone Number", "PhoneNumber", "Contact Number", "Phone", "Contact"'
+            );
+          }
+          
+          const formattedData = jsonData.map((row: any) => ({
+            phoneNumber: row[phoneNumberHeader]?.toString() || '',
+            name: nameHeader ? row[nameHeader]?.toString() || 'Unknown' : 'Unknown'
+          }));
+          
+          resolve(formattedData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      handleFileUpload(acceptedFiles[0]);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'text/csv': ['.csv']
+    },
+    multiple: false
+  });
+
   return (
     <div>
       <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -112,6 +205,39 @@ const UserManagement = ({ country }: { country: string }) => {
             )}
           </Button>
         </div>
+      </div>
+      <div className="mb-4">
+        <div className="p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary-500 transition-colors" {...getRootProps()}>
+          <input {...getInputProps()} />
+          <div className="text-center">
+            {isDragActive ? (
+              <p>Drop the Excel file here...</p>
+            ) : (
+              <p>Drag and drop an Excel file here, or click to select file</p>
+            )}
+            <div className="mt-2 text-sm text-gray-500">
+              <p>Accepted column headers:</p>
+              <ul className="list-disc list-inside mt-1">
+                <li>
+                  <strong>Phone Number</strong> (required) - Any of these:
+                  <br />
+                  "Phone Number", "PhoneNumber", "Contact Number", "Phone", "Contact"
+                </li>
+                <li>
+                  <strong>Name</strong> (optional) - Any of these:
+                  <br />
+                  "Name", "Full Name", "Customer Name"
+                </li>
+              </ul>
+              <p className="mt-1">Supports .xlsx, .xls, and .csv files</p>
+            </div>
+          </div>
+        </div>
+        {message && (
+          <p className={`mt-2 text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
+            {message}
+          </p>
+        )}
       </div>
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -166,7 +292,6 @@ const UserManagement = ({ country }: { country: string }) => {
           </tbody>
         </table>
       )}
-      {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
     </div>
   );
 };
