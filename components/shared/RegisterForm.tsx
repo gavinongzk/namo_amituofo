@@ -44,6 +44,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
+  const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function fetchOrderCount() {
@@ -111,7 +112,10 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                 ? z.string()
                     .min(1, { message: "Phone number is required" })
                     .refine(
-                      (value) => userCountry === 'Others' ? true : isValidPhoneNumber(value),
+                      (value) => {
+                        const index = parseInt(field.id.split('_')[1]) - 1;
+                        return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
+                      },
                       { message: "Invalid phone number" }
                     )
                 : field.label.toLowerCase().includes('name')
@@ -249,42 +253,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     ));
   };
 
-  // Define PhoneInputWithOthers inside RegisterForm to access the functions
-  const PhoneInputWithOthers = ({ value, onChange, userCountry }: {
-    value: string;
-    onChange: (value: string | undefined) => void;
-    userCountry: string | null;
-  }) => {
-    return (
-      <div className="space-y-2">
-        <select 
-          className="w-full rounded-md border border-input px-3 py-2 text-sm"
-          value={userCountry || ''}
-          onChange={(e) => {
-            setUserCountry(e.target.value);
-            onChange(e.target.value === 'Malaysia' ? '+60' : 
-                    e.target.value === 'Singapore' ? '+65' : 
-                    '');
-          }}
-        >
-          <option value="Singapore">Singapore</option>
-          <option value="Malaysia">Malaysia</option>
-          <option value="Others">Others</option>
-        </select>
-        
-        <PhoneInput
-          value={value}
-          onChange={onChange}
-          defaultCountry={getDefaultCountry(userCountry)}
-          international
-          countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
-          className="input-field"
-          withCountryCallingCode
-        />
-      </div>
-    );
-  };
-
   return (
     <>
       {isCountryLoading ? (
@@ -321,11 +289,47 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                     onCheckedChange={formField.onChange}
                                   />
                                 ) : customField.type === 'phone' ? (
-                                  <PhoneInputWithOthers
-                                    value={formField.value as string}
-                                    onChange={(value) => formField.onChange(value || '')}
-                                    userCountry={userCountry}
-                                  />
+                                  <>
+                                    {phoneOverrides[index] ? (
+                                      <Input
+                                        {...formField}
+                                        type="tel"
+                                        placeholder="Enter your phone number"
+                                      />
+                                    ) : (
+                                      <PhoneInput
+                                        value={formField.value as string}
+                                        onChange={(value) => formField.onChange(value || '')}
+                                        defaultCountry={getDefaultCountry(userCountry)}
+                                        countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
+                                        international
+                                        countryCallingCodeEditable={userCountry === 'Others'}
+                                        className="input-field"
+                                        withCountryCallingCode
+                                        initialValueFormat="national"
+                                      />
+                                    )}
+                                    {userCountry !== 'Others' && (
+                                      <div className="flex items-center space-x-2 mt-2">
+                                        <Checkbox
+                                          checked={phoneOverrides[index] || false}
+                                          onCheckedChange={(checked) => {
+                                            setPhoneOverrides(prev => ({
+                                              ...prev,
+                                              [index]: checked === true
+                                            }));
+                                            // Clear the phone number when toggling
+                                            form.setValue(`groups.${index}.phone`, '');
+                                          }}
+                                        />
+                                        <label className="text-sm text-gray-600">
+                                          I am not from Singapore/Malaysia but would like to register
+                                          <br />
+                                          我不是来自新加坡/马来西亚但想要注册
+                                        </label>
+                                      </div>
+                                    )}
+                                  </>
                                 ) : customField.type === 'radio' ? (
                                   <div className="flex gap-4">
                                     {('options' in customField) && customField.options?.map((option) => (
