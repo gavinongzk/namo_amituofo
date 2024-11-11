@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,11 @@ type User = {
   name: string;
   isNewUser: boolean;
   remarks?: string;
+  createdAt: string;
+  updatedAt: string;
 };
+
+type SortConfig = { key: keyof User | 'serialNumber', direction: 'asc' | 'desc' };
 
 const UserManagement = ({ country }: { country: string }) => {
   const [users, setUsers] = useState<User[]>([]);
@@ -25,6 +29,10 @@ const UserManagement = ({ country }: { country: string }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'serialNumber', direction: 'asc' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterText, setFilterText] = useState('');
+  const pageSize = 100;
 
   useEffect(() => {
     const oneWeekAgo = new Date();
@@ -40,10 +48,12 @@ const UserManagement = ({ country }: { country: string }) => {
       const fetchedUsers = await getAllUniquePhoneNumbers(country, date);
       const taggedUsers = await fetch('/api/tagged-users').then(res => res.json());
       
-      const updatedUsers = fetchedUsers.map(user => {
-        const taggedUser = taggedUsers.find((tu: User) => tu.phoneNumber === user.phoneNumber);
-        return { ...user, remarks: taggedUser?.remarks || '' };
-      });
+      const updatedUsers = fetchedUsers.map(user => ({
+        ...user,
+        remarks: taggedUsers.find((tu: User) => tu.phoneNumber === user.phoneNumber)?.remarks || '',
+        createdAt: user.createdAt || new Date().toISOString(),
+        updatedAt: user.updatedAt || new Date().toISOString()
+      }));
       
       setUsers(updatedUsers);
     } catch (error) {
@@ -209,6 +219,52 @@ const UserManagement = ({ country }: { country: string }) => {
     }
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const requestSort = (key: keyof User | 'serialNumber') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    const sortableItems = [...users].filter(user =>
+      user.name.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.phoneNumber.includes(filterText) ||
+      user.remarks?.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (sortConfig.key === 'serialNumber') {
+      return sortConfig.direction === 'asc' ? sortableItems : [...sortableItems].reverse();
+    }
+
+    return sortableItems.sort((a, b) => {
+      const aValue = String(a[sortConfig.key as keyof User] || '');
+      const bValue = String(b[sortConfig.key as keyof User] || '');
+      
+      return sortConfig.direction === 'asc'
+        ? aValue < bValue ? -1 : 1
+        : aValue > bValue ? -1 : 1;
+    });
+  }, [users, sortConfig, filterText]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedData.slice(startIndex, startIndex + pageSize);
+  }, [sortedData, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+
   return (
     <div>
       <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -240,6 +296,14 @@ const UserManagement = ({ country }: { country: string }) => {
             )}
           </Button>
         </div>
+      </div>
+      <div className="mb-4">
+        <Input
+          placeholder="Filter by name, phone number, or remarks..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          className="max-w-md"
+        />
       </div>
       <div className="mb-4">
         <div className="p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary-500 transition-colors" {...getRootProps()}>
@@ -282,18 +346,91 @@ const UserManagement = ({ country }: { country: string }) => {
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 border-b text-left">Name</th>
-              <th className="py-2 px-4 border-b text-left">Phone Number</th>
-              <th className="py-2 px-4 border-b text-left">Status</th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('serialNumber')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  S/N
+                  {sortConfig.key === 'serialNumber' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('name')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  Name
+                  {sortConfig.key === 'name' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('phoneNumber')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  Phone Number
+                  {sortConfig.key === 'phoneNumber' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('isNewUser')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  Status
+                  {sortConfig.key === 'isNewUser' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('createdAt')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  Created At
+                  {sortConfig.key === 'createdAt' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
+              <th className="py-2 px-4 border-b text-left">
+                <Button
+                  variant="ghost"
+                  onClick={() => requestSort('updatedAt')}
+                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                >
+                  Updated At
+                  {sortConfig.key === 'updatedAt' && (
+                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </Button>
+              </th>
               <th className="py-2 px-4 border-b text-left">Remarks</th>
+              <th className="py-2 px-4 border-b text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
+            {paginatedData.map((user, index) => (
+              <tr key={user.phoneNumber} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
+                <td className="py-2 px-4 border-b text-left">{index + 1}</td>
                 <td className="py-2 px-4 border-b text-left">{user.name}</td>
                 <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
                 <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
+                <td className="py-2 px-4 border-b text-left">{formatDateTime(user.createdAt)}</td>
+                <td className="py-2 px-4 border-b text-left">{formatDateTime(user.updatedAt)}</td>
                 <td className="py-2 px-4 border-b text-left">
                   {editingUser === user.phoneNumber ? (
                     <div className="flex items-center gap-2">

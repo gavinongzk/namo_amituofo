@@ -7,10 +7,16 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const { phoneNumber, name, remarks } = await req.json();
     
-    // Ensure remarks can be an empty string
+    const now = new Date().toISOString();
     const taggedUser = await TaggedUser.findOneAndUpdate(
       { phoneNumber },
-      { phoneNumber, name, remarks: remarks || '' }, // Save as empty string if remarks is undefined
+      { 
+        phoneNumber, 
+        name, 
+        remarks: remarks || '',
+        updatedAt: now,
+        $setOnInsert: { createdAt: now }
+      },
       { upsert: true, new: true }
     );
 
