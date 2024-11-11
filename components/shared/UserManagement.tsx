@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getAllUniquePhoneNumbers } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
@@ -45,17 +44,13 @@ const UserManagement = ({ country }: { country: string }) => {
   const fetchUsers = async (date?: string) => {
     setIsLoading(true);
     try {
-      const fetchedUsers = await getAllUniquePhoneNumbers(country, date);
-      const taggedUsers = await fetch('/api/tagged-users').then(res => res.json());
-      
-      const updatedUsers = fetchedUsers.map(user => ({
-        ...user,
-        remarks: taggedUsers.find((tu: User) => tu.phoneNumber === user.phoneNumber)?.remarks || '',
-        createdAt: user.createdAt || new Date().toISOString(),
-        updatedAt: user.updatedAt || new Date().toISOString()
-      }));
-      
-      setUsers(updatedUsers);
+      const response = await fetch('/api/tagged-users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, country })
+      });
+      const { users } = await response.json();
+      setUsers(users);
     } catch (error) {
       console.error('Error fetching users:', error);
       setMessage('Failed to fetch users');
