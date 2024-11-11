@@ -38,7 +38,13 @@ export async function POST(req: Request) {
       formattedUsers.map((user: { phoneNumber: string; name: string; remarks: string }) => ({
         updateOne: {
           filter: { phoneNumber: user.phoneNumber },
-          update: { $setOnInsert: user },
+          update: { 
+            $setOnInsert: {
+              ...user,
+              createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // Set date to 30 days ago
+              updatedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
+            }
+          },
           upsert: true
         }
       }))
