@@ -5,6 +5,8 @@ import { auth, currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React from 'react'
 import RegistrationLookup from '@/components/shared/RegistrationLookup'
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 
 const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
   try {
@@ -34,7 +36,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
               </Button>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6">
-              <RegistrationLookup />
+              <RegistrationLookup showManualInput={true} />
             </div>
           </div>
         </section>
