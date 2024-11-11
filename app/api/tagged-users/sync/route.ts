@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const { date, country } = await req.json();
 
-    // Get unique phone numbers from Orders
+    // 1. Get users from Orders
     const query = {
       'metadata.country': country,
       createdAt: { $gte: new Date(date) }
@@ -38,27 +38,27 @@ export async function POST(req: Request) {
       });
     });
 
-    const users = Array.from(uniqueUsers.values());
+    // 2. Get users from TaggedUsers collection
+    const taggedUsers = await TaggedUser.find({ 
+      isDeleted: false,
+      createdAt: { $gte: new Date(date) }
+    });
 
-    // Sync with TaggedUsers
-    await TaggedUser.bulkWrite(
-      users.map((user: { phoneNumber: string; name: string; remarks: string }) => ({
-        updateOne: {
-          filter: { 
-            phoneNumber: user.phoneNumber,
-            isDeleted: false
-          },
-          update: { 
-            $setOnInsert: {
-              ...user,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          },
-          upsert: true
-        }
-      }))
-    );
+    // 3. Merge users from both sources
+    taggedUsers.forEach(user => {
+      if (!uniqueUsers.has(user.phoneNumber)) {
+        uniqueUsers.set(user.phoneNumber, {
+          phoneNumber: user.phoneNumber,
+          name: user.name,
+          isNewUser: false,
+          remarks: user.remarks,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        });
+      }
+    });
+
+    const users = Array.from(uniqueUsers.values());
 
     return NextResponse.json({ users });
   } catch (error) {
