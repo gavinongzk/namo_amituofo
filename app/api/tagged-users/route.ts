@@ -31,3 +31,21 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch tagged users' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    await connectToDatabase();
+    const { phoneNumber } = await req.json();
+    
+    const deletedUser = await TaggedUser.findOneAndDelete({ phoneNumber });
+    
+    if (!deletedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting tagged user:', error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+  }
+}

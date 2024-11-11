@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
+import Modal from '../ui/modal';
 
 type User = {
   phoneNumber: string;
@@ -22,6 +23,8 @@ const UserManagement = ({ country }: { country: string }) => {
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   useEffect(() => {
     const oneWeekAgo = new Date();
@@ -174,6 +177,38 @@ const UserManagement = ({ country }: { country: string }) => {
     multiple: false
   });
 
+  const handleDeleteUser = async (user: User) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/tagged-users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: userToDelete.phoneNumber }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      setUsers(users.filter(u => u.phoneNumber !== userToDelete.phoneNumber));
+      setMessage('User deleted successfully');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setMessage('Failed to delete user');
+    } finally {
+      setIsLoading(false);
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    }
+  };
+
   return (
     <div>
       <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -287,10 +322,52 @@ const UserManagement = ({ country }: { country: string }) => {
                     </div>
                   )}
                 </td>
+                <td className="py-2 px-4 border-b text-left">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => handleDeleteUser(user)}
+                    className="ml-2"
+                  >
+                    Delete
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      {showDeleteModal && userToDelete && (
+        <Modal>
+          <div className="p-6 bg-white rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+            <p className="mb-4">
+              Are you sure you want to delete the record for {userToDelete.name} ({userToDelete.phoneNumber})?
+            </p>
+            <div className="flex justify-end space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
