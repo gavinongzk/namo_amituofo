@@ -29,14 +29,19 @@ export async function POST(req: Request) {
 
         if (phoneField?.value) {
           const existingUser = uniqueUsers.get(phoneField.value);
-          const isNewUser = !existingUser || 
-            (!existingUser.createdAt || new Date(existingUser.createdAt) >= new Date(date));
+          const orderCreatedAt = order.createdAt;
+
+          const createdAt = existingUser?.createdAt 
+            ? new Date(existingUser.createdAt) < new Date(orderCreatedAt)
+              ? existingUser.createdAt
+              : orderCreatedAt
+            : orderCreatedAt;
 
           uniqueUsers.set(phoneField.value, {
             phoneNumber: phoneField.value,
-            name: nameField?.value || 'Unknown',
-            isNewUser,
-            ...(existingUser && { createdAt: existingUser.createdAt })
+            name: nameField?.value || existingUser?.name || 'Unknown',
+            isNewUser: !createdAt || new Date(createdAt) >= new Date(date),
+            createdAt
           });
         }
       });
@@ -49,14 +54,29 @@ export async function POST(req: Request) {
 
     // 3. Merge users from both sources
     taggedUsers.forEach(user => {
-      if (!uniqueUsers.has(user.phoneNumber)) {
+      const existingUser = uniqueUsers.get(user.phoneNumber);
+      if (!existingUser) {
         uniqueUsers.set(user.phoneNumber, {
           phoneNumber: user.phoneNumber,
           name: user.name,
           isNewUser: !user.createdAt || new Date(user.createdAt) >= new Date(date),
           remarks: user.remarks,
-          createdAt: new Date(user.createdAt),
-          updatedAt: new Date(user.updatedAt)
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        });
+      } else {
+        const earliestCreatedAt = existingUser.createdAt && user.createdAt
+          ? new Date(existingUser.createdAt) < new Date(user.createdAt)
+            ? existingUser.createdAt
+            : user.createdAt
+          : existingUser.createdAt || user.createdAt;
+
+        uniqueUsers.set(user.phoneNumber, {
+          ...existingUser,
+          remarks: user.remarks,
+          createdAt: earliestCreatedAt,
+          updatedAt: user.updatedAt,
+          isNewUser: !earliestCreatedAt || new Date(earliestCreatedAt) >= new Date(date)
         });
       }
     });
