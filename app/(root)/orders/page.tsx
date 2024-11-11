@@ -46,17 +46,17 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
       <section className="wrapper overflow-x-auto content-margin my-8">
         {!eventId ? (
           <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
-            <p className="text-xl font-semibold">Please select an event to view orders</p>
+            <p className="text-xl font-semibold">Please select an event to view registrations</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
-            <p className="text-xl font-semibold">No orders found for this event</p>
+            <p className="text-xl font-semibold">No registrations found for this event</p>
           </div>
         ) : (
           <>
             <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-4">Event Orders</h2>
-              <p className="mb-2">Total Orders: {totalCustomFieldValues}</p>
+              <h2 className="text-2xl font-bold mb-4">Event Registrations</h2>
+              <p className="mb-2">Total Registrations: {totalCustomFieldValues}</p>
               <DownloadCsvButton 
                 eventId={eventId} 
                 searchText={searchText} 

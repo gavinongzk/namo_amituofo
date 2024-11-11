@@ -252,7 +252,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   }
 
   if (!order) {
-    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">Order not found 订单未找到</div>;
+    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">Registration not found 报名资料未找到</div>;
   }
 
   const customFieldValuesArray = Array.isArray(order.customFieldValues) 
@@ -376,10 +376,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             {order.event.registrationSuccessMessage && (
               <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-                <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
-                <div className="whitespace-pre-wrap text-green-800">
-                  {order.event.registrationSuccessMessage}
-                </div>
+                <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重���信息</h4>
+                <div 
+                  className="whitespace-pre-wrap text-green-800"
+                  dangerouslySetInnerHTML={{ 
+                    __html: order.event.registrationSuccessMessage 
+                  }}
+                />
               </div>
             )}
           </div>

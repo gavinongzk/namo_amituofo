@@ -64,7 +64,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           <div className="flex flex-col gap-2">
             <p className="p-medium-16 text-grey-500">Registrations: {event.registrationCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline flex items-center gap-2">
-              Order Details
+              Registration Details
               <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
             </Link>
           </div>

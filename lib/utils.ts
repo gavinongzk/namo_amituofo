@@ -130,3 +130,13 @@ export function formatPhoneNumber(phoneNumber: string): string {
   // Remove all non-digit characters except '+'
   return phoneNumber.replace(/[^\d+]/g, '');
 }
+
+export function getWhatsAppLink(phoneNumber: string): string {
+  // Remove any spaces, dashes, or other characters except numbers and plus sign
+  const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+  return `https://wa.me/${cleanNumber}`;
+}
+
+export function getMonasteryWhatsAppLink(): string {
+  return 'https://wa.me/6588184848';
+}
