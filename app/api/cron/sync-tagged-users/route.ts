@@ -53,7 +53,7 @@ export async function POST(req: Request) {
             update: { 
               $setOnInsert: {
                 ...user,
-                remarks: 'Auto-added from order',
+                remarks: '',
                 createdAt: new Date(),
                 updatedAt: new Date()
               }
