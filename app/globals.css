@@ -354,3 +354,59 @@ input[type=checkbox] {
 .country-selector [data-radix-select-trigger] svg {
   display: none;
 }
+
+/* Add these styles to your existing globals.css */
+.prose {
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+.prose p {
+  margin-bottom: 1.25em;
+  line-height: 1.7;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-bottom: 1.25em;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+}
+
+/* Smooth accordion animations */
+.accordion-content-animation {
+  transition: all 0.2s ease-out;
+}
+
+.accordion-content-animation[data-state='open'] {
+  animation: slideDown 0.2s ease-out;
+}
+
+.accordion-content-animation[data-state='closed'] {
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}

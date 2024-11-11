@@ -28,7 +28,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     }`;
 
   return (
-    <ul className={`flex flex-col md:flex-row gap-4 ${className}`}>
+    <ul className={`flex flex-col md:flex-row md:items-center gap-4 md:gap-6 ${className}`}>
       <li>
         <Link href="/" className={navItemClass('/')} onClick={handleClick}>
           <span className="font-medium">寺院活动</span>
@@ -36,12 +36,20 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
         </Link>
       </li>
       {!isSuperAdmin && !isNormalAdmin && (
-        <li>
-          <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
-            <span className="font-medium">活动查询</span>
-            <span className="text-xs mt-1">Event Lookup</span>
-          </Link>
-        </li>
+        <>
+          <li>
+            <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={handleClick}>
+              <span className="font-medium">活动查询</span>
+              <span className="text-xs mt-1">Event Lookup</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/faq" className={navItemClass('/faq')} onClick={handleClick}>
+              <span className="font-medium">常见问题</span>
+              <span className="text-xs mt-1">FAQ</span>
+            </Link>
+          </li>
+        </>
       )}
       {isSignedIn ? (
         <>

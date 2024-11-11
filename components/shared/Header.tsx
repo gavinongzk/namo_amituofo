@@ -8,22 +8,24 @@ import CountrySelector from '@/components/shared/CountrySelector';
 const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <div className="wrapper flex items-center justify-between py-4">
-        <Link href="/" className="w-36 transition-transform hover:scale-105 ml-4 md:ml-6">
+      <div className="wrapper flex items-center justify-between py-4 px-4 md:px-8">
+        <Link href="/" className="w-36 transition-transform hover:scale-105">
           <Image 
-            src="/assets/images/logo.svg" width={64} height={24}
+            src="/assets/images/logo.svg" 
+            width={128} 
+            height={38}
             alt="Namo Amituofo logo" 
             className="object-contain"
           />
         </Link>
 
-        <nav className="md:flex-between hidden w-full max-w-xs">
+        <nav className="md:flex-between hidden w-full max-w-2xl mx-8">
           <NavWrapper />
         </nav>
 
-        <div className="flex items-center gap-3 mr-4 md:mr-6">
+        <div className="flex items-center gap-4">
           <SignedIn>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <CountrySelector />
               <UserButton 
                 afterSignOutUrl="/"
