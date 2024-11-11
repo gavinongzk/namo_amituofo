@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import toast from 'react-hot-toast';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
@@ -196,7 +197,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to update field');
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || 'Failed to update field', {
+          duration: 4000,
+          position: 'bottom-center',
+        });
+        return;
+      }
 
       // Update local state
       setOrder(prevOrder => {
@@ -217,13 +226,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           ),
         };
       });
+      
+      setEditingField(null);
+      setEditValue('');
+      toast.success('Successfully updated', {
+        duration: 3000,
+        position: 'bottom-center',
+      });
     } catch (error) {
       console.error('Error updating field:', error);
-      // Optionally show error message to user
+      toast.error('Failed to update field', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
     }
-    
-    setEditingField(null);
-    setEditValue('');
   };
 
   const handleCancel = () => {
