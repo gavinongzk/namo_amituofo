@@ -146,7 +146,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : 
-          field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
+          // field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
           ''
         ])
       )]
