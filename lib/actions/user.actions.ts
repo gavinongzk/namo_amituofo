@@ -6,10 +6,19 @@ import { connectToDatabase } from '@/lib/database'
 import User from '@/lib/database/models/user.model'
 import Order from '@/lib/database/models/order.model'
 import Event from '@/lib/database/models/event.model'
+import TaggedUser from '@/lib/database/models/taggedUser.model'
 import { handleError } from '@/lib/utils'
 
 import { CreateUserParams, UpdateUserParams, CustomFieldGroup, UniquePhoneNumber } from '@/types'
 import { Types } from 'mongoose';
+
+interface TaggedUserDocument {
+  _id: Types.ObjectId;
+  phoneNumber: string;
+  remarks: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export async function createUser(user: CreateUserParams) {
   try {
@@ -165,14 +174,15 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
     await connectToDatabase();
 
     const cutoffDate = customDate ? new Date(customDate) : new Date();
-    cutoffDate.setHours(0, 0, 0, 0); // Set to start of the day
+    cutoffDate.setHours(0, 0, 0, 0);
 
-    // Fetch events for the specific country
     const countryEvents = await Event.find({ country: superadminCountry }).select('_id');
     const countryEventIds = countryEvents.map(event => event._id);
-
-    // Fetch orders only for events in the superadmin's country
     const orders = await Order.find({ event: { $in: countryEventIds } }).select('customFieldValues createdAt');
+    
+    // Fetch tagged users
+    const taggedUsers = await TaggedUser.find().lean<TaggedUserDocument[]>();
+    const taggedUsersMap = new Map(taggedUsers.map(user => [user.phoneNumber, user]));
     
     const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
     const userList: UniquePhoneNumber[] = [];
@@ -220,11 +230,15 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
 
         if (group) {
           const nameField = group.fields.find((field: { label: string }) => field.label.toLowerCase().includes('name'));
+          const taggedUser = taggedUsersMap.get(phoneNumber);
 
           userList.push({
             phoneNumber,
             isNewUser: data.firstOrderDate >= cutoffDate,
-            name: nameField ? nameField.value : 'Unknown'
+            name: nameField ? nameField.value : 'Unknown',
+            remarks: taggedUser?.remarks || '',
+            createdAt: taggedUser?.createdAt?.toISOString() || data.firstOrderDate.toISOString(),
+            updatedAt: taggedUser?.updatedAt?.toISOString() || data.firstOrderDate.toISOString()
           });
         }
       }
