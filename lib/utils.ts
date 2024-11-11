@@ -140,3 +140,13 @@ export function getWhatsAppLink(phoneNumber: string): string {
 export function getMonasteryWhatsAppLink(): string {
   return 'https://wa.me/6588184848';
 }
+
+export function convertPhoneNumbersToLinks(text: string): string {
+  // Match Singapore phone numbers (+65 XXXX XXXX or +65-XXXX-XXXX)
+  const phoneRegex = /(\+65[-\s]?[689]\d{3}[-\s]?\d{4})/g;
+  
+  return text.replace(phoneRegex, (match) => {
+    const cleanNumber = match.replace(/[-\s]/g, '');
+    return `<a href="https://wa.me/${cleanNumber.substring(1)}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 transition-colors">${match}</a>`;
+  });
+}
