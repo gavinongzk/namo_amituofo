@@ -33,7 +33,7 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
-const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } } ) => {
+const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryName } } }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRegistrations, setCurrentRegistrations] = useState(0);
@@ -249,6 +249,41 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
     ));
   };
 
+  // Define PhoneInputWithOthers inside RegisterForm to access the functions
+  const PhoneInputWithOthers = ({ value, onChange, userCountry }: {
+    value: string;
+    onChange: (value: string | undefined) => void;
+    userCountry: string | null;
+  }) => {
+    return (
+      <div className="space-y-2">
+        <select 
+          className="w-full rounded-md border border-input px-3 py-2 text-sm"
+          value={userCountry || ''}
+          onChange={(e) => {
+            setUserCountry(e.target.value);
+            onChange('');
+          }}
+        >
+          <option value="Singapore">Singapore</option>
+          <option value="Malaysia">Malaysia</option>
+          <option value="Others">Others</option>
+        </select>
+        
+        <PhoneInput
+          value={value}
+          onChange={onChange}
+          defaultCountry={getDefaultCountry(userCountry)}
+          international
+          countryCallingCodeEditable={userCountry === 'Others'}
+          countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
+          className="input-field"
+          withCountryCallingCode
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       {isCountryLoading ? (
@@ -285,16 +320,10 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                     onCheckedChange={formField.onChange}
                                   />
                                 ) : customField.type === 'phone' ? (
-                                  <PhoneInput
+                                  <PhoneInputWithOthers
                                     value={formField.value as string}
                                     onChange={(value) => formField.onChange(value || '')}
-                                    defaultCountry={getDefaultCountry(userCountry)}
-                                    countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
-                                    international
-                                    countryCallingCodeEditable={userCountry === 'Others'}
-                                    className="input-field"
-                                    withCountryCallingCode
-                                    initialValueFormat="national"
+                                    userCountry={userCountry}
                                   />
                                 ) : customField.type === 'radio' ? (
                                   <div className="flex gap-4">
