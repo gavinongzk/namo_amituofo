@@ -195,9 +195,9 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     await connectToDatabase();
     console.log('Connected to database, searching for phone number:', phoneNumber);
 
-    // Calculate date from 2 weeks ago
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    // Calculate date from X days ago
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() - 3);
 
     const orders = await Order.find({
       'customFieldValues': {
@@ -213,7 +213,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
           'cancelled': { $ne: true }
         }
       },
-      'createdAt': { $gte: twoWeeksAgo } // Add date filter
+      'createdAt': { $gte: currentDate } // Add date filter
     }).populate('event', 'title imageUrl startDateTime endDateTime');
 
     console.log('Found orders:', orders);

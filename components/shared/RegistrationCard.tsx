@@ -36,7 +36,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         </div>
 
         <Link href={`/orders/${event.orderId}`} className="flex gap-2 mt-4 text-primary-500 underline hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2">
-          <p>View Order Details</p>
+          <p>View Details</p>
         </Link>
       </div>
     </div>

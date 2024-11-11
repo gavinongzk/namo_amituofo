@@ -75,7 +75,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         // If no cookie or user metadata, use IP detection
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
-        const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : 'Singapore';
+        const detectedCountry = data.name === 'SG' ? 'Singapore' : 
+                               data.name === 'MY' ? 'Malaysia' : 
+                               'Others';
         
         setUserCountry(detectedCountry);
         try {
@@ -107,8 +109,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
               ? z.boolean()
               : field.type === 'phone'
                 ? z.string()
+                    .min(1, { message: "Phone number is required" })
                     .refine(
-                      (value) => isValidPhoneNumber(value),
+                      (value) => userCountry === 'Others' ? true : isValidPhoneNumber(value),
                       { message: "Invalid phone number" }
                     )
                 : field.label.toLowerCase().includes('name')
@@ -127,6 +130,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
+    if (country === 'Others') return undefined;
     return country === 'Malaysia' ? 'MY' : 'SG';
   };
 
@@ -285,9 +289,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                     value={formField.value as string}
                                     onChange={(value) => formField.onChange(value || '')}
                                     defaultCountry={getDefaultCountry(userCountry)}
-                                    countries={["SG", "MY"]}
+                                    countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
                                     international
-                                    countryCallingCodeEditable={false}
+                                    countryCallingCodeEditable={userCountry === 'Others'}
                                     className="input-field"
                                     withCountryCallingCode
                                     initialValueFormat="national"

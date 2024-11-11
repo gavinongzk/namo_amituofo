@@ -70,7 +70,7 @@ const EventLookupPage = () => {
                         className="p-regular-16 border-2 border-gray-300 rounded-md"
                     />
                     <Button onClick={handleLookup} disabled={isLoading} className="w-full">
-                        {isLoading ? 'Looking up... / 查询中...' : 'Lookup Orders / 查询订单'}
+                        {isLoading ? 'Looking up... / 查询中...' : 'Lookup / 查询'}
                     </Button>
                 </div>
             </div>

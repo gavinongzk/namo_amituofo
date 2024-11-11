@@ -249,6 +249,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                             <span>Malaysia</span>
                           </div>
                         </SelectItem>
+                        <SelectItem value="Others">
+                          <div className="flex items-center gap-2">
+                            <Image src="/assets/icons/world.svg" alt="World" width={20} height={15} />
+                            <span>Others</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

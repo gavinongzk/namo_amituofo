@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from 'react-hot-toast';
 
 import './globals.css'
 
@@ -30,7 +31,8 @@ export default function RootLayout({
           <div className="context-container">
             {children}
           </div>
-          </body>
+          <Toaster />
+        </body>
       </html>
     </ClerkProvider>
   )
