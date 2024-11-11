@@ -255,6 +255,11 @@ const UserManagement = ({ country }: { country: string }) => {
     });
   }, [users, sortConfig, filterText]);
 
+  // Reset to first page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterText]);
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return sortedData.slice(startIndex, startIndex + pageSize);
