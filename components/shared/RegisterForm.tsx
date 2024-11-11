@@ -293,6 +293,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                     {phoneOverrides[index] ? (
                                       <Input
                                         {...formField}
+                                        value={String(formField.value)}
                                         type="tel"
                                         placeholder="Enter your phone number"
                                       />
