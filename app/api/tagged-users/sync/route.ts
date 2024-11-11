@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     // 1. Get users from Orders
     const query = {
-      createdAt: { $gte: new Date(date) }
+        isDeleted: false,
     };
 
     const orders = await Order.find(query);
@@ -28,10 +28,15 @@ export async function POST(req: Request) {
         );
 
         if (phoneField?.value) {
+          const existingUser = uniqueUsers.get(phoneField.value);
+          const isNewUser = !existingUser || 
+            (!existingUser.createdAt || new Date(existingUser.createdAt) >= new Date(date));
+
           uniqueUsers.set(phoneField.value, {
             phoneNumber: phoneField.value,
             name: nameField?.value || 'Unknown',
-            isNewUser: !uniqueUsers.has(phoneField.value)
+            isNewUser,
+            ...(existingUser && { createdAt: existingUser.createdAt })
           });
         }
       });
@@ -40,7 +45,6 @@ export async function POST(req: Request) {
     // 2. Get users from TaggedUsers collection
     const taggedUsers = await TaggedUser.find({ 
       isDeleted: false,
-      createdAt: { $gte: new Date(date) }
     });
 
     // 3. Merge users from both sources
@@ -49,10 +53,10 @@ export async function POST(req: Request) {
         uniqueUsers.set(user.phoneNumber, {
           phoneNumber: user.phoneNumber,
           name: user.name,
-          isNewUser: false,
+          isNewUser: !user.createdAt || new Date(user.createdAt) >= new Date(date),
           remarks: user.remarks,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt)
         });
       }
     });
