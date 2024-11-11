@@ -13,6 +13,7 @@ import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
+import { convertPhoneNumbersToLinks } from '@/lib/utils';
 
 const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
