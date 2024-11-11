@@ -92,9 +92,9 @@ const EventLookupPage = () => {
                             }}
                         />
                         <label className="text-sm text-gray-600">
-                            I am not from Singapore/Malaysia but would like to lookup
+                            I am not from Singapore/Malaysia but would like to lookup (please include country calling code such as +86)
                             <br />
-                            我不是来自新加坡/马来西亚但想要查询
+                            我不是来自新加坡/马来西亚但想要查询 (请包括国家区号，例如 +86)
                         </label>
                     </div>
 
