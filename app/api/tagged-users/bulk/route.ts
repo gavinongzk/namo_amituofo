@@ -3,6 +3,12 @@ import { connectToDatabase } from '@/lib/database';
 import TaggedUser from '@/lib/database/models/taggedUser.model';
 import { isValidPhoneNumber, formatPhoneNumber } from '@/lib/utils';
 
+interface TaggedUserInput {
+  phoneNumber: string;
+  name: string;
+  remarks: string;
+}
+
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
@@ -13,11 +19,11 @@ export async function POST(req: Request) {
       phoneNumber: formatPhoneNumber(user.phoneNumber),
       name: user.name || 'Unknown',
       remarks: 'Pre-existing user'
-    }));
+    } as TaggedUserInput));
 
     // Validate phone numbers
     const invalidNumbers = formattedUsers.filter(
-      user => !isValidPhoneNumber(user.phoneNumber)
+      (user: { phoneNumber: string; name: string; remarks: string }) => !isValidPhoneNumber(user.phoneNumber)
     );
 
     if (invalidNumbers.length > 0) {
