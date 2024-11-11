@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const formattedUsers = users.map((user: { phoneNumber: string; name: string }) => ({
       phoneNumber: formatPhoneNumber(user.phoneNumber),
       name: user.name || 'Unknown',
-      remarks: 'Pre-existing user'
+      remarks: ''
     } as TaggedUserInput));
 
     // Validate phone numbers
