@@ -46,6 +46,22 @@ const UserManagement = ({ country }: { country: string }) => {
     setIsLoading(true);
     try {
       const fetchedUsers = await getAllUniquePhoneNumbers(country, date);
+      
+      // Add new users to TaggedUser schema
+      const newUsers = fetchedUsers.map(user => ({
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+        remarks: 'Auto-added from orders'
+      }));
+
+      // Bulk create/update tagged users
+      await fetch('/api/tagged-users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: newUsers })
+      });
+
+      // Fetch updated tagged users
       const taggedUsers = await fetch('/api/tagged-users').then(res => res.json());
       
       const updatedUsers = fetchedUsers.map(user => ({
