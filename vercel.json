@@ -1,0 +1,9 @@
+{
+  "crons": [{
+    "path": "/api/cron/sync-tagged-users",
+    "schedule": "*/15 * * * *",
+    "headers": {
+      "authorization": "Bearer @CRON_SECRET"
+    }
+  }]
+}
