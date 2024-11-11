@@ -6,10 +6,20 @@ import { connectToDatabase } from '@/lib/database'
 import User from '@/lib/database/models/user.model'
 import Order from '@/lib/database/models/order.model'
 import Event from '@/lib/database/models/event.model'
+import TaggedUser from '@/lib/database/models/taggedUser.model'
 import { handleError } from '@/lib/utils'
 
 import { CreateUserParams, UpdateUserParams, CustomFieldGroup, UniquePhoneNumber } from '@/types'
 import { Types } from 'mongoose';
+
+interface TaggedUserDocument {
+  _id: Types.ObjectId;
+  phoneNumber: string;
+  name: string;
+  remarks: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export async function createUser(user: CreateUserParams) {
   try {
@@ -164,19 +174,22 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
   try {
     await connectToDatabase();
 
+    // Get tagged users first
+    const taggedUsers = await TaggedUser.find({ isDeleted: false }).lean<TaggedUserDocument[]>();
+    const taggedUsersMap = new Map(taggedUsers.map(user => [user.phoneNumber, user]));
+    
+    // Get users from orders
     const cutoffDate = customDate ? new Date(customDate) : new Date();
-    cutoffDate.setHours(0, 0, 0, 0); // Set to start of the day
+    cutoffDate.setHours(0, 0, 0, 0);
 
-    // Fetch events for the specific country
     const countryEvents = await Event.find({ country: superadminCountry }).select('_id');
     const countryEventIds = countryEvents.map(event => event._id);
-
-    // Fetch orders only for events in the superadmin's country
     const orders = await Order.find({ event: { $in: countryEventIds } }).select('customFieldValues createdAt');
     
-    const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
     const userList: UniquePhoneNumber[] = [];
+    const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
 
+    // Add users from orders
     orders.forEach(order => {
       order.customFieldValues.forEach((group: CustomFieldGroup) => {
         const phoneField = group.fields.find(field => 
@@ -200,7 +213,8 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
       });
     });
 
-    for (const [phoneNumber, data] of Array.from(phoneMap)) {
+    // Process orders and add to userList
+    for (const [phoneNumber, data] of phoneMap.entries()) {
       const order = orders.find(order => 
         order.customFieldValues.some((group: CustomFieldGroup) => 
           group.fields.some(field => 
@@ -220,15 +234,33 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
 
         if (group) {
           const nameField = group.fields.find((field: { label: string }) => field.label.toLowerCase().includes('name'));
+          const taggedUser = taggedUsersMap.get(phoneNumber);
 
           userList.push({
             phoneNumber,
             isNewUser: data.firstOrderDate >= cutoffDate,
-            name: nameField ? nameField.value : 'Unknown'
+            name: nameField ? nameField.value : 'Unknown',
+            remarks: taggedUser?.remarks || '',
+            createdAt: taggedUser?.createdAt?.toISOString() || data.firstOrderDate.toISOString(),
+            updatedAt: taggedUser?.updatedAt?.toISOString() || data.firstOrderDate.toISOString()
           });
         }
       }
     }
+
+    // Add tagged users that aren't already in the list
+    taggedUsers.forEach(user => {
+      if (!userList.some(u => u.phoneNumber === user.phoneNumber)) {
+        userList.push({
+          phoneNumber: user.phoneNumber,
+          isNewUser: false,
+          name: user.name || 'Unknown',
+          remarks: user.remarks || '',
+          createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
+          updatedAt: user.updatedAt?.toISOString() || new Date().toISOString()
+        });
+      }
+    });
 
     return userList;
   } catch (error) {

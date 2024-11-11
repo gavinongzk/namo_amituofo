@@ -1,0 +1,6 @@
+{
+  "crons": [{
+    "path": "/api/cron/sync-tagged-users",
+    "schedule": "0 0 * * *"
+  }]
+}

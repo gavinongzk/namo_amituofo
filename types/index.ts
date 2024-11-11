@@ -184,6 +184,9 @@ export type UniquePhoneNumber = {
   phoneNumber: string;
   isNewUser: boolean;
   name: string;
+  remarks: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 // Add these to your existing types
