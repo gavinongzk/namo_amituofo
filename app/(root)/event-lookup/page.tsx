@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import RegistrationCollection from '@/components/shared/RegistrationCollection';
 import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
@@ -11,6 +13,7 @@ import { IOrderItem } from '@/lib/database/models/order.model'; // Import IOrder
 
 const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [useManualInput, setUseManualInput] = useState(false);
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -59,16 +62,42 @@ const EventLookupPage = () => {
                     输入您注册时使用的电话号码，查找您的活动详情和排队号码。
                 </p>
                 <div className="flex flex-col gap-4">
-                    <PhoneInput
-                        placeholder="输入电话号码"
-                        value={phoneNumber}
-                        onChange={(value) => setPhoneNumber(value || '')}
-                        defaultCountry="SG"
-                        countries={["SG", "MY"]}
-                        international
-                        countryCallingCodeEditable={false}
-                        className="p-regular-16 border-2 border-gray-300 rounded-md"
-                    />
+                    {useManualInput ? (
+                        <Input
+                            type="tel"
+                            placeholder="输入电话号码"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="p-regular-16 border-2"
+                        />
+                    ) : (
+                        <PhoneInput
+                            placeholder="输入电话号码"
+                            value={phoneNumber}
+                            onChange={(value) => setPhoneNumber(value || '')}
+                            defaultCountry="SG"
+                            countries={["SG", "MY"]}
+                            international
+                            countryCallingCodeEditable={false}
+                            className="p-regular-16 border-2 border-gray-300 rounded-md"
+                        />
+                    )}
+                    
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            checked={useManualInput}
+                            onCheckedChange={(checked) => {
+                                setUseManualInput(checked === true);
+                                setPhoneNumber('');
+                            }}
+                        />
+                        <label className="text-sm text-gray-600">
+                            I am not from Singapore/Malaysia but would like to lookup (please include country calling code such as +86)
+                            <br />
+                            我不是来自新加坡/马来西亚但想要查询 (请包括国家区号，例如 +86)
+                        </label>
+                    </div>
+
                     <Button onClick={handleLookup} disabled={isLoading} className="w-full">
                         {isLoading ? 'Looking up... / 查询中...' : 'Lookup / 查询'}
                     </Button>

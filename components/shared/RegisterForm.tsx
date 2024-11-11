@@ -44,6 +44,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
+  const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function fetchOrderCount() {
@@ -111,7 +112,10 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                 ? z.string()
                     .min(1, { message: "Phone number is required" })
                     .refine(
-                      (value) => userCountry === 'Others' ? true : isValidPhoneNumber(value),
+                      (value) => {
+                        const index = parseInt(field.id.split('_')[1]) - 1;
+                        return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
+                      },
                       { message: "Invalid phone number" }
                     )
                 : field.label.toLowerCase().includes('name')
@@ -142,7 +146,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : 
-          field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
+          // field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
           ''
         ])
       )]
@@ -285,17 +289,48 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                     onCheckedChange={formField.onChange}
                                   />
                                 ) : customField.type === 'phone' ? (
-                                  <PhoneInput
-                                    value={formField.value as string}
-                                    onChange={(value) => formField.onChange(value || '')}
-                                    defaultCountry={getDefaultCountry(userCountry)}
-                                    countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
-                                    international
-                                    countryCallingCodeEditable={userCountry === 'Others'}
-                                    className="input-field"
-                                    withCountryCallingCode
-                                    initialValueFormat="national"
-                                  />
+                                  <>
+                                    {phoneOverrides[index] ? (
+                                      <Input
+                                        {...formField}
+                                        value={String(formField.value)}
+                                        type="tel"
+                                        placeholder="Enter your phone number"
+                                      />
+                                    ) : (
+                                      <PhoneInput
+                                        value={formField.value as string}
+                                        onChange={(value) => formField.onChange(value || '')}
+                                        defaultCountry={getDefaultCountry(userCountry)}
+                                        countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
+                                        international
+                                        countryCallingCodeEditable={userCountry === 'Others'}
+                                        className="input-field"
+                                        withCountryCallingCode
+                                        initialValueFormat="national"
+                                      />
+                                    )}
+                                    {userCountry !== 'Others' && (
+                                      <div className="flex items-center space-x-2 mt-2">
+                                        <Checkbox
+                                          checked={phoneOverrides[index] || false}
+                                          onCheckedChange={(checked) => {
+                                            setPhoneOverrides(prev => ({
+                                              ...prev,
+                                              [index]: checked === true
+                                            }));
+                                            // Clear the phone number when toggling
+                                            form.setValue(`groups.${index}.phone`, '');
+                                          }}
+                                        />
+                                        <label className="text-sm text-gray-600">
+                                          I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
+                                          <br />
+                                          我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
+                                        </label>
+                                      </div>
+                                    )}
+                                  </>
                                 ) : customField.type === 'radio' ? (
                                   <div className="flex gap-4">
                                     {('options' in customField) && customField.options?.map((option) => (
