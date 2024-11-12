@@ -13,7 +13,7 @@ const AdminLoginButton = () => (
     className="transition-transform hover:scale-105"
   >
     <Image 
-      src="/assets/images/admin.png"
+      src="/assets/icons/admin.png"
       width={32}
       height={32}
       alt="Admin login"
