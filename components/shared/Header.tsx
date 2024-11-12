@@ -43,25 +43,19 @@ const Header = () => {
                     avatarBox: "h-10 w-10"
                   }
                 }}
-              >
-                <UserButton.UserProfilePage 
-                  label="Admin Login" 
-                  url="/sign-in"
-                >
-                  <AdminLoginItem />
-                </UserButton.UserProfilePage>
-              </UserButton>
+              />
             </div>
           </SignedIn>
           <SignedOut>
             <CountrySelector />
-            <Link 
-              href="/sign-in" 
-              className="rounded-md bg-primary-500 px-4 py-2 text-white hover:bg-primary-600 transition-colors"
-            >
-              <span className="font-medium">管理员登录</span>
-              <span className="text-xs ml-2">Admin Login</span>
-            </Link>
+            <UserButton>
+              <UserButton.UserProfilePage 
+                label="Admin Login" 
+                url="/sign-in"
+              >
+                <AdminLoginItem />
+              </UserButton.UserProfilePage>
+            </UserButton>
           </SignedOut>
           <MobileNav />
         </div>
