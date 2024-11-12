@@ -9,6 +9,28 @@ import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
 import React, { useState } from "react";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+
+const AdminLoginButton = () => (
+  <Link 
+    href="/sign-in" 
+    className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-300"
+    onClick={(e) => e.stopPropagation()}
+  >
+    <Image 
+      src="/assets/icons/admin.png"
+      width={24}
+      height={24}
+      alt="Admin login"
+      className="object-contain"
+    />
+    <div className="flex flex-col">
+      <span className="font-medium">管理员登录</span>
+      <span className="text-xs">Admin Login</span>
+    </div>
+  </Link>
+)
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +61,10 @@ const MobileNav = () => {
           />
           <Separator className="border border-gray-200" />
           <NavWrapper onClose={handleClose} />
+          <SignedOut>
+            <Separator className="border border-gray-200" />
+            <AdminLoginButton />
+          </SignedOut>
         </SheetContent>
       </Sheet>
     </nav>
