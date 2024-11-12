@@ -51,19 +51,26 @@ const MobileNav = () => {
             />
           </div>
         </SheetTrigger>
-        <SheetContent className="flex flex-col gap-6 bg-white md:hidden">
-          <Image 
-            src="/assets/images/logo.svg"
-            alt="logo"
-            width={128}
-            height={38}
-            className="mx-auto mt-4"
-          />
-          <Separator className="border border-gray-200" />
-          <NavWrapper onClose={handleClose} />
-          <SignedOut>
+        <SheetContent className="flex flex-col bg-white md:hidden">
+          <div className="flex-1 flex flex-col gap-6">
+            <Image 
+              src="/assets/images/logo.svg"
+              alt="logo"
+              width={128}
+              height={38}
+              className="mx-auto mt-4"
+            />
             <Separator className="border border-gray-200" />
-            <AdminLoginButton />
+            <NavWrapper onClose={handleClose} />
+          </div>
+          
+          <SignedOut>
+            <div className="mt-auto pt-6">
+              <Separator className="border border-gray-200" />
+              <div className="mt-6">
+                <AdminLoginButton />
+              </div>
+            </div>
           </SignedOut>
         </SheetContent>
       </Sheet>
