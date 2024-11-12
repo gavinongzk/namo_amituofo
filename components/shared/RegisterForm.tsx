@@ -369,15 +369,19 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                       )}
                     </div>
                   ))}
-                  <div className="flex gap-4 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
                     <Button
                       type="button"
                       onClick={handleAddPerson}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                      className="w-full sm:flex-1 bg-gray-600 hover:bg-gray-700 text-white"
                     >
                       Add Another Person 添加另一位
                     </Button>
-                    <Button type="submit" disabled={isSubmitting} className="flex-1">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full sm:flex-1"
+                    >
                       {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
                     </Button>
                   </div>
