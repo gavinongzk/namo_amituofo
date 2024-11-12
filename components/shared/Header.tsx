@@ -1,9 +1,18 @@
+'use client'
+
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
 import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
 import CountrySelector from '@/components/shared/CountrySelector';
+
+const AdminLoginItem = () => (
+  <>
+    <span className="font-medium">管理员登录</span>
+    <span className="text-xs ml-2">Admin Login</span>
+  </>
+)
 
 const Header = () => {
   return (
@@ -34,11 +43,25 @@ const Header = () => {
                     avatarBox: "h-10 w-10"
                   }
                 }}
-              />
+              >
+                <UserButton.UserProfilePage 
+                  label="Admin Login" 
+                  url="/sign-in"
+                >
+                  <AdminLoginItem />
+                </UserButton.UserProfilePage>
+              </UserButton>
             </div>
           </SignedIn>
           <SignedOut>
             <CountrySelector />
+            <Link 
+              href="/sign-in" 
+              className="rounded-md bg-primary-500 px-4 py-2 text-white hover:bg-primary-600 transition-colors"
+            >
+              <span className="font-medium">管理员登录</span>
+              <span className="text-xs ml-2">Admin Login</span>
+            </Link>
           </SignedOut>
           <MobileNav />
         </div>
