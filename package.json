@@ -24,6 +24,8 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@tanstack/react-table": "^8.20.5",
     "@uploadthing/react": "^6.8.0",
+    "@upstash/ratelimit": "^2.0.4",
+    "@upstash/redis": "^1.34.3",
     "chart.js": "^4.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
