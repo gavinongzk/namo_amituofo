@@ -89,7 +89,8 @@ function getAllowedRoles(pathname: string): string[] {
     '/admin/events_archive': ['superadmin'],
     '/admin/upload_orders': ['superadmin'],
     '/admin/users': ['superadmin'],
-    '/admin/analytics': ['superadmin']
+    '/admin/analytics': ['superadmin'],
+    '/api/events/:eventId/max-seats': ['superadmin'],
   };
 
   return routeRoles[pathname] || ['user', 'admin', 'superadmin'];

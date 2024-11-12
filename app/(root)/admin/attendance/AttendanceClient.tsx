@@ -624,6 +624,40 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   };
 
+  const handleUpdateMaxSeats = useCallback(async (newMaxSeats: number) => {
+    showModalWithMessage('Updating / 更新中', 'Updating max seats... 更新最大座位数...', 'loading');
+
+    try {
+      const response = await fetch(`/api/events/${event._id}/max-seats`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ maxSeats: newMaxSeats }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update max seats');
+      }
+
+      // Update the event object locally
+      event.maxSeats = newMaxSeats;
+
+      showModalWithMessage(
+        'Success / 成功',
+        'Max seats updated successfully\n最大座位数已更新',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating max seats:', error);
+      showModalWithMessage(
+        'Error / 错误',
+        'Failed to update max seats\n更新最大座位数失败',
+        'error'
+      );
+    }
+  }, [event, showModalWithMessage]);
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -632,6 +666,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         attendedUsersCount={attendedUsersCount}
         cannotReciteAndWalkCount={cannotReciteAndWalkCount}
         cancelledUsersCount={cancelledUsersCount}
+        isSuperAdmin={isSuperAdmin}
+        onUpdateMaxSeats={handleUpdateMaxSeats}
       />
 
       <div className="mt-8">
