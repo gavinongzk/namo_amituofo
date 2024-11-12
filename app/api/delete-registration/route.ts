@@ -35,12 +35,14 @@ export async function POST(req: NextRequest) {
       await order.save();
     }
 
-    // Only increase maxSeats if the registration wasn't cancelled
-    // If it was cancelled, maxSeats was already increased during cancellation
-    const event = await Event.findById(order.event);
-    if (event && !groupToDelete.cancelled) {
-      event.maxSeats += 1;
-      await event.save();
+    // If the registration was cancelled, decrease maxSeats by 1
+    // to counter the increase that happened during cancellation
+    if (groupToDelete.cancelled) {
+      const event = await Event.findById(order.event);
+      if (event) {
+        event.maxSeats -= 1;
+        await event.save();
+      }
     }
 
     return NextResponse.json({ message: 'Registration deleted successfully' });
