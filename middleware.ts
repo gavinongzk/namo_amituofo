@@ -13,6 +13,7 @@ export default authMiddleware({
     '/events/:id/thank-you', // Add this line
     '/event-lookup', // Add this line
     '/api/orders',
+    '/api/update-registration',
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
