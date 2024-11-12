@@ -43,6 +43,12 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           </Link>
         </li>
       )}
+      <li>
+        <Link href="/faq" className={navItemClass('/faq')} onClick={handleClick}>
+          <span className="font-medium">常见问题</span>
+          <span className="text-xs mt-1">FAQ</span>
+        </Link>
+      </li>
       {isSignedIn ? (
         <>
           <li>
@@ -59,12 +65,6 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
               </Link>
             </li>
           )}
-      <li>
-        <Link href="/faq" className={navItemClass('/faq')} onClick={handleClick}>
-          <span className="font-medium">常见问题</span>
-          <span className="text-xs mt-1">FAQ</span>
-        </Link>
-      </li>
           {(isSuperAdmin || isNormalAdmin) && (
             <li>
               <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={handleClick}>
@@ -74,14 +74,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
             </li>
           )}
         </>
-      ) : (
-        <li>
-          <Link href="/sign-in" className={navItemClass('/sign-in')} onClick={handleClick}>
-            <span className="font-medium">管理员登录</span>
-            <span className="text-xs mt-1">Admin Login</span>
-          </Link>
-        </li>
-      )}
+      ) : null}
     </ul>
   );
 }
