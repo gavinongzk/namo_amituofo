@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectToDatabase();
@@ -12,7 +12,7 @@ export async function PATCH(
     const { maxSeats } = await req.json();
 
     const updatedEvent = await Event.findByIdAndUpdate(
-      params.eventId,
+      params.id,
       { maxSeats },
       { new: true }
     );
