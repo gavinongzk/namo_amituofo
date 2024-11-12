@@ -8,6 +8,7 @@ export default authMiddleware({
     '/api/webhook/clerk',
     '/api/events',
     '/api/createOrder',
+    '/api/check-phone-numbers',
     '/events/:id/register',  // Add this line
     '/events/:id/thank-you', // Add this line
     '/event-lookup', // Add this line
