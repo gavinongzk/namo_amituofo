@@ -17,7 +17,7 @@ const AdminLoginButton = () => (
       width={32}
       height={32}
       alt="Admin login"
-      className="object-contain"
+      className="object-contain md:w-[36px] md:h-[36px]"
     />
   </Link>
 )
@@ -25,30 +25,30 @@ const AdminLoginButton = () => (
 const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <div className="wrapper flex items-center justify-between py-4 px-4 md:px-8">
-        <Link href="/" className="w-36 transition-transform hover:scale-105">
+      <div className="wrapper flex items-center justify-between py-2 px-4 md:px-6">
+        <Link href="/" className="w-24 md:w-32 transition-transform hover:scale-105">
           <Image 
             src="/assets/images/logo.svg" 
-            width={128} 
-            height={38}
+            width={96}
+            height={28}
             alt="Namo Amituofo logo" 
-            className="object-contain"
+            className="object-contain w-full h-auto"
           />
         </Link>
 
-        <nav className="md:flex-between hidden w-full max-w-2xl mx-8">
+        <nav className="md:flex-between hidden w-full max-w-xl mx-6">
           <NavWrapper />
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <SignedIn>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <CountrySelector />
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "h-10 w-10"
+                    avatarBox: "h-8 w-8"
                   }
                 }}
               />

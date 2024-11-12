@@ -22,17 +22,27 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckPhoneNum
     
     const { phoneNumbers, eventId }: CheckPhoneNumbersRequest = await req.json();
     
+    if (!Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+      return NextResponse.json<CheckPhoneNumbersResponse>({ duplicates: [] });
+    }
+
+    const validPhoneNumbers = phoneNumbers.filter(phone => phone && phone.trim());
+
+    if (validPhoneNumbers.length === 0) {
+      return NextResponse.json<CheckPhoneNumbersResponse>({ duplicates: [] });
+    }
+
     const orders = await Order.find({
       event: eventId,
       'customFieldValues.fields': {
         $elemMatch: {
           type: 'phone',
-          value: { $in: phoneNumbers }
+          value: { $in: validPhoneNumbers }
         }
       }
     });
 
-    const duplicates = phoneNumbers.filter(phone => 
+    const duplicates = validPhoneNumbers.filter(phone => 
       orders.some(order => 
         order.customFieldValues.some((group: CustomFieldGroup) => 
           group.fields.some((field: CustomField) => 

@@ -56,9 +56,9 @@ const MobileNav = () => {
             <Image 
               src="/assets/images/logo.svg"
               alt="logo"
-              width={128}
-              height={38}
-              className="mx-auto mt-4"
+              width={96}
+              height={28}
+              className="mx-auto mt-4 w-24 md:w-32 h-auto"
             />
             <Separator className="border border-gray-200" />
             <NavWrapper onClose={handleClose} />

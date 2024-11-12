@@ -20,6 +20,7 @@ import { CustomField } from "@/types"
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { toast } from "react-hot-toast"
 
 
 const isValidName = (name: string) => {
@@ -177,21 +178,26 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
+    
     const duplicates = await checkForDuplicatePhoneNumbers(values);
     
     if (duplicates.length > 0) {
+      toast.dismiss(toastId);
       setDuplicatePhoneNumbers(duplicates);
       setFormValues(values);
       setShowConfirmation(true);
       return;
     }
     
-    await submitForm(values);
+    await submitForm(values, toastId);
   };
 
-  const submitForm = async (values: z.infer<typeof formSchema>) => {
+  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
     setIsSubmitting(true);
     setMessage('');
+    
+    toast.loading("Processing registration... / 处理注册中...", { id: toastId });
     
     try {
       const customFieldValues = values.groups.map((group, index) => ({
@@ -227,9 +233,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       }
 
       const data = await response.json();
+      
+      toast.success("Registration successful! / 注册成功！", { id: toastId });
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
+      toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
       setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -251,9 +260,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   };
 
   return (
-    <>
+    <div className="bg-white">
       {isCountryLoading ? (
-        <div className="flex items-center justify-center p-8">
+        <div className="flex items-center justify-center py-4">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             <p className="text-gray-600">Loading... 加载中...</p>
@@ -262,14 +271,14 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       ) : (
         <>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
                 <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
               ) : (
                 <>
                   {fields.map((field, index) => (
-                    <div key={field.id} className="space-y-4">
+                    <div key={field.id} className="space-y-3">
                       <h3 className="font-bold">Person {index + 1}</h3>
                       {customFields.map((customField) => (
                         <FormField
@@ -318,7 +327,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                           form.setValue(`groups.${index}.phone`, '');
                                         }}
                                       />
-                                      <label className="text-sm text-gray-600">
+                                      <label className="text-xs text-gray-500">
                                         I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
                                         <br />
                                         我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
@@ -369,7 +378,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                       )}
                     </div>
                   ))}
-                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-4">
                     <Button
                       type="button"
                       onClick={handleAddPerson}
@@ -426,7 +435,8 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                   onClick={() => {
                     setShowConfirmation(false);
                     if (formValues) {
-                      submitForm(formValues);
+                      const toastId = toast.loading("Processing registration... / 处理注册中...");
+                      submitForm(formValues, toastId);
                     }
                   }}
                   className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
@@ -438,7 +448,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
           </Dialog>
         </>
       )}
-    </>
+    </div>
   )
 }
 
