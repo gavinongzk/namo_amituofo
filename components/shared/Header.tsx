@@ -7,11 +7,19 @@ import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
 import CountrySelector from '@/components/shared/CountrySelector';
 
-const AdminLoginItem = () => (
-  <>
-    <span className="font-medium">管理员登录</span>
-    <span className="text-xs ml-2">Admin Login</span>
-  </>
+const AdminLoginButton = () => (
+  <Link 
+    href="/sign-in" 
+    className="transition-transform hover:scale-105"
+  >
+    <Image 
+      src="/assets/images/admin.png"
+      width={32}
+      height={32}
+      alt="Admin login"
+      className="object-contain"
+    />
+  </Link>
 )
 
 const Header = () => {
@@ -48,14 +56,7 @@ const Header = () => {
           </SignedIn>
           <SignedOut>
             <CountrySelector />
-            <UserButton>
-              <UserButton.UserProfilePage 
-                label="Admin Login" 
-                url="/sign-in"
-              >
-                <AdminLoginItem />
-              </UserButton.UserProfilePage>
-            </UserButton>
+            <AdminLoginButton />
           </SignedOut>
           <MobileNav />
         </div>
