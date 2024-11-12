@@ -16,9 +16,8 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
   })
 
   return (
-    <>
-    <section className="flex justify-center bg-primary-50 bg-dotted-pattern bg-contain">
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:max-w-7xl w-full">
+    <section className="w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto">
         <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-0">
           <Image 
             src={event.imageUrl}
@@ -80,7 +79,6 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
         </div>
       </div>
     </section>
-    </>
   )
 }
 

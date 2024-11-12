@@ -14,10 +14,10 @@ const AdminLoginButton = () => (
   >
     <Image 
       src="/assets/icons/admin.png"
-      width={32}
-      height={32}
+      width={40}
+      height={40}
       alt="Admin login"
-      className="object-contain"
+      className="object-contain md:w-[48px] md:h-[48px]"
     />
   </Link>
 )
@@ -26,13 +26,13 @@ const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
       <div className="wrapper flex items-center justify-between py-4 px-4 md:px-8">
-        <Link href="/" className="w-36 transition-transform hover:scale-105">
+        <Link href="/" className="w-28 md:w-36 transition-transform hover:scale-105">
           <Image 
             src="/assets/images/logo.svg" 
-            width={128} 
-            height={38}
+            width={112}
+            height={33}
             alt="Namo Amituofo logo" 
-            className="object-contain"
+            className="object-contain w-full h-auto"
           />
         </Link>
 
