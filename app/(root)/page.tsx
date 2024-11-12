@@ -20,7 +20,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
   return (
     <>
       <section id="events" className="wrapper my-8 flex flex-col gap-8 md:gap-12">
-        <h2 className="h2-bold">最新活动</h2>
+        <h2 className="h2-bold">Latest Events 最新活动</h2>
 
         <div className="flex w-full flex-col gap-5 md:flex-row">
           <Search />
@@ -59,8 +59,8 @@ async function EventList({ page, searchText, category, country }: { page: number
   return (
     <Collection 
       data={recentAndUpcomingEvents}
-      emptyTitle="No Events Found"
-      emptyStateSubtext="Come back later"
+      emptyTitle="No Events Found 未找到活动"
+      emptyStateSubtext="Come back later 请稍后再来"
       collectionType="All_Events"
       limit={6}
       page={page}
