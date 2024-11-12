@@ -14,6 +14,7 @@ export default authMiddleware({
     '/event-lookup', // Add this line
     '/api/orders',
     '/api/update-registration',
+    '/api/cancel-registration',
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
