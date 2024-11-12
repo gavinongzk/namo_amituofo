@@ -251,26 +251,26 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   };
 
   return (
-    <div className="space-y-6">
+    <>
       {isCountryLoading ? (
-        <div className="flex items-center justify-center py-4">
+        <div className="flex items-center justify-center p-8">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             <p className="text-gray-600">Loading... 加载中...</p>
           </div>
         </div>
       ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {message && <p className="text-red-500 mb-4">{message}</p>}
-            {isFullyBooked ? (
-              <p className="text-red-500 mb-4">This event is fully booked. 此活动已满员。</p>
-            ) : (
-              <>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-bold text-lg mb-3">Person {index + 1}</h3>
-                    <div className="space-y-3">
+        <>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {message && <p className="text-red-500">{message}</p>}
+              {isFullyBooked ? (
+                <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
+              ) : (
+                <>
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="space-y-4">
+                      <h3 className="font-bold">Person {index + 1}</h3>
                       {customFields.map((customField) => (
                         <FormField
                           key={customField.id}
@@ -362,87 +362,83 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                           )}
                         />
                       ))}
+                      {index > 0 && (
+                        <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                          Remove Person
+                        </Button>
+                      )}
                     </div>
-                    {index > 0 && (
-                      <Button 
-                        type="button" 
-                        variant="destructive" 
-                        onClick={() => remove(index)}
-                        className="mt-4"
-                      >
-                        Remove Person
-                      </Button>
-                    )}
+                  ))}
+                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                    <Button
+                      type="button"
+                      onClick={handleAddPerson}
+                      className="w-full sm:flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                    >
+                      Add Another Person 添加另一位
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full sm:flex-1"
+                    >
+                      {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
+                    </Button>
                   </div>
-                ))}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
-                    type="button"
-                    onClick={handleAddPerson}
-                    className="w-full sm:flex-1 bg-gray-600 hover:bg-gray-700 text-white"
-                  >
-                    Add Another Person 添加另一位
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting} 
-                    className="w-full sm:flex-1"
-                  >
-                    {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
-                  </Button>
-                </div>
-              </>
-            )}
-          </form>
-        </Form>
+                </>
+              )}
+            </form>
+          </Form>
+
+          <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+            <DialogContent className="bg-white border-2 border-gray-200 shadow-xl max-w-md w-[90vw]">
+              <DialogHeader className="space-y-4">
+                <DialogTitle className="text-xl font-bold text-gray-900">
+                  Duplicate Registration Found / 发现重复注册
+                </DialogTitle>
+                <DialogDescription className="text-gray-700 space-y-4">
+                  <p className="text-base">
+                    The following phone numbers have already registered for this event:
+                    <br />
+                    以下电话号码已经注册过此活动：
+                  </p>
+                  <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                    <p className="text-red-600 font-medium text-lg">
+                      {duplicatePhoneNumbers.join(', ')}
+                    </p>
+                  </div>
+                  <p className="text-base pt-2">
+                    Do you want to continue with the registration?
+                    <br />
+                    您要继续注册吗？
+                  </p>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-end gap-3 mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowConfirmation(false)}
+                  className="flex-1 sm:flex-none border-gray-300 hover:bg-gray-100"
+                >
+                  Cancel / 取消
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowConfirmation(false);
+                    if (formValues) {
+                      submitForm(formValues);
+                    }
+                  }}
+                  className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
+                >
+                  Continue / 继续
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="bg-white border-2 border-gray-200 shadow-xl max-w-md w-[90vw]">
-          <DialogHeader className="space-y-4">
-            <DialogTitle className="text-xl font-bold text-gray-900">
-              Duplicate Registration Found / 发现重复注册
-            </DialogTitle>
-            <DialogDescription className="text-gray-700 space-y-4">
-              <p className="text-base">
-                The following phone numbers have already registered for this event:
-                <br />
-                以下电话号码已经注册过此活动：
-              </p>
-              <div className="bg-red-50 p-3 rounded-md border border-red-200">
-                <p className="text-red-600 font-medium text-lg">
-                  {duplicatePhoneNumbers.join(', ')}
-                </p>
-              </div>
-              <p className="text-base pt-2">
-                Do you want to continue with the registration?
-                <br />
-                您要继续注册吗？
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-end gap-3 mt-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowConfirmation(false)}
-              className="flex-1 sm:flex-none border-gray-300 hover:bg-gray-100"
-            >
-              Cancel / 取消
-            </Button>
-            <Button 
-              onClick={() => {
-                setShowConfirmation(false);
-                if (formValues) {
-                  submitForm(formValues);
-                }
-              }}
-              className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
-            >
-              Continue / 继续
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </>
   )
 }
 
