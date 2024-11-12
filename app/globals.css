@@ -13,11 +13,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 22 80% 50%;
+    --primary: 25 24% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 22 30% 90%;
-    --secondary-foreground: 22 80% 20%;
+    --secondary: 25 24% 95%;
+    --secondary-foreground: 25 24% 23%;
 
     --muted: 0 0% 90%;
     --muted-foreground: 0 0% 40%;
@@ -409,4 +409,16 @@ input[type=checkbox] {
     height: 0;
     opacity: 0;
   }
+}
+
+.hover-primary {
+  @apply hover:bg-[#8b6f5d] transition-colors duration-200;
+}
+
+.text-primary {
+  @apply text-[#a2826c];
+}
+
+.border-primary {
+  @apply border-[#a2826c];
 }
