@@ -20,6 +20,7 @@ import { CustomField } from "@/types"
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { toast } from "react-hot-toast"
 
 
 const isValidName = (name: string) => {
@@ -177,21 +178,26 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
+    
     const duplicates = await checkForDuplicatePhoneNumbers(values);
     
     if (duplicates.length > 0) {
+      toast.dismiss(toastId);
       setDuplicatePhoneNumbers(duplicates);
       setFormValues(values);
       setShowConfirmation(true);
       return;
     }
     
-    await submitForm(values);
+    await submitForm(values, toastId);
   };
 
-  const submitForm = async (values: z.infer<typeof formSchema>) => {
+  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
     setIsSubmitting(true);
     setMessage('');
+    
+    toast.loading("Processing registration... / 处理注册中...", { id: toastId });
     
     try {
       const customFieldValues = values.groups.map((group, index) => ({
@@ -227,9 +233,12 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       }
 
       const data = await response.json();
+      
+      toast.success("Registration successful! / 注册成功！", { id: toastId });
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
+      toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
       setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -426,7 +435,8 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                   onClick={() => {
                     setShowConfirmation(false);
                     if (formValues) {
-                      submitForm(formValues);
+                      const toastId = toast.loading("Processing registration... / 处理注册中...");
+                      submitForm(formValues, toastId);
                     }
                   }}
                   className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
