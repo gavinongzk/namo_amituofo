@@ -21,6 +21,12 @@ interface TaggedUserDocument {
   updatedAt: Date;
 }
 
+const validateDate = (dateString: string | undefined): string => {
+  if (!dateString) return new Date().toISOString();
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+};
+
 export async function createUser(user: CreateUserParams) {
   try {
     await connectToDatabase()
@@ -241,8 +247,8 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
             isNewUser: data.firstOrderDate >= cutoffDate,
             name: nameField ? nameField.value : 'Unknown',
             remarks: taggedUser?.remarks || '',
-            createdAt: taggedUser?.createdAt?.toISOString() || data.firstOrderDate.toISOString(),
-            updatedAt: taggedUser?.updatedAt?.toISOString() || data.firstOrderDate.toISOString()
+            createdAt: validateDate(taggedUser?.createdAt?.toISOString() || data.firstOrderDate.toISOString()),
+            updatedAt: validateDate(taggedUser?.updatedAt?.toISOString() || data.firstOrderDate.toISOString())
           });
         }
       }

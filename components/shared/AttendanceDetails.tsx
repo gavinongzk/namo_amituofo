@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatDateTime } from '@/lib/utils';
+import { Pencil } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface AttendanceDetailsCardProps {
   event: {
+    _id: string;
     title: string;
     startDateTime: string;
     endDateTime: string;
@@ -16,9 +20,37 @@ interface AttendanceDetailsCardProps {
   attendedUsersCount: number;
   cannotReciteAndWalkCount: number;
   cancelledUsersCount: number;
+  isSuperAdmin?: boolean;
+  onUpdateMaxSeats?: (newMaxSeats: number) => Promise<void>;
 }
 
-const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, totalRegistrations, attendedUsersCount, cannotReciteAndWalkCount, cancelledUsersCount }) => {
+const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ 
+  event, 
+  totalRegistrations, 
+  attendedUsersCount, 
+  cannotReciteAndWalkCount, 
+  cancelledUsersCount,
+  isSuperAdmin,
+  onUpdateMaxSeats
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [maxSeats, setMaxSeats] = useState(event.maxSeats);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleSave = async () => {
+    if (onUpdateMaxSeats) {
+      setIsUpdating(true);
+      try {
+        await onUpdateMaxSeats(maxSeats);
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Error updating max seats:', error);
+      } finally {
+        setIsUpdating(false);
+      }
+    }
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
@@ -47,9 +79,49 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({ event, to
         </div>
         <div className="border-t pt-4 mt-4">
           <div className="grid grid-cols-4 gap-4">
-            <div>
+            <div className="relative">
               <p className="text-sm text-gray-600">Max Seats 最大座位数</p>
-              <p className="font-semibold">{event.maxSeats}</p>
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={maxSeats}
+                      onChange={(e) => setMaxSeats(Number(e.target.value))}
+                      className="w-24"
+                    />
+                    <Button 
+                      onClick={handleSave}
+                      disabled={isUpdating}
+                      size="sm"
+                    >
+                      {isUpdating ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setIsEditing(false);
+                        setMaxSeats(event.maxSeats);
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-semibold">{event.maxSeats}</p>
+                    {isSuperAdmin && (
+                      <button 
+                        onClick={() => setIsEditing(true)}
+                        className="ml-2 text-gray-500 hover:text-gray-700"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Registrations 总注册</p>

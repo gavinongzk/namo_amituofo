@@ -19,6 +19,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // Find the group that's being deleted
+    const groupToDelete = order.customFieldValues.find((g: any) => g.groupId === groupId);
+    if (!groupToDelete) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    }
+
     // Remove the specific group from customFieldValues
     order.customFieldValues = order.customFieldValues.filter((g: any) => g.groupId !== groupId);
 
@@ -29,11 +35,14 @@ export async function POST(req: NextRequest) {
       await order.save();
     }
 
-    // Increase the event's max seats by 1
-    const event = await Event.findById(order.eventId);
-    if (event) {
-      event.maxSeats += 1;
-      await event.save();
+    // If the registration was cancelled, decrease maxSeats by 1
+    // to counter the increase that happened during cancellation
+    if (groupToDelete.cancelled) {
+      const event = await Event.findById(order.event);
+      if (event) {
+        event.maxSeats -= 1;
+        await event.save();
+      }
     }
 
     return NextResponse.json({ message: 'Registration deleted successfully' });
