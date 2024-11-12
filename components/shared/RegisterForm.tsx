@@ -76,9 +76,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
         // If no cookie or user metadata, use IP detection
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
-        const detectedCountry = data.name === 'SG' ? 'Singapore' : 
-                               data.name === 'MY' ? 'Malaysia' : 
-                               'Others';
+        const detectedCountry = data.name === 'SG' ? 'Singapore' : 'Malaysia';
         
         setUserCountry(detectedCountry);
         try {
@@ -134,7 +132,6 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
 
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
-    if (country === 'Others') return undefined;
     return country === 'Malaysia' ? 'MY' : 'SG';
   };
 
@@ -302,34 +299,31 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                         value={formField.value as string}
                                         onChange={(value) => formField.onChange(value || '')}
                                         defaultCountry={getDefaultCountry(userCountry)}
-                                        countries={userCountry === 'Others' ? undefined : ["SG", "MY"]}
+                                        countries={["SG", "MY"]}
                                         international
-                                        countryCallingCodeEditable={userCountry === 'Others'}
+                                        countryCallingCodeEditable={false}
                                         className="input-field"
                                         withCountryCallingCode
                                         initialValueFormat="national"
                                       />
                                     )}
-                                    {userCountry !== 'Others' && (
-                                      <div className="flex items-center space-x-2 mt-2">
-                                        <Checkbox
-                                          checked={phoneOverrides[index] || false}
-                                          onCheckedChange={(checked) => {
-                                            setPhoneOverrides(prev => ({
-                                              ...prev,
-                                              [index]: checked === true
-                                            }));
-                                            // Clear the phone number when toggling
-                                            form.setValue(`groups.${index}.phone`, '');
-                                          }}
-                                        />
-                                        <label className="text-sm text-gray-600">
-                                          I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
-                                          <br />
-                                          我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
-                                        </label>
-                                      </div>
-                                    )}
+                                    <div className="flex items-center space-x-2 mt-2">
+                                      <Checkbox
+                                        checked={phoneOverrides[index] || false}
+                                        onCheckedChange={(checked) => {
+                                          setPhoneOverrides(prev => ({
+                                            ...prev,
+                                            [index]: checked === true
+                                          }));
+                                          form.setValue(`groups.${index}.phone`, '');
+                                        }}
+                                      />
+                                      <label className="text-sm text-gray-600">
+                                        I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
+                                        <br />
+                                        我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
+                                      </label>
+                                    </div>
                                   </>
                                 ) : customField.type === 'radio' ? (
                                   <div className="flex gap-4">
@@ -375,15 +369,19 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                       )}
                     </div>
                   ))}
-                  <div className="flex gap-4 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
                     <Button
                       type="button"
                       onClick={handleAddPerson}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                      className="w-full sm:flex-1 bg-gray-600 hover:bg-gray-700 text-white"
                     >
                       Add Another Person 添加另一位
                     </Button>
-                    <Button type="submit" disabled={isSubmitting} className="flex-1">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full sm:flex-1"
+                    >
                       {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
                     </Button>
                   </div>
