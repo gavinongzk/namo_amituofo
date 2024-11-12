@@ -251,9 +251,9 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
   };
 
   return (
-    <>
+    <div className="bg-white">
       {isCountryLoading ? (
-        <div className="flex items-center justify-center p-8">
+        <div className="flex items-center justify-center py-4">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             <p className="text-gray-600">Loading... 加载中...</p>
@@ -262,14 +262,14 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
       ) : (
         <>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
                 <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
               ) : (
                 <>
                   {fields.map((field, index) => (
-                    <div key={field.id} className="space-y-4">
+                    <div key={field.id} className="space-y-3">
                       <h3 className="font-bold">Person {index + 1}</h3>
                       {customFields.map((customField) => (
                         <FormField
@@ -318,7 +318,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                                           form.setValue(`groups.${index}.phone`, '');
                                         }}
                                       />
-                                      <label className="text-sm text-gray-600">
+                                      <label className="text-xs text-gray-500">
                                         I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
                                         <br />
                                         我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
@@ -369,7 +369,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
                       )}
                     </div>
                   ))}
-                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-4">
                     <Button
                       type="button"
                       onClick={handleAddPerson}
@@ -438,7 +438,7 @@ const RegisterForm = ({ event }: { event: IEvent & { category: { name: CategoryN
           </Dialog>
         </>
       )}
-    </>
+    </div>
   )
 }
 
