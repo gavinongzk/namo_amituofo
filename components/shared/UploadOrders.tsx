@@ -92,11 +92,16 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
             value: row[field.label] || '', // Map the Excel data to the custom field
           }));
 
+          // Pad the number with leading zeros to ensure correct sorting
+          // For example: 'Q0001', 'Q0002', etc.
+          const paddedNumber = String(index + 1).padStart(3, '0');
+          const queueNumber = `U${paddedNumber}`;
+
           return {
             customFieldValues: [
               {
                 groupId: `uploaded_group_${index + 1}`,
-                queueNumber: `uploaded_queue_${index + 1}`,
+                queueNumber, // Use the padded queue number
                 fields: customFieldValues,
                 attendance: true,
                 cancelled: false,
