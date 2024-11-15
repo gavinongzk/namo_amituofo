@@ -122,39 +122,31 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
   try {
     await connectToDatabase()
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-    const categoryCondition = category ? await getCategoryByName(category) : null
+    // Create index for these fields in MongoDB
     const conditions = {
       $and: [
-        titleCondition,
-        categoryCondition ? { category: categoryCondition._id } : {},
-        { country: country }
+        query ? { title: { $regex: query, $options: 'i' } } : {},
+        category ? { category: (await getCategoryByName(category))?._id } : {},
+        { country }
       ]
     }
 
-    const skipAmount = (Number(page) - 1) * limit
-    const eventsQuery = Event.find(conditions)
-      .sort({ createdAt: 'desc' })
-      .skip(skipAmount)
-      .limit(limit)
-      .populate({ path: 'organizer', model: User, select: '_id' })
-      .populate({ path: 'category', model: Category, select: '_id name' })
+    // Parallel queries for better performance
+    const [events, eventsCount] = await Promise.all([
+      Event.find(conditions)
+        .select('title imageUrl startDateTime endDateTime location category organizer')
+        .sort({ startDateTime: 'asc' })
+        .skip((Number(page) - 1) * limit)
+        .limit(limit)
+        .populate('category', '_id name')
+        .lean(),
+      Event.countDocuments(conditions)
+    ]);
 
-    const events = (await eventsQuery.exec()) as IEvent[]
-    const eventsWithCount = await Promise.all(
-      events.map(async (event) => {
-        const orders = await Order.find({ event: event._id })
-        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0)
-        return {
-          ...JSON.parse(JSON.stringify(event)),
-          registrationCount,
-        }
-      })
-    )
-
-    const eventsCount = await Event.countDocuments(conditions)
-
-    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) }
+    return { 
+      data: events,
+      totalPages: Math.ceil(eventsCount / limit) 
+    }
   } catch (error) {
     handleError(error)
     return { data: [], totalPages: 0 }
