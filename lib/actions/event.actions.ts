@@ -20,7 +20,6 @@ import {
 import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
-import Registration from '@/lib/database/models/registration.model';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -158,14 +157,29 @@ export async function getAllEvents({
     
     // Transform events to include required fields
     const transformedEvents = await Promise.all(events.map(async (event) => {
-      const registrationCount = await Registration.countDocuments({ event: event._id })
+      // Get orders for this event
+      const orders = await Order.find({ event: event._id });
+      
+      // Calculate total registrations from orders
+      const registrationCount = orders.reduce((total, order) => 
+        total + (order.customFieldValues?.length || 0), 0
+      );
       
       return {
         ...event.toObject(),
         registrationCount,
-        orderId: undefined, // Will be set by client if needed
-        customFieldValues: [], // Will be set by client if needed
-        queueNumber: undefined, // Will be set by client if needed
+        orderId: undefined,
+        customFieldValues: [],
+        queueNumber: undefined,
+        _id: event._id.toString(), // Ensure _id is a string
+        organizer: {
+          ...event.organizer,
+          _id: event.organizer._id.toString() // Ensure organizer._id is a string
+        },
+        category: {
+          ...event.category,
+          _id: event.category._id.toString() // Ensure category._id is a string
+        }
       }
     }))
 
