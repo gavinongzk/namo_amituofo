@@ -2,12 +2,17 @@
 
 import { IEvent } from '@/lib/database/models/event.model'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import { useEffect } from 'react'
 import { Button } from '../ui/button'
 
 const CheckoutButton = ({ event }: { event: IEvent }) => {
   const router = useRouter()
   const hasEventFinished = new Date(event.endDateTime) < new Date();
+
+  // Prefetch the registration page on mount
+  useEffect(() => {
+    router.prefetch(`/events/${event._id}/register`)
+  }, [event._id, router])
 
   const handleRegisterClick = () => {
     router.push(`/events/${event._id}/register`);
