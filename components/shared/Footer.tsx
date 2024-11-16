@@ -14,7 +14,7 @@ const Footer = () => {
           />
         </Link>
 
-        <p>{new Date().getFullYear()} Namo Amituofo Pte Ltd. All Rights reserved.</p>
+        <p>{new Date().getFullYear()} Namo Amituofo Organization Ltd. All Rights reserved.</p>
       </div>
     </footer>
   )
