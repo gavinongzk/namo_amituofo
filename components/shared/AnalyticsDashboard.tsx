@@ -22,6 +22,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -167,7 +173,6 @@ const AnalyticsDashboard: React.FC = () => {
         const sortedAttendees: FrequentAttendee[] = attendees
             .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
             .sort((a, b) => b.eventCount - a.eventCount)
-            .slice(0, 10)
             .map(attendee => ({
                 name: attendee.name,
                 phoneNumber: attendee.phoneNumber,
@@ -374,22 +379,17 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
 
             {selectedAttendee && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">User Analytics for {selectedAttendee.name}</h3>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedAttendee(null)}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                    <UserAnalyticsVisuals 
-                        attendee={selectedAttendee} 
-                        allEvents={attendees.flatMap(a => a.events)} 
-                    />
-                </div>
+                <Dialog open={!!selectedAttendee} onOpenChange={() => setSelectedAttendee(null)}>
+                    <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                            <DialogTitle>User Analytics for {selectedAttendee.name}</DialogTitle>
+                        </DialogHeader>
+                        <UserAnalyticsVisuals 
+                            attendee={selectedAttendee} 
+                            allEvents={attendees.flatMap(a => a.events)} 
+                        />
+                    </DialogContent>
+                </Dialog>
             )}
 
             <div className="bg-white p-6 rounded-lg shadow-md">
