@@ -57,6 +57,16 @@ interface PopularEvent {
     attendeeCount: number;
 }
 
+interface CategoryData {
+  name: string;
+  customFields: {
+    id: string;
+    label: string;
+    type: string;
+    options?: { value: string; label: string }[];
+  }[];
+}
+
 const userAttendanceOptions: ChartOptions<'line'> = {
   responsive: true,
   plugins: {
@@ -86,6 +96,7 @@ const AnalyticsDashboard: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
+    const [categories, setCategories] = useState<Record<string, string>>({});
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -165,6 +176,24 @@ const AnalyticsDashboard: React.FC = () => {
         };
 
         fetchAnalytics();
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
+                    acc[cat.name] = cat.name;
+                    return acc;
+                }, {});
+                setCategories(categoryMap);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
     }, []);
 
     const processFrequentAttendees = (attendees: Attendee[]) => {
