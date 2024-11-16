@@ -61,6 +61,30 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+  // Group events by category and sort by date
+  const eventsByCategory = attendee.events.reduce((acc, event) => {
+    const category = event.category.name;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(event);
+    return acc;
+  }, {} as Record<string, typeof attendee.events>);
+
+  // Sort events within each category by date (newest first)
+  Object.keys(eventsByCategory).forEach(category => {
+    eventsByCategory[category].sort((a, b) => 
+      new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+    );
+  });
+
+  // Sort categories by their most recent event date
+  const sortedCategories = Object.entries(eventsByCategory).sort(([, eventsA], [, eventsB]) => {
+    const latestA = new Date(eventsA[0].eventDate).getTime();
+    const latestB = new Date(eventsB[0].eventDate).getTime();
+    return latestB - latestA;
+  });
+
   return (
     <div className="space-y-8">
       {/* Quick Stats */}
@@ -132,21 +156,26 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
           </div>
         </Card>
 
+        {/* Updated Event History with sorting */}
         <Card className="p-6">
           <h4 className="text-lg font-semibold mb-4">Event History</h4>
           <div className="max-h-[300px] overflow-y-auto">
-            <ul className="space-y-2">
-              {attendee.events.map((event, idx) => (
-                <li key={idx} className="text-sm border-b pb-2">
-                  <span className="font-medium">
-                    {format(parseISO(event.eventDate), 'MMM dd, yyyy')}
-                  </span>
-                  <br />
-                  <span className="text-gray-600">{event.category.name}</span> -{' '}
-                  <span className="text-gray-600">{event.eventTitle}</span>
-                </li>
-              ))}
-            </ul>
+            {sortedCategories.map(([category, events]) => (
+              <div key={category} className="mb-4">
+                <h5 className="font-medium text-base mb-2">{category} ({events.length})</h5>
+                <ul className="space-y-2 pl-4">
+                  {events.map((event, idx) => (
+                    <li key={idx} className="text-sm border-b pb-2">
+                      <span className="font-medium">
+                        {format(parseISO(event.eventDate), 'MMM dd, yyyy')}
+                      </span>
+                      {' - '}
+                      <span className="text-gray-600">{event.eventTitle}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
