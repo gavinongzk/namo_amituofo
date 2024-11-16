@@ -52,9 +52,9 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
     count,
   }));
 
-  // Calculate event category distribution
+  // Updated category distribution calculation
   const eventCategoryData = attendee.events.reduce((acc, event) => {
-    const category = event.eventTitle.split(' - ')[0];
+    const category = event.category.name;
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -132,7 +132,6 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
           </div>
         </Card>
 
-        {/* Event History */}
         <Card className="p-6">
           <h4 className="text-lg font-semibold mb-4">Event History</h4>
           <div className="max-h-[300px] overflow-y-auto">
@@ -143,6 +142,7 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
                     {format(parseISO(event.eventDate), 'MMM dd, yyyy')}
                   </span>
                   <br />
+                  <span className="text-gray-600">{event.category.name}</span> -{' '}
                   <span className="text-gray-600">{event.eventTitle}</span>
                 </li>
               ))}
