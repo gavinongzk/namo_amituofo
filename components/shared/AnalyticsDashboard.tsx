@@ -380,14 +380,16 @@ const AnalyticsDashboard: React.FC = () => {
 
             {selectedAttendee && (
                 <Dialog open={!!selectedAttendee} onOpenChange={() => setSelectedAttendee(null)}>
-                    <DialogContent className="max-w-4xl">
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>User Analytics for {selectedAttendee.name}</DialogTitle>
                         </DialogHeader>
-                        <UserAnalyticsVisuals 
-                            attendee={selectedAttendee} 
-                            allEvents={attendees.flatMap(a => a.events)} 
-                        />
+                        <div className="space-y-6 py-4">
+                            <UserAnalyticsVisuals 
+                                attendee={selectedAttendee} 
+                                allEvents={attendees.flatMap(a => a.events)} 
+                            />
+                        </div>
                     </DialogContent>
                 </Dialog>
             )}
