@@ -1,7 +1,6 @@
 import { preloadEvents } from '@/lib/actions/preload';
 import { Suspense } from 'react';
 import CategoryFilter from '@/components/shared/CategoryFilter';
-import Collection from '@/components/shared/Collection'
 import Search from '@/components/shared/Search';
 import Loading from '@/components/shared/Loader';
 import { cookies } from 'next/headers';
@@ -17,39 +16,43 @@ export default async function Home({ searchParams }: SearchParamProps) {
     const cookieStore = cookies();
     const country = cookieStore.get('userCountry')?.value || 'Singapore';
 
-    // Preload initial data with error handling
     if (!searchText && !category) {
       try {
-        await preloadEvents(country);
+        const preloadedData = await preloadEvents(country);
+        if (!preloadedData || typeof preloadedData !== 'object') {
+          console.warn('Invalid preloaded data format');
+        }
       } catch (error) {
         console.error('Error preloading events:', error);
       }
     }
 
     return (
-      <>
-        <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">
-          <h2 className="h2-bold">Latest Events 最新活动</h2>
+      <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">
+        <h2 className="h2-bold">Latest Events 最新活动</h2>
 
-          <div className="flex w-full flex-col gap-5 md:flex-row">
-            <Search />
-            <CategoryFilter />
-          </div>
+        <div className="flex w-full flex-col gap-5 md:flex-row">
+          <Search />
+          <CategoryFilter />
+        </div>
 
-          <Suspense fallback={<Loading />}>
-            <EventList 
-              page={page}
-              searchText={searchText}
-              category={category}
-              country={country}
-            />
-          </Suspense>
-        </section>
-      </>
-    )
+        <Suspense fallback={<Loading />}>
+          <EventList 
+            page={page}
+            searchText={searchText}
+            category={category}
+            country={country}
+          />
+        </Suspense>
+      </section>
+    );
   } catch (error) {
     console.error('Error in Home page:', error);
-    return <div>Something went wrong. Please try again later.</div>;
+    return (
+      <div className="wrapper my-8 text-center">
+        <p className="text-red-500">Something went wrong. Please try again later.</p>
+      </div>
+    );
   }
 }
 
