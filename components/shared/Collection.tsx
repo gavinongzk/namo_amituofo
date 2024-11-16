@@ -85,9 +85,9 @@ const Collection = ({
 
           {totalPages > 1 && (
             <Pagination 
-              urlParamName={urlParamName} 
-              page={Number(page) || 1} 
-              totalPages={totalPages} 
+              urlParamName={urlParamName || 'page'}
+              page={Number(page) || 1}
+              totalPages={Math.max(1, Number(totalPages))}
             />
           )}
         </div>
