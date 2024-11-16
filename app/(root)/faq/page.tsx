@@ -358,16 +358,18 @@ export default function FAQPage() {
 
         {/* Contact Section */}
         <div className="mt-12 text-center">
-          <p className="text-gray-600">
-            Still have questions? Contact us via WhatsApp at{' '}
-            <a 
-              href="https://wa.me/6588184848" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-primary-600 hover:underline font-medium"
-            >
-              +65 8818 4848
-            </a>
+          <p className="text-gray-600 space-y-2">
+            <div>还有其他问题？请通过WhatsApp联系我们：</div>
+            <div>Still have questions? Contact us via WhatsApp at{' '}
+              <a 
+                href="https://wa.me/6588184848" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-primary-600 hover:underline font-medium"
+              >
+                +65 8818 4848
+              </a>
+            </div>
           </p>
         </div>
       </div>
