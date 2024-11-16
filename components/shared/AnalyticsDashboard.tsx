@@ -4,6 +4,24 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement,
 import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  ColumnDef,
+  flexRender,
+} from '@tanstack/react-table'
+import { Card } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -35,6 +53,24 @@ interface PopularEvent {
     attendeeCount: number;
 }
 
+const userAttendanceOptions: ChartOptions<'line'> = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+    title: {
+      display: true,
+      text: 'Individual Attendance History',
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+    }
+  },
+};
+
 const AnalyticsDashboard: React.FC = () => {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
@@ -45,6 +81,57 @@ const AnalyticsDashboard: React.FC = () => {
     const [nameFilter, setNameFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
+
+    const columns: ColumnDef<FrequentAttendee>[] = [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+        },
+        {
+            accessorKey: 'phoneNumber',
+            header: 'Phone Number',
+        },
+        {
+            accessorKey: 'eventCount',
+            header: 'Event Count',
+        },
+        {
+            accessorKey: 'lastEventDate',
+            header: 'Last Attended',
+        },
+        {
+            id: 'actions',
+            cell: ({ row }) => (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        const fullAttendee = attendees.find(a => 
+                            a.name === row.original.name && 
+                            a.phoneNumber === row.original.phoneNumber
+                        );
+                        setSelectedAttendee(fullAttendee || null);
+                    }}
+                >
+                    View Details
+                </Button>
+            ),
+        },
+    ];
+
+    const table = useReactTable({
+        data: frequentAttendees,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        initialState: {
+            pagination: {
+                pageSize: itemsPerPage,
+            },
+        },
+    });
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -274,15 +361,36 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="p-6 space-y-8">
             <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
             
-            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
-                <Line data={attendanceTrendData} options={attendanceTrendOptions} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
+                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
+                    <Bar data={popularEventsData} options={popularEventsOptions} />
+                </div>
             </div>
 
-            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
-                <Bar data={popularEventsData} options={popularEventsOptions} />
-            </div>
+            {selectedAttendee && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold">User Analytics for {selectedAttendee.name}</h3>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedAttendee(null)}
+                        >
+                            Close
+                        </Button>
+                    </div>
+                    <UserAnalyticsVisuals 
+                        attendee={selectedAttendee} 
+                        allEvents={attendees.flatMap(a => a.events)} 
+                    />
+                </div>
+            )}
 
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-semibold mb-4">Frequent Attendees</h3>
@@ -291,45 +399,63 @@ const AnalyticsDashboard: React.FC = () => {
                         type="text"
                         placeholder="Filter by name"
                         value={nameFilter}
-                        onChange={(e) => setNameFilter(e.target.value)}
+                        onChange={(e) => {
+                            setNameFilter(e.target.value);
+                            table.getColumn('name')?.setFilterValue(e.target.value);
+                        }}
                         className="max-w-xs"
                     />
                 </div>
-                <table className="min-w-full bg-white">
-                    <thead>
-                        <tr>
-                            <th className="py-2 px-4 border-b text-left">Name</th>
-                            <th className="py-2 px-4 border-b text-left">Phone Number</th>
-                            <th className="py-2 px-4 border-b text-left">Event Count</th>
-                            <th className="py-2 px-4 border-b text-left">Last Attended</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedAttendees.map((attendee, index) => (
-                            <tr key={index}>
-                                <td className="py-2 px-4 border-b">{attendee.name}</td>
-                                <td className="py-2 px-4 border-b">{attendee.phoneNumber}</td>
-                                <td className="py-2 px-4 border-b">{attendee.eventCount}</td>
-                                <td className="py-2 px-4 border-b">{attendee.lastEventDate}</td>
-                            </tr>
+                
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-                <div className="mt-4 flex justify-between items-center">
-                    <div>
-                        <span>Page {currentPage} of {pageCount}</span>
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                        {table.getFilteredRowModel().rows.length} attendee(s)
                     </div>
-                    <div>
+                    <div className="flex items-center space-x-2">
                         <Button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="mr-2"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
                         >
                             Previous
                         </Button>
                         <Button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === pageCount}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
                         >
                             Next
                         </Button>
