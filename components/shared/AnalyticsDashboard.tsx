@@ -4,12 +4,34 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement,
 import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  ColumnDef,
+  flexRender,
+} from '@tanstack/react-table'
+import { Card } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
+import { X } from 'lucide-react'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface AttendeeEvent {
     eventDate: string;
     eventTitle: string;
+    category: {
+        name: string;
+    };
 }
 
 interface AttendeeData {
@@ -30,21 +52,95 @@ interface FrequentAttendee {
     lastEventDate: string;
 }
 
-interface PopularEvent {
-    eventTitle: string;
+interface CategoryDistribution {
+    categoryName: string;
     attendeeCount: number;
 }
+
+interface CategoryData {
+    name: string;
+}
+
+const userAttendanceOptions: ChartOptions<'line'> = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+    title: {
+      display: true,
+      text: 'Individual Attendance History',
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+    }
+  },
+};
 
 const AnalyticsDashboard: React.FC = () => {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
-    const [popularEvents, setPopularEvents] = useState<PopularEvent[]>([]);
+    const [popularEvents, setPopularEvents] = useState<CategoryDistribution[]>([]);
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [nameFilter, setNameFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
+    const [categories, setCategories] = useState<Record<string, string>>({});
+
+    const columns: ColumnDef<FrequentAttendee>[] = [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+        },
+        {
+            accessorKey: 'phoneNumber',
+            header: 'Phone Number',
+        },
+        {
+            accessorKey: 'eventCount',
+            header: 'Event Count',
+        },
+        {
+            accessorKey: 'lastEventDate',
+            header: 'Last Attended',
+        },
+        {
+            id: 'actions',
+            cell: ({ row }) => (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        const fullAttendee = attendees.find(a => 
+                            a.name === row.original.name && 
+                            a.phoneNumber === row.original.phoneNumber
+                        );
+                        setSelectedAttendee(fullAttendee || null);
+                    }}
+                >
+                    View Details
+                </Button>
+            ),
+        },
+    ];
+
+    const table = useReactTable({
+        data: frequentAttendees,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        initialState: {
+            pagination: {
+                pageSize: itemsPerPage,
+            },
+        },
+    });
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -76,11 +172,28 @@ const AnalyticsDashboard: React.FC = () => {
         fetchAnalytics();
     }, []);
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
+                    acc[cat.name] = cat.name;
+                    return acc;
+                }, {});
+                setCategories(categoryMap);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
     const processFrequentAttendees = (attendees: Attendee[]) => {
         const sortedAttendees: FrequentAttendee[] = attendees
             .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
             .sort((a, b) => b.eventCount - a.eventCount)
-            .slice(0, 10)
             .map(attendee => ({
                 name: attendee.name,
                 phoneNumber: attendee.phoneNumber,
@@ -92,23 +205,28 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     const processPopularEvents = (attendees: Attendee[]) => {
-        const eventCounts: Record<string, number> = attendees.reduce((acc, attendee) => {
+        const categoryCounts: Record<string, number> = {};
+
+        attendees.forEach(attendee => {
             if (attendee.events && Array.isArray(attendee.events)) {
-                attendee.events.forEach(event => {
-                    if (event.eventTitle) {
-                        acc[event.eventTitle] = (acc[event.eventTitle] || 0) + 1;
-                    }
+                const uniqueCategories = new Set(
+                    attendee.events.map(event => event.category?.name || 'Uncategorized')
+                );
+                uniqueCategories.forEach(categoryName => {
+                    categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
                 });
             }
-            return acc;
-        }, {} as Record<string, number>);
+        });
 
-        const sortedEvents: PopularEvent[] = Object.entries(eventCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-            .map(([eventTitle, attendeeCount]) => ({ eventTitle, attendeeCount }));
+        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCounts)
+            .map(([categoryName, attendeeCount]) => ({
+                categoryName,
+                attendeeCount
+            }))
+            .sort((a, b) => b.attendeeCount - a.attendeeCount)
+            .slice(0, 5);
 
-        setPopularEvents(sortedEvents);
+        setPopularEvents(sortedCategories);
     };
 
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
@@ -199,25 +317,21 @@ const AnalyticsDashboard: React.FC = () => {
         },
     };
 
-    const popularEventsData = {
-        labels: popularEvents.map(event => event.eventTitle),
+    const categoryDistributionData = {
+        labels: popularEvents.map(cat => cat.categoryName),
         datasets: [
             {
-                label: 'Attendee Count',
-                data: popularEvents.map(event => event.attendeeCount),
+                label: 'Attendee Count by Category',
+                data: popularEvents.map(cat => cat.attendeeCount),
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)',
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',  // Blue
+                    'rgba(75, 192, 192, 0.7)',  // Teal
+                    'rgba(255, 206, 86, 0.7)',  // Yellow
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
                     'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 206, 86, 1)',
                 ],
                 borderWidth: 1,
             }
@@ -250,7 +364,7 @@ const AnalyticsDashboard: React.FC = () => {
             x: {
                 title: {
                     display: true,
-                    text: 'Event Title',
+                    text: 'Category Name',
                 }
             }
         },
@@ -274,14 +388,16 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="p-6 space-y-8">
             <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
             
-            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
-                <Line data={attendanceTrendData} options={attendanceTrendOptions} />
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
+                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
+                </div>
 
-            <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
-                <Bar data={popularEventsData} options={popularEventsOptions} />
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
+                    <Bar data={categoryDistributionData} options={popularEventsOptions} />
+                </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -291,51 +407,93 @@ const AnalyticsDashboard: React.FC = () => {
                         type="text"
                         placeholder="Filter by name"
                         value={nameFilter}
-                        onChange={(e) => setNameFilter(e.target.value)}
+                        onChange={(e) => {
+                            setNameFilter(e.target.value);
+                            table.getColumn('name')?.setFilterValue(e.target.value);
+                        }}
                         className="max-w-xs"
                     />
                 </div>
-                <table className="min-w-full bg-white">
-                    <thead>
-                        <tr>
-                            <th className="py-2 px-4 border-b text-left">Name</th>
-                            <th className="py-2 px-4 border-b text-left">Phone Number</th>
-                            <th className="py-2 px-4 border-b text-left">Event Count</th>
-                            <th className="py-2 px-4 border-b text-left">Last Attended</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedAttendees.map((attendee, index) => (
-                            <tr key={index}>
-                                <td className="py-2 px-4 border-b">{attendee.name}</td>
-                                <td className="py-2 px-4 border-b">{attendee.phoneNumber}</td>
-                                <td className="py-2 px-4 border-b">{attendee.eventCount}</td>
-                                <td className="py-2 px-4 border-b">{attendee.lastEventDate}</td>
-                            </tr>
+                
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-                <div className="mt-4 flex justify-between items-center">
-                    <div>
-                        <span>Page {currentPage} of {pageCount}</span>
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                        {table.getFilteredRowModel().rows.length} attendee(s)
                     </div>
-                    <div>
+                    <div className="flex items-center space-x-2">
                         <Button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="mr-2"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
                         >
                             Previous
                         </Button>
                         <Button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === pageCount}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
                         >
                             Next
                         </Button>
                     </div>
                 </div>
             </div>
+
+            {selectedAttendee && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-semibold">
+                            Individual Analytics: {selectedAttendee.name}
+                        </h3>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedAttendee(null)}
+                            className="h-8 px-2 rounded-full"
+                        >
+                            <X className="h-4 w-4 mr-1" />
+                            Close
+                        </Button>
+                    </div>
+                    
+                    <UserAnalyticsVisuals 
+                        attendee={selectedAttendee} 
+                        allEvents={attendees.flatMap(a => a.events)} 
+                    />
+                </div>
+            )}
         </div>
     );
 };
