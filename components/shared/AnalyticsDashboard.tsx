@@ -22,12 +22,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { X } from 'lucide-react'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
@@ -382,36 +376,6 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
             </div>
 
-            {selectedAttendee && (
-                <Dialog open={!!selectedAttendee} onOpenChange={() => setSelectedAttendee(null)}>
-                    <DialogContent className="sm:max-w-[900px] max-h-[85vh] p-0">
-                        <DialogHeader className="sticky top-0 z-50 bg-background px-6 py-4 border-b">
-                            <div className="flex items-center justify-between">
-                                <DialogTitle className="text-xl font-semibold">
-                                    Analytics: {selectedAttendee.name}
-                                </DialogTitle>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setSelectedAttendee(null)}
-                                    className="h-8 w-8 rounded-full"
-                                >
-                                    <X className="h-4 w-4" />
-                                    <span className="sr-only">Close</span>
-                                </Button>
-                            </div>
-                        </DialogHeader>
-                        
-                        <div className="px-6 py-4 overflow-y-auto">
-                            <UserAnalyticsVisuals 
-                                attendee={selectedAttendee} 
-                                allEvents={attendees.flatMap(a => a.events)} 
-                            />
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
-
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-semibold mb-4">Frequent Attendees</h3>
                 <div className="mb-4">
@@ -482,6 +446,30 @@ const AnalyticsDashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {selectedAttendee && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-semibold">
+                            Individual Analytics: {selectedAttendee.name}
+                        </h3>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedAttendee(null)}
+                            className="h-8 px-2 rounded-full"
+                        >
+                            <X className="h-4 w-4 mr-1" />
+                            Close
+                        </Button>
+                    </div>
+                    
+                    <UserAnalyticsVisuals 
+                        attendee={selectedAttendee} 
+                        allEvents={attendees.flatMap(a => a.events)} 
+                    />
+                </div>
+            )}
         </div>
     );
 };
