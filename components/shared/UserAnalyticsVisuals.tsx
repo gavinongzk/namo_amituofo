@@ -24,12 +24,18 @@ interface UserAnalyticsVisualsProps {
     events: {
       eventDate: string;
       eventTitle: string;
+      category: {
+        name: string;
+      };
     }[];
     lastEventDate: string;
   };
   allEvents: {
     eventDate: string;
     eventTitle: string;
+    category: {
+      name: string;
+    };
   }[];
 }
 
@@ -47,8 +53,7 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
   }));
 
   // Calculate event category distribution
-  const eventTypeData = attendee.events.reduce((acc, event) => {
-    // Extract category from event title (assuming format: "Category - Event Name")
+  const eventCategoryData = attendee.events.reduce((acc, event) => {
     const category = event.eventTitle.split(' - ')[0];
     acc[category] = (acc[category] || 0) + 1;
     return acc;
@@ -101,14 +106,14 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Event Type Distribution */}
+        {/* Event Category Distribution */}
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Event Type Distribution</h4>
+          <h4 className="text-lg font-semibold mb-4">Event Category Distribution</h4>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={Object.entries(eventTypeData).map(([name, value]) => ({ name, value }))}
+                  data={Object.entries(eventCategoryData).map(([name, value]) => ({ name, value }))}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -116,7 +121,7 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {Object.entries(eventTypeData).map((entry, index) => (
+                  {Object.entries(eventCategoryData).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
