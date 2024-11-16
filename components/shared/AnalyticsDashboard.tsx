@@ -52,19 +52,13 @@ interface FrequentAttendee {
     lastEventDate: string;
 }
 
-interface PopularEvent {
-    eventTitle: string;
+interface CategoryDistribution {
+    categoryName: string;
     attendeeCount: number;
 }
 
 interface CategoryData {
-  name: string;
-  customFields: {
-    id: string;
-    label: string;
-    type: string;
-    options?: { value: string; label: string }[];
-  }[];
+    name: string;
 }
 
 const userAttendanceOptions: ChartOptions<'line'> = {
@@ -88,7 +82,7 @@ const userAttendanceOptions: ChartOptions<'line'> = {
 const AnalyticsDashboard: React.FC = () => {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
-    const [popularEvents, setPopularEvents] = useState<PopularEvent[]>([]);
+    const [popularEvents, setPopularEvents] = useState<CategoryDistribution[]>([]);
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -211,23 +205,27 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     const processPopularEvents = (attendees: Attendee[]) => {
-        const eventCounts: Record<string, number> = attendees.reduce((acc, attendee) => {
+        const categoryCounts: Record<string, number> = {};
+
+        attendees.forEach(attendee => {
             if (attendee.events && Array.isArray(attendee.events)) {
                 attendee.events.forEach(event => {
-                    if (event.eventTitle) {
-                        acc[event.eventTitle] = (acc[event.eventTitle] || 0) + 1;
+                    if (event.category?.name) {
+                        categoryCounts[event.category.name] = 
+                            (categoryCounts[event.category.name] || 0) + 1;
                     }
                 });
             }
-            return acc;
-        }, {} as Record<string, number>);
+        });
 
-        const sortedEvents: PopularEvent[] = Object.entries(eventCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-            .map(([eventTitle, attendeeCount]) => ({ eventTitle, attendeeCount }));
+        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCounts)
+            .map(([categoryName, attendeeCount]) => ({
+                categoryName,
+                attendeeCount
+            }))
+            .sort((a, b) => b.attendeeCount - a.attendeeCount);
 
-        setPopularEvents(sortedEvents);
+        setPopularEvents(sortedCategories);
     };
 
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
@@ -318,25 +316,21 @@ const AnalyticsDashboard: React.FC = () => {
         },
     };
 
-    const popularEventsData = {
-        labels: popularEvents.map(event => event.eventTitle),
+    const categoryDistributionData = {
+        labels: popularEvents.map(cat => cat.categoryName),
         datasets: [
             {
-                label: 'Attendee Count',
-                data: popularEvents.map(event => event.attendeeCount),
+                label: 'Attendee Count by Category',
+                data: popularEvents.map(cat => cat.attendeeCount),
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)',
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',  // Blue
+                    'rgba(75, 192, 192, 0.7)',  // Teal
+                    'rgba(255, 206, 86, 0.7)',  // Yellow
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
                     'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 206, 86, 1)',
                 ],
                 borderWidth: 1,
             }
@@ -369,7 +363,7 @@ const AnalyticsDashboard: React.FC = () => {
             x: {
                 title: {
                     display: true,
-                    text: 'Event Title',
+                    text: 'Category Name',
                 }
             }
         },
@@ -401,7 +395,7 @@ const AnalyticsDashboard: React.FC = () => {
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
-                    <Bar data={popularEventsData} options={popularEventsOptions} />
+                    <Bar data={categoryDistributionData} options={popularEventsOptions} />
                 </div>
             </div>
 
