@@ -6,27 +6,38 @@ import { Button } from '../ui/button'
 import { formUrlQuery } from '@/lib/utils'
 
 type PaginationProps = {
-  page: number | string,
-  totalPages: number,
-  urlParamName?: string
+  page: number | string;
+  totalPages: number;
+  urlParamName?: string;
 }
 
 const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
+  console.log('🔢 Pagination props:', { page, totalPages, urlParamName });
+  
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  // Ensure page is a valid number
+  const currentPage = Number(page) || 1;
+  
   const onClick = (btnType: string) => {
-    const pageValue = btnType === 'next' 
-      ? Number(page) + 1 
-      : Number(page) - 1
+    try {
+      const pageValue = btnType === 'next' 
+        ? currentPage + 1 
+        : currentPage - 1;
 
-    const newUrl = formUrlQuery({
-      params: searchParams.toString(),
-      key: urlParamName || 'page',
-      value: pageValue.toString(),
-    })
+      console.log('🔄 Pagination click:', { btnType, currentPage, newPage: pageValue });
 
-    router.push(newUrl, {scroll: false})
+      const newUrl = formUrlQuery({
+        params: searchParams.toString(),
+        key: urlParamName || 'page',
+        value: pageValue.toString(),
+      });
+
+      router.push(newUrl, {scroll: false});
+    } catch (error) {
+      console.error('❌ Error in pagination onClick:', error);
+    }
   }
 
   return (
@@ -36,7 +47,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
         variant="outline"
         className="w-28"
         onClick={() => onClick('prev')}
-        disabled={Number(page) <= 1}
+        disabled={currentPage <= 1}
       >
         Previous
       </Button>
@@ -45,7 +56,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
         variant="outline"
         className="w-28"
         onClick={() => onClick('next')}
-        disabled={Number(page) >= totalPages}
+        disabled={currentPage >= totalPages}
       >
         Next
       </Button>
@@ -53,4 +64,4 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
   )
 }
 
-export default Pagination
+export default Pagination;
