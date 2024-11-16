@@ -20,6 +20,7 @@ import {
 import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
+import Registration from '@/lib/database/models/registration.model';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -118,38 +119,65 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS
-export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
+export async function getAllEvents({
+  query,
+  category,
+  page,
+  limit,
+  country
+}: GetAllEventsParams) {
   try {
     await connectToDatabase()
 
-    // Create index for these fields in MongoDB
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+    const categoryCondition = category ? { 'category.name': category } : {}
+    const countryCondition = country ? { country: country } : {}
+
     const conditions = {
       $and: [
-        query ? { title: { $regex: query, $options: 'i' } } : {},
-        category ? { category: (await getCategoryByName(category))?._id } : {},
-        { country }
+        titleCondition,
+        categoryCondition,
+        countryCondition,
+        { endDateTime: { $gte: new Date() } }
       ]
     }
 
-    // Parallel queries for better performance
-    const [events, eventsCount] = await Promise.all([
-      Event.find(conditions)
-        .select('title imageUrl startDateTime endDateTime location category organizer')
-        .sort({ startDateTime: 'asc' })
-        .skip((Number(page) - 1) * limit)
-        .limit(limit)
-        .populate('category', '_id name')
-        .lean(),
-      Event.countDocuments(conditions)
-    ]);
+    const skipAmount = (Number(page) - 1) * limit
+    
+    const eventsQuery = Event.find(conditions)
+      .populate({
+        path: 'organizer',
+        select: '_id firstName lastName'
+      })
+      .populate('category')
+      .sort({ startDateTime: 'asc' })
+      .skip(skipAmount)
+      .limit(limit)
 
-    return { 
-      data: events,
-      totalPages: Math.ceil(eventsCount / limit) 
+    const events = await eventsQuery.exec()
+    
+    // Transform events to include required fields
+    const transformedEvents = await Promise.all(events.map(async (event) => {
+      const registrationCount = await Registration.countDocuments({ event: event._id })
+      
+      return {
+        ...event.toObject(),
+        registrationCount,
+        orderId: undefined, // Will be set by client if needed
+        customFieldValues: [], // Will be set by client if needed
+        queueNumber: undefined, // Will be set by client if needed
+      }
+    }))
+
+    const totalPages = Math.ceil(await Event.countDocuments(conditions) / limit)
+
+    return {
+      data: transformedEvents,
+      totalPages
     }
   } catch (error) {
-    handleError(error)
-    return { data: [], totalPages: 0 }
+    console.error('Error in getAllEvents:', error)
+    throw error
   }
 }
 
