@@ -209,11 +209,11 @@ const AnalyticsDashboard: React.FC = () => {
 
         attendees.forEach(attendee => {
             if (attendee.events && Array.isArray(attendee.events)) {
-                attendee.events.forEach(event => {
-                    if (event.category?.name) {
-                        categoryCounts[event.category.name] = 
-                            (categoryCounts[event.category.name] || 0) + 1;
-                    }
+                const uniqueCategories = new Set(
+                    attendee.events.map(event => event.category?.name || 'Uncategorized')
+                );
+                uniqueCategories.forEach(categoryName => {
+                    categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
                 });
             }
         });
@@ -223,7 +223,8 @@ const AnalyticsDashboard: React.FC = () => {
                 categoryName,
                 attendeeCount
             }))
-            .sort((a, b) => b.attendeeCount - a.attendeeCount);
+            .sort((a, b) => b.attendeeCount - a.attendeeCount)
+            .slice(0, 5);
 
         setPopularEvents(sortedCategories);
     };

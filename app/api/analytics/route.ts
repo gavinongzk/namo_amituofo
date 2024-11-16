@@ -8,6 +8,9 @@ import mongoose from 'mongoose';
 interface AttendeeEvent {
   eventDate: string;
   eventTitle: string;
+  category: {
+    name: string;
+  };
 }
 
 interface AttendeeData {
@@ -30,7 +33,12 @@ export async function GET(req: NextRequest) {
     console.log('Database connected successfully');
 
     console.log('Fetching orders...');
-    const orders = await Order.find().populate<{ event: IEvent }>('event');
+    const orders = await Order.find().populate({
+      path: 'event',
+      populate: {
+        path: 'category'
+      }
+    });
     console.log(`Found ${orders.length} orders`);
     console.log('Sample order:', JSON.stringify(orders[0], null, 2));
 
@@ -44,9 +52,9 @@ export async function GET(req: NextRequest) {
           field.label.toLowerCase().includes('phone') || field.type === 'phone'
         )?.value?.toString() || 'Unknown';
 
-        // Check if order.event is not null before accessing its properties
         const eventDate = order.event ? order.event.startDateTime?.toISOString() : '';
         const eventTitle = order.event ? order.event.title : '';
+        const categoryName = order.event?.category?.name || 'Uncategorized';
 
         const key = `${name}-${phoneNumber}`;
         if (!attendeeMap.has(key)) {
@@ -54,7 +62,11 @@ export async function GET(req: NextRequest) {
         }
         const attendee = attendeeMap.get(key)!;
         attendee.eventCount++;
-        attendee.events.push({ eventDate, eventTitle });
+        attendee.events.push({ 
+          eventDate, 
+          eventTitle,
+          category: { name: categoryName }
+        });
       });
     });
 
