@@ -118,82 +118,49 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS
-export async function getAllEvents({
-  query,
-  category,
-  page,
-  limit,
-  country
-}: GetAllEventsParams) {
+export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
   try {
     await connectToDatabase()
 
     const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-    const categoryCondition = category ? { 'category.name': category } : {}
-    const countryCondition = country ? { country: country } : {}
-
+    const categoryCondition = category ? await getCategoryByName(category) : null
     const conditions = {
       $and: [
         titleCondition,
-        categoryCondition,
-        countryCondition,
-        { endDateTime: { $gte: new Date() } }
+        categoryCondition ? { category: categoryCondition._id } : {},
+        { country: country }
       ]
     }
 
     const skipAmount = (Number(page) - 1) * limit
-    
     const eventsQuery = Event.find(conditions)
-      .populate({
-        path: 'organizer',
-        select: '_id firstName lastName'
-      })
-      .populate('category')
-      .sort({ startDateTime: 'asc' })
+      .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
+      .populate({ path: 'organizer', model: User, select: '_id' })
+      .populate({ path: 'category', model: Category, select: '_id name' })
 
-    const events = await eventsQuery.exec()
-    
-    // Transform events to include required fields
-    const transformedEvents = await Promise.all(events.map(async (event) => {
-      // Get orders for this event
-      const orders = await Order.find({ event: event._id });
-      
-      // Calculate total registrations from orders
-      const registrationCount = orders.reduce((total, order) => 
-        total + (order.customFieldValues?.length || 0), 0
-      );
-      
-      return {
-        ...event.toObject(),
-        registrationCount,
-        orderId: undefined,
-        customFieldValues: [],
-        queueNumber: undefined,
-        _id: event._id.toString(), // Ensure _id is a string
-        organizer: {
-          ...event.organizer,
-          _id: event.organizer._id.toString() // Ensure organizer._id is a string
-        },
-        category: {
-          ...event.category,
-          _id: event.category._id.toString() // Ensure category._id is a string
+    const events = (await eventsQuery.exec()) as IEvent[]
+    const eventsWithCount = await Promise.all(
+      events.map(async (event) => {
+        const orders = await Order.find({ event: event._id })
+        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0)
+        return {
+          ...JSON.parse(JSON.stringify(event)),
+          registrationCount,
         }
-      }
-    }))
+      })
+    )
 
-    const totalPages = Math.ceil(await Event.countDocuments(conditions) / limit)
+    const eventsCount = await Event.countDocuments(conditions)
 
-    return {
-      data: transformedEvents,
-      totalPages
-    }
+    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) }
   } catch (error) {
-    console.error('Error in getAllEvents:', error)
-    throw error
+    handleError(error)
+    return { data: [], totalPages: 0 }
   }
 }
+
 
 // GET EVENTS BY ORGANIZER
 export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUserParams) {
