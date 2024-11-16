@@ -384,18 +384,25 @@ const AnalyticsDashboard: React.FC = () => {
 
             {selectedAttendee && (
                 <Dialog open={!!selectedAttendee} onOpenChange={() => setSelectedAttendee(null)}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 relative">
-                        <DialogHeader className="sticky top-0 z-50 bg-white dark:bg-gray-900 pb-4 border-b">
-                            <DialogTitle>User Analytics for {selectedAttendee.name}</DialogTitle>
-                            <button
-                                onClick={() => setSelectedAttendee(null)}
-                                className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100 dark:ring-offset-gray-950 dark:focus:ring-gray-800 dark:data-[state=open]:bg-gray-800"
-                            >
-                                <X className="h-4 w-4" />
-                                <span className="sr-only">Close</span>
-                            </button>
+                    <DialogContent className="sm:max-w-[900px] max-h-[85vh] p-0">
+                        <DialogHeader className="sticky top-0 z-50 bg-background px-6 py-4 border-b">
+                            <div className="flex items-center justify-between">
+                                <DialogTitle className="text-xl font-semibold">
+                                    Analytics: {selectedAttendee.name}
+                                </DialogTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setSelectedAttendee(null)}
+                                    className="h-8 w-8 rounded-full"
+                                >
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Close</span>
+                                </Button>
+                            </div>
                         </DialogHeader>
-                        <div className="space-y-6 py-4 px-6">
+                        
+                        <div className="px-6 py-4 overflow-y-auto">
                             <UserAnalyticsVisuals 
                                 attendee={selectedAttendee} 
                                 allEvents={attendees.flatMap(a => a.events)} 
