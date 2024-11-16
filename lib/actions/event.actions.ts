@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { unstable_cache } from 'next/cache';
 
 import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
@@ -54,29 +55,36 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 }
 
 // GET ONE EVENT BY ID
-export async function getEventById(eventId: string) {
-  try {
-    await connectToDatabase();
+export const getEventById = unstable_cache(
+  async (eventId: string) => {
+    try {
+      await connectToDatabase();
 
-    const event = await Event.findById(eventId)
-      .populate({ path: 'organizer', model: User, select: '_id' })
-      .populate({ path: 'category', model: Category, select: '_id name' });
+      const event = await Event.findById(eventId)
+        .populate({ path: 'organizer', model: User, select: '_id' })
+        .populate({ path: 'category', model: Category, select: '_id name' });
 
-    if (!event) {
-      throw new Error('Event not found');
+      if (!event) {
+        throw new Error('Event not found');
+      }
+
+      const attendeeCount = await Order.countDocuments({ event: eventId });
+
+      return {
+        ...JSON.parse(JSON.stringify(event)),
+        attendeeCount,
+      };
+    } catch (error) {
+      handleError(error);
+      return null;
     }
-
-    const attendeeCount = await Order.countDocuments({ event: eventId });
-
-    return {
-      ...JSON.parse(JSON.stringify(event)),
-      attendeeCount,
-    };
-  } catch (error) {
-    handleError(error);
-    return null;
+  },
+  ['event-by-id'],
+  {
+    revalidate: 60, // Cache for 1 minute
+    tags: ['event']
   }
-}
+);
 
 // UPDATE
 export async function updateEvent({ userId, event, path }: UpdateEventParams) {
