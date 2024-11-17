@@ -75,7 +75,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         // If no cookie or user metadata, use IP detection
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
-        const detectedCountry = data.name === 'SG' ? 'Singapore' : 'Malaysia';
+        console.log('Country data:', data);
+        const detectedCountry = data.country === 'SG' 
+          ? 'Singapore' 
+          : data.country === 'MY' 
+            ? 'Malaysia' 
+            : 'Singapore'; // Default to Others for non-SG/MY countries
         
         setUserCountry(detectedCountry);
         try {
