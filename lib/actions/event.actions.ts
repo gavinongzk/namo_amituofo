@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { unstable_cache } from 'next/cache';
 
 import { connectToDatabase } from '@/lib/database'
@@ -44,9 +44,12 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       ...event, 
       category: event.categoryId, 
       organizer: userId,
-      customFields: event.customFields // Ensure customFields are saved
+      customFields: event.customFields
     });
+
     revalidatePath(path);
+    revalidatePath('/');
+    revalidateTag('events');
 
     return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
@@ -101,11 +104,13 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { 
         ...event, 
         category: event.categoryId,
-        customFields: event.customFields // Ensure customFields are updated
+        customFields: event.customFields
       },
       { new: true }
     );
     revalidatePath(path);
+    revalidatePath('/');
+    revalidateTag('events');
 
     return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
@@ -120,6 +125,8 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 
     const deletedEvent = await Event.findByIdAndDelete(eventId)
     if (deletedEvent) revalidatePath(path)
+    revalidatePath('/');
+    revalidateTag('events');
   } catch (error) {
     handleError(error)
   }
