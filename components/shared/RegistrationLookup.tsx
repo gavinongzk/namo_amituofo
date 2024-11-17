@@ -17,7 +17,7 @@ interface RegistrationLookupProps {
 
 const RegistrationLookup = ({ showManualInput = false, className = '' }: RegistrationLookupProps) => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [useManualInput, setUseManualInput] = useState(showManualInput);
+  const [useManualInput, setUseManualInput] = useState(false);
   const [registrations, setRegistrations] = useState<IRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
