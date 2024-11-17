@@ -434,23 +434,30 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       )}
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Duplicate Registration Found / 发现重复注册</DialogTitle>
-            <DialogDescription className="space-y-3 pt-3">
-              <p>The following phone numbers are already registered: / 以下电话号码已注册：</p>
-              <ul className="list-disc pl-4">
+        <DialogContent className="bg-white sm:max-w-md">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              Duplicate Registration Found / 发现重复注册
+            </DialogTitle>
+            <DialogDescription className="space-y-4">
+              <p className="text-gray-700 text-base">
+                The following phone numbers are already registered: / 以下电话号码已注册：
+              </p>
+              <ul className="list-disc pl-6 space-y-1">
                 {duplicatePhoneNumbers.map((phone) => (
-                  <li key={phone} className="text-red-600">{phone}</li>
+                  <li key={phone} className="text-red-600 font-medium">{phone}</li>
                 ))}
               </ul>
-              <p>Do you still want to proceed? / 您是否仍要继续？</p>
+              <p className="text-gray-700 text-base pt-2">
+                Do you still want to proceed? / 您是否仍要继续？
+              </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex gap-3">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button
               variant="outline"
               onClick={() => setShowConfirmation(false)}
+              className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
             >
               Cancel / 取消
             </Button>
@@ -461,6 +468,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   submitForm(formValues, toast.loading("Processing registration... / 处理注册中..."));
                 }
               }}
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
             >
               Continue / 继续
             </Button>
