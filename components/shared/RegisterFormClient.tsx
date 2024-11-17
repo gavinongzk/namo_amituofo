@@ -348,9 +348,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           className="mt-1"
                                         />
                                         <label className="text-sm text-gray-500 leading-relaxed">
-                                          I am not from Singapore/Malaysia but would like to register
+                                          I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
                                           <br />
-                                          我不是来自新加坡/马来西亚但想要注册
+                                          我不是来自新加坡/马来西亚但想要注册（请包括国家区号，例如 +86）
                                         </label>
                                       </div>
                                     </div>
