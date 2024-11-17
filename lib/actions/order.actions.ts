@@ -194,56 +194,32 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
-    console.log('Connected to database, searching for phone number:', phoneNumber);
-
+    
     // Calculate dates for the range (now to 2 days ago)
     const now = new Date();
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    const orders = await Order.aggregate([
-      {
-        $lookup: {
-          from: 'events',
-          localField: 'event',
-          foreignField: '_id',
-          as: 'event'
-        }
-      },
-      {
-        $unwind: '$event'
-      },
-      {
-        $match: {
-          'customFieldValues': {
+    const orders = await Order.find({
+      'customFieldValues': {
+        $elemMatch: {
+          'fields': {
             $elemMatch: {
-              'fields': {
-                $elemMatch: {
-                  $or: [
-                    { type: 'phone', value: phoneNumber },
-                    { label: { $regex: /contact number/i }, value: phoneNumber }
-                  ]
-                }
-              },
-              'cancelled': { $ne: true }
+              $or: [
+                { type: 'phone', value: phoneNumber },
+                { label: { $regex: /contact number/i }, value: phoneNumber }
+              ]
             }
           },
-          'event.startDateTime': {
-            $gte: twoDaysAgo,
-            $lte: now
-          }
+          'cancelled': { $ne: true }
         }
       },
-      {
-        $group: {
-          _id: '$event._id',
-          event: { $first: '$event' },
-          orders: { $push: '$$ROOT' }
-        }
+      'event.startDateTime': {
+        $gte: twoDaysAgo,
+        $lte: now
       }
-    ]);
+    }).populate('event', '_id title imageUrl startDateTime endDateTime organizer');
 
-    console.log('Found grouped orders:', orders);
     return orders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
