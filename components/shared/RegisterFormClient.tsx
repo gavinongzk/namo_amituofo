@@ -20,6 +20,9 @@ import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
 
+const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
+  return `${personIndex + 1}.${fieldIndex + 1}`;
+};
 
 const isValidName = (name: string) => {
   // Regex to match letters (including Chinese), spaces, brackets, and common punctuation
@@ -261,23 +264,32 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       ) : (
         <>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
                 <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
               ) : (
                 <>
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="space-y-3">
-                      <h3 className="font-bold">Person {index + 1}</h3>
-                      {customFields.map((customField) => (
+                  {fields.map((field, personIndex) => (
+                    <div key={field.id} className="space-y-6 p-6 rounded-lg border border-gray-200">
+                      <h3 className="text-xl font-bold text-primary-500 border-b pb-2">
+                        Person {personIndex + 1}
+                      </h3>
+                      
+                      {customFields.map((customField, fieldIndex) => (
                         <FormField
                           key={customField.id}
                           control={form.control}
-                          name={`groups.${index}.${customField.id}`}
+                          name={`groups.${personIndex}.${customField.id}`}
                           render={({ field: formField }) => (
                             <FormItem>
-                              <FormLabel>{customField.label}</FormLabel>
+                              <FormLabel className="flex gap-2">
+                                <span className="text-primary-500 font-medium min-w-[2rem]">
+                                  {getQuestionNumber(personIndex, fieldIndex)}
+                                </span>
+                                <span>{customField.label}</span>
+                              </FormLabel>
+                              
                               <FormControl>
                                 {customField.type === 'boolean' ? (
                                   <Checkbox
@@ -286,7 +298,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                   />
                                 ) : customField.type === 'phone' ? (
                                   <>
-                                    {phoneOverrides[index] ? (
+                                    {phoneOverrides[personIndex] ? (
                                       <Input
                                         {...formField}
                                         value={String(formField.value)}
@@ -308,13 +320,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                     )}
                                     <div className="flex items-center space-x-2 mt-2">
                                       <Checkbox
-                                        checked={phoneOverrides[index] || false}
+                                        checked={phoneOverrides[personIndex] || false}
                                         onCheckedChange={(checked) => {
                                           setPhoneOverrides(prev => ({
                                             ...prev,
-                                            [index]: checked === true
+                                            [personIndex]: checked === true
                                           }));
-                                          form.setValue(`groups.${index}.phone`, '');
+                                          form.setValue(`groups.${personIndex}.phone`, '');
                                         }}
                                       />
                                       <label className="text-xs text-gray-500">
@@ -361,8 +373,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           )}
                         />
                       ))}
-                      {index > 0 && (
-                        <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                      {personIndex > 0 && (
+                        <Button type="button" variant="destructive" onClick={() => remove(personIndex)}>
                           Remove Person
                         </Button>
                       )}
