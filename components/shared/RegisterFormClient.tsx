@@ -325,9 +325,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             placeholder="Enter phone number with country code / 请输入带国家区号的电话号码"
                                           />
                                           <p className="text-xs text-gray-500 pl-1">
-                                            Format examples: +86-13812345678 (China), +1-2345678900 (USA)
+                                            Format examples: +8613812345678 (China), +12345678900 (USA)
                                             <br />
-                                            格式示例：+86-13812345678 (中国),+1-2345678900 (美国)
+                                            格式示例：+8613812345678 (中国),+12345678900 (美国)
                                           </p>
                                         </div>
                                       ) : (
