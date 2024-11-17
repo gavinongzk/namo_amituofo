@@ -19,6 +19,7 @@ import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
+import { PlusIcon, Loader2Icon } from 'lucide-react'
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -253,202 +254,180 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   };
 
   return (
-    <div className="bg-white">
+    <div className="max-w-3xl mx-auto">
       {isCountryLoading ? (
-        <div className="flex items-center justify-center py-4">
-          <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p className="text-gray-600">Loading... 加载中...</p>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
+            <p className="text-gray-600 font-medium">Loading... 加载中...</p>
           </div>
         </div>
       ) : (
-        <>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {message && <p className="text-red-500">{message}</p>}
-              {isFullyBooked ? (
-                <p className="text-red-500">This event is fully booked. 此活动已满员。</p>
-              ) : (
-                <>
-                  {fields.map((field, personIndex) => (
-                    <div key={field.id} className="space-y-6 p-6 rounded-lg border border-gray-200">
-                      <h3 className="text-xl font-bold text-primary-500 border-b pb-2">
-                        Person {personIndex + 1}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {message && <p className="text-red-500">{message}</p>}
+            {isFullyBooked ? (
+              <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
+                <p className="text-red-600 font-medium text-lg">This event is fully booked. 此活动已满员。</p>
+              </div>
+            ) : (
+              <>
+                {fields.map((field, personIndex) => (
+                  <div 
+                    key={field.id} 
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                  >
+                    <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-6 py-4 border-b border-gray-200">
+                      <h3 className="text-xl font-semibold text-primary-700">
+                        Person {personIndex + 1} / 参加者 {personIndex + 1}
                       </h3>
-                      
+                    </div>
+                    
+                    <div className="p-6 space-y-8">
                       {customFields.map((customField, fieldIndex) => (
                         <FormField
                           key={customField.id}
                           control={form.control}
                           name={`groups.${personIndex}.${customField.id}`}
                           render={({ field: formField }) => (
-                            <FormItem>
-                              <FormLabel className="flex gap-2">
-                                <span className="text-primary-500 font-medium min-w-[2rem]">
+                            <FormItem className="space-y-3">
+                              <FormLabel className="flex items-start gap-3 text-gray-700">
+                                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-primary-50 text-primary-600 font-semibold text-sm">
                                   {getQuestionNumber(personIndex, fieldIndex)}
                                 </span>
-                                <span>{customField.label}</span>
+                                <span className="text-base pt-1">{customField.label}</span>
                               </FormLabel>
                               
                               <FormControl>
-                                {customField.type === 'boolean' ? (
-                                  <Checkbox
-                                    checked={formField.value as boolean}
-                                    onCheckedChange={formField.onChange}
-                                  />
-                                ) : customField.type === 'phone' ? (
-                                  <>
-                                    {phoneOverrides[personIndex] ? (
-                                      <Input
-                                        {...formField}
-                                        value={String(formField.value)}
-                                        type="tel"
-                                        placeholder="Enter your phone number"
-                                      />
-                                    ) : (
-                                      <PhoneInput
-                                        value={formField.value as string}
-                                        onChange={(value) => formField.onChange(value || '')}
-                                        defaultCountry={getDefaultCountry(userCountry)}
-                                        countries={["SG", "MY"]}
-                                        international
-                                        countryCallingCodeEditable={false}
-                                        className="input-field"
-                                        withCountryCallingCode
-                                        initialValueFormat="national"
-                                      />
-                                    )}
-                                    <div className="flex items-center space-x-2 mt-2">
+                                <div className="pl-11">
+                                  {customField.type === 'boolean' ? (
+                                    <div className="flex gap-6">
                                       <Checkbox
-                                        checked={phoneOverrides[personIndex] || false}
-                                        onCheckedChange={(checked) => {
-                                          setPhoneOverrides(prev => ({
-                                            ...prev,
-                                            [personIndex]: checked === true
-                                          }));
-                                          form.setValue(`groups.${personIndex}.phone`, '');
-                                        }}
+                                        checked={formField.value as boolean}
+                                        onCheckedChange={formField.onChange}
+                                        className="h-5 w-5 rounded-md"
                                       />
-                                      <label className="text-xs text-gray-500">
-                                        I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
-                                        <br />
-                                        我不是来自新加坡/马来西亚但想要注册 (请包括国家区号，例如 +86)
-                                      </label>
                                     </div>
-                                  </>
-                                ) : customField.type === 'radio' ? (
-                                  <div className="flex gap-4">
-                                    {('options' in customField) && customField.options?.map((option) => (
-                                      <label key={option.value} className="flex items-center">
-                                        <input
-                                          type="radio"
-                                          value={option.value}
-                                          checked={formField.value === option.value}
-                                          onChange={() => formField.onChange(option.value)}
-                                          className="mr-2"
+                                  ) : customField.type === 'phone' ? (
+                                    <div className="space-y-3">
+                                      {phoneOverrides[personIndex] ? (
+                                        <Input
+                                          {...formField}
+                                          value={String(formField.value)}
+                                          type="tel"
+                                          className="max-w-md"
+                                          placeholder="Enter your phone number with country code"
                                         />
-                                        {option.label}
-                                      </label>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <Input 
-                                    {...formField} 
-                                    value={String(formField.value)}
-                                    onChange={(e) => {
-                                      const sanitized = sanitizeName(e.target.value);
-                                      formField.onChange(sanitized);
-                                    }}
-                                    onPaste={(e) => {
-                                      e.preventDefault();
-                                      const text = e.clipboardData.getData('text');
-                                      const sanitized = sanitizeName(text);
-                                      formField.onChange(sanitized);
-                                    }}
-                                  />
-                                )}
+                                      ) : (
+                                        <PhoneInput
+                                          value={formField.value as string}
+                                          onChange={(value) => formField.onChange(value || '')}
+                                          defaultCountry={getDefaultCountry(userCountry)}
+                                          countries={["SG", "MY"]}
+                                          international
+                                          countryCallingCodeEditable={false}
+                                          className="max-w-md"
+                                          withCountryCallingCode
+                                        />
+                                      )}
+                                      <div className="flex items-start gap-3 mt-2">
+                                        <Checkbox
+                                          checked={phoneOverrides[personIndex] || false}
+                                          onCheckedChange={(checked) => {
+                                            setPhoneOverrides(prev => ({
+                                              ...prev,
+                                              [personIndex]: checked === true
+                                            }));
+                                            form.setValue(`groups.${personIndex}.phone`, '');
+                                          }}
+                                          className="mt-1"
+                                        />
+                                        <label className="text-sm text-gray-500 leading-relaxed">
+                                          I am not from Singapore/Malaysia but would like to register
+                                          <br />
+                                          我不是来自新加坡/马来西亚但想要注册
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ) : customField.type === 'radio' ? (
+                                    <div className="flex gap-6">
+                                      {('options' in customField) && customField.options?.map((option) => (
+                                        <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="radio"
+                                            value={option.value}
+                                            checked={formField.value === option.value}
+                                            onChange={() => formField.onChange(option.value)}
+                                            className="w-4 h-4 text-primary-600"
+                                          />
+                                          <span className="text-gray-700">{option.label}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <Input 
+                                      {...formField}
+                                      className="max-w-md"
+                                      value={String(formField.value)}
+                                      onChange={(e) => {
+                                        const sanitized = sanitizeName(e.target.value);
+                                        formField.onChange(sanitized);
+                                      }}
+                                    />
+                                  )}
+                                </div>
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage className="pl-11" />
                             </FormItem>
                           )}
                         />
                       ))}
-                      {personIndex > 0 && (
-                        <Button type="button" variant="destructive" onClick={() => remove(personIndex)}>
-                          Remove Person
-                        </Button>
-                      )}
                     </div>
-                  ))}
-                  <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    <Button
-                      type="button"
-                      onClick={handleAddPerson}
-                      className="w-full sm:flex-1 bg-gray-600 hover:bg-gray-700 text-white"
-                    >
-                      Add Another Person 添加另一位
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={isSubmitting} 
-                      className="w-full sm:flex-1"
-                    >
-                      {isSubmitting ? 'Submitting... 提交中...' : 'Register 注册'}
-                    </Button>
+                    
+                    {personIndex > 0 && (
+                      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          onClick={() => remove(personIndex)}
+                          className="w-full sm:w-auto"
+                        >
+                          Remove Person {personIndex + 1}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
-            </form>
-          </Form>
+                ))}
 
-          <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-            <DialogContent className="bg-white border-2 border-gray-200 shadow-xl max-w-md w-[90vw]">
-              <DialogHeader className="space-y-4">
-                <DialogTitle className="text-xl font-bold text-gray-900">
-                  Duplicate Registration Found / 发现重复注册
-                </DialogTitle>
-                <DialogDescription className="text-gray-700 space-y-4">
-                  <p className="text-base">
-                    The following phone numbers have already registered for this event:
-                    <br />
-                    以下电话号码已经注册过此活动：
-                  </p>
-                  <div className="bg-red-50 p-3 rounded-md border border-red-200">
-                    <p className="text-red-600 font-medium text-lg">
-                      {duplicatePhoneNumbers.join(', ')}
-                    </p>
-                  </div>
-                  <p className="text-base pt-2">
-                    Do you want to continue with the registration?
-                    <br />
-                    您要继续注册吗？
-                  </p>
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="sm:justify-end gap-3 mt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowConfirmation(false)}
-                  className="flex-1 sm:flex-none border-gray-300 hover:bg-gray-100"
-                >
-                  Cancel / 取消
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setShowConfirmation(false);
-                    if (formValues) {
-                      const toastId = toast.loading("Processing registration... / 处理注册中...");
-                      submitForm(formValues, toastId);
-                    }
-                  }}
-                  className="flex-1 sm:flex-none bg-primary-500 hover:bg-primary-600 text-white"
-                >
-                  Continue / 继续
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </>
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <Button
+                    type="button"
+                    onClick={handleAddPerson}
+                    variant="outline"
+                    className="flex-1 gap-2 text-base font-medium"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                    Add Another Person
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-base font-medium py-6"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2Icon className="w-4 h-4 animate-spin" />
+                        Submitting...
+                      </div>
+                    ) : (
+                      'Complete Registration'
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </form>
+        </Form>
       )}
     </div>
   )
