@@ -9,6 +9,7 @@ import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
 import QRCode from 'qrcode';
 import { CustomFieldGroup } from '@/types'
+import { unstable_cache } from 'next/cache'
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -265,3 +266,11 @@ export const getGroupIdsByEventId = async (eventId: string): Promise<string[]> =
     throw new Error('Failed to fetch group IDs');
   }
 };
+
+export const getCachedOrderCount = unstable_cache(
+  async (eventId: string) => {
+    return getOrderCountByEvent(eventId)
+  },
+  ['event-order-count'],
+  { revalidate: 30 } // Cache for 30 seconds
+)
