@@ -210,7 +210,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
             $elemMatch: {
               $or: [
                 { type: 'phone', value: phoneNumber },
-                { label: { $regex: /contact number/i }, value: phoneNumber }
+                { label: { $regex: /phone/i }, value: phoneNumber }
               ]
             }
           },
