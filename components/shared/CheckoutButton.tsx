@@ -2,20 +2,22 @@
 
 import { IEvent } from '@/lib/database/models/event.model'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 
 const CheckoutButton = ({ event }: { event: IEvent }) => {
   const router = useRouter()
-  const hasEventFinished = new Date(event.endDateTime) < new Date();
+  const hasEventFinished = new Date(event.endDateTime) < new Date()
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Prefetch the registration page on mount
+  // Only prefetch the route
   useEffect(() => {
     router.prefetch(`/events/${event._id}/register`)
   }, [event._id, router])
 
   const handleRegisterClick = () => {
-    router.push(`/events/${event._id}/register`);
+    setIsLoading(true)
+    router.push(`/events/${event._id}/register`)
   }
 
   return (
@@ -23,8 +25,13 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
       {hasEventFinished ? (
         <p className="p-2 text-red-400">Sorry, registration is closed.</p>
       ) : (
-        <Button onClick={handleRegisterClick} className="button rounded-full" size="lg">
-          Register 报名
+        <Button 
+          onClick={handleRegisterClick} 
+          className="button rounded-full" 
+          size="lg"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Loading...' : 'Register 报名'}
         </Button>
       )}
     </div>
