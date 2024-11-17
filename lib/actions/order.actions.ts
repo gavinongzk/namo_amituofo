@@ -197,31 +197,50 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
 
     // Calculate date from X days ago
     const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() - 3);
+    currentDate.setDate(currentDate.getDate() - 2);
 
-    const orders = await Order.find({
-      'customFieldValues': {
-        $elemMatch: {
-          'fields': {
+    // Modified query to group by event
+    const orders = await Order.aggregate([
+      {
+        $match: {
+          'customFieldValues': {
             $elemMatch: {
-              $or: [
-                { type: 'phone', value: phoneNumber },
-                { label: { $regex: /contact number/i }, value: phoneNumber }
-              ]
+              'fields': {
+                $elemMatch: {
+                  $or: [
+                    { type: 'phone', value: phoneNumber },
+                    { label: { $regex: /contact number/i }, value: phoneNumber }
+                  ]
+                }
+              },
+              'cancelled': { $ne: true }
             }
           },
-          'cancelled': { $ne: true }
+          'createdAt': { $gte: currentDate }
         }
       },
-      'createdAt': { $gte: currentDate } // Add date filter
-    }).populate('event', 'title imageUrl startDateTime endDateTime');
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'event',
+          foreignField: '_id',
+          as: 'event'
+        }
+      },
+      {
+        $unwind: '$event'
+      },
+      {
+        $group: {
+          _id: '$event._id',
+          event: { $first: '$event' },
+          orders: { $push: '$$ROOT' }
+        }
+      }
+    ]);
 
-    console.log('Found orders:', orders);
-
-    const serializedOrders = JSON.parse(JSON.stringify(orders));
-    console.log('Serialized orders:', serializedOrders);
-
-    return serializedOrders;
+    console.log('Found grouped orders:', orders);
+    return orders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;
