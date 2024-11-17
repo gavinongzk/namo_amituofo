@@ -42,6 +42,7 @@ const RegistrationLookup = ({ showManualInput = false }: RegistrationLookupProps
                     endDateTime: order.event.endDateTime,
                     orderId: order._id.toString(),
                     organizer: { _id: order.event.organizer?.toString() || '' },
+                    customFieldValues: order.customFieldValues,
                 },
                 registrations: order.customFieldValues.map((group) => ({
                     queueNumber: group.queueNumber || '',
