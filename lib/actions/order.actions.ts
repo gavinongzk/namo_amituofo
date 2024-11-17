@@ -195,12 +195,23 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     await connectToDatabase();
     console.log('Connected to database, searching for phone number:', phoneNumber);
 
-    // Calculate date from X days ago
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() - 2);
+    // Calculate dates for the range (now to 2 days ago)
+    const now = new Date();
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    // Modified query to group by event
     const orders = await Order.aggregate([
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'event',
+          foreignField: '_id',
+          as: 'event'
+        }
+      },
+      {
+        $unwind: '$event'
+      },
       {
         $match: {
           'customFieldValues': {
@@ -216,19 +227,11 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
               'cancelled': { $ne: true }
             }
           },
-          'createdAt': { $gte: currentDate }
+          'event.startDateTime': {
+            $gte: twoDaysAgo,
+            $lte: now
+          }
         }
-      },
-      {
-        $lookup: {
-          from: 'events',
-          localField: 'event',
-          foreignField: '_id',
-          as: 'event'
-        }
-      },
-      {
-        $unwind: '$event'
       },
       {
         $group: {
