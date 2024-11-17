@@ -388,11 +388,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                         <Button 
                           type="button" 
-                          variant="destructive" 
                           onClick={() => remove(personIndex)}
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          Remove Person {personIndex + 1}
+                          Remove Person {personIndex + 1} / 删除参加者 {personIndex + 1}
                         </Button>
                       </div>
                     )}
@@ -403,24 +402,23 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    variant="outline"
-                    className="flex-1 gap-2 text-base font-medium"
+                    className="flex-1 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 gap-2 text-base font-medium h-12"
                   >
                     <PlusIcon className="w-5 h-5" />
-                    Add Another Person
+                    Add Another Person / 添加参加者
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-base font-medium py-6"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium h-12 disabled:bg-blue-400"
                   >
                     {isSubmitting ? (
                       <div className="flex items-center gap-2">
                         <Loader2Icon className="w-4 h-4 animate-spin" />
-                        Submitting...
+                        Submitting... / 提交中...
                       </div>
                     ) : (
-                      'Complete Registration'
+                      'Complete Registration / 完成注册'
                     )}
                   </Button>
                 </div>
