@@ -200,6 +200,9 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
+    console.log('Searching for phone number:', phoneNumber);
+    console.log('Date range:', { twoDaysAgo, now });
+
     const orders = await Order.find({
       'customFieldValues': {
         $elemMatch: {
@@ -219,6 +222,9 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
         $lte: now
       }
     }).populate('event', '_id title imageUrl startDateTime endDateTime organizer');
+
+    console.log('Found orders:', orders.length);
+    console.log('Orders details:', JSON.stringify(orders, null, 2));
 
     return orders;
   } catch (error) {
