@@ -432,6 +432,41 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           </form>
         </Form>
       )}
+
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate Registration Found / 发现重复注册</DialogTitle>
+            <DialogDescription className="space-y-3 pt-3">
+              <p>The following phone numbers are already registered: / 以下电话号码已注册：</p>
+              <ul className="list-disc pl-4">
+                {duplicatePhoneNumbers.map((phone) => (
+                  <li key={phone} className="text-red-600">{phone}</li>
+                ))}
+              </ul>
+              <p>Do you still want to proceed? / 您是否仍要继续？</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmation(false)}
+            >
+              Cancel / 取消
+            </Button>
+            <Button
+              onClick={() => {
+                setShowConfirmation(false);
+                if (formValues) {
+                  submitForm(formValues, toast.loading("Processing registration... / 处理注册中..."));
+                }
+              }}
+            >
+              Continue / 继续
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
