@@ -314,28 +314,42 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       />
                                     </div>
                                   ) : customField.type === 'phone' ? (
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                       {phoneOverrides[personIndex] ? (
-                                        <Input
-                                          {...formField}
-                                          value={String(formField.value)}
-                                          type="tel"
-                                          className="max-w-md"
-                                          placeholder="Enter your phone number with country code"
-                                        />
+                                        <div className="space-y-1.5">
+                                          <Input
+                                            {...formField}
+                                            value={String(formField.value)}
+                                            type="tel"
+                                            className="max-w-md"
+                                            placeholder="Enter phone number with country code / 请输入带国家区号的电话号码"
+                                          />
+                                          <p className="text-xs text-gray-500 pl-1">
+                                            Format examples: +86-13812345678 (China), +1-2345678900 (USA)
+                                            <br />
+                                            格式示例：+86-13812345678 (中国)，+1-2345678900 (美国)
+                                          </p>
+                                        </div>
                                       ) : (
-                                        <PhoneInput
-                                          value={formField.value as string}
-                                          onChange={(value) => formField.onChange(value || '')}
-                                          defaultCountry={getDefaultCountry(userCountry)}
-                                          countries={["SG", "MY"]}
-                                          international
-                                          countryCallingCodeEditable={false}
-                                          className="max-w-md"
-                                          withCountryCallingCode
-                                        />
+                                        <div className="space-y-1.5">
+                                          <PhoneInput
+                                            value={formField.value as string}
+                                            onChange={(value) => formField.onChange(value || '')}
+                                            defaultCountry={getDefaultCountry(userCountry)}
+                                            countries={["SG", "MY"]}
+                                            international
+                                            countryCallingCodeEditable={false}
+                                            className="max-w-md"
+                                            withCountryCallingCode
+                                          />
+                                          <p className="text-xs text-gray-500 pl-1">
+                                            For Singapore (+65) and Malaysia (+60) numbers only
+                                            <br />
+                                            仅适用于新加坡 (+65) 和马来西亚 (+60) 号码
+                                          </p>
+                                        </div>
                                       )}
-                                      <div className="flex items-start gap-3 mt-2">
+                                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
                                         <Checkbox
                                           checked={phoneOverrides[personIndex] || false}
                                           onCheckedChange={(checked) => {
@@ -345,12 +359,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }));
                                             form.setValue(`groups.${personIndex}.phone`, '');
                                           }}
-                                          className="mt-1"
+                                          className="h-4 w-4"
                                         />
-                                        <label className="text-sm text-gray-500 leading-relaxed">
-                                          I am not from Singapore/Malaysia but would like to register (please include country calling code such as +86)
+                                        <label className="cursor-pointer">
+                                          I am using a phone number from another country
                                           <br />
-                                          我不是来自新加坡/马来西亚但想要注册（请包括国家区号，例如 +86）
+                                          我使用其他国家的电话号码
                                         </label>
                                       </div>
                                     </div>
@@ -374,6 +388,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       {...formField}
                                       className="max-w-md"
                                       value={String(formField.value)}
+                                      placeholder={`Please enter ${customField.label.toLowerCase()} / 请输入${customField.label}`}
                                       onChange={(e) => {
                                         const sanitized = sanitizeName(e.target.value);
                                         formField.onChange(sanitized);
