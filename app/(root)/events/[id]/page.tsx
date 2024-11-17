@@ -63,11 +63,23 @@ const EventInfo = async ({ event }: { event: any }) => {
   );
 };
 
+// Add metadata export for caching
+export const revalidate = 3600; // Cache for 1 hour
+
 // Main component with preloading and streaming
 export default async function EventDetails({ params: { id }, searchParams }: SearchParamProps) {
-  // Parallel data fetching
+  // Parallel data fetching with caching
   const eventPromise = getEventById(id);
   const event = await eventPromise;
+
+  // Add metadata for better SEO
+  const metadata = {
+    title: event.title,
+    description: event.description.slice(0, 160), // First 160 characters for SEO
+    openGraph: {
+      images: [event.imageUrl],
+    },
+  };
 
   return (
     <section className="w-full">
@@ -89,13 +101,4 @@ export default async function EventDetails({ params: { id }, searchParams }: Sea
       </div>
     </section>
   );
-}
-
-// Generate static params for common events
-export async function generateStaticParams() {
-  // Add your most common event IDs here
-  return [
-    { id: 'popular-event-1' },
-    { id: 'popular-event-2' },
-  ];
 }

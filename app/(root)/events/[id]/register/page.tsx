@@ -73,14 +73,6 @@ async function AsyncRegisterForm({
   return <RegisterFormWrapper event={event} />
 }
 
-// Generate static params for common event IDs
-export function generateStaticParams() {
-  // Add your most common event IDs here
-  return [
-    { id: 'popular-event-1' },
-    { id: 'popular-event-2' },
-  ]
-}
 
 export async function generateMetadata({ 
   params: { id } 

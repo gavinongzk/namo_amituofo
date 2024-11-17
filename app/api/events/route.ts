@@ -1,30 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents } from '@/lib/actions/event.actions';
-import { useUser } from '@clerk/nextjs';
+import { unstable_cache } from 'next/cache';
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const country = searchParams.get('country') || '';
-
-    console.log('Country:', country);
-
-    const events = await getAllEvents({
+const getCachedEvents = unstable_cache(
+  async (country: string) => {
+    return getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 1000,
       country: country
     });
-    console.log('Fetched Events:', events);
+  },
+  ['api-events-list'],
+  {
+    revalidate: 60, // Cache for 1 minute
+    tags: ['events']
+  }
+);
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const country = searchParams.get('country') || '';
+
+    const events = await getCachedEvents(country);
     
     return NextResponse.json(events, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
       },
     });
   } catch (error) {
     console.error('Error fetching events:', error);
-    return NextResponse.json({ message: 'Failed to fetch events' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Failed to fetch events' }, 
+      { status: 500 }
+    );
   }
 }
