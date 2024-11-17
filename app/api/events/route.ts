@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents } from '@/lib/actions/event.actions';
 import { unstable_cache } from 'next/cache';
 
-export const runtime = 'edge';
-
 const getCachedEvents = unstable_cache(
   async (country: string) => {
     return getAllEvents({
@@ -16,7 +14,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 300, // Cache for 5 minutes
+    revalidate: 300,
     tags: ['events']
   }
 );
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const events = await getCachedEvents(country);
     
-    return new NextResponse(JSON.stringify(events), {
+    return NextResponse.json(events, {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
