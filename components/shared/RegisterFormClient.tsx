@@ -407,7 +407,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    className="flex-1 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 gap-2 text-base font-medium h-12"
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300"
                   >
                     <PlusIcon className="w-5 h-5" />
                     Add Another Person / 添加参加者
