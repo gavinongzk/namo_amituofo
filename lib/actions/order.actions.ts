@@ -219,7 +219,6 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
       },
       'event.startDateTime': {
         $gte: twoDaysAgo,
-        $lte: now
       }
     }).populate('event', '_id title imageUrl startDateTime endDateTime organizer');
 
