@@ -216,9 +216,6 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
           },
           'cancelled': { $ne: true }
         }
-      },
-      'event.startDateTime': {
-        $gte: twoDaysAgo,
       }
     }).populate('event', '_id title imageUrl startDateTime endDateTime organizer');
 
