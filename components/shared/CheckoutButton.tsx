@@ -10,22 +10,9 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
   const hasEventFinished = new Date(event.endDateTime) < new Date()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Prefetch both route and data on mount
+  // Only prefetch the route
   useEffect(() => {
-    // Prefetch the route
     router.prefetch(`/events/${event._id}/register`)
-    
-    // Prefetch initial event data
-    const prefetchData = async () => {
-      try {
-        await fetch(`/api/events/${event._id}`, { 
-          next: { revalidate: 60 } // Cache for 1 minute
-        })
-      } catch (error) {
-        console.error('Prefetch error:', error)
-      }
-    }
-    prefetchData()
   }, [event._id, router])
 
   const handleRegisterClick = () => {
