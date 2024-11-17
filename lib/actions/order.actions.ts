@@ -195,33 +195,55 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     await connectToDatabase();
     console.log('Connected to database, searching for phone number:', phoneNumber);
 
-    // Calculate date from X days ago
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() - 3);
+    // Calculate dates for the range (now to 2 days ago)
+    const now = new Date();
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    const orders = await Order.find({
-      'customFieldValues': {
-        $elemMatch: {
-          'fields': {
-            $elemMatch: {
-              $or: [
-                { type: 'phone', value: phoneNumber },
-                { label: { $regex: /contact number/i }, value: phoneNumber }
-              ]
-            }
-          },
-          'cancelled': { $ne: true }
+    const orders = await Order.aggregate([
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'event',
+          foreignField: '_id',
+          as: 'event'
         }
       },
-      'createdAt': { $gte: currentDate } // Add date filter
-    }).populate('event', 'title imageUrl startDateTime endDateTime');
+      {
+        $unwind: '$event'
+      },
+      {
+        $match: {
+          'customFieldValues': {
+            $elemMatch: {
+              'fields': {
+                $elemMatch: {
+                  $or: [
+                    { type: 'phone', value: phoneNumber },
+                    { label: { $regex: /contact number/i }, value: phoneNumber }
+                  ]
+                }
+              },
+              'cancelled': { $ne: true }
+            }
+          },
+          'event.startDateTime': {
+            $gte: twoDaysAgo,
+            $lte: now
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$event._id',
+          event: { $first: '$event' },
+          orders: { $push: '$$ROOT' }
+        }
+      }
+    ]);
 
-    console.log('Found orders:', orders);
-
-    const serializedOrders = JSON.parse(JSON.stringify(orders));
-    console.log('Serialized orders:', serializedOrders);
-
-    return serializedOrders;
+    console.log('Found grouped orders:', orders);
+    return orders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;

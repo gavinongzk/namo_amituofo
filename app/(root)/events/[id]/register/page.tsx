@@ -1,7 +1,7 @@
 // app/(root)/events/[id]/register/page.tsx
 import { Suspense } from 'react'
 import Loading from '@/components/shared/Loader'
-import RegisterForm from '@/components/shared/RegisterForm'
+import RegisterFormWrapper from '@/components/shared/RegisterFormWrapper'
 import { getEventById } from '@/lib/actions/event.actions'
 import { unstable_cache } from 'next/cache'
 import { headers } from 'next/headers'
@@ -70,7 +70,7 @@ async function AsyncRegisterForm({
     )
   }
 
-  return <RegisterForm event={event} />
+  return <RegisterFormWrapper event={event} />
 }
 
 // Generate static params for common event IDs

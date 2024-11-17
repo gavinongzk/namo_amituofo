@@ -29,20 +29,24 @@ const EventLookupPage = () => {
             console.log('Received orders:', orders);
 
             // Transform orders into IRegistration format
-            const transformedRegistrations: IRegistration[] = orders.map((order: IOrderItem) => ({
+            const transformedRegistrations: IRegistration[] = orders.map((groupedOrder: any) => ({
                 event: {
-                    _id: order.event._id,
-                    title: order.event.title,
-                    imageUrl: order.event.imageUrl,
-                    startDateTime: order.event.startDateTime,
-                    endDateTime: order.event.endDateTime,
-                    orderId: order._id.toString(),
-                    organizer: { _id: order.event.organizer?.toString() || '' },
+                    _id: groupedOrder.event._id,
+                    title: groupedOrder.event.title,
+                    imageUrl: groupedOrder.event.imageUrl,
+                    startDateTime: groupedOrder.event.startDateTime,
+                    endDateTime: groupedOrder.event.endDateTime,
+                    orderId: groupedOrder.orders[0]._id.toString(),
+                    organizer: { _id: groupedOrder.event.organizer?.toString() || '' },
+                    customFieldValues: groupedOrder.orders[0].customFieldValues,
                 },
-                registrations: order.customFieldValues.map((group) => ({
-                    queueNumber: group.queueNumber || '',
-                    name: group.fields?.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                })),
+                registrations: groupedOrder.orders.flatMap((order: any) => 
+                    order.customFieldValues.map((group: any) => ({
+                        queueNumber: group.queueNumber || '',
+                        name: group.fields?.find((field: any) => 
+                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                    }))
+                ),
             }));
 
             setRegistrations(transformedRegistrations);
