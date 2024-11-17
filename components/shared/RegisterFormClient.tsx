@@ -314,15 +314,22 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       />
                                     </div>
                                   ) : customField.type === 'phone' ? (
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                       {phoneOverrides[personIndex] ? (
-                                        <Input
-                                          {...formField}
-                                          value={String(formField.value)}
-                                          type="tel"
-                                          className="max-w-md"
-                                          placeholder="Enter your phone number with country code"
-                                        />
+                                        <div className="space-y-1.5">
+                                          <Input
+                                            {...formField}
+                                            value={String(formField.value)}
+                                            type="tel"
+                                            className="max-w-md"
+                                            placeholder="Enter phone number with country code / 请输入带国家区号的电话号码"
+                                          />
+                                          <p className="text-xs text-gray-500 pl-1">
+                                            Format examples: +8613812345678 (China), +12345678900 (USA)
+                                            <br />
+                                            格式示例：+8613812345678 (中国),+12345678900 (美国)
+                                          </p>
+                                        </div>
                                       ) : (
                                         <PhoneInput
                                           value={formField.value as string}
@@ -335,7 +342,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           withCountryCallingCode
                                         />
                                       )}
-                                      <div className="flex items-start gap-3 mt-2">
+                                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
                                         <Checkbox
                                           checked={phoneOverrides[personIndex] || false}
                                           onCheckedChange={(checked) => {
@@ -345,12 +352,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }));
                                             form.setValue(`groups.${personIndex}.phone`, '');
                                           }}
-                                          className="mt-1"
+                                          className="h-4 w-4"
                                         />
-                                        <label className="text-sm text-gray-500 leading-relaxed">
-                                          I am not from Singapore/Malaysia but would like to register
+                                        <label className="cursor-pointer">
+                                          I am using a phone number from another country
                                           <br />
-                                          我不是来自新加坡/马来西亚但想要注册
+                                          我使用其他国家的电话号码
                                         </label>
                                       </div>
                                     </div>
@@ -374,6 +381,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       {...formField}
                                       className="max-w-md"
                                       value={String(formField.value)}
+                                      placeholder={`Please enter ${customField.label.toLowerCase()} / 请输入${customField.label}`}
                                       onChange={(e) => {
                                         const sanitized = sanitizeName(e.target.value);
                                         formField.onChange(sanitized);
@@ -407,7 +415,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    className="flex-1 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 gap-2 text-base font-medium h-12"
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300"
                   >
                     <PlusIcon className="w-5 h-5" />
                     Add Another Person / 添加参加者

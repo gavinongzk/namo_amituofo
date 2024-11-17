@@ -194,57 +194,36 @@ export async function getTotalRegistrationsByEvent(eventId: string) {
 export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
-    console.log('Connected to database, searching for phone number:', phoneNumber);
-
-    // Calculate dates for the range (now to 2 days ago)
-    const now = new Date();
+    
+    // Calculate date for 2 days ago
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    const orders = await Order.aggregate([
-      {
-        $lookup: {
-          from: 'events',
-          localField: 'event',
-          foreignField: '_id',
-          as: 'event'
-        }
-      },
-      {
-        $unwind: '$event'
-      },
-      {
-        $match: {
-          'customFieldValues': {
+    const orders = await Order.find({
+      'customFieldValues': {
+        $elemMatch: {
+          'fields': {
             $elemMatch: {
-              'fields': {
-                $elemMatch: {
-                  $or: [
-                    { type: 'phone', value: phoneNumber },
-                    { label: { $regex: /contact number/i }, value: phoneNumber }
-                  ]
-                }
-              },
-              'cancelled': { $ne: true }
+              $or: [
+                { type: 'phone', value: phoneNumber },
+                { label: { $regex: /phone/i }, value: phoneNumber }
+              ]
             }
           },
-          'event.startDateTime': {
-            $gte: twoDaysAgo,
-            $lte: now
-          }
-        }
-      },
-      {
-        $group: {
-          _id: '$event._id',
-          event: { $first: '$event' },
-          orders: { $push: '$$ROOT' }
+          'cancelled': { $ne: true }
         }
       }
-    ]);
+    })
+    .populate({
+      path: 'event',
+      match: { startDateTime: { $gte: twoDaysAgo } },
+      select: '_id title imageUrl startDateTime endDateTime organizer'
+    });
 
-    console.log('Found grouped orders:', orders);
-    return orders;
+    // Filter out any null events (those that didn't match the date criteria)
+    const filteredOrders = orders.filter(order => order.event);
+
+    return filteredOrders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     throw error;
