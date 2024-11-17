@@ -20,11 +20,14 @@ const EventLookupPage = () => {
     const [hasSearched, setHasSearched] = useState(false);
 
     const handleLookup = async () => {
+        console.log('handleLookup called with phone number:', phoneNumber);
         setIsLoading(true);
         setError('');
         setHasSearched(true);
         try {
+            console.log('Calling getOrdersByPhoneNumber...');
             const orders = await getOrdersByPhoneNumber(phoneNumber);
+            console.log('Orders received:', orders);
 
             // Transform each order into IRegistration format
             const transformedRegistrations: IRegistration[] = orders.map((order: any) => ({
