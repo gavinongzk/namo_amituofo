@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
-import { usePrefetchRoutes } from '@/hooks/usePrefetchRoutes';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
 
 import './globals.css'
