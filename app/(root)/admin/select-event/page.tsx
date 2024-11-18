@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { formatDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2 } from "lucide-react"
-import { addDays, isAfter, parseISO } from 'date-fns';
-import useSWR from 'swr';
+import { Loader2 } from "lucide-react" // Import the loader icon
+import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
 
 type Event = {
   _id: string;
@@ -29,63 +28,64 @@ type Event = {
   cannotReciteAndWalk: number;
 };
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Failed to fetch');
-  return res.json();
-};
-
 const SelectEventPage = () => {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  const country = user?.publicMetadata.country as string | undefined;
-  const { data: eventsData, error } = useSWR(
-    isLoaded && user ? `/api/events${country ? `?country=${country}` : ''}` : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60000,
-      suspense: true,
-      keepPreviousData: true,
-      onSuccess: () => setIsLoadingEvents(false),
-      onError: () => setIsLoadingEvents(false)
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const country = user?.publicMetadata.country as string | undefined;
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
+        const result = await response.json();
+
+        if (Array.isArray(result.data)) {
+          const currentDate = new Date();
+          const fiveDaysAgo = addDays(currentDate, -5);
+          const recentAndUpcomingEvents = await Promise.all(result.data
+            .filter((event: Event) => {
+              if (user?.publicMetadata?.role === 'superadmin') return true;
+              const endDate = parseISO(event.endDateTime);
+              return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
+            })
+            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
+            .map(async (event: Event) => {
+              const countsResponse = await fetch(`/api/events/${event._id}/counts`);
+              const countsData = await countsResponse.json();
+              return {
+                ...event,
+                totalRegistrations: countsData.totalRegistrations,
+                attendedUsers: countsData.attendedUsers,
+                cannotReciteAndWalk: countsData.cannotReciteAndWalk
+              };
+            }));
+          setEvents(recentAndUpcomingEvents);
+        } else {
+          console.error('Fetched data is not an array:', result);
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isLoaded && user) {
+      fetchEvents();
     }
-  );
-
-  const { data: eventCounts } = useSWR(
-    selectedEventId ? `/api/events/${selectedEventId}/counts` : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    }
-  );
-
-  const events = useMemo(() => {
-    if (!eventsData?.data) return [];
-    
-    const currentDate = new Date();
-    const fiveDaysAgo = addDays(currentDate, -5);
-    
-    return eventsData.data
-      .filter((event: Event) => {
-        if (user?.publicMetadata?.role === 'superadmin') return true;
-        const endDate = parseISO(event.endDateTime);
-        return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
-      })
-      .sort((a: Event, b: Event) => 
-        new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
-      );
-  }, [eventsData, user]);
+  }, [isLoaded, user]);
 
   const handleSelectEvent = (eventId: string) => {
     setSelectedEventId(eventId);
-    const event = events.find((e: Event) => e._id === eventId);
+    const event = events.find(e => e._id === eventId);
     setSelectedEvent(event || null);
   };
 
@@ -118,21 +118,19 @@ const SelectEventPage = () => {
             <CardDescription>Select an event to view details and manage attendance</CardDescription>
           </CardHeader>
           <CardContent>
-            <Select onValueChange={handleSelectEvent} value={selectedEventId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={
-                  isLoadingEvents ? "Loading events..." : "Select an event"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                <ScrollArea className="h-[300px]">
-                  {isLoadingEvents ? (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>Loading events...</span>
-                    </div>
-                  ) : (
-                    Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+            {isLoading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Loading events...</span>
+              </div>
+            ) : (
+              <Select onValueChange={handleSelectEvent} value={selectedEventId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an event" />
+                </SelectTrigger>
+                <SelectContent>
+                  <ScrollArea className="h-[300px]">
+                    {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
                         <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
                           {category}
@@ -149,11 +147,11 @@ const SelectEventPage = () => {
                           </SelectItem>
                         ))}
                       </SelectGroup>
-                    ))
-                  )}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
+                    ))}
+                  </ScrollArea>
+                </SelectContent>
+              </Select>
+            )}
           </CardContent>
         </Card>
 
@@ -217,13 +215,16 @@ const SelectEventPage = () => {
 
         <Button 
           onClick={handleGoToAttendance} 
-          disabled={!selectedEventId}
+          disabled={!selectedEventId || isLoading}
           className="w-full text-lg py-6"
         >
-          {selectedEventId ? (
-            'Go to Attendance'
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </>
           ) : (
-            'Select an event to go to attendance'
+            'Go to Attendance'
           )}
         </Button>
       </div>
