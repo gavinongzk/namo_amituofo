@@ -1,5 +1,7 @@
 'use client'
 
+import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import Link from "next/link"
@@ -23,18 +25,28 @@ const AdminLoginButton = () => (
 )
 
 const Header = () => {
+  const router = useRouter();
+
+  // Optimized navigation handler
+  const handleNavigation = useCallback((path: string) => {
+    router.push(path, { scroll: false });
+  }, [router]);
+
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <div className="wrapper flex items-center justify-between py-2 px-4 md:px-6">
-        <Link href="/" className="w-24 md:w-32 transition-transform hover:scale-105">
+      <nav className="wrapper flex items-center justify-between py-2">
+        <button 
+          onClick={() => handleNavigation('/')}
+          className="transition-transform hover:scale-105"
+        >
           <Image 
             src="/assets/images/logo.svg" 
             width={96}
             height={28}
-            alt="Namo Amituofo logo" 
-            className="object-contain w-full h-auto"
+            alt="Logo"
+            priority
           />
-        </Link>
+        </button>
 
         <nav className="md:flex-between hidden w-full max-w-xl mx-6">
           <NavWrapper />
@@ -62,7 +74,7 @@ const Header = () => {
           </SignedOut>
           <MobileNav />
         </div>
-      </div>
+      </nav>
     </header>
   )
 }
