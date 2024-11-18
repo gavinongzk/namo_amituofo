@@ -3,21 +3,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { useUser } from '@clerk/nextjs';
-
-type Event = {
-  _id: string;
-  title: string;
-  startDateTime: string;
-  endDateTime: string;
-  location: string;
-  category: {
-    name: string;
-  };
-  maxSeats: number;
-  totalRegistrations: number;
-  attendedUsers: number;
-  cannotReciteAndWalk: number;
-};
+import { Event } from '@/types';
 
 type EventSelectorProps = {
   onEventSelect: (event: Event) => void;

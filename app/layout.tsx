@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
+import { RouteWarmer } from '@/components/shared/RouteWarmer';
 
 import './globals.css'
 
@@ -24,9 +25,25 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Add preload hints for critical resources
+  const preloadResources = (
+    <>
+      <link 
+        rel="preload" 
+        href="/assets/images/logo.svg" 
+        as="image" 
+      />
+      <link 
+        rel="preconnect" 
+        href="https://fonts.googleapis.com" 
+      />
+    </>
+  );
+
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>{preloadResources}</head>
         <body className={poppins.variable}>
           <div className="context-container">
             {children}
@@ -50,6 +67,7 @@ export default function RootLayout({
               },
             }}
           />
+          <RouteWarmer />
         </body>
       </html>
     </ClerkProvider>
