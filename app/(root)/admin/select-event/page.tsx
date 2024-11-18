@@ -40,6 +40,7 @@ const SelectEventPage = () => {
   const router = useRouter();
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
   const country = user?.publicMetadata.country as string | undefined;
   const { data: eventsData, error } = useSWR(
@@ -48,7 +49,11 @@ const SelectEventPage = () => {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000, // Dedupe requests for 1 minute
+      dedupingInterval: 60000,
+      suspense: true,
+      keepPreviousData: true,
+      onSuccess: () => setIsLoadingEvents(false),
+      onError: () => setIsLoadingEvents(false)
     }
   );
 
@@ -115,28 +120,37 @@ const SelectEventPage = () => {
           <CardContent>
             <Select onValueChange={handleSelectEvent} value={selectedEventId}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an event" />
+                <SelectValue placeholder={
+                  isLoadingEvents ? "Loading events..." : "Select an event"
+                } />
               </SelectTrigger>
               <SelectContent>
                 <ScrollArea className="h-[300px]">
-                  {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
-                    <SelectGroup key={category}>
-                      <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
-                        {category}
-                      </SelectLabel>
-                      {categoryEvents.map((event) => (
-                        <SelectItem key={event._id} value={event._id} className="py-2">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{event.title}</span>
-                            <span className="text-sm text-gray-500">
-                              {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                              {formatDateTime(new Date(event.startDateTime)).timeOnly}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
+                  {isLoadingEvents ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Loading events...</span>
+                    </div>
+                  ) : (
+                    Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+                      <SelectGroup key={category}>
+                        <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                          {category}
+                        </SelectLabel>
+                        {categoryEvents.map((event) => (
+                          <SelectItem key={event._id} value={event._id} className="py-2">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{event.title}</span>
+                              <span className="text-sm text-gray-500">
+                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
+                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))
+                  )}
                 </ScrollArea>
               </SelectContent>
             </Select>
