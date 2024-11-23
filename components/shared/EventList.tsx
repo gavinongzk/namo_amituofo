@@ -17,17 +17,13 @@ interface EventsResponse {
 }
 
 async function EventList({ page, searchText, category, country }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country });
   
   let events: EventsResponse;
   
   try {
     if (!searchText && !category) {
-      console.log('📥 Using preloadEvents cache');
       events = await preloadEvents(country) as EventsResponse;
-      console.log('📦 Preloaded events:', JSON.stringify(events, null, 2));
     } else {
-      console.log('🔍 Fetching events directly');
       events = await getAllEvents({
         query: searchText,
         category,
@@ -35,19 +31,11 @@ async function EventList({ page, searchText, category, country }: EventListProps
         limit: 6,
         country
       }) as EventsResponse;
-      console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
     }
 
     if (!events || !events.data) {
-      console.warn('⚠️ No events data available');
       events = { data: [], totalPages: 0 };
     }
-
-    console.log('✅ Rendering Collection with events:', {
-      dataLength: events.data?.length,
-      totalPages: events.totalPages
-    });
-
     return (
       <Collection
         data={events.data as (IEvent & { 
