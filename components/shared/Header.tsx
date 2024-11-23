@@ -34,7 +34,7 @@ const Header = () => {
 
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <nav className="wrapper flex items-center justify-between py-2">
+      <nav className="wrapper flex items-center justify-between py-4 px-4 md:px-6 lg:px-8">
         <button 
           onClick={() => handleNavigation('/')}
           className="transition-transform hover:scale-105"
@@ -45,22 +45,23 @@ const Header = () => {
             height={28}
             alt="Logo"
             priority
+            className="h-7 md:h-8 w-auto"
           />
         </button>
 
-        <nav className="md:flex-between hidden w-full max-w-xl mx-6">
+        <nav className="md:flex-between hidden w-full max-w-xl mx-8 lg:mx-12">
           <NavWrapper />
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 md:gap-6">
           <SignedIn>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4 md:gap-6">
               <CountrySelector />
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "h-8 w-8"
+                    avatarBox: "h-9 w-9 md:h-10 md:w-10"
                   }
                 }}
               />
