@@ -3,6 +3,21 @@ import { stringify } from 'csv-stringify/sync';
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { formatDateTime } from '@/lib/utils';
 
+// Add these interfaces at the top
+interface Field {
+  label: string;
+  value: string;
+  type?: string;
+}
+
+interface Group {
+  fields: Field[];
+  groupId: string;
+  queueNumber?: string;
+  attendance?: boolean;
+  cancelled?: boolean;
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const eventId = searchParams.get('eventId');
@@ -30,9 +45,9 @@ export async function GET(request: NextRequest) {
     ];
 
     const data = orders.flatMap(order => 
-      order.customFieldValues.map(group => {
-        const nameField = group.fields.find(f => f.label.toLowerCase().includes('name'));
-        const phoneField = group.fields.find(f => 
+      order.customFieldValues.map((group: Group) => {
+        const nameField = group.fields.find((f: Field) => f.label.toLowerCase().includes('name'));
+        const phoneField = group.fields.find((f: Field) => 
           f.label.toLowerCase().includes('phone number') || 
           f.label.toLowerCase().includes('contact number') || 
           f.type === 'phone'
@@ -49,7 +64,7 @@ export async function GET(request: NextRequest) {
         ];
 
         // Add all custom fields
-        group.fields.forEach(field => {
+        group.fields.forEach((field: Field) => {
           if (!headers.includes(field.label) && 
               field !== nameField && 
               field !== phoneField) {
