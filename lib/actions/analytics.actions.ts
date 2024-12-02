@@ -52,10 +52,14 @@ export const getAnalyticsData = unstable_cache(
       regionDistribution: regionStats
     }
   },
-  ['analytics-data']
+  ['analytics-data'],
+  {
+    revalidate: 3600, // Revalidate every hour
+    tags: ['analytics']
+  }
 )
 
 // Function to manually revalidate cache
 export async function revalidateAnalytics() {
-  revalidatePath('/admin/analytics')
+  revalidatePath('/admin/analytics', 'page')
 } 
