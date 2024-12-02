@@ -321,26 +321,26 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             {...formField}
                                             value={String(formField.value)}
                                             type="tel"
-                                            className="max-w-md"
-                                            placeholder="Enter phone number with country code / 请输入带国家区号的电话号码"
+                                            className="max-w-md h-12 text-lg border-2 focus:border-primary-500"
+                                            placeholder="e.g. +8613812345678"
                                           />
-                                          <p className="text-xs text-gray-500 pl-1">
-                                            Format examples: +8613812345678 (China), +12345678900 (USA)
-                                            <br />
-                                            格式示例：+8613812345678 (中国),+12345678900 (美国)
+                                          <p className="text-sm text-gray-600 pl-1">
+                                            Format: +[country code][number]
                                           </p>
                                         </div>
                                       ) : (
-                                        <PhoneInput
-                                          value={formField.value as string}
-                                          onChange={(value) => formField.onChange(value || '')}
-                                          defaultCountry={getDefaultCountry(userCountry)}
-                                          countries={["SG", "MY"]}
-                                          international
-                                          countryCallingCodeEditable={false}
-                                          className="max-w-md"
-                                          withCountryCallingCode
-                                        />
+                                        <div className="phone-input-container max-w-md">
+                                          <PhoneInput
+                                            value={formField.value as string}
+                                            onChange={(value) => formField.onChange(value || '')}
+                                            defaultCountry={getDefaultCountry(userCountry)}
+                                            countries={["SG", "MY"]}
+                                            international
+                                            countryCallingCodeEditable={false}
+                                            className="h-12 text-lg"
+                                            withCountryCallingCode
+                                          />
+                                        </div>
                                       )}
                                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
                                         <Checkbox
