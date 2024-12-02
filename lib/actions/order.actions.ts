@@ -76,14 +76,12 @@ export async function createOrder(order: CreateOrderParams) {
 }
 
 // GET ORDERS BY EVENT
-export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEventParams) {
+export async function getOrdersByEvent({ searchString, eventId, select }: GetOrdersByEventParams) {
   try {
     await connectToDatabase();
 
     if (!eventId) throw new Error('Event ID is required');
     const eventObjectId = new ObjectId(eventId);
-
-    console.log('Fetching orders for event:', eventId);
 
     let query = { event: eventObjectId };
 
@@ -96,42 +94,20 @@ export async function getOrdersByEvent({ searchString, eventId }: GetOrdersByEve
           { 'customFieldValues.queueNumber': { $regex: lowercasedSearchString, $options: 'i' } }
         ]
       };
-
       query = queryObject;
     }
 
-    console.log('Query:', JSON.stringify(query));
+    const baseQuery = Order.find(query);
+    
+    if (select) {
+      baseQuery.select(select);
+    }
 
-    const orders = await Order.find(query)
-      .populate('event', 'title imageUrl startDateTime endDateTime')
+    const orders = await baseQuery
+      .populate('event', select ? select.split(' ').filter(f => f.startsWith('event.')).join(' ') : 'title imageUrl startDateTime endDateTime')
       .lean();
 
-    console.log('Found orders:', orders.length);
-
-    const formattedOrders: IOrderItem[] = orders.map((order: any) => ({
-      _id: order._id.toString(),
-      createdAt: order.createdAt,
-      event: {
-        _id: order.event._id.toString(),
-        title: order.event.title,
-        imageUrl: order.event.imageUrl,
-        startDateTime: order.event.startDateTime,
-        endDateTime: order.event.endDateTime,
-      },
-      customFieldValues: order.customFieldValues.map((field: any) => ({
-        groupId: field.groupId,
-        queueNumber: field.queueNumber,
-        fields: field.fields,
-        attendance: field.attendance || false,
-        cancelled: field.cancelled || false,
-        __v: field.__v || 0,
-      })),
-      __v: order.__v,
-    }));
-
-    console.log('Formatted orders:', formattedOrders.length);
-
-    return formattedOrders;
+    return orders;
   } catch (error) {
     console.error('Error in getOrdersByEvent:', error);
     handleError(error);
