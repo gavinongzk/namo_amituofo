@@ -185,7 +185,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [event._id]);
 
   useEffect(() => {
-    console.log('Fetching registrations for event:', event._id);
     fetchRegistrations();
   }, [fetchRegistrations]);
 
@@ -227,7 +226,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, []);
 
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
-    console.log(`Marking attendance for registration ${registrationId}, group ${groupId}: ${attended}`);
     showModalWithMessage('Updating / 更新中', 'Updating attendance... 更新出席情况...', 'loading');
 
     try {
@@ -297,7 +295,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, [event._id, registrations, calculateCounts, showModalWithMessage]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
-    console.log('Submitting queue number:', queueNumber);
     const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
     if (registration) {
       const group = registration.order.customFieldValues[0];
@@ -314,7 +311,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
     } else {
       setMessage('Registration not found with this queue number. 未找到此排队号码的注册。');
-      console.log('Registration not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registrations]);
 
@@ -559,7 +555,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
-    console.log("Scanned QR Code:", decodedText);
 
     const [scannedEventId, queueNumber] = decodedText.split('_');
 
@@ -567,7 +562,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       const registration = registrations.find(r => 
         r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
       );
-      console.log("Registration:", registration);
 
       if (registration) {
         const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);

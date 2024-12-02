@@ -204,26 +204,37 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
+    const toastId = toast.loading("Checking registration details... / 检查注册详情中...", {
+      duration: Infinity
+    });
     
-    const duplicates = await checkForDuplicatePhoneNumbers(values);
-    
-    if (duplicates.length > 0) {
-      toast.dismiss(toastId);
-      setDuplicatePhoneNumbers(duplicates);
-      setFormValues(values);
-      setShowConfirmation(true);
-      return;
+    try {
+      const duplicates = await checkForDuplicatePhoneNumbers(values);
+      
+      if (duplicates.length > 0) {
+        toast.dismiss(toastId);
+        setDuplicatePhoneNumbers(duplicates);
+        setFormValues(values);
+        setShowConfirmation(true);
+        return;
+      }
+      
+      await submitForm(values, toastId);
+    } catch (error) {
+      toast.error("An error occurred. Please try again. / 发生错误，请重试。", {
+        id: toastId
+      });
     }
-    
-    await submitForm(values, toastId);
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
     setIsSubmitting(true);
     setMessage('');
     
-    toast.loading("Processing registration... / 处理注册中...", { id: toastId });
+    toast.loading("Processing registration... / 处理注册中...", { 
+      id: toastId,
+      duration: Infinity
+    });
     
     try {
       const customFieldValues = values.groups.map((group, index) => ({
@@ -260,11 +271,17 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
       const data = await response.json();
       
-      toast.success("Registration successful! / 注册成功！", { id: toastId });
+      toast.success("Registration successful! / 注册成功！", {
+        id: toastId,
+        duration: 3000
+      });
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
+      toast.error("Registration failed. Please try again. / 注册失败，请重试。", {
+        id: toastId,
+        duration: 3000
+      });
       setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
