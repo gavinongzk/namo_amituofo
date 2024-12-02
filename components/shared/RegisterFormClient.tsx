@@ -297,14 +297,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           render={({ field: formField }) => (
                             <FormItem className="space-y-3">
                               <FormLabel className="flex items-start gap-3 text-gray-700">
-                                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-primary-50 text-primary-600 font-semibold text-sm">
-                                  {getQuestionNumber(personIndex, fieldIndex)}
-                                </span>
                                 <span className="text-base pt-1">{customField.label}</span>
                               </FormLabel>
                               
                               <FormControl>
-                                <div className="pl-11">
+                                <div className="pl-0">
                                   {customField.type === 'boolean' ? (
                                     <div className="flex gap-6">
                                       <Checkbox
@@ -329,37 +326,36 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           </p>
                                         </div>
                                       ) : (
-                                        <div className="phone-input-container max-w-md">
-                                          <PhoneInput
-                                            value={formField.value as string}
-                                            onChange={(value) => formField.onChange(value || '')}
-                                            defaultCountry={getDefaultCountry(userCountry)}
-                                            countries={["SG", "MY"]}
-                                            international
-                                            countryCallingCodeEditable={false}
-                                            className="h-12 text-lg"
-                                            withCountryCallingCode
-                                          />
+                                        <div className="space-y-2">
+                                          <div className="phone-input-container max-w-md">
+                                            <PhoneInput
+                                              value={formField.value as string}
+                                              onChange={(value) => formField.onChange(value || '')}
+                                              defaultCountry={getDefaultCountry(userCountry)}
+                                              countries={["SG", "MY"]}
+                                              international
+                                              countryCallingCodeEditable={false}
+                                              className="h-12 text-lg"
+                                              withCountryCallingCode
+                                            />
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setPhoneOverrides(prev => ({
+                                                ...prev,
+                                                [personIndex]: true
+                                              }));
+                                              form.setValue(`groups.${personIndex}.phone`, '');
+                                            }}
+                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                          >
+                                            Using a phone number from another country? Click here
+                                            <br />
+                                            使用其他国家的电话号码？点击这里
+                                          </button>
                                         </div>
                                       )}
-                                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
-                                        <Checkbox
-                                          checked={phoneOverrides[personIndex] || false}
-                                          onCheckedChange={(checked) => {
-                                            setPhoneOverrides(prev => ({
-                                              ...prev,
-                                              [personIndex]: checked === true
-                                            }));
-                                            form.setValue(`groups.${personIndex}.phone`, '');
-                                          }}
-                                          className="h-4 w-4"
-                                        />
-                                        <label className="cursor-pointer">
-                                          I am using a phone number from another country
-                                          <br />
-                                          我使用其他国家的电话号码
-                                        </label>
-                                      </div>
                                     </div>
                                   ) : customField.type === 'radio' ? (
                                     <div className="flex gap-6">
@@ -390,7 +386,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                   )}
                                 </div>
                               </FormControl>
-                              <FormMessage className="pl-11" />
+                              <FormMessage className="pl-0" />
                             </FormItem>
                           )}
                         />
