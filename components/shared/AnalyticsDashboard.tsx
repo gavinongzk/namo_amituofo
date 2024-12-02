@@ -137,6 +137,12 @@ const AnalyticsDashboard: React.FC = () => {
                             a.phoneNumber === row.original.phoneNumber
                         );
                         setSelectedAttendee(fullAttendee || null);
+                        setTimeout(() => {
+                            document.getElementById('attendee-details')?.scrollIntoView({ 
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                        }, 100);
                     }}
                 >
                     View Details
@@ -692,7 +698,7 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
 
             {selectedAttendee && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
+                <div id="attendee-details" className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xl font-semibold">
                             Individual Analytics: {selectedAttendee.name}
