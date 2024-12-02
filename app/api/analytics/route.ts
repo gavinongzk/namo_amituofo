@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database';
 import Order, { IOrder } from '@/lib/database/models/order.model';
 import Event, { IEvent } from '@/lib/database/models/event.model';
 import { CustomFieldGroup, CustomField } from '@/types';
+import { getSingaporePostalInfo } from '@/lib/utils';
 import mongoose from 'mongoose';
 
 interface AttendeeEvent {
@@ -16,6 +17,9 @@ interface AttendeeEvent {
 interface AttendeeData {
   name: string;
   phoneNumber: string;
+  postalCode: string;
+  region: string;
+  town: string;
   eventCount: number;
   events: AttendeeEvent[];
 }
@@ -51,6 +55,10 @@ export async function GET(req: NextRequest) {
         const phoneNumber = group.fields.find((field: CustomField) => 
           field.label.toLowerCase().includes('phone') || field.type === 'phone'
         )?.value?.toString() || 'Unknown';
+        const postalCode = group.fields.find((field: CustomField) => 
+          field.label.toLowerCase().includes('postal')
+        )?.value?.toString() || '';
+        const { region, town } = getSingaporePostalInfo(postalCode);
 
         const eventDate = order.event ? order.event.startDateTime?.toISOString() : '';
         const eventTitle = order.event ? order.event.title : '';
@@ -58,7 +66,15 @@ export async function GET(req: NextRequest) {
 
         const key = `${name}-${phoneNumber}`;
         if (!attendeeMap.has(key)) {
-          attendeeMap.set(key, { name, phoneNumber, eventCount: 0, events: [] });
+          attendeeMap.set(key, { 
+            name, 
+            phoneNumber, 
+            postalCode,
+            region,
+            town,
+            eventCount: 0, 
+            events: [] 
+          });
         }
         const attendee = attendeeMap.get(key)!;
         attendee.eventCount++;

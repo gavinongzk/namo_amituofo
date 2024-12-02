@@ -140,3 +140,103 @@ export function convertPhoneNumbersToLinks(text: string): string {
     return `<a href="https://wa.me/${cleanNumber.substring(1)}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 transition-colors">${match}</a>`;
   });
 }
+
+interface PostalCodeInfo {
+  region: string;
+  town: string;
+}
+
+export function getSingaporePostalInfo(postalCode: string): PostalCodeInfo {
+  if (!postalCode || !/^\d{6}$/.test(postalCode)) {
+    return { region: 'Unknown', town: 'Unknown' };
+  }
+
+  const firstTwoDigits = parseInt(postalCode.substring(0, 2));
+
+  // Singapore postal sector mapping with towns
+  // Central Region
+  if (firstTwoDigits >= 1 && firstTwoDigits <= 6) {
+    return { region: 'Central', town: 'CBD' };
+  } else if ([20, 21].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Bishan' };
+  } else if ([22, 23].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Toa Payoh' };
+  } else if ([24, 25].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Novena' };
+  } else if ([26, 27].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Thomson' };
+  } else if ([28].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Serangoon' };
+  } else if ([69, 70, 71].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Geylang' };
+  } else if ([72, 73].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'MacPherson' };
+  } else if ([79, 80].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Braddell' };
+
+  // East Region
+  } else if (firstTwoDigits >= 7 && firstTwoDigits <= 8) {
+    return { region: 'East', town: 'Paya Lebar' };
+  } else if ([29, 30, 31].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Changi' };
+  } else if ([32, 33].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Tampines' };
+  } else if ([34].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Pasir Ris' };
+  } else if ([59, 60, 61].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Marine Parade' };
+  } else if ([62, 63, 64].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Bedok' };
+  } else if ([65, 66, 67, 68].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Tampines' };
+
+  // North Region
+  } else if ([9, 10].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Sembawang' };
+  } else if ([17, 18, 19].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Yishun' };
+  } else if ([46, 47, 48].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Woodlands' };
+  } else if ([77, 78].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Upper Thomson' };
+
+  // Northeast Region
+  } else if ([11, 12, 13].includes(firstTwoDigits)) {
+    return { region: 'Northeast', town: 'Ang Mo Kio' };
+  } else if ([35, 36].includes(firstTwoDigits)) {
+    return { region: 'Northeast', town: 'Hougang' };
+  } else if ([37].includes(firstTwoDigits)) {
+    return { region: 'Northeast', town: 'Upper Serangoon' };
+  } else if ([74, 75, 76].includes(firstTwoDigits)) {
+    return { region: 'Northeast', town: 'Sengkang' };
+
+  // West Region
+  } else if (firstTwoDigits >= 14 && firstTwoDigits <= 16) {
+    return { region: 'West', town: 'Bukit Panjang' };
+  } else if ([38, 39].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Clementi' };
+  } else if ([40, 41].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong' };
+  } else if ([42, 43].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong West' };
+  } else if ([44, 45].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong East' };
+  } else if ([49, 50, 51].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Bukit Batok' };
+  } else if ([52, 53, 54].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong East' };
+  } else if ([55, 56, 57].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong West' };
+  } else if ([58].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Bukit Panjang' };
+  } else if ([81, 82].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Bukit Panjang' };
+  }
+
+  return { region: 'Unknown', town: 'Unknown' };
+}
+
+// Keep the old function for backward compatibility
+export function getSingaporeRegion(postalCode: string): string {
+  return getSingaporePostalInfo(postalCode).region;
+}

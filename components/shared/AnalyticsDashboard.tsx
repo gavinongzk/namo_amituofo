@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -23,26 +23,27 @@ import {
 } from '@/components/ui/table'
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
 import { X } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
-interface AttendeeEvent {
-    eventDate: string;
-    eventTitle: string;
-    category: {
-        name: string;
-    };
-}
-
-interface AttendeeData {
+interface Attendee {
     name: string;
     phoneNumber: string;
+    postalCode: string;
+    region: string;
+    town: string;
     eventCount: number;
-    events: AttendeeEvent[];
-}
-
-interface Attendee extends AttendeeData {
+    events: {
+        eventDate: string;
+        eventTitle: string;
+        category: {
+            name: string;
+        };
+    }[];
     lastEventDate: string;
+    eventDate: string;
+    eventTitle: string;
 }
 
 interface FrequentAttendee {
@@ -59,6 +60,16 @@ interface CategoryDistribution {
 
 interface CategoryData {
     name: string;
+}
+
+interface RegionDistribution {
+    region: string;
+    attendeeCount: number;
+}
+
+interface TownDistribution {
+    town: string;
+    attendeeCount: number;
 }
 
 const userAttendanceOptions: ChartOptions<'line'> = {
@@ -83,6 +94,8 @@ const AnalyticsDashboard: React.FC = () => {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
     const [popularEvents, setPopularEvents] = useState<CategoryDistribution[]>([]);
+    const [regionDistribution, setRegionDistribution] = useState<RegionDistribution[]>([]);
+    const [townDistribution, setTownDistribution] = useState<TownDistribution[]>([]);
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -91,6 +104,9 @@ const AnalyticsDashboard: React.FC = () => {
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
     const [categories, setCategories] = useState<Record<string, string>>({});
+    const [selectedRegion, setSelectedRegion] = useState<string>('all');
+    const [selectedTown, setSelectedTown] = useState<string>('all');
+    const [locationFilteredAttendees, setLocationFilteredAttendees] = useState<Attendee[]>([]);
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -142,54 +158,6 @@ const AnalyticsDashboard: React.FC = () => {
         },
     });
 
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
-                console.log('Fetching analytics data...');
-                const response = await fetch('/api/analytics');
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
-                }
-                const data = await response.json();
-                console.log('Received analytics data:', JSON.stringify(data, null, 2));
-                if (!data.attendees || !Array.isArray(data.attendees)) {
-                    throw new Error('Invalid data structure received from API');
-                }
-                setAttendees(data.attendees);
-                processFrequentAttendees(data.attendees);
-                processPopularEvents(data.attendees);
-            } catch (error) {
-                console.error('Error fetching analytics data:', error);
-                setError(error instanceof Error ? error.message : 'An unknown error occurred');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAnalytics();
-    }, []);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('/api/categories');
-                const data = await response.json();
-                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
-                    acc[cat.name] = cat.name;
-                    return acc;
-                }, {});
-                setCategories(categoryMap);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-
-        fetchCategories();
-    }, []);
-
     const processFrequentAttendees = (attendees: Attendee[]) => {
         const sortedAttendees: FrequentAttendee[] = attendees
             .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
@@ -229,6 +197,86 @@ const AnalyticsDashboard: React.FC = () => {
         setPopularEvents(sortedCategories);
     };
 
+    const processRegionAndTownDistribution = (attendees: Attendee[]) => {
+        const regionCounts: Record<string, number> = {};
+        const townCounts: Record<string, number> = {};
+        
+        attendees.forEach(attendee => {
+            const region = attendee.region || 'Unknown';
+            const town = attendee.town || 'Unknown';
+            
+            regionCounts[region] = (regionCounts[region] || 0) + 1;
+            townCounts[town] = (townCounts[town] || 0) + 1;
+        });
+
+        const sortedRegions: RegionDistribution[] = Object.entries(regionCounts)
+            .map(([region, attendeeCount]) => ({
+                region,
+                attendeeCount
+            }))
+            .sort((a, b) => b.attendeeCount - a.attendeeCount);
+
+        const sortedTowns: TownDistribution[] = Object.entries(townCounts)
+            .map(([town, attendeeCount]) => ({
+                town,
+                attendeeCount
+            }))
+            .sort((a, b) => b.attendeeCount - a.attendeeCount)
+            .slice(0, 10); // Show top 10 towns
+
+        setRegionDistribution(sortedRegions);
+        setTownDistribution(sortedTowns);
+    };
+
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                console.log('Fetching analytics data...');
+                const response = await fetch('/api/analytics');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
+                }
+                const data = await response.json();
+                console.log('Received analytics data:', JSON.stringify(data, null, 2));
+                if (!data.attendees || !Array.isArray(data.attendees)) {
+                    throw new Error('Invalid data structure received from API');
+                }
+                setAttendees(data.attendees);
+                processFrequentAttendees(data.attendees);
+                processPopularEvents(data.attendees);
+                processRegionAndTownDistribution(data.attendees);
+            } catch (error) {
+                console.error('Error fetching analytics data:', error);
+                setError(error instanceof Error ? error.message : 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
+                    acc[cat.name] = cat.name;
+                    return acc;
+                }, {});
+                setCategories(categoryMap);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
         const now = new Date();
         const sixMonthsAgo = subMonths(now, 5);
@@ -252,12 +300,21 @@ const AnalyticsDashboard: React.FC = () => {
         }
     }, [attendees]);
 
-    const filteredAttendees = frequentAttendees.filter(attendee =>
+    useEffect(() => {
+        const filtered = attendees.filter(attendee => {
+            const matchesRegion = selectedRegion === 'all' || attendee.region === selectedRegion;
+            const matchesTown = selectedTown === 'all' || attendee.town === selectedTown;
+            return matchesRegion && matchesTown;
+        });
+        setLocationFilteredAttendees(filtered);
+    }, [attendees, selectedRegion, selectedTown]);
+
+    const nameFilteredAttendees = frequentAttendees.filter(attendee =>
         attendee.name.toLowerCase().includes(nameFilter.toLowerCase())
     );
 
-    const pageCount = Math.ceil(filteredAttendees.length / itemsPerPage);
-    const paginatedAttendees = filteredAttendees.slice(
+    const pageCount = Math.ceil(nameFilteredAttendees.length / itemsPerPage);
+    const paginatedAttendees = nameFilteredAttendees.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -370,6 +427,94 @@ const AnalyticsDashboard: React.FC = () => {
         },
     };
 
+    const regionDistributionData = {
+        labels: regionDistribution.map(region => region.region),
+        datasets: [
+            {
+                label: 'Attendee Count by Region',
+                data: regionDistribution.map(region => region.attendeeCount),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',   // Red
+                    'rgba(54, 162, 235, 0.7)',   // Blue
+                    'rgba(255, 206, 86, 0.7)',   // Yellow
+                    'rgba(75, 192, 192, 0.7)',   // Teal
+                    'rgba(153, 102, 255, 0.7)',  // Purple
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                ],
+                borderWidth: 1,
+            }
+        ]
+    };
+
+    const townDistributionData = {
+        labels: townDistribution.map(town => town.town),
+        datasets: [
+            {
+                label: 'Attendee Count by Town',
+                data: townDistribution.map(town => town.attendeeCount),
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+            }
+        ]
+    };
+
+    const regionDistributionOptions: ChartOptions<'doughnut'> = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right',
+            },
+            title: {
+                display: true,
+                text: 'Attendee Distribution by Region',
+                font: {
+                    size: 16,
+                    weight: 'bold',
+                }
+            },
+        },
+    };
+
+    const townDistributionOptions: ChartOptions<'bar'> = {
+        responsive: true,
+        indexAxis: 'y' as const,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            title: {
+                display: true,
+                text: 'Top 10 Towns by Attendee Count',
+                font: {
+                    size: 16,
+                    weight: 'bold',
+                }
+            },
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Attendees'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Town'
+                }
+            }
+        }
+    };
+
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
@@ -388,6 +533,67 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="p-6 space-y-8">
             <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-6 rounded-lg shadow-md">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Filter by Region</label>
+                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Regions</SelectItem>
+                            {regionDistribution.map(({ region }) => (
+                                <SelectItem key={region} value={region}>{region}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Filter by Town</label>
+                    <Select value={selectedTown} onValueChange={setSelectedTown}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Town" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Towns</SelectItem>
+                            {townDistribution.map(({ town }) => (
+                                <SelectItem key={town} value={town}>{town}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="col-span-full mt-4">
+                    <h3 className="text-lg font-semibold mb-2">
+                        Filtered Attendees ({locationFilteredAttendees.length} total)
+                    </h3>
+                    <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+                        <table className="w-full">
+                            <thead className="text-sm text-gray-600">
+                                <tr>
+                                    <th className="text-left py-2">Name</th>
+                                    <th className="text-left py-2">Region</th>
+                                    <th className="text-left py-2">Town</th>
+                                    <th className="text-left py-2">Event Count</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-sm">
+                                {locationFilteredAttendees.map((attendee, index) => (
+                                    <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
+                                        className="border-t border-gray-200">
+                                        <td className="py-2">{attendee.name}</td>
+                                        <td className="py-2">{attendee.region}</td>
+                                        <td className="py-2">{attendee.town}</td>
+                                        <td className="py-2">{attendee.eventCount}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
@@ -397,6 +603,16 @@ const AnalyticsDashboard: React.FC = () => {
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
                     <Bar data={categoryDistributionData} options={popularEventsOptions} />
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Region Distribution</h3>
+                    <Doughnut data={regionDistributionData} options={regionDistributionOptions} />
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold mb-4">Town Distribution</h3>
+                    <Bar data={townDistributionData} options={townDistributionOptions} />
                 </div>
             </div>
 
