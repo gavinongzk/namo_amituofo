@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';

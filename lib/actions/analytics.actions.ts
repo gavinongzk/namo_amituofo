@@ -63,7 +63,3 @@ export const getAnalyticsData = unstable_cache(
 export async function revalidateAnalytics() {
   revalidatePath('/admin/analytics')
 }
-
-// Add dynamic config to prevent static generation attempts
-export const dynamic = 'force-dynamic'
-export const revalidate = 0 
