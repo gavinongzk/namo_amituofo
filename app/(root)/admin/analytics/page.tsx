@@ -1,11 +1,9 @@
-'use client'
-
 import { Suspense } from 'react'
 import { getAnalyticsData } from '@/lib/actions/analytics.actions'
 import AnalyticsDashboard from '@/components/shared/AnalyticsDashboard'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export const revalidate = 3600 // Revalidate page every hour
+export const dynamic = 'force-dynamic'
 
 export default async function AnalyticsPage() {
   const data = await getAnalyticsData()
