@@ -77,12 +77,18 @@ export async function GET(req: NextRequest) {
           });
         }
         const attendee = attendeeMap.get(key)!;
+        if (eventDate && (!attendee.events.length || eventDate > attendee.events[0].eventDate)) {
+          attendee.postalCode = postalCode;
+          attendee.region = region;
+          attendee.town = town;
+        }
         attendee.eventCount++;
         attendee.events.push({ 
           eventDate, 
           eventTitle,
           category: { name: categoryName }
         });
+        attendee.events.sort((a, b) => b.eventDate.localeCompare(a.eventDate));
       });
     });
 
