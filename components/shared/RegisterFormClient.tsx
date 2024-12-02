@@ -35,6 +35,19 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
+const isValidPostalCode = (code: string, country: string) => {
+  if (!code) return false;
+  
+  if (country === 'Singapore') {
+    return /^\d{6}$/.test(code);
+  } else if (country === 'Malaysia') {
+    return /^\d{5}$/.test(code);
+  }
+  
+  // For other countries, accept 4-10 digits
+  return /^\d{4,10}$/.test(code);
+};
+
 interface RegisterFormClientProps {
   event: IEvent & { category: { name: CategoryName } }
   initialOrderCount: number
@@ -119,14 +132,27 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       },
                       { message: "Invalid phone number" }
                     )
-                : field.label.toLowerCase().includes('name')
+                : field.type === 'postal'
                   ? z.string()
-                      .min(1, { message: "This field is required" })
+                      .min(1, { message: "Postal code is required" })
                       .refine(
-                        (value) => isValidName(value),
-                        { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                        (value) => isValidPostalCode(value, userCountry || 'Singapore'),
+                        {
+                          message: userCountry === 'Singapore' 
+                            ? "Please enter a valid 6-digit postal code"
+                            : userCountry === 'Malaysia'
+                              ? "Please enter a valid 5-digit postal code"
+                              : "Please enter a valid postal code"
+                        }
                       )
-                  : z.string().min(1, { message: "This field is required" })
+                  : field.label.toLowerCase().includes('name')
+                    ? z.string()
+                        .min(1, { message: "This field is required" })
+                        .refine(
+                          (value) => isValidName(value),
+                          { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                        )
+                    : z.string().min(1, { message: "This field is required" })
           ])
         )
       )
@@ -297,14 +323,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           render={({ field: formField }) => (
                             <FormItem className="space-y-3">
                               <FormLabel className="flex items-start gap-3 text-gray-700">
-                                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-primary-50 text-primary-600 font-semibold text-sm">
-                                  {getQuestionNumber(personIndex, fieldIndex)}
-                                </span>
                                 <span className="text-base pt-1">{customField.label}</span>
                               </FormLabel>
                               
                               <FormControl>
-                                <div className="pl-11">
+                                <div className="pl-0">
                                   {customField.type === 'boolean' ? (
                                     <div className="flex gap-6">
                                       <Checkbox
@@ -321,45 +344,57 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             {...formField}
                                             value={String(formField.value)}
                                             type="tel"
-                                            className="max-w-md"
-                                            placeholder="Enter phone number with country code / 请输入带国家区号的电话号码"
+                                            className="max-w-md h-12 text-lg border-2 focus:border-primary-500"
+                                            placeholder="e.g. +8613812345678"
                                           />
-                                          <p className="text-xs text-gray-500 pl-1">
-                                            Format examples: +8613812345678 (China), +12345678900 (USA)
-                                            <br />
-                                            格式示例：+8613812345678 (中国),+12345678900 (美国)
+                                          <p className="text-sm text-gray-600 pl-1">
+                                            Format: +[country code][number]
                                           </p>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setPhoneOverrides(prev => ({
+                                                ...prev,
+                                                [personIndex]: false
+                                              }));
+                                              form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
+                                            }}
+                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                          >
+                                            Switch back to SG/MY phone number format / 切换回新马电话格式
+                                          </button>
                                         </div>
                                       ) : (
-                                        <PhoneInput
-                                          value={formField.value as string}
-                                          onChange={(value) => formField.onChange(value || '')}
-                                          defaultCountry={getDefaultCountry(userCountry)}
-                                          countries={["SG", "MY"]}
-                                          international
-                                          countryCallingCodeEditable={false}
-                                          className="max-w-md"
-                                          withCountryCallingCode
-                                        />
+                                        <div className="space-y-2">
+                                          <div className="phone-input-container max-w-md">
+                                            <PhoneInput
+                                              value={formField.value as string}
+                                              onChange={(value) => formField.onChange(value || '')}
+                                              defaultCountry={getDefaultCountry(userCountry)}
+                                              countries={["SG", "MY"]}
+                                              international
+                                              countryCallingCodeEditable={false}
+                                              className="h-12 text-lg"
+                                              withCountryCallingCode
+                                            />
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setPhoneOverrides(prev => ({
+                                                ...prev,
+                                                [personIndex]: true
+                                              }));
+                                              form.setValue(`groups.${personIndex}.phone`, '');
+                                            }}
+                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                          >
+                                            Using a phone number from another country? Click here
+                                            <br />
+                                            使用其他国家的电话号码？点击这里
+                                          </button>
+                                        </div>
                                       )}
-                                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
-                                        <Checkbox
-                                          checked={phoneOverrides[personIndex] || false}
-                                          onCheckedChange={(checked) => {
-                                            setPhoneOverrides(prev => ({
-                                              ...prev,
-                                              [personIndex]: checked === true
-                                            }));
-                                            form.setValue(`groups.${personIndex}.phone`, '');
-                                          }}
-                                          className="h-4 w-4"
-                                        />
-                                        <label className="cursor-pointer">
-                                          I am using a phone number from another country
-                                          <br />
-                                          我使用其他国家的电话号码
-                                        </label>
-                                      </div>
                                     </div>
                                   ) : customField.type === 'radio' ? (
                                     <div className="flex gap-6">
@@ -376,12 +411,34 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         </label>
                                       ))}
                                     </div>
+                                  ) : customField.type === 'postal' ? (
+                                    <div className="space-y-2">
+                                      <Input 
+                                        {...formField}
+                                        className="max-w-md"
+                                        value={String(formField.value)}
+                                        placeholder={
+                                          userCountry === 'Singapore' 
+                                            ? "e.g. 123456" 
+                                            : userCountry === 'Malaysia'
+                                              ? "e.g. 12345"
+                                              : "Enter postal code"
+                                        }
+                                      />
+                                      <p className="text-sm text-gray-500 pl-1">
+                                        {userCountry === 'Singapore' 
+                                          ? "Please enter 6-digit postal code / 请输入6位数的邮区编号"
+                                          : userCountry === 'Malaysia'
+                                            ? "Please enter 5-digit postal code / 请输入5位数的邮区编号"
+                                            : "Please enter your postal code / 请输入邮区编号"}
+                                      </p>
+                                    </div>
                                   ) : (
                                     <Input 
                                       {...formField}
                                       className="max-w-md"
                                       value={String(formField.value)}
-                                      placeholder={`Please enter ${customField.label.toLowerCase()} / 请输入${customField.label}`}
+                                      placeholder={customField.label}
                                       onChange={(e) => {
                                         const sanitized = sanitizeName(e.target.value);
                                         formField.onChange(sanitized);
@@ -390,7 +447,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                   )}
                                 </div>
                               </FormControl>
-                              <FormMessage className="pl-11" />
+                              <FormMessage className="pl-0" />
                             </FormItem>
                           )}
                         />

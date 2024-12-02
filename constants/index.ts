@@ -28,6 +28,7 @@ export const categoryCustomFields = {
   default: [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
+    { id: '3', label: '邮区编号 Postal Code', type: 'postal' },
   ],
   '念佛共修': [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
@@ -41,14 +42,17 @@ export const categoryCustomFields = {
         { value: 'no', label: '否 No' }
       ]
     },
+    { id: '4', label: '邮区编号 Postal Code', type: 'postal' },
   ],
   '念佛｜闻法｜祈福｜超荐': [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
+    { id: '3', label: '邮区编号 Postal Code', type: 'postal' },
   ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 Volunteer\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
+    { id: '3', label: '邮区编号 Postal Code', type: 'postal' },
   ],
   // Add more categories as needed
 };

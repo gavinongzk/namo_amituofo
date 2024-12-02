@@ -140,3 +140,163 @@ export function convertPhoneNumbersToLinks(text: string): string {
     return `<a href="https://wa.me/${cleanNumber.substring(1)}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 transition-colors">${match}</a>`;
   });
 }
+
+interface PostalCodeInfo {
+  region: string;
+  town: string;
+}
+
+export function getSingaporePostalInfo(postalCode: string): PostalCodeInfo {
+  if (!postalCode || !/^\d{6}$/.test(postalCode)) {
+    return { region: 'Unknown', town: 'Unknown' };
+  }
+
+  const firstTwoDigits = parseInt(postalCode.substring(0, 2));
+
+  // District 01: Raffles Place, Cecil, Marina, People's Park
+  if ([1, 2, 3, 4, 5, 6].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Raffles Place/Cecil/Marina/People\'s Park' };
+  }
+  
+  // District 02: Anson, Tanjong Pagar
+  if ([7, 8].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Anson/Tanjong Pagar' };
+  }
+
+  // District 03: Queenstown, Tiong Bahru
+  if ([14, 15, 16].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Queenstown/Tiong Bahru' };
+  }
+
+  // District 04: Telok Blangah, Harbourfront
+  if ([9, 10].includes(firstTwoDigits)) {
+    return { region: 'South', town: 'Telok Blangah/Harbourfront' };
+  }
+
+  // District 05: Pasir Panjang, Hong Leong Garden, Clementi New Town
+  if ([11, 12, 13].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Pasir Panjang/Hong Leong Garden/Clementi New Town' };
+  }
+
+  // District 06: High Street, Beach Road
+  if ([17].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'High Street/Beach Road' };
+  }
+
+  // District 07: Middle Road, Golden Mile
+  if ([18, 19].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Middle Road/Golden Mile' };
+  }
+
+  // District 08: Little India
+  if ([20, 21].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Little India' };
+  }
+
+  // District 09: Orchard, Cairnhill, River Valley
+  if ([22, 23].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Orchard/Cairnhill/River Valley' };
+  }
+
+  // District 10: Ardmore, Bukit Timah, Holland Road, Tanglin
+  if ([24, 25, 26, 27].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Ardmore/Bukit Timah/Holland Road/Tanglin' };
+  }
+
+  // District 11: Watten Estate, Novena, Thomson
+  if ([28, 29, 30].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Watten Estate/Novena/Thomson' };
+  }
+
+  // District 12: Balestier, Toa Payoh, Serangoon
+  if ([31, 32, 33].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Balestier/Toa Payoh/Serangoon' };
+  }
+
+  // District 13: Macpherson, Braddell
+  if ([34, 35, 36, 37].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Macpherson/Braddell' };
+  }
+
+  // District 14: Geylang, Eunos
+  if ([38, 39, 40, 41].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Geylang/Eunos' };
+  }
+
+  // District 15: Katong, Joo Chiat, Amber Road
+  if ([42, 43, 44, 45].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Katong/Joo Chiat/Amber Road' };
+  }
+
+  // District 16: Bedok, Upper East Coast, Eastwood, Kew Drive
+  if ([46, 47, 48].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Bedok/Upper East Coast/Eastwood/Kew Drive' };
+  }
+
+  // District 17: Loyang, Changi
+  if ([49, 50, 81].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Loyang/Changi' };
+  }
+
+  // District 18: Tampines, Pasir Ris
+  if ([51, 52].includes(firstTwoDigits)) {
+    return { region: 'East', town: 'Tampines/Pasir Ris' };
+  }
+
+  // District 19: Serangoon Garden, Hougang, Punggol
+  if ([53, 54, 55, 82].includes(firstTwoDigits)) {
+    return { region: 'Northeast', town: 'Serangoon Garden/Hougang/Punggol' };
+  }
+
+  // District 20: Bishan, Ang Mo Kio
+  if ([56, 57].includes(firstTwoDigits)) {
+    return { region: 'Central', town: 'Bishan/Ang Mo Kio' };
+  }
+
+  // District 21: Upper Bukit Timah, Clementi Park, Ulu Pandan
+  if ([58, 59].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Upper Bukit Timah/Clementi Park/Ulu Pandan' };
+  }
+
+  // District 22: Jurong
+  if ([60, 61, 62, 63, 64].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Jurong' };
+  }
+
+  // District 23: Hillview, Dairy Farm, Bukit Panjang, Choa Chu Kang
+  if ([65, 66, 67, 68].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Hillview/Dairy Farm/Bukit Panjang/Choa Chu Kang' };
+  }
+
+  // District 24: Lim Chu Kang, Tengah
+  if ([69, 70, 71].includes(firstTwoDigits)) {
+    return { region: 'West', town: 'Lim Chu Kang/Tengah' };
+  }
+
+  // District 25: Kranji, Woodgrove
+  if ([72, 73].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Kranji/Woodgrove' };
+  }
+
+  // District 26: Upper Thomson, Springleaf
+  if ([77, 78].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Upper Thomson/Springleaf' };
+  }
+
+  // District 27: Yishun, Sembawang
+  if ([75, 76].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Yishun/Sembawang' };
+  }
+
+  // District 28: Seletar
+  if ([79, 80].includes(firstTwoDigits)) {
+    return { region: 'North', town: 'Seletar' };
+  }
+
+  return { region: 'Unknown', town: 'Unknown' };
+}
+
+// Keep the old function for backward compatibility
+export function getSingaporeRegion(postalCode: string): string {
+  return getSingaporePostalInfo(postalCode).region;
+}
