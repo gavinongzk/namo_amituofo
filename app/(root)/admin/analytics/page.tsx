@@ -1,31 +1,32 @@
 'use client'
 
-import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { redirect } from 'next/navigation';
-import AnalyticsDashboard from '@/components/shared/AnalyticsDashboard';
+import { Suspense } from 'react'
+import { getAnalyticsData } from '@/lib/actions/analytics.actions'
+import AnalyticsDashboard from '@/components/shared/AnalyticsDashboard'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const AdminAnalyticsPage = () => {
-  const { user, isLoaded } = useUser();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+export const revalidate = 3600 // Revalidate page every hour
 
-  useEffect(() => {
-    if (isLoaded) {
-      const role = user?.publicMetadata.role as string;
-      setIsSuperAdmin(role === 'superadmin');
-      if (role !== 'superadmin') {
-        redirect('/');
-      }
-    }
-  }, [isLoaded, user]);
-
-  if (!isLoaded) return <div>Loading...</div>;
-
+export default async function AnalyticsPage() {
+  const data = await getAnalyticsData()
+  
   return (
-    <div className="wrapper my-8">
-      <AnalyticsDashboard />
-    </div>
-  );
-};
+    <Suspense fallback={<AnalyticsSkeleton />}>
+      <AnalyticsDashboard initialData={data} />
+    </Suspense>
+  )
+}
 
-export default AdminAnalyticsPage;
+function AnalyticsSkeleton() {
+  return (
+    <div className="p-6 space-y-8">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-[300px]" />
+        ))}
+      </div>
+      <Skeleton className="h-[400px]" />
+    </div>
+  )
+}

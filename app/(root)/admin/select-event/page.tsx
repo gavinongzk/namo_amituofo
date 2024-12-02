@@ -42,29 +42,16 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
+        const currentDate = new Date();
+        const fiveDaysAgo = addDays(currentDate, -5);
+        
+        const response = await fetch(`/api/events${country ? `?country=${country}&` : '?'}startDate=${fiveDaysAgo.toISOString()}`);
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
-          const currentDate = new Date();
-          const fiveDaysAgo = addDays(currentDate, -5);
-          const recentAndUpcomingEvents = await Promise.all(result.data
-            .filter((event: Event) => {
-              if (user?.publicMetadata?.role === 'superadmin') return true;
-              const endDate = parseISO(event.endDateTime);
-              return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
-            })
-            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
-            .map(async (event: Event) => {
-              const countsResponse = await fetch(`/api/events/${event._id}/counts`);
-              const countsData = await countsResponse.json();
-              return {
-                ...event,
-                totalRegistrations: countsData.totalRegistrations,
-                attendedUsers: countsData.attendedUsers,
-                cannotReciteAndWalk: countsData.cannotReciteAndWalk
-              };
-            }));
+          const recentAndUpcomingEvents = result.data
+            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+          
           setEvents(recentAndUpcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);

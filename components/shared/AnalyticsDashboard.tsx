@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
 import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
@@ -24,6 +24,9 @@ import {
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
 import { X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { Skeleton } from '@/components/ui/skeleton'
+import dynamic from 'next/dynamic'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -90,8 +93,14 @@ const userAttendanceOptions: ChartOptions<'line'> = {
   },
 };
 
-const AnalyticsDashboard: React.FC = () => {
-    const [attendees, setAttendees] = useState<Attendee[]>([]);
+interface Props {
+  initialData: {
+    attendees: Attendee[]
+  }
+}
+
+const AnalyticsDashboard: React.FC<Props> = ({ initialData }) => {
+    const [attendees, setAttendees] = useState<Attendee[]>(initialData.attendees);
     const [frequentAttendees, setFrequentAttendees] = useState<FrequentAttendee[]>([]);
     const [popularEvents, setPopularEvents] = useState<CategoryDistribution[]>([]);
     const [regionDistribution, setRegionDistribution] = useState<RegionDistribution[]>([]);
@@ -107,6 +116,7 @@ const AnalyticsDashboard: React.FC = () => {
     const [selectedRegion, setSelectedRegion] = useState<string>('all');
     const [selectedTown, setSelectedTown] = useState<string>('all');
     const [locationFilteredAttendees, setLocationFilteredAttendees] = useState<Attendee[]>([]);
+    const parentRef = useRef<HTMLDivElement>(null);
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -237,37 +247,6 @@ const AnalyticsDashboard: React.FC = () => {
         setRegionDistribution(sortedRegions);
         setTownDistribution(sortedTowns);
     };
-
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
-                console.log('Fetching analytics data...');
-                const response = await fetch('/api/analytics');
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
-                }
-                const data = await response.json();
-                console.log('Received analytics data:', JSON.stringify(data, null, 2));
-                if (!data.attendees || !Array.isArray(data.attendees)) {
-                    throw new Error('Invalid data structure received from API');
-                }
-                setAttendees(data.attendees);
-                processFrequentAttendees(data.attendees);
-                processPopularEvents(data.attendees);
-                processRegionAndTownDistribution(data.attendees);
-            } catch (error) {
-                console.error('Error fetching analytics data:', error);
-                setError(error instanceof Error ? error.message : 'An unknown error occurred');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAnalytics();
-    }, []);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -525,6 +504,22 @@ const AnalyticsDashboard: React.FC = () => {
         }
     };
 
+    const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
+        ssr: false,
+        loading: () => <Skeleton className="h-[300px]" />
+    })
+
+    const Bar = dynamic(() => import('react-chartjs-2').then(mod => mod.Bar), {
+        ssr: false,
+        loading: () => <Skeleton className="h-[300px]" />
+    })
+
+    const rowVirtualizer = useVirtualizer({
+        count: locationFilteredAttendees.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 35,
+    })
+
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
@@ -578,28 +573,30 @@ const AnalyticsDashboard: React.FC = () => {
                     <h3 className="text-lg font-semibold mb-2">
                         Filtered Attendees ({locationFilteredAttendees.length} total)
                     </h3>
-                    <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
-                        <table className="w-full">
-                            <thead className="text-sm text-gray-600">
-                                <tr>
-                                    <th className="text-left py-2">Name</th>
-                                    <th className="text-left py-2">Region</th>
-                                    <th className="text-left py-2">Town</th>
-                                    <th className="text-left py-2">Event Count</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-sm">
-                                {locationFilteredAttendees.map((attendee, index) => (
-                                    <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
-                                        className="border-t border-gray-200">
-                                        <td className="py-2">{attendee.name}</td>
-                                        <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
-                                        <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
-                                        <td className="py-2">{attendee.eventCount}</td>
+                    <div ref={parentRef} className="overflow-auto">
+                        <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+                            <table className="w-full">
+                                <thead className="text-sm text-gray-600">
+                                    <tr>
+                                        <th className="text-left py-2">Name</th>
+                                        <th className="text-left py-2">Region</th>
+                                        <th className="text-left py-2">Town</th>
+                                        <th className="text-left py-2">Event Count</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="text-sm">
+                                    {locationFilteredAttendees.map((attendee, index) => (
+                                        <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
+                                            className="border-t border-gray-200">
+                                            <td className="py-2">{attendee.name}</td>
+                                            <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
+                                            <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
+                                            <td className="py-2">{attendee.eventCount}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

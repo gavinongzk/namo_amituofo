@@ -22,6 +22,7 @@ import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 import type { Document } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -285,3 +286,76 @@ export const getEventCategory = async (eventId: string): Promise<string | null> 
     return null; // Return null in case of an error
   }
 };
+
+export async function getEventCounts(eventId: string) {
+  try {
+    await connectToDatabase();
+    
+    const result = await Order.aggregate([
+      { $match: { event: new ObjectId(eventId) } },
+      { $unwind: '$customFieldValues' },
+      {
+        $group: {
+          _id: null,
+          totalRegistrations: {
+            $sum: {
+              $cond: [{ $eq: ['$customFieldValues.cancelled', false] }, 1, 0]
+            }
+          },
+          attendedUsers: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $eq: ['$customFieldValues.cancelled', false] },
+                  { $eq: ['$customFieldValues.attendance', true] }
+                ]},
+                1,
+                0
+              ]
+            }
+          },
+          cannotReciteAndWalk: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$customFieldValues.cancelled', false] },
+                    {
+                      $anyElementTrue: {
+                        $map: {
+                          input: "$customFieldValues.fields",
+                          as: "field",
+                          in: {
+                            $and: [
+                              { $regexMatch: { input: "$$field.label", regex: /walk/i } },
+                              { $in: ["$$field.value", ["no", "否", false]] }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    return result[0] || { 
+      totalRegistrations: 0, 
+      attendedUsers: 0, 
+      cannotReciteAndWalk: 0 
+    };
+  } catch (error) {
+    console.error('Error getting event counts:', error);
+    return { 
+      totalRegistrations: 0, 
+      attendedUsers: 0, 
+      cannotReciteAndWalk: 0 
+    };
+  }
+}
