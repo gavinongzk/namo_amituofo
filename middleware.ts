@@ -1,15 +1,5 @@
 import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from 'next/server';
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-// Create a new ratelimiter with monastery-appropriate limits
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(30, "1 m"), // 30 requests per minute
-  analytics: true,
-  prefix: "monastery_app",
-});
 
 export default authMiddleware({
   publicRoutes: [
@@ -31,26 +21,6 @@ export default authMiddleware({
     '/api/uploadthing',
   ],
   async beforeAuth(req) {
-    // Apply rate limiting to registration and API endpoints
-    if (req.nextUrl.pathname.includes('/api/') || 
-        req.nextUrl.pathname.includes('/register')) {
-      const ip = req.ip ?? "127.0.0.1";
-      const { success, pending, limit, reset, remaining } = await ratelimit.limit(
-        `${req.nextUrl.pathname}_${ip}`
-      );
-      
-      if (!success) {
-        return new NextResponse("Too many requests. Please try again later.", {
-          status: 429,
-          headers: {
-            "Retry-After": reset.toString(),
-            "X-RateLimit-Limit": limit.toString(),
-            "X-RateLimit-Remaining": remaining.toString(),
-          },
-        });
-      }
-    }
-
     return NextResponse.next();
   },
   async afterAuth(auth, req) {
