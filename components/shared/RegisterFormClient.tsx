@@ -324,6 +324,19 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           <p className="text-sm text-gray-600 pl-1">
                                             Format: +[country code][number]
                                           </p>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setPhoneOverrides(prev => ({
+                                                ...prev,
+                                                [personIndex]: false
+                                              }));
+                                              form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
+                                            }}
+                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                          >
+                                            Switch back to SG/MY phone number format / 切换回新马电话格式
+                                          </button>
                                         </div>
                                       ) : (
                                         <div className="space-y-2">
@@ -377,7 +390,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       {...formField}
                                       className="max-w-md"
                                       value={String(formField.value)}
-                                      placeholder={`Please enter ${customField.label.toLowerCase()} / 请输入${customField.label}`}
+                                      placeholder={customField.label}
                                       onChange={(e) => {
                                         const sanitized = sanitizeName(e.target.value);
                                         formField.onChange(sanitized);
