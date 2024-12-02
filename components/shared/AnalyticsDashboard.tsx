@@ -202,11 +202,15 @@ const AnalyticsDashboard: React.FC = () => {
         const townCounts: Record<string, number> = {};
         
         attendees.forEach(attendee => {
-            const region = attendee.region || 'Unknown';
-            const town = attendee.town || 'Unknown';
+            const region = attendee.region === 'Unknown' ? '' : attendee.region;
+            const town = attendee.town === 'Unknown' ? '' : attendee.town;
             
-            regionCounts[region] = (regionCounts[region] || 0) + 1;
-            townCounts[town] = (townCounts[town] || 0) + 1;
+            if (region) {
+                regionCounts[region] = (regionCounts[region] || 0) + 1;
+            }
+            if (town) {
+                townCounts[town] = (townCounts[town] || 0) + 1;
+            }
         });
 
         const sortedRegions: RegionDistribution[] = Object.entries(regionCounts)
@@ -222,7 +226,7 @@ const AnalyticsDashboard: React.FC = () => {
                 attendeeCount
             }))
             .sort((a, b) => b.attendeeCount - a.attendeeCount)
-            .slice(0, 10); // Show top 10 towns
+            .slice(0, 10);
 
         setRegionDistribution(sortedRegions);
         setTownDistribution(sortedTowns);
@@ -583,8 +587,8 @@ const AnalyticsDashboard: React.FC = () => {
                                     <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
                                         className="border-t border-gray-200">
                                         <td className="py-2">{attendee.name}</td>
-                                        <td className="py-2">{attendee.region}</td>
-                                        <td className="py-2">{attendee.town}</td>
+                                        <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
+                                        <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
                                         <td className="py-2">{attendee.eventCount}</td>
                                     </tr>
                                 ))}
