@@ -10,7 +10,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
   const eventId = searchParams?.eventId as string | undefined
   const searchText = (searchParams?.query as string) || ''
 
-  let orders: IOrderItem[] = []
+  let orders: any[] = []
   if (eventId) {
     try {
       orders = await getOrdersByEvent({ eventId, searchString: searchText }) || []
