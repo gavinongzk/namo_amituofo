@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       populate: {
         path: 'category'
       }
-    });
+    }).sort({ createdAt: -1 });
     console.log(`Found ${orders.length} orders`);
     console.log('Sample order:', JSON.stringify(orders[0], null, 2));
 
@@ -69,15 +69,15 @@ export async function GET(req: NextRequest) {
           attendeeMap.set(key, { 
             name, 
             phoneNumber, 
-            postalCode,
-            region,
-            town,
+            postalCode: '',
+            region: '',
+            town: '',
             eventCount: 0, 
             events: [] 
           });
         }
         const attendee = attendeeMap.get(key)!;
-        if (eventDate && (!attendee.events.length || eventDate > attendee.events[0].eventDate)) {
+        if (postalCode) {
           attendee.postalCode = postalCode;
           attendee.region = region;
           attendee.town = town;
