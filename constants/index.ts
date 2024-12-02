@@ -33,9 +33,8 @@ export const categoryCustomFields = {
   '念佛共修': [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 Contact number', type: 'phone' },
-    { id: '3', label: '邮区编号 Postal Code', type: 'postal' },
     {
-      id: '4',
+      id: '3',
       label: '请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?',
       type: 'radio',
       options: [
@@ -43,6 +42,7 @@ export const categoryCustomFields = {
         { value: 'no', label: '否 No' }
       ]
     },
+    { id: '4', label: '邮区编号 Postal Code', type: 'postal' },
   ],
   '念佛｜闻法｜祈福｜超荐': [
     { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
