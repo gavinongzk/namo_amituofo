@@ -6,11 +6,23 @@ import { IOrderItem } from '@/lib/database/models/order.model'
 import { formatDateTime } from '@/lib/utils'
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton'
 
+interface Field {
+  label: string;
+  value: string;
+  type?: string;
+}
+
+interface Group {
+  fields: Field[];
+  groupId: string;
+  queueNumber?: string;
+}
+
 const Orders = async ({ searchParams }: SearchParamProps) => {
   const eventId = searchParams?.eventId as string | undefined
   const searchText = (searchParams?.query as string) || ''
 
-  let orders: IOrderItem[] = []
+  let orders: any[] = []
   if (eventId) {
     try {
       orders = await getOrdersByEvent({ eventId, searchString: searchText }) || []
@@ -21,8 +33,8 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
 
   const filteredOrders = orders.filter(order => {
     if (searchText === '') return true;
-    return order.customFieldValues.some(group => 
-      group.fields.some(field => 
+    return order.customFieldValues.some((group: Group) => 
+      group.fields.some((field: Field) => 
         field.label.toLowerCase().includes('name') && 
         typeof field.value === 'string' && 
         field.value.toLowerCase().includes(searchText.toLowerCase())

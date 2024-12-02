@@ -2,75 +2,70 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import { getOrdersByEvent } from '@/lib/actions/order.actions';
 import { unstable_cache } from 'next/cache';
+import { CustomFieldGroup, CustomField } from '@/types';
 
 const getCachedAttendees = unstable_cache(
   async (eventId: string) => {
     await connectToDatabase();
-    const orders = await getOrdersByEvent({ eventId });
+    
+    // Optimize query with lean() and field selection
+    const orders = await getOrdersByEvent({ 
+      eventId,
+      select: 'customFieldValues event._id event.title event.startDateTime event.endDateTime'
+    });
 
-    if (!orders || orders.length === 0) {
-      return NextResponse.json({ message: 'No orders found' }, { status: 404 });
+    if (!orders?.length) {
+      return { attendees: [] };
     }
 
-    const attendees = orders.flatMap(order => 
-      order.customFieldValues.map(group => ({
-        id: `${order._id}_${group.groupId}`,
-        eventTitle: order.event.title,
-        eventStartDateTime: order.event.startDateTime,
-        eventEndDateTime: order.event.endDateTime,
-        order: {
-          customFieldValues: [
-            {
+    // Process data in batches for better memory usage
+    const BATCH_SIZE = 100;
+    const attendees = [];
+    
+    for (let i = 0; i < orders.length; i += BATCH_SIZE) {
+      const batch = orders.slice(i, i + BATCH_SIZE);
+      const batchAttendees = batch.flatMap(order => 
+        order.customFieldValues.map((group: CustomFieldGroup) => ({
+          id: `${order._id}_${group.groupId}`,
+          eventTitle: order.event.title,
+          eventStartDateTime: order.event.startDateTime,
+          eventEndDateTime: order.event.endDateTime,
+          order: {
+            customFieldValues: [{
               ...group,
-              fields: group.fields.map(field => ({
+              fields: group.fields.map((field: CustomField) => ({
                 ...field,
-                value: field.value
-                  ? field.type === 'phone'
-                    ? field.value
-                    : typeof field.value === 'string'
-                      ? field.value.replace(/\d/g, '*')
-                      : String(field.value).replace(/\d/g, '*')
-                  : '',
+                value: field.value && field.type !== 'phone' 
+                  ? String(field.value).replace(/\d/g, '*')
+                  : field.value || '',
               })),
-              __v: group.__v // Use the __v from the database
-            }
-          ]
-        }
-      }))
-    );
-
-    // Log the entire attendees object
-    console.log('Full attendees object:', JSON.stringify(attendees, null, 2));
-
-    // Log just the __v values for each attendee
-    console.log('__v values for each attendee:');
-    attendees.forEach((attendee, index) => {
-      console.log(`Attendee ${index + 1}: __v =`, attendee.order.customFieldValues[0].__v);
-    });
+            }]
+          }
+        }))
+      );
+      attendees.push(...batchAttendees);
+    }
 
     return { attendees };
   },
   ['event-attendees'],
   {
     revalidate: 30, // Cache for 30 seconds
-    tags: ['events', 'orders', 'attendees']
+    tags: ['attendees']
   }
 );
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const eventId = params.id;
-    const data = await getCachedAttendees(eventId);
-
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=15',
-      },
-    });
+    const result = await getCachedAttendees(params.id);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching attendees:', error);
     return NextResponse.json(
-      { message: 'Error fetching attendees', error }, 
+      { error: 'Internal Server Error' }, 
       { status: 500 }
     );
   }

@@ -21,6 +21,7 @@ import {
 import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
+import type { Document } from 'mongoose';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -134,46 +135,78 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 
 // GET ALL EVENTS
 export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
-  try {
-    await connectToDatabase()
+  const cacheKey = `events-${query}-${limit}-${page}-${category}-${country}`;
+  
+  return unstable_cache(
+    async () => {
+      try {
+        await connectToDatabase()
 
-    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-    const categoryCondition = category ? await getCategoryByName(category) : null
-    const conditions = {
-      $and: [
-        titleCondition,
-        categoryCondition ? { category: categoryCondition._id } : {},
-        { country: country }
-      ]
-    }
-
-    const skipAmount = (Number(page) - 1) * limit
-    const eventsQuery = Event.find(conditions)
-      .sort({ createdAt: 'desc' })
-      .skip(skipAmount)
-      .limit(limit)
-      .populate({ path: 'organizer', model: User, select: '_id' })
-      .populate({ path: 'category', model: Category, select: '_id name' })
-
-    const events = (await eventsQuery.exec()) as IEvent[]
-    const eventsWithCount = await Promise.all(
-      events.map(async (event) => {
-        const orders = await Order.find({ event: event._id })
-        const registrationCount = orders.reduce((total, order) => total + order.customFieldValues.length, 0)
-        return {
-          ...JSON.parse(JSON.stringify(event)),
-          registrationCount,
+        const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+        const categoryCondition = category ? await getCategoryByName(category) : null
+        const conditions = {
+          $and: [
+            titleCondition,
+            categoryCondition ? { category: categoryCondition._id } : {},
+            { country: country }
+          ]
         }
-      })
-    )
 
-    const eventsCount = await Event.countDocuments(conditions)
+        const skipAmount = (Number(page) - 1) * limit
+        
+        // Parallel queries for better performance
+        const [events, eventsCount] = await Promise.all([
+          Event.find(conditions)
+            .sort({ createdAt: 'desc' })
+            .skip(skipAmount)
+            .limit(limit)
+            .populate({ 
+              path: 'organizer', 
+              model: User,
+              select: '_id'
+            })
+            .populate({ 
+              path: 'category', 
+              model: Category,
+              select: '_id name'
+            })
+            .lean(), // Use lean() for faster queries
+          Event.countDocuments(conditions)
+        ]);
 
-    return { data: eventsWithCount, totalPages: Math.ceil(eventsCount / limit) }
-  } catch (error) {
-    handleError(error)
-    return { data: [], totalPages: 0 }
-  }
+        // Batch fetch registration counts
+        const eventIds = events.map(event => event._id);
+        const orders = await Order.find({ 
+          event: { $in: eventIds } 
+        }).select('event customFieldValues').lean();
+
+        // Create a map for faster lookup
+        const registrationCountMap = orders.reduce((acc: { [key: string]: number }, order) => {
+          const eventId = order.event.toString();
+          acc[eventId] = (acc[eventId] || 0) + order.customFieldValues.length;
+          return acc;
+        }, {});
+
+        const eventsWithCount = events.map((event: any) => ({
+          ...event,
+          registrationCount: registrationCountMap[event._id.toString()] || 0
+        }));
+
+        return { 
+          data: eventsWithCount, 
+          totalPages: Math.ceil(eventsCount / limit) 
+        }
+      } catch (error) {
+        handleError(error)
+        return { data: [], totalPages: 0 }
+      }
+    },
+    ['events-list'],
+    {
+      revalidate: 60, // Cache for 1 minute
+      tags: ['events']
+    }
+  )();
 }
 
 

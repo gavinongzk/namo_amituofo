@@ -107,6 +107,7 @@ export interface CreateOrderParams {
 export type GetOrdersByEventParams = {
   eventId: string
   searchString?: string
+  select?: string
 }
 
 export type GetOrdersByUserParams = {
