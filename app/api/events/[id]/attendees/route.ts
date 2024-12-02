@@ -35,9 +35,7 @@ const getCachedAttendees = unstable_cache(
               ...group,
               fields: group.fields.map((field: CustomField) => ({
                 ...field,
-                value: field.value && field.type !== 'phone' 
-                  ? String(field.value).replace(/\d/g, '*')
-                  : field.value || '',
+                value: field.value || '',
               })),
             }]
           }
