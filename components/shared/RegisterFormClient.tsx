@@ -35,6 +35,19 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
+const isValidPostalCode = (code: string, country: string) => {
+  if (!code) return false;
+  
+  if (country === 'Singapore') {
+    return /^\d{6}$/.test(code);
+  } else if (country === 'Malaysia') {
+    return /^\d{5}$/.test(code);
+  }
+  
+  // For other countries, accept 4-10 digits
+  return /^\d{4,10}$/.test(code);
+};
+
 interface RegisterFormClientProps {
   event: IEvent & { category: { name: CategoryName } }
   initialOrderCount: number
@@ -119,14 +132,27 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       },
                       { message: "Invalid phone number" }
                     )
-                : field.label.toLowerCase().includes('name')
+                : field.type === 'postal'
                   ? z.string()
-                      .min(1, { message: "This field is required" })
+                      .min(1, { message: "Postal code is required" })
                       .refine(
-                        (value) => isValidName(value),
-                        { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                        (value) => isValidPostalCode(value, userCountry || 'Singapore'),
+                        {
+                          message: userCountry === 'Singapore' 
+                            ? "Please enter a valid 6-digit postal code"
+                            : userCountry === 'Malaysia'
+                              ? "Please enter a valid 5-digit postal code"
+                              : "Please enter a valid postal code"
+                        }
                       )
-                  : z.string().min(1, { message: "This field is required" })
+                  : field.label.toLowerCase().includes('name')
+                    ? z.string()
+                        .min(1, { message: "This field is required" })
+                        .refine(
+                          (value) => isValidName(value),
+                          { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                        )
+                    : z.string().min(1, { message: "This field is required" })
           ])
         )
       )
@@ -384,6 +410,28 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           <span className="text-gray-700">{option.label}</span>
                                         </label>
                                       ))}
+                                    </div>
+                                  ) : customField.type === 'postal' ? (
+                                    <div className="space-y-2">
+                                      <Input 
+                                        {...formField}
+                                        className="max-w-md"
+                                        value={String(formField.value)}
+                                        placeholder={
+                                          userCountry === 'Singapore' 
+                                            ? "e.g. 123456" 
+                                            : userCountry === 'Malaysia'
+                                              ? "e.g. 12345"
+                                              : "Enter postal code"
+                                        }
+                                      />
+                                      <p className="text-sm text-gray-500 pl-1">
+                                        {userCountry === 'Singapore' 
+                                          ? "Please enter 6-digit postal code / 请输入6位数的邮区编号"
+                                          : userCountry === 'Malaysia'
+                                            ? "Please enter 5-digit postal code / 请输入5位数的邮区编号"
+                                            : "Please enter your postal code / 请输入邮区编号"}
+                                      </p>
                                     </div>
                                   ) : (
                                     <Input 
