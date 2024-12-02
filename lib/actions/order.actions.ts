@@ -99,12 +99,19 @@ export async function getOrdersByEvent({ searchString, eventId, select }: GetOrd
 
     const baseQuery = Order.find(query);
     
-    if (select) {
-      baseQuery.select(select);
-    }
+    // Handle field selection
+    const eventFields = select ? 
+      select.split(' ')
+        .filter(f => f.startsWith('event.'))
+        .map(f => f.replace('event.', ''))
+        .join(' ') : 
+      'title imageUrl startDateTime endDateTime';
 
     const orders = await baseQuery
-      .populate('event', select ? select.split(' ').filter(f => f.startsWith('event.')).join(' ') : 'title imageUrl startDateTime endDateTime')
+      .populate({
+        path: 'event',
+        select: eventFields
+      })
       .lean();
 
     return orders;
