@@ -6,63 +6,48 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
-
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-
     --primary: 25 24% 53%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 25 24% 95%;
     --secondary-foreground: 25 24% 23%;
-
     --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 40%;
-
+    --muted-foreground: 0 0% 45%;
     --accent: 22 80% 60%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 80%;
+    --border: 0 0% 85%;
     --input: 0 0% 80%;
     --ring: 22 100% 50%;
-
     --radius: 0.25rem;
+    color-scheme: light;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    color-scheme: dark;
   }
 }
 
@@ -74,15 +59,43 @@
 }
 
 body {
-  font-family: var(--font-poppins)
+  font-family: var(--font-poppins);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-.filter-grey {
-  filter: brightness(0) saturate(100%) invert(47%) sepia(0%) saturate(217%)
-    hue-rotate(32deg) brightness(98%) contrast(92%);
+/* Focus styles */
+:focus-visible {
+  @apply outline-2 outline-primary outline-offset-2 !important;
 }
 
-/* ========================================== TAILWIND STYLES */
+/* Touch targets */
+.button, .input-field {
+  @apply min-h-[48px] md:h-[54px];
+}
+
+/* Animations */
+.hover-scale {
+  @apply transition-transform hover:scale-105;
+}
+
+/* Input states */
+.input-field[aria-invalid="true"] {
+  @apply border-destructive;
+}
+
+.input-field:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2;
+}
+
+/* Text readability */
+.prose p {
+  max-width: 70ch;
+  @apply mb-4;
+}
+
+/* TYPOGRAPHY */
 @layer utilities {
   .wrapper {
     @apply max-w-7xl lg:mx-auto p-5 md:px-10 xl:px-0 w-full;
@@ -96,92 +109,19 @@ body {
     @apply flex justify-between items-center;
   }
 
-  /* TYPOGRAPHY */
-  /* 64 */
+  /* Simplified typography scale */
   .h1-bold {
-    @apply font-bold text-[40px] leading-[48px] lg:text-[48px] lg:leading-[60px]  xl:text-[58px] xl:leading-[74px];
+    @apply font-bold text-[40px] leading-[48px] lg:text-[48px] lg:leading-[60px] xl:text-[58px] xl:leading-[74px];
   }
 
-  .h1-extra-bold {
-    @apply font-extrabold text-[48px] leading-[56px] lg:text-[64px] lg:leading-[72px];
+  .h2-bold, .h2-medium {
+    @apply font-bold text-[32px] leading-[1.2];
   }
 
-  /* 40 */
-  .h2-bold {
-    @apply font-bold text-[32px] leading-[40px] lg:text-[36px] lg:leading-[44px] xl:text-[40px] xl:leading-[48px];
-  }
-
-  .h2-medium {
-    @apply font-medium text-[32px] leading-[40px] lg:text-[36px] lg:leading-[44px] xl:text-[40px] xl:leading-[48px];
-  }
-
-  /* 36 */
   .h3-bold {
     @apply font-bold text-[28px] leading-[36px] md:text-[36px] md:leading-[44px];
   }
 
-  .h3-medium {
-    @apply font-medium text-[28px] leading-[36px] md:text-[36px] md:leading-[44px];
-  }
-
-  /* 32 */
-  .h4-medium {
-    @apply font-medium text-[32px] leading-[40px];
-  }
-
-  /* 28 */
-  .h5-bold {
-    @apply font-bold text-[28px] leading-[36px];
-  }
-
-  /* 24 */
-  .p-bold-24 {
-    @apply font-bold text-[24px] leading-[36px];
-  }
-
-  .p-medium-24 {
-    @apply font-medium text-[24px] leading-[36px];
-  }
-
-  .p-regular-24 {
-    @apply font-normal text-[24px] leading-[36px];
-  }
-
-  /* 20 */
-  .p-bold-20 {
-    @apply font-bold text-[20px] leading-[30px] tracking-[2%];
-  }
-
-  .p-semibold-20 {
-    @apply text-[20px] font-semibold leading-[30px] tracking-[2%];
-  }
-
-  .p-medium-20 {
-    @apply text-[20px] font-medium leading-[30px];
-  }
-
-  .p-regular-20 {
-    @apply text-[20px] font-normal leading-[30px] tracking-[2%];
-  }
-
-  /* 18 */
-  .p-semibold-18 {
-    @apply text-[18px] font-semibold leading-[28px] tracking-[2%];
-  }
-
-  .p-medium-18 {
-    @apply text-[18px] font-medium leading-[28px];
-  }
-
-  .p-regular-18 {
-    @apply text-[18px] font-normal leading-[28px] tracking-[2%];
-  }
-
-  .subtitle-medium {
-    @apply font-medium text-[18px] leading-[28px] text-gray-600;
-  }
-
-  /* 16 */
   .p-bold-16 {
     @apply text-[16px] font-bold leading-[24px];
   }
@@ -194,259 +134,32 @@ body {
     @apply text-[16px] font-normal leading-[24px];
   }
 
-  /* 14 */
-  .p-semibold-14 {
-    @apply text-[14px] font-semibold leading-[20px];
-  }
-
   .p-medium-14 {
     @apply text-[14px] font-medium leading-[20px];
   }
-
-  .p-regular-14 {
-    @apply text-[14px] font-normal leading-[20px];
-  }
-
-  /* 12 */
-  .p-medium-12 {
-    @apply text-[12px] font-medium leading-[20px];
-  }
-
-  /* SHADCN OVERRIDES */
-  .select-field {
-    @apply w-full bg-grey-50 h-[54px] placeholder:text-grey-500 rounded-full p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent focus:ring-transparent !important;
-  }
-
-  .input-field {
-    @apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-4 py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 !important;
-  }
-
-  .textarea {
-    @apply bg-grey-50 flex flex-1 placeholder:text-grey-500 p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent !important;
-  }
-
-  .button {
-    @apply rounded-full h-[54px] p-regular-16 transition-all duration-300 hover:shadow-md active:scale-95;
-  }
-
-  .select-item {
-    @apply py-3 cursor-pointer  focus:bg-primary-50;
-  }
-
-  .toggle-switch {
-    @apply bg-gray-300 !important;
-  }
 }
 
-/* ========================================== CLERK STYLES */
-.cl-logoImage {
-  height: 38px;
+/* Component styles */
+.select-field {
+  @apply w-full bg-grey-50 h-[54px] placeholder:text-grey-500 rounded-full p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent focus:ring-transparent !important;
 }
 
-.cl-userButtonBox {
-  flex-direction: row-reverse;
+.input-field {
+  @apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-4 py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 !important;
 }
 
-.cl-userButtonOuterIdentifier {
-  font-size: 16px;
+.textarea {
+  @apply bg-grey-50 flex flex-1 placeholder:text-grey-500 p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent !important;
 }
 
-.cl-userButtonPopoverCard {
-  right: 4px !important;
+.button {
+  @apply rounded-full h-[54px] p-regular-16 transition-all duration-300 hover:shadow-md active:scale-95;
 }
 
-.cl-formButtonPrimary:hover,
-.cl-formButtonPrimary:focus,
-.cl-formButtonPrimary:active {
-  background-color: #a3826c;
+.select-item {
+  @apply py-3 cursor-pointer focus:bg-primary-50;
 }
 
-/* ========================================== REACT-DATEPICKER STYLES */
-.datePicker {
-  width: 100%;
-}
-
-.react-datepicker__input-container input {
-  background-color: transparent;
-  width: 100%;
-  outline: none;
-  margin-left: 16px;
-}
-
-.react-datepicker__day--selected {
-  background-color: #a3826c !important;
-  color: #ffffff !important;
-  border-radius: 4px;
-}
-
-.react-datepicker__time-list-item--selected {
-  background-color: #624cf5 !important;
-}
-
-/* ========================================== NEW UTILITY CLASS */
-@layer utilities {
-  .content-container {
-    @apply px-4 md:px-6 lg:px-8 max-w-[1440px] mx-auto;
-  }
-}
-
-.small-button {
-  @apply h-[40px] p-regular-14;
-}
-
-.pagination {
-  display: flex;
-  list-style: none;
-  padding: 0;
-}
-
-.page-item {
-  margin: 0 5px;
-}
-
-.page-link {
-  display: block;
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-decoration: none;
-  color: #007bff;
-  cursor: pointer;
-}
-
-.page-link:hover {
-  background-color: #f1f1f1;
-}
-
-.page-item.active .page-link {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.section-padding {
-  @apply py-12 md:py-16 lg:py-20;
-}
-
-.content-margin {
-  @apply my-8 md:my-12;
-}
-
-.fade-in {
-  @apply transition-opacity duration-300 ease-in-out;
-}
-
-.hover-scale {
-  @apply transition-transform duration-300 hover:scale-105;
-}
-
-input[type=checkbox] {
-  -webkit-appearance: checkbox;
-  appearance: checkbox;
-}
-
-.country-selector [data-radix-select-trigger] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.country-selector [data-radix-select-trigger] svg {
-  display: none;
-}
-
-/* Add these styles to your existing globals.css */
-.prose {
-  max-width: 65ch;
-  margin: 0 auto;
-}
-
-.prose p {
-  margin-bottom: 1.25em;
-  line-height: 1.7;
-}
-
-.prose ul {
-  list-style-type: disc;
-  padding-left: 1.5em;
-  margin-bottom: 1.25em;
-}
-
-.prose li {
-  margin-bottom: 0.5em;
-}
-
-/* Smooth accordion animations */
-.accordion-content-animation {
-  transition: all 0.2s ease-out;
-}
-
-.accordion-content-animation[data-state='open'] {
-  animation: slideDown 0.2s ease-out;
-}
-
-.accordion-content-animation[data-state='closed'] {
-  animation: slideUp 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    height: 0;
-    opacity: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    height: var(--radix-accordion-content-height);
-    opacity: 1;
-  }
-  to {
-    height: 0;
-    opacity: 0;
-  }
-}
-
-.hover-primary {
-  @apply hover:bg-[#8b6f5d] transition-colors duration-200;
-}
-
-.text-primary {
-  @apply text-[#a2826c];
-}
-
-.border-primary {
-  @apply border-[#a2826c];
-}
-
-/* Add these styles for the phone input */
-.phone-input-container .PhoneInput {
-  display: flex;
-  align-items: center;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 0 0.75rem;
-  height: 3rem;
-}
-
-.phone-input-container .PhoneInput:focus-within {
-  border-color: var(--primary-500);
-  ring: 2px var(--primary-100);
-}
-
-.phone-input-container .PhoneInputInput {
-  border: none;
-  padding: 0.5rem;
-  font-size: 1.125rem;
-  width: 100%;
-  outline: none;
-}
-
-.phone-input-container .PhoneInputCountry {
-  margin-right: 0.5rem;
-  padding: 0.25rem;
+.toggle-switch {
+  @apply bg-gray-300 !important;
 }

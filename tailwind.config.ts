@@ -9,6 +9,9 @@ module.exports = withUt({
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     container: {
       center: true,
@@ -22,6 +25,7 @@ module.exports = withUt({
         primary: {
           500: '#a2826c',
           50: '#f5f2f0',
+          600: '#8B6F5C',
           DEFAULT: '#a2826c',
           foreground: 'hsl(var(--primary-foreground))',
         },
@@ -29,10 +33,10 @@ module.exports = withUt({
           500: '#15BF59',
         },
         grey: {
-          600: '#545454', // Subdued - color name in figma
+          600: '#545454',
           500: '#757575',
-          400: '#AFAFAF', // Disabled - color name in figma
-          50: '#F6F6F6', // White Grey - color name in figma
+          400: '#959595',
+          50: '#F6F6F6',
         },
         black: '#000000',
         white: '#FFFFFF',
@@ -65,7 +69,7 @@ module.exports = withUt({
           foreground: 'hsl(var(--card-foreground))',
         },
         yellow: {
-          500: '#DAA520', // Yellow color for numbers
+          500: '#DAA520',
         },
       },
       fontFamily: {
@@ -99,7 +103,17 @@ module.exports = withUt({
         'accordion-up': 'accordion-up 0.2s ease-out',
         scan: 'scan 2s linear infinite'
       },
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+      },
+      screens: {
+        'hover-hover': {'raw': '(hover: hover)'},
+      },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+  ],
 });
