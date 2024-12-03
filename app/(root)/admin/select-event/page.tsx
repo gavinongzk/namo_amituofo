@@ -1,3 +1,18 @@
+export const revalidate = 3600; // 1 hour ISR
+
+export const generateMetadata = async () => {
+  return {
+    title: 'Select Event',
+    description: 'Select an event to manage',
+    httpHeaders: {
+      link: [
+        '</api/events?country=Singapore>; rel=preload; as=fetch',
+        '</api/events?country=Malaysia>; rel=preload; as=fetch',
+      ].join(', '),
+    },
+  };
+};
+
 'use client';
 
 import { useEffect, useState } from 'react';

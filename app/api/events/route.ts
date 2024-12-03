@@ -14,22 +14,40 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 300,
+    revalidate: 3600,
     tags: ['events']
   }
 );
+
+const COMMON_COUNTRIES = ['Singapore', 'Malaysia'];
+const preloadEvents = () => {
+  COMMON_COUNTRIES.forEach(country => {
+    void getCachedEvents(country);
+  });
+};
+
+preloadEvents();
+
+export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const country = searchParams.get('country') || '';
 
+    const nextCountry = COMMON_COUNTRIES.find(c => c !== country);
+    if (nextCountry) {
+      void getCachedEvents(nextCountry);
+    }
+
     const events = await getCachedEvents(country);
     
-    return NextResponse.json(events, {
+    return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
+        'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
+        'Vercel-CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
       },
     });
   } catch (error) {
