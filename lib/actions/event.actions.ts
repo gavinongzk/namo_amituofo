@@ -158,17 +158,18 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
         const projection = {
           title: 1,
           description: 1,
+          country: 1,
+          location: 1,
+          createdAt: 1,
+          imageUrl: 1,
           startDateTime: 1,
           endDateTime: 1,
-          imageUrl: 1,
-          price: 1,
-          isFree: 1,
-          url: 1,
-          venue: 1,
-          country: 1,
           category: 1,
           organizer: 1,
-          createdAt: 1,
+          customFields: 1,
+          maxSeats: 1,
+          registrationSuccessMessage: 1,
+          _id: 1
         };
 
         // Parallel queries with field projection

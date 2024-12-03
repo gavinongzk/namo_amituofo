@@ -176,7 +176,7 @@ const SelectEventPage = () => {
                 </div>
                 <div className="flex items-center">
                   <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{selectedEvent.location}</span>
+                  <span className="text-lg">{selectedEvent.location || 'No location specified'}</span>
                 </div>
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
