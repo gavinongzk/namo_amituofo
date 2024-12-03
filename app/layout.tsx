@@ -37,6 +37,18 @@ export default function RootLayout({
         rel="preconnect" 
         href="https://fonts.googleapis.com" 
       />
+      <link 
+        rel="preload"
+        href="/api/events?country=Singapore"
+        as="fetch"
+        crossOrigin="anonymous"
+      />
+      <link 
+        rel="preload"
+        href="/api/events?country=Malaysia"
+        as="fetch"
+        crossOrigin="anonymous"
+      />
     </>
   );
 
