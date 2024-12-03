@@ -69,29 +69,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [savedPostal, setSavedPostal] = useState<string>('');
 
   useEffect(() => {
-    // Load saved postal code
     const savedPostalCode = localStorage.getItem('lastUsedPostal');
     if (savedPostalCode) {
       setSavedPostal(savedPostalCode);
     }
   }, []);
-
-  // Watch first person's postal code changes
-  useEffect(() => {
-    if (fields.length > 0) {
-      const postalField = customFields.find(f => f.type === 'postal')?.id;
-      if (postalField) {
-        const firstPersonPostal = form.watch(`groups.0.${postalField}`);
-        if (firstPersonPostal && useSamePostal) {
-          fields.forEach((_, index) => {
-            if (index > 0) {
-              form.setValue(`groups.${index}.${postalField}`, firstPersonPostal);
-            }
-          });
-        }
-      }
-    }
-  }, [form.watch(`groups.0.${customFields.find(f => f.type === 'postal')?.id}`), useSamePostal]);
 
   useEffect(() => {
     const detectCountry = async () => {
@@ -136,9 +118,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         setIsCountryLoading(false);
       }
     };
-
     detectCountry();
   }, [isLoaded, user]);
+
   const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
   const formSchema = z.object({
@@ -197,9 +179,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       groups: [Object.fromEntries(
         customFields.map(field => [
           field.id, 
-          field.type === 'boolean' ? false : 
-          // field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
-          ''
+          field.type === 'boolean' ? false : ''
         ])
       )]
     },
@@ -209,6 +189,23 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     control: form.control,
     name: "groups"
   });
+
+  // Watch first person's postal code changes
+  useEffect(() => {
+    if (fields.length > 0) {
+      const postalField = customFields.find(f => f.type === 'postal')?.id;
+      if (postalField) {
+        const firstPersonPostal = form.watch(`groups.0.${postalField}`);
+        if (firstPersonPostal && useSamePostal) {
+          fields.forEach((_, index) => {
+            if (index > 0) {
+              form.setValue(`groups.${index}.${postalField}`, firstPersonPostal);
+            }
+          });
+        }
+      }
+    }
+  }, [form.watch(`groups.0.${customFields.find(f => f.type === 'postal')?.id}`), useSamePostal, fields, form]);
 
   const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
     const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
