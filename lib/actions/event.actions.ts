@@ -154,42 +154,66 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
 
         const skipAmount = (Number(page) - 1) * limit
         
-        // Parallel queries for better performance
+        // Only select necessary fields
+        const projection = {
+          title: 1,
+          description: 1,
+          startDateTime: 1,
+          endDateTime: 1,
+          imageUrl: 1,
+          price: 1,
+          isFree: 1,
+          url: 1,
+          venue: 1,
+          country: 1,
+          category: 1,
+          organizer: 1,
+          createdAt: 1,
+        };
+
+        // Parallel queries with field projection
         const [events, eventsCount] = await Promise.all([
-          Event.find(conditions)
-            .sort({ createdAt: 'desc' })
+          Event.find(conditions, projection)
+            .sort({ startDateTime: 'desc', createdAt: 'desc' })
             .skip(skipAmount)
             .limit(limit)
             .populate({ 
               path: 'organizer', 
               model: User,
-              select: '_id'
+              select: '_id firstName lastName'
             })
             .populate({ 
               path: 'category', 
               model: Category,
               select: '_id name'
             })
-            .lean(), // Use lean() for faster queries
+            .lean()
+            .exec(), // Add exec() for better performance
           Event.countDocuments(conditions)
         ]);
 
-        // Batch fetch registration counts
+        // Batch fetch registration counts with projection
         const eventIds = events.map(event => event._id);
         const orders = await Order.find({ 
           event: { $in: eventIds } 
-        }).select('event customFieldValues').lean();
+        })
+        .select('event customFieldValues')
+        .lean()
+        .exec();
 
-        // Create a map for faster lookup
-        const registrationCountMap = orders.reduce((acc: { [key: string]: number }, order) => {
+        // Create a map for faster lookup using Set for O(1) lookups
+        const registrationCountMap = new Map();
+        orders.forEach(order => {
           const eventId = order.event.toString();
-          acc[eventId] = (acc[eventId] || 0) + order.customFieldValues.length;
-          return acc;
-        }, {});
+          registrationCountMap.set(
+            eventId, 
+            (registrationCountMap.get(eventId) || 0) + order.customFieldValues.length
+          );
+        });
 
         const eventsWithCount = events.map((event: any) => ({
           ...event,
-          registrationCount: registrationCountMap[event._id.toString()] || 0
+          registrationCount: registrationCountMap.get(event._id.toString()) || 0
         }));
 
         return { 
@@ -203,7 +227,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
     },
     ['events-list'],
     {
-      revalidate: 60, // Cache for 1 minute
+      revalidate: 3600, // Match the API cache duration
       tags: ['events']
     }
   )();

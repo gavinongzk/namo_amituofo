@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { formatDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2 } from "lucide-react" // Import the loader icon
+import { Loader2 } from "lucide-react"
 import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
 
 type Event = {
