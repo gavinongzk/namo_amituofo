@@ -65,6 +65,33 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
+  const [useSamePostal, setUseSamePostal] = useState(false);
+  const [savedPostal, setSavedPostal] = useState<string>('');
+
+  useEffect(() => {
+    // Load saved postal code
+    const savedPostalCode = localStorage.getItem('lastUsedPostal');
+    if (savedPostalCode) {
+      setSavedPostal(savedPostalCode);
+    }
+  }, []);
+
+  // Watch first person's postal code changes
+  useEffect(() => {
+    if (fields.length > 0) {
+      const postalField = customFields.find(f => f.type === 'postal')?.id;
+      if (postalField) {
+        const firstPersonPostal = form.watch(`groups.0.${postalField}`);
+        if (firstPersonPostal && useSamePostal) {
+          fields.forEach((_, index) => {
+            if (index > 0) {
+              form.setValue(`groups.${index}.${postalField}`, firstPersonPostal);
+            }
+          });
+        }
+      }
+    }
+  }, [form.watch(`groups.0.${customFields.find(f => f.type === 'postal')?.id}`), useSamePostal]);
 
   useEffect(() => {
     const detectCountry = async () => {
@@ -230,6 +257,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
           const field = customFields.find(f => f.id === key) as CustomField;
+          // Save first person's postal code
+          if (index === 0 && field?.type === 'postal') {
+            localStorage.setItem('lastUsedPostal', String(value));
+          }
           return {
             id: key,
             label: field?.label || key,
@@ -303,6 +334,29 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               </div>
             ) : (
               <>
+                {savedPostal && fields.length > 1 && (
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <Checkbox
+                      checked={useSamePostal}
+                      onCheckedChange={(checked) => {
+                        setUseSamePostal(checked as boolean);
+                        if (checked) {
+                          const postalField = customFields.find(f => f.type === 'postal')?.id;
+                          if (postalField) {
+                            fields.forEach((_, index) => {
+                              form.setValue(`groups.${index}.${postalField}`, form.getValues(`groups.0.${postalField}`));
+                            });
+                          }
+                        }
+                      }}
+                      className="h-5 w-5"
+                    />
+                    <label className="text-sm text-gray-700">
+                      Use same postal code for all registrants / 为所有参加者使用相同的邮区编号
+                    </label>
+                  </div>
+                )}
+                
                 {fields.map((field, personIndex) => (
                   <div 
                     key={field.id} 
