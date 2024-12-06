@@ -66,16 +66,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
-  const [useSamePostal, setUseSamePostal] = useState(false);
-  const [savedPostal, setSavedPostal] = useState<string>('');
   const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
     if (savedPostalCode) {
-      setSavedPostal(savedPostalCode as string);
-      // Pre-fill first person's postal if available
       const postalField = customFields.find(f => f.type === 'postal')?.id;
       if (postalField) {
         form.setValue(`groups.0.${postalField}`, savedPostalCode);
@@ -197,23 +193,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     control: form.control,
     name: "groups"
   });
-
-  // Watch first person's postal code changes
-  useEffect(() => {
-    if (fields.length > 0) {
-      const postalField = customFields.find(f => f.type === 'postal')?.id;
-      if (postalField) {
-        const firstPersonPostal = form.watch(`groups.0.${postalField}`);
-        if (firstPersonPostal && useSamePostal) {
-          fields.forEach((_, index) => {
-            if (index > 0) {
-              form.setValue(`groups.${index}.${postalField}`, firstPersonPostal);
-            }
-          });
-        }
-      }
-    }
-  }, [form.watch(`groups.0.${customFields.find(f => f.type === 'postal')?.id}`), useSamePostal, fields, form]);
 
   const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
     const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
@@ -431,84 +410,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               </div>
             ) : (
               <>
-                {fields.length > 1 && (
-                  <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={useSamePostal}
-                        onCheckedChange={(checked) => {
-                          setUseSamePostal(checked as boolean);
-                          if (checked) {
-                            const postalField = customFields.find(f => f.type === 'postal')?.id;
-                            if (postalField) {
-                              const firstPostal = form.getValues(`groups.0.${postalField}`);
-                              fields.forEach((_, index) => {
-                                if (index > 0) form.setValue(`groups.${index}.${postalField}`, firstPostal);
-                              });
-                            }
-                          }
-                        }}
-                        className="h-5 w-5"
-                      />
-                      <label className="text-sm text-gray-700">
-                        Use same postal code for all registrants / 为所有参加者使用相同的邮区编号
-                      </label>
-                    </div>
-                    {savedPostal && !useSamePostal && (
-                      <div className="flex items-center gap-2 pl-8">
-                        <span className="text-sm text-gray-600">Last used postal code / 上次使的邮区编号: </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const postalField = customFields.find(f => f.type === 'postal')?.id;
-                            if (postalField) {
-                              fields.forEach((_, index) => {
-                                form.setValue(`groups.${index}.${postalField}`, savedPostal);
-                              });
-                              setUseSamePostal(true);
-                            }
-                          }}
-                          className="text-sm text-primary-600 hover:text-primary-700 font-medium underline"
-                        >
-                          {savedPostal} (Click to use / 点击使用)
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {Object.keys(lastUsedFields).length > 0 && fields.length > 1 && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">
-                        Pre-fill new entries with last used data? / 用上次的资料预填新登记？
-                      </span>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const currentLength = fields.length;
-                          if (currentLength > 1) {
-                            fields.forEach((_, index) => {
-                              if (index > 0) { // Don't modify first person's data
-                                Object.entries(lastUsedFields).forEach(([fieldId, value]) => {
-                                  if (!fieldId.includes('phone')) {
-                                    form.setValue(`groups.${index}.${fieldId}`, value as string | boolean);
-                                  }
-                                });
-                              }
-                            });
-                          }
-                          toast.success("Fields pre-filled successfully / 资料预填成功");
-                        }}
-                        className="text-sm bg-primary-50 text-primary-600 hover:bg-primary-100"
-                        variant="ghost"
-                      >
-                        Apply / 应用
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
                 {fields.map((field, personIndex) => (
                   <div 
                     key={field.id}
