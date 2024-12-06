@@ -136,7 +136,7 @@ export type SearchParamProps = {
 export type CustomField = {
   id: string;
   label: string;
-  type: "boolean" | "text" | "phone" | "radio";
+  type: "boolean" | "text" | "phone" | "radio" | "postal";
   value?: string | boolean;
   options?: { value: string; label: string }[];
 };

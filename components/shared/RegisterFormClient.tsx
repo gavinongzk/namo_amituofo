@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -20,6 +20,7 @@ import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
+import { debounce } from 'lodash';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -65,6 +66,18 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
+  const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
+    if (savedPostalCode) {
+      const postalField = customFields.find(f => f.type === 'postal')?.id;
+      if (postalField) {
+        form.setValue(`groups.0.${postalField}`, savedPostalCode);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const detectCountry = async () => {
@@ -109,9 +122,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         setIsCountryLoading(false);
       }
     };
-
     detectCountry();
   }, [isLoaded, user]);
+
   const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
   const formSchema = z.object({
@@ -170,9 +183,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       groups: [Object.fromEntries(
         customFields.map(field => [
           field.id, 
-          field.type === 'boolean' ? false : 
-          // field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') : 
-          ''
+          field.type === 'boolean' ? false : ''
         ])
       )]
     },
@@ -206,6 +217,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
     
+    saveFormData(values);
+    
     const duplicates = await checkForDuplicatePhoneNumbers(values);
     
     if (duplicates.length > 0) {
@@ -230,6 +243,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
           const field = customFields.find(f => f.id === key) as CustomField;
+          // Save first person's postal code
+          if (index === 0 && field?.type === 'postal') {
+            const postalValue = String(value);
+            localStorage.setItem('lastUsedPostal', postalValue);
+            setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
+          }
           return {
             id: key,
             label: field?.label || key,
@@ -284,6 +303,94 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     ));
   };
 
+  useEffect(() => {
+    // Load saved form data from cookies
+    const savedFormData = getCookie('lastUsedFields');
+    if (savedFormData) {
+      try {
+        const parsedData = JSON.parse(savedFormData as string);
+        setLastUsedFields(parsedData);
+        
+        // Pre-fill first person's non-sensitive fields
+        Object.entries(parsedData).forEach(([fieldId, value]) => {
+          // Don't pre-fill sensitive info like phone numbers
+          if (!fieldId.includes('phone')) {
+            form.setValue(`groups.0.${fieldId}`, value as string | boolean);
+          }
+        });
+      } catch (e) {
+        console.error('Error parsing saved form data:', e);
+      }
+    }
+  }, []);
+
+  const saveFormData = (values: z.infer<typeof formSchema>) => {
+    const firstPerson = values.groups[0];
+    const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
+      // Don't save sensitive info
+      if (!key.includes('phone')) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, string | boolean>);
+
+    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), { 
+      maxAge: 60 * 60 * 24 * 30 // 30 days
+    });
+  };
+
+  const debouncedSaveForm = useMemo(
+    () => debounce((values: z.infer<typeof formSchema>) => {
+      saveFormData(values);
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const personIndex = parseInt(entry.target.id.split('-')[1]);
+            setCurrentStep(personIndex);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    fields.forEach((_, index) => {
+      const element = document.getElementById(`person-${index}`);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, [fields.length]);
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name?.includes('postal')) {
+        const postalField = customFields.find(f => f.type === 'postal')?.id;
+        if (postalField) {
+          debouncedSaveForm(form.getValues());
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, debouncedSaveForm]);
+
+  const validatePostalCode = (code: string, country: string | null) => {
+    if (!code) return '';
+    if (country === 'Singapore' && !/^\d{6}$/.test(code)) {
+      return 'Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字';
+    }
+    if (country === 'Malaysia' && !/^\d{5}$/.test(code)) {
+      return 'Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字';
+    }
+    return '';
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       {isCountryLoading ? (
@@ -305,15 +412,16 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               <>
                 {fields.map((field, personIndex) => (
                   <div 
-                    key={field.id} 
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    key={field.id}
+                    id={`person-${personIndex}`}
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden scroll-mt-6"
                   >
                     <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-6 py-4 border-b border-gray-200">
                       <h3 className="text-xl font-semibold text-primary-700">
                         Person {personIndex + 1} / 参加者 {personIndex + 1}
                       </h3>
                     </div>
-                    
+
                     <div className="p-6 space-y-8">
                       {customFields.map((customField, fieldIndex) => (
                         <FormField
@@ -415,7 +523,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                     <div className="space-y-2">
                                       <Input 
                                         {...formField}
-                                        className="max-w-md"
+                                        className={`max-w-md ${
+                                          validatePostalCode(formField.value as string, userCountry) 
+                                            ? 'border-red-500 focus:border-red-500' 
+                                            : ''
+                                        }`}
                                         value={String(formField.value)}
                                         placeholder={
                                           userCountry === 'Singapore' 
@@ -424,14 +536,43 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                               ? "e.g. 12345"
                                               : "Enter postal code"
                                         }
+                                        onChange={(e) => {
+                                          formField.onChange(e);
+                                          const error = validatePostalCode(e.target.value, userCountry);
+                                          if (error) {
+                                            form.setError(`groups.${personIndex}.${customField.id}`, {
+                                              type: 'manual',
+                                              message: error
+                                            });
+                                          } else {
+                                            form.clearErrors(`groups.${personIndex}.${customField.id}`);
+                                          }
+                                        }}
                                       />
-                                      <p className="text-sm text-gray-500 pl-1">
-                                        {userCountry === 'Singapore' 
-                                          ? "Please enter 6-digit postal code / 请输入6位数的邮区编号"
-                                          : userCountry === 'Malaysia'
-                                            ? "Please enter 5-digit postal code / 请输入5位数的邮区编号"
-                                            : "Please enter your postal code / 请输入邮区编号"}
-                                      </p>
+                                      {personIndex > 0 && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <Checkbox
+                                            checked={formField.value === form.getValues(`groups.0.${customField.id}`)}
+                                            onCheckedChange={(checked) => {
+                                              if (checked) {
+                                                const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
+                                              } else {
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, '');
+                                              }
+                                            }}
+                                            className="h-4 w-4"
+                                          />
+                                          <label className="text-sm text-gray-600">
+                                            Use same as Person 1 / 使用与参加者1相同
+                                          </label>
+                                        </div>
+                                      )}
+                                      {validatePostalCode(formField.value as string, userCountry) && (
+                                        <p className="text-sm text-red-500 pl-1">
+                                          {validatePostalCode(formField.value as string, userCountry)}
+                                        </p>
+                                      )}
                                     </div>
                                   ) : (
                                     <Input 
@@ -472,7 +613,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300"
+                    disabled={fields.length >= event.maxSeats}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-5 h-5" />
                     Add Another Person / 添加参加者
