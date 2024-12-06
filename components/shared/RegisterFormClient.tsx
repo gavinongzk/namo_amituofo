@@ -54,23 +54,6 @@ interface RegisterFormClientProps {
   initialOrderCount: number
 }
 
-const StepIndicator = ({ current, total }: { current: number; total: number }) => (
-  <div className="flex items-center gap-2 mb-4">
-    <div className="flex gap-1">
-      {Array.from({ length: total }).map((_, i) => (
-        <button
-          key={i}
-          onClick={() => document.getElementById(`person-${i}`)?.scrollIntoView({ behavior: 'smooth' })}
-          className={`w-2 h-2 rounded-full transition-colors ${
-            i === current ? 'bg-primary-600' : 'bg-gray-300 hover:bg-gray-400'
-          }`}
-        />
-      ))}
-    </div>
-    <span className="text-sm text-gray-600">Person {current + 1} of {total}</span>
-  </div>
-);
-
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -473,7 +456,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     </div>
                     {savedPostal && !useSamePostal && (
                       <div className="flex items-center gap-2 pl-8">
-                        <span className="text-sm text-gray-600">Last used postal code / 上次使用的邮区编号: </span>
+                        <span className="text-sm text-gray-600">Last used postal code / 上次使的邮区编号: </span>
                         <button
                           type="button"
                           onClick={() => {
@@ -498,7 +481,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-700">
-                        Pre-fill new entries with last used data? / 用上次的资料预填新的登记？
+                        Pre-fill new entries with last used data? / 用上次的资料预填新登记？
                       </span>
                       <Button
                         type="button"
@@ -536,10 +519,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       <h3 className="text-xl font-semibold text-primary-700">
                         Person {personIndex + 1} / 参加者 {personIndex + 1}
                       </h3>
-                    </div>
-
-                    <div className="px-6 pt-4">
-                      <StepIndicator current={currentStep} total={fields.length} />
                     </div>
 
                     <div className="p-6 space-y-8">
@@ -669,6 +648,23 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           }
                                         }}
                                       />
+                                      {personIndex > 0 && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <Checkbox
+                                            checked={formField.value === form.getValues(`groups.0.${customField.id}`)}
+                                            onCheckedChange={(checked) => {
+                                              if (checked) {
+                                                const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
+                                              }
+                                            }}
+                                            className="h-4 w-4"
+                                          />
+                                          <label className="text-sm text-gray-600">
+                                            Use same as Person 1 / 使用与参加者1相同
+                                          </label>
+                                        </div>
+                                      )}
                                       {validatePostalCode(formField.value as string, userCountry) && (
                                         <p className="text-sm text-red-500 pl-1">
                                           {validatePostalCode(formField.value as string, userCountry)}
@@ -710,35 +706,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
 
-                {fields.length > 1 && (
-                  <div className="flex justify-between mt-4 mb-8">
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        const prevIndex = Math.max(0, currentStep - 1);
-                        document.getElementById(`person-${prevIndex}`)?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      disabled={currentStep === 0}
-                      variant="outline"
-                      className="w-[120px]"
-                    >
-                      Previous / 上一个
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        const nextIndex = Math.min(fields.length - 1, currentStep + 1);
-                        document.getElementById(`person-${nextIndex}`)?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      disabled={currentStep === fields.length - 1}
-                      variant="outline"
-                      className="w-[120px]"
-                    >
-                      Next / 下一个
-                    </Button>
-                  </div>
-                )}
-
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button
                     type="button"
@@ -747,7 +714,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-5 h-5" />
-                    Add Another Person ({fields.length}/{event.maxSeats}) / 添加参加者
+                    Add Another Person / 添加参加者
                   </Button>
                   <Button 
                     type="submit" 
