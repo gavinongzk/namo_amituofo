@@ -557,6 +557,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                               if (checked) {
                                                 const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
                                                 form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
+                                              } else {
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                               }
                                             }}
                                             className="h-4 w-4"
