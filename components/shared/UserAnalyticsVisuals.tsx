@@ -21,6 +21,8 @@ interface UserAnalyticsVisualsProps {
     name: string;
     phoneNumber: string;
     eventCount: number;
+    region: string;
+    town: string;
     events: {
       eventDate: string;
       eventTitle: string;
@@ -88,7 +90,7 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
   return (
     <div className="space-y-8">
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="p-4">
           <h5 className="text-sm font-medium text-gray-500">Total Events</h5>
           <p className="mt-1 text-2xl font-semibold">{attendee.eventCount}</p>
@@ -103,6 +105,18 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
           <h5 className="text-sm font-medium text-gray-500">Last Event</h5>
           <p className="mt-1 text-sm font-medium">
             {format(parseISO(attendee.lastEventDate), 'MMM dd, yyyy')}
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Region</h5>
+          <p className="mt-1 text-sm font-medium">
+            {attendee.region === 'Unknown' ? 'Not specified' : attendee.region}
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Town</h5>
+          <p className="mt-1 text-sm font-medium">
+            {attendee.town === 'Unknown' ? 'Not specified' : attendee.town}
           </p>
         </Card>
       </div>

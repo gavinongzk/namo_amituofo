@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -107,6 +107,11 @@ const AnalyticsDashboard: React.FC = () => {
     const [selectedRegion, setSelectedRegion] = useState<string>('all');
     const [selectedTown, setSelectedTown] = useState<string>('all');
     const [locationFilteredAttendees, setLocationFilteredAttendees] = useState<Attendee[]>([]);
+    const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
+        start: subMonths(new Date(), 6),
+        end: new Date()
+    });
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -525,6 +530,94 @@ const AnalyticsDashboard: React.FC = () => {
         }
     };
 
+    const calculateKPIs = (attendees: Attendee[]) => {
+        const totalUniqueAttendees = attendees.length;
+        const allEvents = attendees.flatMap(a => a.events);
+        const totalEvents = new Set(allEvents.map(e => e.eventDate + e.eventTitle)).size;
+        const avgAttendancePerEvent = totalEvents > 0 ? (allEvents.length / totalEvents).toFixed(1) : '0';
+        
+        // Calculate MoM Growth
+        const thisMonth = allEvents.filter(e => {
+            const date = parseISO(e.eventDate);
+            return date.getMonth() === new Date().getMonth();
+        }).length;
+        
+        const lastMonth = allEvents.filter(e => {
+            const date = parseISO(e.eventDate);
+            return date.getMonth() === subMonths(new Date(), 1).getMonth();
+        }).length;
+
+        const momGrowth = lastMonth > 0 ? 
+            (((thisMonth - lastMonth) / lastMonth) * 100).toFixed(1) : '0';
+
+        return {
+            totalUniqueAttendees,
+            totalEvents,
+            avgAttendancePerEvent,
+            momGrowth
+        };
+    };
+
+    const calculateEngagementMetrics = (attendees: Attendee[]) => {
+        // Calculate average time between events
+        const avgTimeBetweenEvents = attendees.map(attendee => {
+            const sortedEvents = [...attendee.events].sort((a, b) => {
+                if (!a || !b) return 0;
+                return parseISO(a.eventDate).getTime() - parseISO(b.eventDate).getTime();
+            });
+            
+            if (sortedEvents.length < 2) return null;
+            
+            let totalDays = 0;
+            for (let i = 1; i < sortedEvents.length; i++) {
+                totalDays += differenceInDays(
+                    parseISO(sortedEvents[i].eventDate),
+                    parseISO(sortedEvents[i-1].eventDate)
+                );
+            }
+            return totalDays / (sortedEvents.length - 1);
+        }).filter((days): days is number => days !== null);
+
+        const averageDaysBetweenEvents = avgTimeBetweenEvents.length > 0 
+            ? Math.round(avgTimeBetweenEvents.reduce((a, b) => a + (b as number), 0) / avgTimeBetweenEvents.length)
+            : 0;
+
+        // Calculate retention rate
+        const thisMonth = new Date();
+        const lastMonth = subMonths(thisMonth, 1);
+        
+        const activeLastMonth = attendees.filter(attendee => 
+            attendee.events.some(event => {
+                const eventDate = parseISO(event.eventDate);
+                return isSameMonth(eventDate, lastMonth) && isSameYear(eventDate, lastMonth);
+            })
+        ).length;
+
+        const activeThisMonth = attendees.filter(attendee => 
+            attendee.events.some(event => {
+                const eventDate = parseISO(event.eventDate);
+                return isSameMonth(eventDate, thisMonth) && isSameYear(eventDate, thisMonth);
+            })
+        ).length;
+
+        const retentionRate = activeLastMonth > 0 
+            ? ((activeThisMonth / activeLastMonth) * 100).toFixed(1)
+            : '0';
+
+        // Calculate churn risk
+        const thirtyDaysAgo = subMonths(new Date(), 1);
+        const attendeesAtRisk = attendees.filter(attendee => {
+            const lastEventDate = parseISO(attendee.lastEventDate);
+            return differenceInDays(new Date(), lastEventDate) > 30;
+        }).length;
+
+        return {
+            averageDaysBetweenEvents,
+            retentionRate,
+            attendeesAtRisk
+        };
+    };
+
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
@@ -541,8 +634,143 @@ const AnalyticsDashboard: React.FC = () => {
 
     return (
         <div className="p-6 space-y-8">
-            <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
-            
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold">Analytics Dashboard</h2>
+                <div className="flex gap-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            // TODO: Implement export functionality
+                            console.log('Export data');
+                        }}
+                    >
+                        Export Data
+                    </Button>
+                </div>
+            </div>
+
+            {/* KPI Section */}
+            {attendees.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {Object.entries(calculateKPIs(attendees)).map(([key, value]) => (
+                        <Card key={key} className="p-4">
+                            <h5 className="text-sm font-medium text-gray-500">
+                                {key.split(/(?=[A-Z])/).join(' ').toUpperCase()}
+                            </h5>
+                            <div className="mt-2 flex items-baseline">
+                                <p className="text-2xl font-semibold">
+                                    {key === 'momGrowth' ? `${value}%` : value}
+                                </p>
+                                {key === 'momGrowth' && (
+                                    <span className={`ml-2 text-sm ${
+                                        parseFloat(value.toString()) > 0 ? 'text-green-600' : 
+                                        parseFloat(value.toString()) < 0 ? 'text-red-600' : 'text-gray-600'
+                                    }`}>
+                                        {parseFloat(value.toString()) > 0 ? '↑' : parseFloat(value.toString()) < 0 ? '↓' : '→'}
+                                    </span>
+                                )}
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            {/* Engagement Metrics Section */}
+            {attendees.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Object.entries(calculateEngagementMetrics(attendees)).map(([key, value]) => (
+                        <Card key={key} className="p-4 bg-gray-50">
+                            <h5 className="text-sm font-medium text-gray-500">
+                                {key.split(/(?=[A-Z])/).join(' ').toUpperCase()}
+                            </h5>
+                            <div className="mt-2 flex items-baseline">
+                                <p className="text-2xl font-semibold">
+                                    {key === 'retentionRate' ? `${value}%` : 
+                                     key === 'averageDaysBetweenEvents' ? `${value} days` : 
+                                     value}
+                                </p>
+                                {key === 'attendeesAtRisk' && Number(value) > 0 && (
+                                    <span className="ml-2 text-sm text-amber-600">
+                                        Needs attention
+                                    </span>
+                                )}
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            {/* Enhanced Filtering Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-md">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Filter by Region</label>
+                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Regions</SelectItem>
+                            {regionDistribution.map(({ region }) => (
+                                <SelectItem key={region} value={region}>{region}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Filter by Town</label>
+                    <Select value={selectedTown} onValueChange={setSelectedTown}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Town" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Towns</SelectItem>
+                            {townDistribution.map(({ town }) => (
+                                <SelectItem key={town} value={town}>{town}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Filter by Category</label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {Object.keys(categories).map((category) => (
+                                <SelectItem key={category} value={category}>{category}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Date Range</label>
+                    <div className="flex gap-2">
+                        <Input
+                            type="date"
+                            value={format(dateRange.start, 'yyyy-MM-dd')}
+                            onChange={(e) => setDateRange(prev => ({
+                                ...prev,
+                                start: parseISO(e.target.value)
+                            }))}
+                        />
+                        <Input
+                            type="date"
+                            value={format(dateRange.end, 'yyyy-MM-dd')}
+                            onChange={(e) => setDateRange(prev => ({
+                                ...prev,
+                                end: parseISO(e.target.value)
+                            }))}
+                        />
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-6 rounded-lg shadow-md">
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Filter by Region</label>
@@ -606,7 +834,31 @@ const AnalyticsDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Attendance Trend</h3>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold">Attendance Trend</h3>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    // Toggle between monthly and yearly view
+                                    // TODO: Implement view toggle
+                                }}
+                            >
+                                Monthly
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    // Toggle between monthly and yearly view
+                                    // TODO: Implement view toggle
+                                }}
+                            >
+                                Yearly
+                            </Button>
+                        </div>
+                    </div>
                     <Line data={attendanceTrendData} options={attendanceTrendOptions} />
                 </div>
 
