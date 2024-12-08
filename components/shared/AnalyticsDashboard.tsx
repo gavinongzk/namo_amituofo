@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,6 +72,16 @@ interface TownDistribution {
     attendeeCount: number;
 }
 
+interface CohortData {
+    cohortMonth: string;
+    originalSize: number;
+    retentionData: {
+        month: string;
+        count: number;
+        percentage: number;
+    }[];
+}
+
 const userAttendanceOptions: ChartOptions<'line'> = {
   responsive: true,
   plugins: {
@@ -112,6 +122,8 @@ const AnalyticsDashboard: React.FC = () => {
         end: new Date()
     });
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [predictedAttendance, setPredictedAttendance] = useState<number[]>([]);
+    const [cohortAnalytics, setCohortAnalytics] = useState<CohortData[]>([]);
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -344,13 +356,30 @@ const AnalyticsDashboard: React.FC = () => {
     }).map(date => format(date, 'MMM yyyy'));
 
     const attendanceTrendData = {
-        labels,
+        labels: [
+            ...eachMonthOfInterval({
+                start: subMonths(new Date(), 5),
+                end: new Date()
+            }).map(date => format(date, 'MMM yyyy')),
+            ...Array(3).fill(0).map((_, i) => 
+                format(addMonths(new Date(), i + 1), 'MMM yyyy')
+            )
+        ],
         datasets: [
             {
-                label: 'Attendance Trend',
-                data: attendanceTrend,
+                label: 'Actual Attendance',
+                data: [...attendanceTrend, ...new Array(3).fill(null)],
                 borderColor: 'rgb(53, 162, 235)',
                 backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                tension: 0.3,
+                fill: true,
+            },
+            {
+                label: 'Predicted Attendance',
+                data: [...new Array(6).fill(null), ...predictedAttendance],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderDash: [5, 5],
                 tension: 0.3,
                 fill: true,
             }
@@ -618,6 +647,98 @@ const AnalyticsDashboard: React.FC = () => {
         };
     };
 
+    // Add predictive analytics calculation
+    const calculatePredictedAttendance = (attendees: Attendee[]) => {
+        const now = new Date();
+        const monthlyAttendance = new Array(6).fill(0);
+        
+        // Calculate past 6 months attendance
+        for (let i = 5; i >= 0; i--) {
+            const monthStart = startOfMonth(subMonths(now, i));
+            const monthEnd = endOfMonth(subMonths(now, i));
+            
+            const count = attendees.reduce((acc, attendee) => {
+                return acc + attendee.events.filter(event => {
+                    const eventDate = parseISO(event.eventDate);
+                    return eventDate >= monthStart && eventDate <= monthEnd;
+                }).length;
+            }, 0);
+            
+            monthlyAttendance[5-i] = count;
+        }
+
+        // Simple moving average prediction for next 3 months
+        const predictions = [];
+        const windowSize = 3;
+        
+        for (let i = 0; i < 3; i++) {
+            const recentMonths = monthlyAttendance.slice(-windowSize);
+            const prediction = Math.round(recentMonths.reduce((a, b) => a + b, 0) / windowSize);
+            predictions.push(prediction);
+            monthlyAttendance.push(prediction);
+        }
+
+        setPredictedAttendance(predictions);
+    };
+
+    // Add cohort analysis calculation
+    const calculateCohortAnalytics = (attendees: Attendee[]) => {
+        const cohorts: Map<string, Attendee[]> = new Map();
+        
+        // Group attendees by their first event month
+        attendees.forEach(attendee => {
+            if (attendee.events.length === 0) return;
+            
+            const firstEventDate = parseISO(attendee.events[0].eventDate);
+            const cohortMonth = format(firstEventDate, 'yyyy-MM');
+            
+            if (!cohorts.has(cohortMonth)) {
+                cohorts.set(cohortMonth, []);
+            }
+            cohorts.get(cohortMonth)!.push(attendee);
+        });
+
+        const cohortData: CohortData[] = [];
+        const months = Array.from(cohorts.keys()).sort();
+
+        months.forEach(cohortMonth => {
+            const cohortAttendees = cohorts.get(cohortMonth)!;
+            const originalSize = cohortAttendees.length;
+            const retentionData = [];
+
+            // Calculate retention for each month after cohort month
+            for (let i = 0; i <= months.indexOf(cohortMonth); i++) {
+                const targetMonth = format(addMonths(parseISO(cohortMonth + '-01'), i), 'yyyy-MM');
+                const activeInMonth = cohortAttendees.filter(attendee =>
+                    attendee.events.some(event => 
+                        format(parseISO(event.eventDate), 'yyyy-MM') === targetMonth
+                    )
+                ).length;
+
+                retentionData.push({
+                    month: targetMonth,
+                    count: activeInMonth,
+                    percentage: Math.round((activeInMonth / originalSize) * 100)
+                });
+            }
+
+            cohortData.push({
+                cohortMonth,
+                originalSize,
+                retentionData
+            });
+        });
+
+        setCohortAnalytics(cohortData);
+    };
+
+    useEffect(() => {
+        if (attendees.length > 0) {
+            calculatePredictedAttendance(attendees);
+            calculateCohortAnalytics(attendees);
+        }
+    }, [attendees]);
+
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
@@ -771,64 +892,33 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-6 rounded-lg shadow-md">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Region</label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Regions</SelectItem>
-                            {regionDistribution.map(({ region }) => (
-                                <SelectItem key={region} value={region}>{region}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Town</label>
-                    <Select value={selectedTown} onValueChange={setSelectedTown}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Town" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Towns</SelectItem>
-                            {townDistribution.map(({ town }) => (
-                                <SelectItem key={town} value={town}>{town}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="col-span-full mt-4">
-                    <h3 className="text-lg font-semibold mb-2">
-                        Filtered Attendees ({locationFilteredAttendees.length} total)
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
-                        <table className="w-full">
-                            <thead className="text-sm text-gray-600">
-                                <tr>
-                                    <th className="text-left py-2">Name</th>
-                                    <th className="text-left py-2">Region</th>
-                                    <th className="text-left py-2">Town</th>
-                                    <th className="text-left py-2">Event Count</th>
+            {/* Filtered Attendees Table */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold mb-2">
+                    Filtered Attendees ({locationFilteredAttendees.length} total)
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+                    <table className="w-full">
+                        <thead className="text-sm text-gray-600">
+                            <tr>
+                                <th className="text-left py-2">Name</th>
+                                <th className="text-left py-2">Region</th>
+                                <th className="text-left py-2">Town</th>
+                                <th className="text-left py-2">Event Count</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-sm">
+                            {locationFilteredAttendees.map((attendee, index) => (
+                                <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
+                                    className="border-t border-gray-200">
+                                    <td className="py-2">{attendee.name}</td>
+                                    <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
+                                    <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
+                                    <td className="py-2">{attendee.eventCount}</td>
                                 </tr>
-                            </thead>
-                            <tbody className="text-sm">
-                                {locationFilteredAttendees.map((attendee, index) => (
-                                    <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
-                                        className="border-t border-gray-200">
-                                        <td className="py-2">{attendee.name}</td>
-                                        <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
-                                        <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
-                                        <td className="py-2">{attendee.eventCount}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -972,6 +1062,69 @@ const AnalyticsDashboard: React.FC = () => {
                     />
                 </div>
             )}
+
+            {/* Predictive Analytics Section */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Attendance Forecast</h3>
+                <div className="h-[400px]">
+                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                    {predictedAttendance.map((prediction, index) => (
+                        <Card key={index} className="p-4">
+                            <h5 className="text-sm font-medium text-gray-500">
+                                {format(addMonths(new Date(), index + 1), 'MMMM yyyy')}
+                            </h5>
+                            <p className="mt-2 text-2xl font-semibold">
+                                {prediction}
+                                <span className="text-sm text-gray-500 ml-2">attendees</span>
+                            </p>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+
+            {/* Cohort Analysis Section */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Cohort Analysis</h3>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead>
+                            <tr className="bg-gray-50">
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Cohort</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Size</th>
+                                {Array.from({ length: 6 }, (_, i) => (
+                                    <th key={i} className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                                        Month {i + 1}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {cohortAnalytics.map((cohort) => (
+                                <tr key={cohort.cohortMonth} className="border-t border-gray-200">
+                                    <td className="px-4 py-2">{format(parseISO(cohort.cohortMonth + '-01'), 'MMM yyyy')}</td>
+                                    <td className="px-4 py-2">{cohort.originalSize}</td>
+                                    {cohort.retentionData.map((data, i) => (
+                                        <td key={i} className="px-4 py-2">
+                                            <div className="flex items-center">
+                                                <div 
+                                                    className="h-8 bg-blue-100 rounded"
+                                                    style={{ width: `${data.percentage}%` }}
+                                                >
+                                                    <div className="px-2 py-1 text-xs">
+                                                        {data.percentage}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

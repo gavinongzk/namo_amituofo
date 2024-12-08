@@ -42,6 +42,14 @@ interface UserAnalyticsVisualsProps {
 }
 
 const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, allEvents }) => {
+  // Sort events chronologically
+  const sortedEvents = [...attendee.events].sort((a, b) => 
+    parseISO(a.eventDate).getTime() - parseISO(b.eventDate).getTime()
+  );
+
+  const firstEvent = sortedEvents[0];
+  const lastEvent = sortedEvents[sortedEvents.length - 1];
+
   // Process data for visualizations
   const monthlyAttendance = attendee.events.reduce((acc, event) => {
     const month = format(parseISO(event.eventDate), 'MMM yyyy');
@@ -98,13 +106,13 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
         <Card className="p-4">
           <h5 className="text-sm font-medium text-gray-500">First Event</h5>
           <p className="mt-1 text-sm font-medium">
-            {format(parseISO(attendee.events[0].eventDate), 'MMM dd, yyyy')}
+            {firstEvent ? format(parseISO(firstEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
           </p>
         </Card>
         <Card className="p-4">
           <h5 className="text-sm font-medium text-gray-500">Last Event</h5>
           <p className="mt-1 text-sm font-medium">
-            {format(parseISO(attendee.lastEventDate), 'MMM dd, yyyy')}
+            {lastEvent ? format(parseISO(lastEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
           </p>
         </Card>
         <Card className="p-4">
