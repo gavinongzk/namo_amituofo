@@ -230,7 +230,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> 在扫码区出示您的二维码
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 工作人员会为您完成扫码确认
+                <span className="font-medium text-gray-900">4.</span> 义工们会为您完成扫码确认
               </li>
             </ol>
           </div>
@@ -248,7 +248,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> Present your QR code at the scanning station
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> Staff will scan your code to confirm your attendance
+                <span className="font-medium text-gray-900">4.</span> Volunteers will scan your code to confirm your attendance
               </li>
             </ol>
           </div>
