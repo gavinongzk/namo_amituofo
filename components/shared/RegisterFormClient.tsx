@@ -22,6 +22,8 @@ import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
 
+const AUTOSAVE_INTERVAL = 30000; // 30 seconds
+
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
 };
@@ -68,6 +70,82 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
   const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
   const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const loadSavedData = async () => {
+      try {
+        // Check for recovery data
+        const recoveryData = localStorage.getItem('registrationRecoveryData');
+        if (recoveryData) {
+          const { values, timestamp, eventId } = JSON.parse(recoveryData);
+          const recoveryTime = new Date(timestamp);
+          const now = new Date();
+          const hoursSinceRecovery = (now.getTime() - recoveryTime.getTime()) / (1000 * 60 * 60);
+
+          // Only recover if it's for the same event and less than 24 hours old
+          if (eventId === event._id && hoursSinceRecovery < 24) {
+            const shouldRecover = window.confirm(
+              'We found a previously unsubmitted registration. Would you like to recover it? / 我们发现之前未提交的注册信息。您要恢复吗？'
+            );
+            if (shouldRecover) {
+              form.reset(values);
+              toast.success('Registration data recovered / 注册数据已恢复');
+            }
+          }
+          // Clear old recovery data
+          localStorage.removeItem('registrationRecoveryData');
+        }
+
+        // Load saved postal code and other non-sensitive data
+        const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
+        if (savedPostalCode) {
+          const postalField = customFields.find(f => f.type === 'postal')?.id;
+          if (postalField) {
+            form.setValue(`groups.0.${postalField}`, savedPostalCode);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    };
+
+    loadSavedData();
+  }, [event._id, form]);
+
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      const formData = form.getValues();
+      try {
+        // Save current form state
+        const autoSaveData = {
+          values: formData,
+          timestamp: new Date().toISOString(),
+          eventId: event._id
+        };
+        localStorage.setItem('registrationAutoSave', JSON.stringify(autoSaveData));
+      } catch (error) {
+        console.error('Error auto-saving form:', error);
+      }
+    }, AUTOSAVE_INTERVAL);
+
+    return () => clearInterval(autoSaveInterval);
+  }, [event._id, form]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const formData = form.getValues();
+      const isDirty = Object.keys(formData.groups[0]).some(key => formData.groups[0][key] !== '');
+      
+      if (isDirty) {
+        const message = 'You have unsaved changes. Are you sure you want to leave? / 您有未保存的更改。确定要离开吗？';
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [form]);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -232,13 +310,28 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     await submitForm(values, toastId);
   };
 
-  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
+  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string, retryCount = 0) => {
     setIsSubmitting(true);
     setMessage('');
     
-    toast.loading("Processing registration... / 处理注册中...", { id: toastId });
+    const maxRetries = 3;
+    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000); // Exponential backoff capped at 8 seconds
     
     try {
+      toast.loading("Processing registration... / 处理注册中...", { id: toastId });
+      
+      // Check if event is still available and has capacity
+      const eventResponse = await fetch(`/api/events/${event._id}/availability`);
+      if (!eventResponse.ok) {
+        throw new Error('Failed to check event availability');
+      }
+      const eventData = await eventResponse.json();
+      if (eventData.currentRegistrations >= event.maxSeats) {
+        toast.error("Event is now fully booked. Please try another event. / 活动已满员，请选择其他活动。", { id: toastId });
+        setMessage('Event is fully booked');
+        return;
+      }
+
       const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
@@ -246,8 +339,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           // Save first person's postal code
           if (index === 0 && field?.type === 'postal') {
             const postalValue = String(value);
-            localStorage.setItem('lastUsedPostal', postalValue);
-            setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
+            try {
+              localStorage.setItem('lastUsedPostal', postalValue);
+              setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
+            } catch (error) {
+              console.error('Error saving postal code:', error);
+            }
           }
           return {
             id: key,
@@ -274,17 +371,47 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create order');
       }
 
       const data = await response.json();
+      
+      // Verify the order was created successfully
+      const verifyResponse = await fetch(`/api/orders/${data.order._id}/verify`);
+      if (!verifyResponse.ok) {
+        throw new Error('Order verification failed');
+      }
       
       toast.success("Registration successful! / 注册成功！", { id: toastId });
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
+      
+      if (retryCount < maxRetries) {
+        toast.loading(`Retrying submission (${retryCount + 1}/${maxRetries})... / 重试提交中...`, { id: toastId });
+        
+        // Wait with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        
+        // Retry submission
+        return submitForm(values, toastId, retryCount + 1);
+      }
+      
       toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
       setMessage('Failed to submit registration. Please try again.');
+      
+      // Save form data locally for recovery
+      try {
+        const recoveryData = {
+          values,
+          timestamp: new Date().toISOString(),
+          eventId: event._id
+        };
+        localStorage.setItem('registrationRecoveryData', JSON.stringify(recoveryData));
+      } catch (error) {
+        console.error('Error saving recovery data:', error);
+      }
     } finally {
       setIsSubmitting(false);
     }
