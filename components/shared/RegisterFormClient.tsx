@@ -15,12 +15,13 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { CustomField } from "@/types"
-import { useUser } from '@clerk/nextjs';
-import { getCookie, setCookie } from 'cookies-next';
+import { useUser } from '@clerk/nextjs'
+import { getCookie, setCookie } from 'cookies-next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
-import { debounce } from 'lodash';
+import { debounce } from 'lodash'
+import * as Sentry from "@sentry/nextjs"
 
 const AUTOSAVE_INTERVAL = 30000; // 30 seconds
 
@@ -60,57 +61,154 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentRegistrations, setCurrentRegistrations] = useState(initialOrderCount)
-  const [message, setMessage] = useState('');
-  const { user, isLoaded } = useUser();
-  const [userCountry, setUserCountry] = useState<string | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([]);
-  const [formValues, setFormValues] = useState<any>(null);
-  const [isCountryLoading, setIsCountryLoading] = useState(true);
-  const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
-  const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
-  const [currentStep, setCurrentStep] = useState(0);
+  const [message, setMessage] = useState('')
+  const { user, isLoaded } = useUser()
+  const [userCountry, setUserCountry] = useState<string | null>(null)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([])
+  const [formValues, setFormValues] = useState<any>(null)
+  const [isCountryLoading, setIsCountryLoading] = useState(true)
+  const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({})
+  const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({})
+  const [currentStep, setCurrentStep] = useState(0)
+
+  const getDefaultCountry = (country: string | null) => {
+    return country === 'Malaysia' ? 'MY' : 'SG';
+  };
+
+  const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default
+
+  const formSchema = z.object({
+    groups: z.array(
+      z.object(
+        Object.fromEntries(
+          customFields.map(field => [
+            field.id,
+            field.type === 'boolean'
+              ? z.boolean()
+              : field.type === 'phone'
+                ? z.string()
+                    .min(1, { message: "Phone number is required" })
+                    .refine(
+                      (value) => {
+                        const index = parseInt(field.id.split('_')[1]) - 1
+                        return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value)
+                      },
+                      { message: "Invalid phone number" }
+                    )
+                : field.type === 'postal'
+                  ? z.string()
+                      .min(1, { message: "Postal code is required" })
+                      .refine(
+                        (value) => isValidPostalCode(value, userCountry || 'Singapore'),
+                        {
+                          message: userCountry === 'Singapore' 
+                            ? "Please enter a valid 6-digit postal code"
+                            : userCountry === 'Malaysia'
+                              ? "Please enter a valid 5-digit postal code"
+                              : "Please enter a valid postal code"
+                        }
+                      )
+                  : field.label.toLowerCase().includes('name')
+                    ? z.string()
+                        .min(1, { message: "This field is required" })
+                        .refine(
+                          (value) => isValidName(value),
+                          { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                        )
+                    : z.string().min(1, { message: "This field is required" })
+          ])
+        )
+      )
+    )
+  })
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      groups: [Object.fromEntries(
+        customFields.map(field => [
+          field.id, 
+          field.type === 'boolean' ? false : ''
+        ])
+      )]
+    },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "groups"
+  })
+
+  const handleError = (error: any, errorInfo: any = {}) => {
+    Sentry.withScope((scope) => {
+      scope.setExtras(errorInfo)
+      scope.setTag("feature", "registration")
+      scope.setLevel("error")
+      Sentry.captureException(error)
+    })
+    
+    toast.error("An error occurred during registration. Our team has been notified.")
+  }
+
+  const saveFormData = (values: z.infer<typeof formSchema>) => {
+    const firstPerson = values.groups[0]
+    const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
+      if (!key.includes('phone')) {
+        acc[key] = value
+      }
+      return acc
+    }, {} as Record<string, string | boolean>)
+
+    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), { 
+      maxAge: 60 * 60 * 24 * 30 // 30 days
+    })
+  }
+
+  const debouncedSaveForm = useMemo(
+    () => debounce((values: z.infer<typeof formSchema>) => {
+      saveFormData(values)
+    }, 1000),
+    [saveFormData]
+  )
 
   useEffect(() => {
     const loadSavedData = async () => {
       try {
-        // Check for recovery data
-        const recoveryData = localStorage.getItem('registrationRecoveryData');
+        const recoveryData = localStorage.getItem('registrationRecoveryData')
         if (recoveryData) {
-          const { values, timestamp, eventId } = JSON.parse(recoveryData);
-          const recoveryTime = new Date(timestamp);
-          const now = new Date();
-          const hoursSinceRecovery = (now.getTime() - recoveryTime.getTime()) / (1000 * 60 * 60);
+          const { values, timestamp, eventId } = JSON.parse(recoveryData)
+          const recoveryTime = new Date(timestamp)
+          const now = new Date()
+          const hoursSinceRecovery = (now.getTime() - recoveryTime.getTime()) / (1000 * 60 * 60)
 
-          // Only recover if it's for the same event and less than 24 hours old
           if (eventId === event._id && hoursSinceRecovery < 24) {
             const shouldRecover = window.confirm(
               'We found a previously unsubmitted registration. Would you like to recover it? / 我们发现之前未提交的注册信息。您要恢复吗？'
-            );
+            )
             if (shouldRecover) {
-              form.reset(values);
-              toast.success('Registration data recovered / 注册数据已恢复');
+              form.reset(values)
+              toast.success('Registration data recovered / 注册数据已恢复')
             }
           }
-          // Clear old recovery data
-          localStorage.removeItem('registrationRecoveryData');
+          localStorage.removeItem('registrationRecoveryData')
         }
 
-        // Load saved postal code and other non-sensitive data
-        const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
+        const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal')
         if (savedPostalCode) {
-          const postalField = customFields.find(f => f.type === 'postal')?.id;
+          const postalField = customFields.find(f => f.type === 'postal')?.id
           if (postalField) {
-            form.setValue(`groups.0.${postalField}`, savedPostalCode);
+            form.setValue(`groups.0.${postalField}`, savedPostalCode)
           }
         }
       } catch (error) {
-        console.error('Error loading saved data:', error);
+        handleError(error, { context: 'loadSavedData' })
+        console.error('Error loading saved data:', error)
       }
-    };
+    }
 
-    loadSavedData();
-  }, [event._id, form]);
+    loadSavedData()
+  }, [event._id, form, customFields])
 
   useEffect(() => {
     const autoSaveInterval = setInterval(() => {
@@ -203,75 +301,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     detectCountry();
   }, [isLoaded, user]);
 
-  const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
-
-  const formSchema = z.object({
-    groups: z.array(
-      z.object(
-        Object.fromEntries(
-          customFields.map(field => [
-            field.id,
-            field.type === 'boolean'
-              ? z.boolean()
-              : field.type === 'phone'
-                ? z.string()
-                    .min(1, { message: "Phone number is required" })
-                    .refine(
-                      (value) => {
-                        const index = parseInt(field.id.split('_')[1]) - 1;
-                        return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
-                      },
-                      { message: "Invalid phone number" }
-                    )
-                : field.type === 'postal'
-                  ? z.string()
-                      .min(1, { message: "Postal code is required" })
-                      .refine(
-                        (value) => isValidPostalCode(value, userCountry || 'Singapore'),
-                        {
-                          message: userCountry === 'Singapore' 
-                            ? "Please enter a valid 6-digit postal code"
-                            : userCountry === 'Malaysia'
-                              ? "Please enter a valid 5-digit postal code"
-                              : "Please enter a valid postal code"
-                        }
-                      )
-                  : field.label.toLowerCase().includes('name')
-                    ? z.string()
-                        .min(1, { message: "This field is required" })
-                        .refine(
-                          (value) => isValidName(value),
-                          { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
-                        )
-                    : z.string().min(1, { message: "This field is required" })
-          ])
-        )
-      )
-    )
-  });
-  // Helper function to get default country code
-  const getDefaultCountry = (country: string | null) => {
-    return country === 'Malaysia' ? 'MY' : 'SG';
-  };
-
-  // Update form initialization with detected country
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      groups: [Object.fromEntries(
-        customFields.map(field => [
-          field.id, 
-          field.type === 'boolean' ? false : ''
-        ])
-      )]
-    },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "groups"
-  });
-
   const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
     const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
     
@@ -293,21 +322,32 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
-    
-    saveFormData(values);
-    
-    const duplicates = await checkForDuplicatePhoneNumbers(values);
-    
-    if (duplicates.length > 0) {
-      toast.dismiss(toastId);
-      setDuplicatePhoneNumbers(duplicates);
-      setFormValues(values);
-      setShowConfirmation(true);
-      return;
+    try {
+      setIsSubmitting(true);
+      const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
+      
+      saveFormData(values);
+      
+      const duplicates = await checkForDuplicatePhoneNumbers(values);
+      
+      if (duplicates.length > 0) {
+        toast.dismiss(toastId);
+        setDuplicatePhoneNumbers(duplicates);
+        setFormValues(values);
+        setShowConfirmation(true);
+        return;
+      }
+      
+      await submitForm(values, toastId);
+    } catch (error) {
+      handleError(error, { 
+        context: 'form_submission',
+        formData: values,
+        eventId: event._id
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    await submitForm(values, toastId);
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string, retryCount = 0) => {
@@ -451,62 +491,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   }, []);
 
-  const saveFormData = (values: z.infer<typeof formSchema>) => {
-    const firstPerson = values.groups[0];
-    const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
-      // Don't save sensitive info
-      if (!key.includes('phone')) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string | boolean>);
-
-    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), { 
-      maxAge: 60 * 60 * 24 * 30 // 30 days
-    });
-  };
-
-  const debouncedSaveForm = useMemo(
-    () => debounce((values: z.infer<typeof formSchema>) => {
-      saveFormData(values);
-    }, 1000),
-    []
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const personIndex = parseInt(entry.target.id.split('-')[1]);
-            setCurrentStep(personIndex);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    fields.forEach((_, index) => {
-      const element = document.getElementById(`person-${index}`);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [fields.length]);
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name?.includes('postal')) {
-        const postalField = customFields.find(f => f.type === 'postal')?.id;
-        if (postalField) {
-          debouncedSaveForm(form.getValues());
-        }
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, debouncedSaveForm]);
-
   const validatePostalCode = (code: string, country: string | null) => {
     if (!code) return '';
     if (country === 'Singapore' && !/^\d{6}$/.test(code)) {
@@ -518,8 +502,31 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     return '';
   };
 
+  const testSentryError = () => {
+    try {
+      // Deliberately throw an error for testing
+      throw new Error('Test error from registration form');
+    } catch (error) {
+      handleError(error, { 
+        context: 'test_error',
+        eventId: event._id,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
+      {process.env.NODE_ENV === 'development' && (
+        <Button
+          type="button"
+          onClick={testSentryError}
+          className="mb-4 bg-yellow-500 hover:bg-yellow-600 text-white"
+        >
+          Test Sentry Error
+        </Button>
+      )}
+      
       {isCountryLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
