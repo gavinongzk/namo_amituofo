@@ -54,8 +54,8 @@ interface RegisterFormClientProps {
   initialOrderCount: number
 }
 
-const getCountryFromPhoneNumber = (phoneNumber: string) => {
-  if (!phoneNumber) return null;
+const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
+  if (!phoneNumber || typeof phoneNumber !== 'string') return null;
   if (phoneNumber.startsWith('+60')) return 'Malaysia';
   if (phoneNumber.startsWith('+65')) return 'Singapore';
   return null;
@@ -64,7 +64,6 @@ const getCountryFromPhoneNumber = (phoneNumber: string) => {
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentRegistrations, setCurrentRegistrations] = useState(initialOrderCount)
   const [message, setMessage] = useState('');
   const { user, isLoaded } = useUser();
   const [userCountry, setUserCountry] = useState<string | null>(null);
@@ -73,8 +72,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
-  const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
-  const [currentStep, setCurrentStep] = useState(0);
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
@@ -298,7 +295,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       setIsSubmitting(false);
     }
   };
-  const isFullyBooked = currentRegistrations >= event.maxSeats;
+  const isFullyBooked = initialOrderCount >= event.maxSeats;
 
   // Update the append function
   const handleAddPerson = () => {
@@ -318,7 +315,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     if (savedFormData) {
       try {
         const parsedData = JSON.parse(savedFormData as string);
-        setLastUsedFields(parsedData);
         
         // Pre-fill first person's non-sensitive fields
         Object.entries(parsedData).forEach(([fieldId, value]) => {
@@ -360,8 +356,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const personIndex = parseInt(entry.target.id.split('-')[1]);
-            setCurrentStep(personIndex);
+            // We don't need to track the current step anymore
+            // as it's not used anywhere
           }
         });
       },
@@ -549,7 +545,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       <Input 
                                         {...formField}
                                         className={`max-w-md ${
-                                          validatePostalCode(formField.value as string, personIndex) 
+                                          validatePostalCode(String(formField.value || ''), personIndex) 
                                             ? 'border-red-500 focus:border-red-500' 
                                             : ''
                                         }`}
@@ -591,9 +587,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           </label>
                                         </div>
                                       )}
-                                      {validatePostalCode(formField.value as string, personIndex) && (
+                                      {validatePostalCode(String(formField.value || ''), personIndex) && (
                                         <p className="text-sm text-red-500 pl-1">
-                                          {validatePostalCode(formField.value as string, personIndex)}
+                                          {validatePostalCode(String(formField.value || ''), personIndex)}
                                         </p>
                                       )}
                                     </div>
