@@ -54,10 +54,16 @@ interface RegisterFormClientProps {
   initialOrderCount: number
 }
 
+const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
+  if (!phoneNumber || typeof phoneNumber !== 'string') return null;
+  if (phoneNumber.startsWith('+60')) return 'Malaysia';
+  if (phoneNumber.startsWith('+65')) return 'Singapore';
+  return null;
+};
+
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentRegistrations, setCurrentRegistrations] = useState(initialOrderCount)
   const [message, setMessage] = useState('');
   const { user, isLoaded } = useUser();
   const [userCountry, setUserCountry] = useState<string | null>(null);
@@ -66,8 +72,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
-  const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
-  const [currentStep, setCurrentStep] = useState(0);
+  const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -152,10 +157,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         (value) => isValidPostalCode(value, userCountry || 'Singapore'),
                         {
                           message: userCountry === 'Singapore' 
-                            ? "Please enter a valid 6-digit postal code"
+                            ? "Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字"
                             : userCountry === 'Malaysia'
-                              ? "Please enter a valid 5-digit postal code"
-                              : "Please enter a valid postal code"
+                              ? "Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字"
+                              : "Please enter a valid postal code / 请输入有效的邮区编号"
                         }
                       )
                   : field.label.toLowerCase().includes('name')
@@ -274,7 +279,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        throw new Error(`Failed to create order: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -283,13 +288,14 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
+      
       toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
       setMessage('Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
-  const isFullyBooked = currentRegistrations >= event.maxSeats;
+  const isFullyBooked = initialOrderCount >= event.maxSeats;
 
   // Update the append function
   const handleAddPerson = () => {
@@ -309,7 +315,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     if (savedFormData) {
       try {
         const parsedData = JSON.parse(savedFormData as string);
-        setLastUsedFields(parsedData);
         
         // Pre-fill first person's non-sensitive fields
         Object.entries(parsedData).forEach(([fieldId, value]) => {
@@ -351,8 +356,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const personIndex = parseInt(entry.target.id.split('-')[1]);
-            setCurrentStep(personIndex);
+            // We don't need to track the current step anymore
+            // as it's not used anywhere
           }
         });
       },
@@ -369,6 +374,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
+      // Watch for phone number changes
+      if (name?.includes('phone')) {
+        const personIndex = parseInt(name.split('.')[1]);
+        const phoneValue = value?.groups?.[personIndex]?.phone;
+        const detectedCountry = getCountryFromPhoneNumber(phoneValue);
+        
+        if (detectedCountry) {
+          setPhoneCountries(prev => ({
+            ...prev,
+            [personIndex]: detectedCountry
+          }));
+        }
+      }
+
       if (name?.includes('postal')) {
         const postalField = customFields.find(f => f.type === 'postal')?.id;
         if (postalField) {
@@ -379,17 +398,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
-
-  const validatePostalCode = (code: string, country: string | null) => {
-    if (!code) return '';
-    if (country === 'Singapore' && !/^\d{6}$/.test(code)) {
-      return 'Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字';
-    }
-    if (country === 'Malaysia' && !/^\d{5}$/.test(code)) {
-      return 'Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字';
-    }
-    return '';
-  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -521,30 +529,15 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                     <div className="space-y-2">
                                       <Input 
                                         {...formField}
-                                        className={`max-w-md ${
-                                          validatePostalCode(formField.value as string, userCountry) 
-                                            ? 'border-red-500 focus:border-red-500' 
-                                            : ''
-                                        }`}
+                                        className="max-w-md"
                                         value={String(formField.value)}
                                         placeholder={
-                                          userCountry === 'Singapore' 
-                                            ? "e.g. 123456" 
-                                            : userCountry === 'Malaysia'
-                                              ? "e.g. 12345"
-                                              : "Enter postal code"
+                                          phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
+                                            ? "e.g. 12345"
+                                            : "e.g. 123456"
                                         }
                                         onChange={(e) => {
                                           formField.onChange(e);
-                                          const error = validatePostalCode(e.target.value, userCountry);
-                                          if (error) {
-                                            form.setError(`groups.${personIndex}.${customField.id}`, {
-                                              type: 'manual',
-                                              message: error
-                                            });
-                                          } else {
-                                            form.clearErrors(`groups.${personIndex}.${customField.id}`);
-                                          }
                                         }}
                                       />
                                       {personIndex > 0 && (
@@ -565,11 +558,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             Use same as Person 1 / 使用与参加者1相同
                                           </label>
                                         </div>
-                                      )}
-                                      {validatePostalCode(formField.value as string, userCountry) && (
-                                        <p className="text-sm text-red-500 pl-1">
-                                          {validatePostalCode(formField.value as string, userCountry)}
-                                        </p>
                                       )}
                                     </div>
                                   ) : (
