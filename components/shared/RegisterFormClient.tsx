@@ -54,6 +54,13 @@ interface RegisterFormClientProps {
   initialOrderCount: number
 }
 
+const getCountryFromPhoneNumber = (phoneNumber: string) => {
+  if (!phoneNumber) return null;
+  if (phoneNumber.startsWith('+60')) return 'Malaysia';
+  if (phoneNumber.startsWith('+65')) return 'Singapore';
+  return null;
+};
+
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -68,6 +75,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
   const [lastUsedFields, setLastUsedFields] = useState<Record<string, string | boolean>>({});
   const [currentStep, setCurrentStep] = useState(0);
+  const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -370,6 +378,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
+      // Watch for phone number changes
+      if (name?.includes('phone')) {
+        const personIndex = parseInt(name.split('.')[1]);
+        const phoneValue = value?.groups?.[personIndex]?.phone;
+        const detectedCountry = getCountryFromPhoneNumber(phoneValue);
+        
+        if (detectedCountry) {
+          setPhoneCountries(prev => ({
+            ...prev,
+            [personIndex]: detectedCountry
+          }));
+        }
+      }
+
       if (name?.includes('postal')) {
         const postalField = customFields.find(f => f.type === 'postal')?.id;
         if (postalField) {
@@ -381,12 +403,16 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
 
-  const validatePostalCode = (code: string, country: string | null) => {
+  const validatePostalCode = (code: string, personIndex: number) => {
     if (!code) return '';
-    if (country === 'Singapore' && !/^\d{6}$/.test(code)) {
+    
+    // Get country from phone number if available, otherwise use default userCountry
+    const personCountry = phoneCountries[personIndex] || userCountry;
+    
+    if (personCountry === 'Singapore' && !/^\d{6}$/.test(code)) {
       return 'Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字';
     }
-    if (country === 'Malaysia' && !/^\d{5}$/.test(code)) {
+    if (personCountry === 'Malaysia' && !/^\d{5}$/.test(code)) {
       return 'Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字';
     }
     return '';
@@ -523,21 +549,19 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       <Input 
                                         {...formField}
                                         className={`max-w-md ${
-                                          validatePostalCode(formField.value as string, userCountry) 
+                                          validatePostalCode(formField.value as string, personIndex) 
                                             ? 'border-red-500 focus:border-red-500' 
                                             : ''
                                         }`}
                                         value={String(formField.value)}
                                         placeholder={
-                                          userCountry === 'Singapore' 
-                                            ? "e.g. 123456" 
-                                            : userCountry === 'Malaysia'
-                                              ? "e.g. 12345"
-                                              : "Enter postal code"
+                                          phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
+                                            ? "e.g. 12345"
+                                            : "e.g. 123456"
                                         }
                                         onChange={(e) => {
                                           formField.onChange(e);
-                                          const error = validatePostalCode(e.target.value, userCountry);
+                                          const error = validatePostalCode(e.target.value, personIndex);
                                           if (error) {
                                             form.setError(`groups.${personIndex}.${customField.id}`, {
                                               type: 'manual',
@@ -567,9 +591,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           </label>
                                         </div>
                                       )}
-                                      {validatePostalCode(formField.value as string, userCountry) && (
+                                      {validatePostalCode(formField.value as string, personIndex) && (
                                         <p className="text-sm text-red-500 pl-1">
-                                          {validatePostalCode(formField.value as string, userCountry)}
+                                          {validatePostalCode(formField.value as string, personIndex)}
                                         </p>
                                       )}
                                     </div>
