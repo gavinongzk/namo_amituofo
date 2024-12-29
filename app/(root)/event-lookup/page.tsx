@@ -89,19 +89,21 @@ const EventLookupPage = () => {
                         />
                     )}
                     
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            checked={useManualInput}
-                            onCheckedChange={(checked) => {
-                                setUseManualInput(checked === true);
+                    <div className="text-xs text-gray-500 text-right">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setUseManualInput(!useManualInput);
                                 setPhoneNumber('');
                             }}
-                        />
-                        <label className="text-xs text-gray-500">
-                            I am not from Singapore/Malaysia but would like to lookup (please include country calling code such as +86)
-                            <br />
-                            我不是来自新加坡/马来西亚但想要查询 (请包括国家区号，例如 +86)
-                        </label>
+                            className="text-primary-500 hover:text-primary-600 hover:underline"
+                        >
+                            {useManualInput ? (
+                                "Switch back to SG/MY phone number format / 切换回新马电话格式"
+                            ) : (
+                                "Using a phone number from another country? Click here / 使用其他国家的电话号码？点击这里"
+                            )}
+                        </button>
                     </div>
 
                     <Button onClick={handleLookup} disabled={isLoading} className="w-full">

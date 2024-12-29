@@ -467,7 +467,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                               }));
                                               form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
                                             }}
-                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
                                             Switch back to SG/MY phone number format / 切换回新马电话格式
                                           </button>
@@ -495,11 +495,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                               }));
                                               form.setValue(`groups.${personIndex}.phone`, '');
                                             }}
-                                            className="text-xs text-gray-500 hover:text-gray-700 underline mt-1"
+                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            Using a phone number from another country? Click here
-                                            <br />
-                                            使用其他国家的电话号码？点击这里
+                                            Using a phone number from another country? Click here / 使用其他国家的电话号码？点击这里
                                           </button>
                                         </div>
                                       )}
