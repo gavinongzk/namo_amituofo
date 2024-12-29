@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
+import * as Sentry from "@sentry/nextjs";
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -274,7 +275,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        throw new Error(`Failed to create order: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -283,6 +284,22 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
+      
+      // Track the error in Sentry with additional context
+      Sentry.withScope((scope) => {
+        scope.setExtra('formValues', values);
+        scope.setExtra('eventId', event._id);
+        scope.setExtra('eventTitle', event.title);
+        scope.setTag('feature', 'event-registration');
+        scope.setLevel('error');
+        
+        if (error instanceof Error) {
+          Sentry.captureException(error);
+        } else {
+          Sentry.captureMessage('Failed to submit registration');
+        }
+      });
+      
       toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
       setMessage('Failed to submit registration. Please try again.');
     } finally {
