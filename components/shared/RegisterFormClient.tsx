@@ -399,16 +399,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
 
-  const validatePostalCode = (code: string, personIndex: number) => {
-    if (!code) return '';
-    
-    // Accept both 5 digits (MY) and 6 digits (SG)
-    if (!/^\d{5,6}$/.test(code)) {
-      return 'Must be 5 digits (Malaysia) or 6 digits (Singapore) / 必须是5位数字（马来西亚）或6位数字（新加坡）';
-    }
-    return '';
-  };
-
   return (
     <div className="max-w-3xl mx-auto">
       {isCountryLoading ? (
@@ -539,11 +529,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                     <div className="space-y-2">
                                       <Input 
                                         {...formField}
-                                        className={`max-w-md ${
-                                          validatePostalCode(String(formField.value || ''), personIndex) 
-                                            ? 'border-red-500 focus:border-red-500' 
-                                            : ''
-                                        }`}
+                                        className="max-w-md"
                                         value={String(formField.value)}
                                         placeholder={
                                           phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
@@ -552,15 +538,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         }
                                         onChange={(e) => {
                                           formField.onChange(e);
-                                          const error = validatePostalCode(e.target.value, personIndex);
-                                          if (error) {
-                                            form.setError(`groups.${personIndex}.${customField.id}`, {
-                                              type: 'manual',
-                                              message: error
-                                            });
-                                          } else {
-                                            form.clearErrors(`groups.${personIndex}.${customField.id}`);
-                                          }
                                         }}
                                       />
                                       {personIndex > 0 && (
@@ -581,11 +558,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             Use same as Person 1 / 使用与参加者1相同
                                           </label>
                                         </div>
-                                      )}
-                                      {validatePostalCode(String(formField.value || ''), personIndex) && (
-                                        <p className="text-sm text-red-500 pl-1">
-                                          {validatePostalCode(String(formField.value || ''), personIndex)}
-                                        </p>
                                       )}
                                     </div>
                                   ) : (
