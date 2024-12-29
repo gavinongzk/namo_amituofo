@@ -41,19 +41,25 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
     try {
       checkBrowserCompatibility();
 
-      // First explicitly request camera permission
+      // First explicitly request camera permission with more specific constraints
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: {
-          facingMode: 'environment' // Prefer back camera initially
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         }
       });
 
-      // For Safari: manually set the video stream
-      if (isSafari && videoRef.current) {
+      // Immediately set the stream to video element
+      if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(err => {
-          console.error('Safari video play error:', err);
-        });
+        // Ensure video plays
+        try {
+          await videoRef.current.play();
+        } catch (playError) {
+          console.error('Error playing video:', playError);
+          throw new Error('Failed to start video stream');
+        }
       }
       
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -82,22 +88,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
       });
-      
+
       let active = true;
 
-      const constraints = {
-        video: {
-          deviceId: selectedCamera,
-          facingMode: backCamera ? 'environment' : 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          // Add Safari-specific constraints
-          ...(isSafari ? { 
-            frameRate: { ideal: 30 },
-            aspectRatio: { ideal: 16/9 }
-          } : {})
-        }
-      };
+      // Stop the initial stream before starting the code reader
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
       const controls = await codeReader.decodeFromVideoDevice(
         selectedCamera,
@@ -114,25 +111,15 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
 
       scannerRef.current = controls;
 
-      // Check if video is actually playing
-      const videoElement = videoRef.current;
-      if (videoElement && !isSafari) { // Skip for Safari as we handle it differently
-        videoElement.onloadedmetadata = () => {
-          videoElement.play().catch(err => {
-            console.error('Error playing video:', err);
-            handleError(new Error('Failed to start video stream'));
-          });
-        };
-      }
-
       return () => {
         active = false;
         if (controls) {
           controls.stop();
         }
-        // Clean up video stream
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+        // Clean up any remaining video tracks
+        if (videoRef.current?.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach(track => track.stop());
         }
       };
     } catch (err: any) {
@@ -205,12 +192,24 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
     };
   }, [activeCamera]);
 
+  // Add a new effect to handle video element attributes
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.setAttribute('autoplay', 'true');
+      videoRef.current.setAttribute('playsinline', 'true');
+      videoRef.current.setAttribute('muted', 'true');
+    }
+  }, []);
+
   return (
     <div className="relative w-full max-w-[500px] mx-auto">
       <div className="relative aspect-video">
         <video 
           ref={videoRef}
           className="w-full h-full object-cover rounded-lg"
+          autoPlay
+          playsInline
+          muted
         />
         
         {/* Scanning Guide Overlay */}
