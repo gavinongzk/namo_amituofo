@@ -157,10 +157,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         (value) => isValidPostalCode(value, userCountry || 'Singapore'),
                         {
                           message: userCountry === 'Singapore' 
-                            ? "Please enter a valid 6-digit postal code"
+                            ? "Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字"
                             : userCountry === 'Malaysia'
-                              ? "Please enter a valid 5-digit postal code"
-                              : "Please enter a valid postal code"
+                              ? "Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字"
+                              : "Please enter a valid postal code / 请输入有效的邮区编号"
                         }
                       )
                   : field.label.toLowerCase().includes('name')
