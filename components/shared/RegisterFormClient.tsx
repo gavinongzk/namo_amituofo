@@ -402,14 +402,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const validatePostalCode = (code: string, personIndex: number) => {
     if (!code) return '';
     
-    // Get country from phone number if available, otherwise use default userCountry
-    const personCountry = phoneCountries[personIndex] || userCountry;
-    
-    if (personCountry === 'Singapore' && !/^\d{6}$/.test(code)) {
-      return 'Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字';
-    }
-    if (personCountry === 'Malaysia' && !/^\d{5}$/.test(code)) {
-      return 'Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字';
+    // Accept both 5 digits (MY) and 6 digits (SG)
+    if (!/^\d{5,6}$/.test(code)) {
+      return 'Must be 5 digits (Malaysia) or 6 digits (Singapore) / 必须是5位数字（马来西亚）或6位数字（新加坡）';
     }
     return '';
   };
