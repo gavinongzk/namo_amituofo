@@ -47,17 +47,29 @@ const CountrySelector = () => {
         }
 
         // Only if all above methods fail, use GeoJS
-        const response = await fetch('https://get.geojs.io/v1/ip/country.json');
-        const data = await response.json();
-        const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : null;
-
-        if (detectedCountry) {
-          setCountry(detectedCountry);
+        try {
+          const response = await fetch('https://get.geojs.io/v1/ip/country.json');
+          const data = await response.json();
+          const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : 'Singapore'; // Default to Singapore
+          if (detectedCountry) {
+            setCountry(detectedCountry);
+            try {
+              setCookie('userCountry', detectedCountry);
+              localStorage.setItem('userCountry', detectedCountry);
+            } catch (error) {
+              console.error('Error setting cookie or localStorage:', error);
+            }
+          }
+        } catch (error) {
+          console.error('Error detecting country:', error);
+          // Set default country if geolocation fails
+          const defaultCountry = 'Singapore';
+          setCountry(defaultCountry);
           try {
-            setCookie('userCountry', detectedCountry);
-            localStorage.setItem('userCountry', detectedCountry);
-          } catch (error) {
-            console.error('Error setting cookie or localStorage:', error);
+            setCookie('userCountry', defaultCountry);
+            localStorage.setItem('userCountry', defaultCountry);
+          } catch (storageError) {
+            console.error('Error setting cookie or localStorage:', storageError);
           }
         }
       } catch (error) {

@@ -20,6 +20,7 @@ async function EventList({ page, searchText, category, country }: EventListProps
   console.log('🎬 EventList starting with params:', { page, searchText, category, country });
   
   let events: EventsResponse;
+  let error: string | null = null;
   
   try {
     if (!searchText && !category) {
@@ -33,7 +34,7 @@ async function EventList({ page, searchText, category, country }: EventListProps
         category,
         page,
         limit: 6,
-        country
+        country: country || 'Singapore'
       }) as EventsResponse;
       console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
     }
@@ -41,6 +42,7 @@ async function EventList({ page, searchText, category, country }: EventListProps
     if (!events || !events.data) {
       console.warn('⚠️ No events data available');
       events = { data: [], totalPages: 0 };
+      error = 'No events available for your region at this time.';
     }
 
     console.log('✅ Rendering Collection with events:', {
@@ -49,38 +51,48 @@ async function EventList({ page, searchText, category, country }: EventListProps
     });
 
     return (
-      <Collection
-        data={events.data as (IEvent & { 
-          orderId?: string;
-          customFieldValues?: CustomField[];
-          queueNumber?: string;
-          registrationCount?: number;
-        })[]}
-        emptyTitle="No Events Found"
-        emptyStateSubtext="Come back later for more events."
-        collectionType="All_Events"
-        limit={6}
-        page={page}
-        totalPages={events.totalPages}
-        urlParamName="page"
-      />
+      <>
+        {error && (
+          <div className="w-full text-center mb-6">
+            <p className="text-amber-600">{error}</p>
+            <p className="text-gray-600 text-sm mt-2">
+              Try changing your country selection or check back later for new events.
+            </p>
+          </div>
+        )}
+        <Collection
+          data={events.data}
+          emptyTitle={error || "No Events Found"}
+          emptyStateSubtext={
+            error 
+              ? "Please try selecting a different country or check back later."
+              : "Come back later for more events."
+          }
+          collectionType="All_Events"
+          limit={6}
+          page={page}
+          totalPages={events.totalPages}
+          urlParamName="page"
+        />
+      </>
     );
   } catch (error) {
     console.error('❌ Error in EventList:', error);
     console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     
-    // Return empty collection on error
     return (
-      <Collection
-        data={[]}
-        emptyTitle="Error Loading Events"
-        emptyStateSubtext="Please try again later."
-        collectionType="All_Events"
-        limit={6}
-        page={page}
-        totalPages={0}
-        urlParamName="page"
-      />
+      <div className="w-full">
+        <Collection
+          data={[]}
+          emptyTitle="Unable to Load Events"
+          emptyStateSubtext="We're having trouble loading events. This might be due to connection issues or temporary service disruption. Please try again later."
+          collectionType="All_Events"
+          limit={6}
+          page={page}
+          totalPages={0}
+          urlParamName="page"
+        />
+      </div>
     );
   }
 }
