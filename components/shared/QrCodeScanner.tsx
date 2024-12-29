@@ -16,24 +16,91 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [error, setError] = useState<string>();
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
   const lastScanTime = useRef(0);
   const scannerRef = useRef<{ stop: () => void }>();
 
+  useEffect(() => {
+    // Check if running on Safari
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    setIsSafari(isSafariBrowser);
+  }, []);
+
+  const checkBrowserCompatibility = () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Your browser doesn\'t support camera access. Please use a modern browser like Chrome, Firefox, or Safari.');
+    }
+
+    // Check if running in insecure context
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      throw new Error('Camera access requires a secure (HTTPS) connection.');
+    }
+  };
+
   const initializeScanner = async () => {
     try {
+      checkBrowserCompatibility();
+
+      // First explicitly request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: {
+          facingMode: 'environment' // Prefer back camera initially
+        }
+      });
+
+      // For Safari: manually set the video stream
+      if (isSafari && videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(err => {
+          console.error('Safari video play error:', err);
+        });
+      }
+      
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      
+      if (videoDevices.length === 0) {
+        throw new Error('No cameras found on this device.');
+      }
+      
       setCameras(videoDevices);
       
+      // Prefer back camera for mobile devices
       const backCamera = videoDevices.find(device => 
-        device.label.toLowerCase().includes('back'));
-      setActiveCamera(backCamera?.deviceId || videoDevices[0]?.deviceId);
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('rear')
+      );
+      
+      const selectedCamera = backCamera?.deviceId || videoDevices[0]?.deviceId;
+      setActiveCamera(selectedCamera);
 
-      const codeReader = new BrowserQRCodeReader();
+      if (!selectedCamera) {
+        throw new Error('Failed to select a camera.');
+      }
+
+      const codeReader = new BrowserQRCodeReader(undefined, {
+        delayBetweenScanAttempts: 100,
+        delayBetweenScanSuccess: 1500
+      });
+      
       let active = true;
 
+      const constraints = {
+        video: {
+          deviceId: selectedCamera,
+          facingMode: backCamera ? 'environment' : 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          // Add Safari-specific constraints
+          ...(isSafari ? { 
+            frameRate: { ideal: 30 },
+            aspectRatio: { ideal: 16/9 }
+          } : {})
+        }
+      };
+
       const controls = await codeReader.decodeFromVideoDevice(
-        activeCamera,
+        selectedCamera,
         videoRef.current!,
         (result) => {
           if (result && active) {
@@ -47,12 +114,30 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
 
       scannerRef.current = controls;
 
+      // Check if video is actually playing
+      const videoElement = videoRef.current;
+      if (videoElement && !isSafari) { // Skip for Safari as we handle it differently
+        videoElement.onloadedmetadata = () => {
+          videoElement.play().catch(err => {
+            console.error('Error playing video:', err);
+            handleError(new Error('Failed to start video stream'));
+          });
+        };
+      }
+
       return () => {
         active = false;
-        controls.stop();
+        if (controls) {
+          controls.stop();
+        }
+        // Clean up video stream
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
       };
     } catch (err: any) {
       handleError(err);
+      return () => {};
     }
   };
 
@@ -70,12 +155,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
   };
 
   const handleError = (err: Error) => {
-    if (err.name === 'NotAllowedError') {
-      setError('Camera access denied. Please enable camera permissions.');
-    } else if (err.name === 'NotFoundError') {
-      setError('No camera found. Please connect a camera.');
+    console.error('QR Scanner Error:', err);
+    if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
+      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.');
+    } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
+      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.');
+    } else if (err.name === 'NotReadableError' || err.message.includes('hardware')) {
+      setError('Camera is in use by another application or not accessible. Please close other apps using the camera and try again.');
+    } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
+      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.');
     } else {
-      setError(err.message);
+      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.`);
     }
   };
 
