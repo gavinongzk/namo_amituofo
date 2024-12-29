@@ -46,7 +46,41 @@ const CountrySelector = () => {
           }
         }
 
-        // Only if all above methods fail, use GeoJS
+        // Try browser geolocation
+        if (navigator.geolocation) {
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                timeout: 5000,
+                maximumAge: 0,
+                enableHighAccuracy: true
+              });
+            });
+
+            // Use reverse geocoding to get country from coordinates
+            const response = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
+            );
+            const data = await response.json();
+            const detectedCountry = data.countryName === 'Singapore' ? 'Singapore' : 
+                                  data.countryName === 'Malaysia' ? 'Malaysia' : null;
+
+            if (detectedCountry) {
+              setCountry(detectedCountry);
+              try {
+                setCookie('userCountry', detectedCountry);
+                localStorage.setItem('userCountry', detectedCountry);
+              } catch (error) {
+                console.error('Error setting cookie or localStorage:', error);
+              }
+              return;
+            }
+          } catch (error) {
+            console.error('Geolocation error:', error);
+          }
+        }
+
+        // If geolocation fails or is not available, use GeoJS IP detection as last resort
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
         const detectedCountry = data.name === 'SG' ? 'Singapore' : data.name === 'MY' ? 'Malaysia' : null;
@@ -59,9 +93,28 @@ const CountrySelector = () => {
           } catch (error) {
             console.error('Error setting cookie or localStorage:', error);
           }
+        } else {
+          // Fallback to Singapore if all detection methods fail
+          console.log('All country detection methods failed, falling back to Singapore');
+          setCountry('Singapore');
+          try {
+            setCookie('userCountry', 'Singapore');
+            localStorage.setItem('userCountry', 'Singapore');
+          } catch (error) {
+            console.error('Error setting cookie or localStorage:', error);
+          }
         }
       } catch (error) {
+        // Fallback to Singapore if any error occurs
         console.error('Error detecting country:', error);
+        console.log('Error in country detection, falling back to Singapore');
+        setCountry('Singapore');
+        try {
+          setCookie('userCountry', 'Singapore');
+          localStorage.setItem('userCountry', 'Singapore');
+        } catch (storageError) {
+          console.error('Error setting cookie or localStorage:', storageError);
+        }
       }
     };
 
