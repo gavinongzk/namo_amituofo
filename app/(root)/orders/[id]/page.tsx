@@ -340,6 +340,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   const handleShare = async () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isChrome = /Chrome/.test(navigator.userAgent);
+    const isSamsung = /SamsungBrowser/.test(navigator.userAgent);
+
     if (isIOS) {
       toast((t) => (
         <div>
@@ -354,7 +358,36 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 8000,
         position: 'bottom-center',
       });
+    } else if (isAndroid && (isChrome || isSamsung)) {
+      toast((t) => (
+        <div>
+          <p>To add to home screen:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Tap the three dots menu (⋮) at the top right</li>
+            <li>Select "Add to Home screen" or "Install app"</li>
+            <li>Tap "Add" to confirm</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
     } else {
+      toast((t) => (
+        <div>
+          <p>To bookmark this page:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
+            <li>Or tap the star/menu icon in your browser</li>
+            <li>Select "Add bookmark" or "Add to favorites"</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+
+      // Also try to use the share API if available
       try {
         if (navigator.share) {
           await navigator.share({
@@ -362,13 +395,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             text: 'View my order details',
             url: window.location.href
           });
-        } else {
-          await navigator.clipboard.writeText(window.location.href);
-          toast.success('URL copied to clipboard!');
         }
       } catch (error) {
         console.error('Error sharing:', error);
-        toast.error('Failed to share URL');
       }
     }
   };
@@ -401,7 +430,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded"
         >
           <Share2 className="h-4 w-4" />
-          <span>Add to Home Screen 添加到主屏幕</span>
+          <span>Save for Easy Access 保存快捷方式</span>
         </button>
         
         {isPolling && (
