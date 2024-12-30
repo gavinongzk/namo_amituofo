@@ -416,7 +416,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
+      <div className="grid grid-cols-2 gap-4 mb-4 relative">
         <button
           onClick={downloadAllQRCodes}
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
@@ -427,14 +427,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
         <button
           onClick={handleShare}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded"
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
         >
           <Share2 className="h-4 w-4" />
           <span>Save for Easy Access 保存快捷方式</span>
         </button>
         
         {isPolling && (
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm">Checking for updates...</span>
           </div>
