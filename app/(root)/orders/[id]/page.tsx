@@ -35,11 +35,11 @@ const convertLinksInText = (text: string) => {
   let processedText = convertPhoneNumbersToLinks(text);
   // Then convert addresses
   processedText = convertAddressesToLinks(processedText);
-  // Convert Google Maps links
+  // Convert Google Maps links - handle both with and without newlines
   processedText = processedText.replace(
-    /(Google Map:?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s]+|www\.google\.com\/maps\/[^\s]+))/gi,
+    /(Google Map:?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
     (match, prefix, url) => {
-      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
     }
   );
   return processedText;
