@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
@@ -10,15 +10,50 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check } from 'lucide-react';
+import { Pencil, X, Check, Loader2, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 
-const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
+const convertToGoogleMapsLink = (location: string) => {
+  const encodedLocation = encodeURIComponent(location);
+  return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+};
+
+const convertAddressesToLinks = (text: string) => {
+  // This regex looks for addresses that might contain these patterns
+  const addressRegex = /(?:\d+[A-Za-z\s,-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
+  
+  return text.replace(addressRegex, (match) => {
+    const mapsLink = convertToGoogleMapsLink(match);
+    return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+  });
+};
+
+const convertLinksInText = (text: string) => {
+  // First convert phone numbers
+  let processedText = convertPhoneNumbersToLinks(text);
+  // Then convert addresses
+  processedText = convertAddressesToLinks(processedText);
+  // Convert Google Maps links - handle both with and without newlines
+  processedText = processedText.replace(
+    /(Google Map:?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
+    (match, prefix, url) => {
+      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+    }
+  );
+  return processedText;
+};
+
+const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: { 
+  qrCode: string, 
+  isAttended: boolean,
+  isNewlyMarked?: boolean 
+}) => (
   <div className="w-full max-w-sm mx-auto mb-6">
     <h6 className="text-lg font-semibold mb-2 text-center">QR Code</h6>
-    <div className="relative aspect-square w-full">
+    <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
+      ${isNewlyMarked ? 'animate-flash' : ''}`}>
       <Image 
         src={qrCode} 
         alt="QR Code" 
@@ -26,6 +61,34 @@ const QRCodeDisplay = ({ qrCode }: { qrCode: string }) => (
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className="object-contain"
       />
+      {isAttended && (
+        <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
+          ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
+          <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <svg 
+                className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M5 13l4 4L19 7" 
+                />
+              </svg>
+              <span className="text-lg font-semibold text-green-700">Attendance Marked</span>
+            </div>
+            <p className="text-sm text-green-600 text-center mt-1">出席已记录</p>
+          </div>
+          <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+            <p className="text-sm text-yellow-700">Please keep this QR code for verification</p>
+            <p className="text-xs text-yellow-600">请保留此二维码以供核实</p>
+          </div>
+        </div>
+      )}
     </div>
   </div>
 );
@@ -102,14 +165,71 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     field: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [isPolling, setIsPolling] = useState(false);
+  const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
+  const previousOrder = useRef<typeof order>(null);
+  const lastFetchTime = useRef<number>(0);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
+  const playSuccessSound = () => {
+    const audio = new Audio('/assets/sounds/success-beep.mp3');
+    audio.play().catch(e => console.error('Error playing audio:', e));
+  };
+
+  const fetchOrder = async () => {
+    const now = Date.now();
+    // Debounce: Skip if last fetch was less than 1 second ago
+    if (now - lastFetchTime.current < 1000) {
+      return;
+    }
+    
+    setIsPolling(true);
+    try {
       const fetchedOrder = await getOrderById(id);
+      
+      // Check for newly marked attendances
+      if (previousOrder.current) {
+        fetchedOrder.customFieldValues.forEach((group: CustomFieldGroup) => {
+          const prevGroup = previousOrder.current?.customFieldValues.find(
+            (g: CustomFieldGroup) => g.groupId === group.groupId
+          );
+          if (group.attendance && !prevGroup?.attendance) {
+            setNewlyMarkedGroups(prev => new Set(prev).add(group.groupId));
+            playSuccessSound();
+            // Clear the newly marked status after animation
+            setTimeout(() => {
+              setNewlyMarkedGroups(prev => {
+                const next = new Set(prev);
+                next.delete(group.groupId);
+                return next;
+              });
+            }, 2000);
+          }
+        });
+      }
+      
+      previousOrder.current = fetchedOrder;
       setOrder(fetchedOrder);
       setIsLoading(false);
-    };
+      lastFetchTime.current = now;
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    } finally {
+      setIsPolling(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
     fetchOrder();
+  }, [id]);
+
+  // Set up polling for real-time updates
+  useEffect(() => {
+    // Poll every 2 seconds for updates
+    const pollInterval = setInterval(fetchOrder, 2000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(pollInterval);
   }, [id]);
 
   const downloadAllQRCodes = async () => {
@@ -248,6 +368,70 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
+  const handleShare = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isChrome = /Chrome/.test(navigator.userAgent);
+    const isSamsung = /SamsungBrowser/.test(navigator.userAgent);
+
+    if (isIOS) {
+      toast((t) => (
+        <div>
+          <p>To add to home screen:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Tap the share button (box with arrow) at the bottom of Safari</li>
+            <li>Scroll down and tap "Add to Home Screen"</li>
+            <li>Tap "Add" in the top right corner</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+    } else if (isAndroid && (isChrome || isSamsung)) {
+      toast((t) => (
+        <div>
+          <p>To add to home screen:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Tap the three dots menu (⋮) at the top right</li>
+            <li>Select "Add to Home screen" or "Install app"</li>
+            <li>Tap "Add" to confirm</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+    } else {
+      toast((t) => (
+        <div>
+          <p>To bookmark this page:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
+            <li>Or tap the star/menu icon in your browser</li>
+            <li>Select "Add bookmark" or "Add to favorites"</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+
+      // Also try to use the share API if available
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Order Details',
+            text: 'View my order details',
+            url: window.location.href
+          });
+        }
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">Loading...</div>;
   }
@@ -262,13 +446,30 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <button
-        onClick={downloadAllQRCodes}
-        className="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-        disabled={isDownloading}
-      >
-        {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
-      </button>
+      <div className="grid grid-cols-2 gap-4 mb-4 relative">
+        <button
+          onClick={downloadAllQRCodes}
+          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+          disabled={isDownloading}
+        >
+          {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
+        </button>
+
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
+        >
+          <Share2 className="h-4 w-4" />
+          <span>Save for Easy Access 保存快捷方式</span>
+        </button>
+        
+        {isPolling && (
+          <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Checking for updates...</span>
+          </div>
+        )}
+      </div>
 
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
@@ -290,7 +491,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
-                    <QRCodeDisplay qrCode={group.qrCode} />
+                    <QRCodeDisplay 
+                      qrCode={group.qrCode} 
+                      isAttended={!!group.attendance}
+                      isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                    />
                   </div>
                 )}
                 
@@ -379,9 +584,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
                 <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
                 <div 
-                  className="whitespace-pre-wrap text-green-800"
+                  className="whitespace-pre-wrap text-green-800 break-words"
                   dangerouslySetInnerHTML={{ 
-                    __html: convertPhoneNumbersToLinks(order.event.registrationSuccessMessage) 
+                    __html: convertLinksInText(order.event.registrationSuccessMessage) 
                   }}
                 />
               </div>
