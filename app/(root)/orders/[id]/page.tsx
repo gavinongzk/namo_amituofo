@@ -15,6 +15,36 @@ import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 
+const convertToGoogleMapsLink = (location: string) => {
+  const encodedLocation = encodeURIComponent(location);
+  return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+};
+
+const convertAddressesToLinks = (text: string) => {
+  // This regex looks for addresses that might contain these patterns
+  const addressRegex = /(?:\d+[A-Za-z\s,-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
+  
+  return text.replace(addressRegex, (match) => {
+    const mapsLink = convertToGoogleMapsLink(match);
+    return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+  });
+};
+
+const convertLinksInText = (text: string) => {
+  // First convert phone numbers
+  let processedText = convertPhoneNumbersToLinks(text);
+  // Then convert addresses
+  processedText = convertAddressesToLinks(processedText);
+  // Convert Google Maps links
+  processedText = processedText.replace(
+    /(Google Map:?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s]+|www\.google\.com\/maps\/[^\s]+))/gi,
+    (match, prefix, url) => {
+      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+    }
+  );
+  return processedText;
+};
+
 const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: { 
   qrCode: string, 
   isAttended: boolean,
@@ -554,9 +584,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
                 <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
                 <div 
-                  className="whitespace-pre-wrap text-green-800"
+                  className="whitespace-pre-wrap text-green-800 break-words"
                   dangerouslySetInnerHTML={{ 
-                    __html: convertPhoneNumbersToLinks(order.event.registrationSuccessMessage) 
+                    __html: convertLinksInText(order.event.registrationSuccessMessage) 
                   }}
                 />
               </div>
