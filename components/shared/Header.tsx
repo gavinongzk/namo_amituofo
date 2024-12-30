@@ -41,11 +41,11 @@ const Header = () => {
         >
           <Image 
             src="/assets/images/logo.svg" 
-            width={128}
-            height={38}
+            width={180}
+            height={54}
             alt="Logo"
             priority
-            className="h-10 md:h-12 w-auto"
+            className="h-12 md:h-16 lg:h-20 w-auto"
           />
         </button>
 
