@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check, Loader2 } from 'lucide-react';
+import { Pencil, X, Check, Loader2, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
@@ -338,6 +338,41 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
+  const handleShare = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      toast((t) => (
+        <div>
+          <p>To add to home screen:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Tap the share button (box with arrow) at the bottom of Safari</li>
+            <li>Scroll down and tap "Add to Home Screen"</li>
+            <li>Tap "Add" in the top right corner</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+    } else {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Order Details',
+            text: 'View my order details',
+            url: window.location.href
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          toast.success('URL copied to clipboard!');
+        }
+      } catch (error) {
+        console.error('Error sharing:', error);
+        toast.error('Failed to share URL');
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">Loading...</div>;
   }
@@ -359,6 +394,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           disabled={isDownloading}
         >
           {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
+        </button>
+
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded"
+        >
+          <Share2 className="h-4 w-4" />
+          <span>Add to Home Screen 添加到主屏幕</span>
         </button>
         
         {isPolling && (

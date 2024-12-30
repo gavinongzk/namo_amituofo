@@ -55,7 +55,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <head>{preloadResources}</head>
+        <head>
+          <meta name="apple-mobile-web-app-title" content="Namo Amituofo" />
+          <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
+          <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
+          {preloadResources}
+        </head>
         <body className={poppins.variable}>
           <div className="context-container">
             {children}
