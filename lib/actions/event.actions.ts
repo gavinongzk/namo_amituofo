@@ -164,7 +164,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
           price: 1,
           isFree: 1,
           url: 1,
-          venue: 1,
+          location: 1,
           country: 1,
           category: 1,
           organizer: 1,

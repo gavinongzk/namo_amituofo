@@ -136,12 +136,11 @@ const SelectEventPage = () => {
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
-                          <SelectItem key={event._id} value={event._id} className="py-2">
-                            <div className="flex flex-col">
+                          <SelectItem key={event._id} value={event._id} className="py-3">
+                            <div className="flex flex-col gap-1">
                               <span className="font-medium">{event.title}</span>
                               <span className="text-sm text-gray-500">
-                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | {formatDateTime(new Date(event.startDateTime)).timeOnly}
                               </span>
                             </div>
                           </SelectItem>
