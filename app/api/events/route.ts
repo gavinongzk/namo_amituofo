@@ -14,7 +14,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 3600,
+    revalidate: 60,
     tags: ['events']
   }
 );
@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
-        'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
-        'Vercel-CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
+        'CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
+        'Vercel-CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
       },
     });
   } catch (error) {
