@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, MapPinIcon, UsersIcon } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
@@ -35,7 +35,7 @@ const SelectEventPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -109,9 +109,9 @@ const SelectEventPage = () => {
   const groupedEvents = groupEventsByCategory(events);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Select an Event for Attendance</h1>
-      <div className="max-w-2xl mx-auto">
+    <div className="wrapper my-8">
+      <h1 className="text-3xl font-bold text-center mb-8 text-primary-500">Select an Event for Attendance</h1>
+      <div className="max-w-3xl mx-auto">
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-xl">Choose an Event</CardTitle>
@@ -125,24 +125,27 @@ const SelectEventPage = () => {
               </div>
             ) : (
               <Select onValueChange={handleSelectEvent} value={selectedEventId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full text-left h-auto py-3">
                   <SelectValue placeholder="Select an event" />
                 </SelectTrigger>
                 <SelectContent>
                   <ScrollArea className="h-[300px]">
                     {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
-                        <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                        <SelectLabel className="bg-primary-50 px-3 py-2 rounded-md text-sm font-semibold mb-2">
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
-                          <SelectItem key={event._id} value={event._id} className="py-2">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{event.title}</span>
-                              <span className="text-sm text-gray-500">
-                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
-                              </span>
+                          <SelectItem key={event._id} value={event._id} className="py-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium text-base">{event.title}</span>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <CalendarIcon className="h-4 w-4" />
+                                <span>
+                                  {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
+                                  {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                                </span>
+                              </div>
                             </div>
                           </SelectItem>
                         ))}
@@ -162,44 +165,67 @@ const SelectEventPage = () => {
               <CardDescription className="text-lg">{selectedEvent.category.name}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+              <div className="grid gap-4">
+                <div className="flex items-start gap-3">
+                  <CalendarIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Date</span>
+                    <span className="text-gray-600">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
-                    {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
-                  </span>
+
+                <div className="flex items-start gap-3">
+                  <CalendarIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Time</span>
+                    <span className="text-gray-600">
+                      {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
+                      {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{selectedEvent.location}</span>
+
+                <div className="flex items-start gap-3">
+                  <MapPinIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Location</span>
+                    <span className="text-gray-600 whitespace-pre-wrap">{selectedEvent.location}</span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
-                  </span>
+
+                <div className="flex items-start gap-3">
+                  <UsersIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Registration Status</span>
+                    <span className="text-gray-600">
+                      {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    {selectedEvent.attendedUsers} attended
-                  </span>
+
+                <div className="flex items-start gap-3">
+                  <UsersIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Attendance</span>
+                    <span className="text-gray-600">
+                      {selectedEvent.attendedUsers} attended
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    {selectedEvent.cannotReciteAndWalk} cannot recite and walk
-                  </span>
+
+                <div className="flex items-start gap-3">
+                  <UsersIcon className="h-5 w-5 text-gray-500 mt-1" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Special Assistance</span>
+                    <span className="text-gray-600">
+                      {selectedEvent.cannotReciteAndWalk} cannot recite and walk
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Badge variant="outline" className="mr-2 text-sm">
+            <CardFooter className="flex gap-2">
+              <Badge variant="outline" className="text-sm">
                 {selectedEvent.category.name}
               </Badge>
               <Badge variant="outline" className="text-sm">
