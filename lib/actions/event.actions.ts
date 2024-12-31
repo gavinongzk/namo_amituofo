@@ -85,7 +85,7 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: 60, // Cache for 1 minute
+    revalidate: 3600, // Cache for 1 minute
     tags: ['event']
   }
 );
@@ -210,7 +210,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
     },
     ['events-list'],
     {
-      revalidate: 60, // Reduce to 1 minute to match API
+      revalidate: 3600, // Reduce to 1 minute to match API
       tags: ['events']
     }
   )();

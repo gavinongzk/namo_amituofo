@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents } from '@/lib/actions/event.actions';
 import { unstable_cache } from 'next/cache';
+import { IEvent } from '@/lib/database/models/event.model';
 
 const getCachedEvents = unstable_cache(
   async (country: string) => {
-    return getAllEvents({
+    const events = await getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 1000,
       country: country
     });
+
+    // Ensure all fields are present in the response
+    const eventsWithAllFields = {
+      ...events,
+      data: events.data?.map((event: IEvent) => ({
+        ...event,
+        location: event.location || '',  // Explicitly include location
+      }))
+    };
+
+    return eventsWithAllFields;
   },
   ['api-events-list'],
   {
