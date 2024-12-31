@@ -86,6 +86,7 @@ const SelectEventPage = () => {
   const handleSelectEvent = (eventId: string) => {
     setSelectedEventId(eventId);
     const event = events.find(e => e._id === eventId);
+    console.log('Selected Event:', event);
     setSelectedEvent(event || null);
   };
 
