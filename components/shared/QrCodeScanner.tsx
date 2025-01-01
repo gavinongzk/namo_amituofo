@@ -203,7 +203,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto">
-      <div className="relative aspect-video">
+      <div className="relative aspect-square">
         <video 
           ref={videoRef}
           className="w-full h-full object-cover rounded-lg"
@@ -215,11 +215,11 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
         {/* Scanning Guide Overlay */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="w-full h-full relative">
-            {/* Corner guides */}
-            <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-primary-500" />
-            <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-primary-500" />
-            <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-primary-500" />
-            <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-primary-500" />
+            {/* Corner guides - made larger */}
+            <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-primary-500" />
+            <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-primary-500" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-primary-500" />
+            <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-primary-500" />
             
             {/* Scanning line animation */}
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary-500 animate-scan" />
