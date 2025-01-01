@@ -369,20 +369,35 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const handleShare = async () => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isChrome = /Chrome/.test(navigator.userAgent);
-    const isSamsung = /SamsungBrowser/.test(navigator.userAgent);
+    const userAgent = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+    const isAndroid = /Android/.test(userAgent);
+    const isChrome = /Chrome/.test(userAgent) && !/Edg/.test(userAgent);
+    const isEdge = /Edg/.test(userAgent);
+    const isFirefox = /Firefox/.test(userAgent);
+    const isSamsung = /SamsungBrowser/.test(userAgent);
+    const isOpera = /OPR|Opera/.test(userAgent);
 
-    if (isIOS) {
+    if (isIOS && isSafari) {
       toast((t) => (
         <div>
           <p>To add to home screen:</p>
           <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the share button (box with arrow) at the bottom of Safari</li>
+            <li>Tap the share button <span className="inline-block">⬆️</span> at the bottom of Safari</li>
             <li>Scroll down and tap "Add to Home Screen"</li>
             <li>Tap "Add" in the top right corner</li>
           </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+    } else if (isIOS && !isSafari) {
+      toast((t) => (
+        <div>
+          <p>Please open this page in Safari to add it to your home screen</p>
+          <p className="mt-2">在Safari浏览器中打开此页面以添加到主屏幕</p>
         </div>
       ), {
         duration: 8000,
@@ -393,7 +408,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         <div>
           <p>To add to home screen:</p>
           <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the three dots menu (⋮) at the top right</li>
+            <li>Tap the menu icon (⋮) at the top right</li>
             <li>Select "Add to Home screen" or "Install app"</li>
             <li>Tap "Add" to confirm</li>
           </ol>
@@ -402,13 +417,42 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 8000,
         position: 'bottom-center',
       });
+    } else if (isAndroid && isFirefox) {
+      toast((t) => (
+        <div>
+          <p>To add to home screen:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Tap the menu icon (⋮) at the top right</li>
+            <li>Tap "Page" then "Add to Home Screen"</li>
+            <li>Tap "Add" to confirm</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
+    } else if (isEdge) {
+      toast((t) => (
+        <div>
+          <p>To add to favorites:</p>
+          <ol className="list-decimal ml-4 mt-2">
+            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
+            <li>Or click the star icon in the address bar</li>
+            <li>Choose a folder and click "Done"</li>
+          </ol>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'bottom-center',
+      });
     } else {
+      // Default instructions for other browsers (Chrome, Firefox, Opera, etc.)
       toast((t) => (
         <div>
           <p>To bookmark this page:</p>
           <ol className="list-decimal ml-4 mt-2">
             <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
-            <li>Or tap the star/menu icon in your browser</li>
+            <li>Or click the star/menu icon in your browser</li>
             <li>Select "Add bookmark" or "Add to favorites"</li>
           </ol>
         </div>
@@ -416,19 +460,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 8000,
         position: 'bottom-center',
       });
+    }
 
-      // Also try to use the share API if available
-      try {
-        if (navigator.share) {
-          await navigator.share({
-            title: 'Order Details',
-            text: 'View my order details',
-            url: window.location.href
-          });
-        }
-      } catch (error) {
-        console.error('Error sharing:', error);
+    // Try to use the Web Share API if available
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Order Details',
+          text: 'View my order details',
+          url: window.location.href
+        });
       }
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 

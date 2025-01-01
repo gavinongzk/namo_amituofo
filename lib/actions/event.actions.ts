@@ -85,7 +85,7 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: 60, // Cache for 1 minute
+    revalidate: 3600, // Cache for 1 minute
     tags: ['event']
   }
 );
@@ -154,26 +154,9 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
 
         const skipAmount = (Number(page) - 1) * limit
         
-        // Only select necessary fields
-        const projection = {
-          title: 1,
-          description: 1,
-          startDateTime: 1,
-          endDateTime: 1,
-          imageUrl: 1,
-          price: 1,
-          isFree: 1,
-          url: 1,
-          venue: 1,
-          country: 1,
-          category: 1,
-          organizer: 1,
-          createdAt: 1,
-        };
-
-        // Parallel queries with field projection
+        // Parallel queries without field projection to get all fields
         const [events, eventsCount] = await Promise.all([
-          Event.find(conditions, projection)
+          Event.find(conditions)
             .sort({ startDateTime: 'desc', createdAt: 'desc' })
             .skip(skipAmount)
             .limit(limit)
@@ -188,11 +171,11 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
               select: '_id name'
             })
             .lean()
-            .exec(), // Add exec() for better performance
+            .exec(),
           Event.countDocuments(conditions)
         ]);
 
-        // Batch fetch registration counts with projection
+        // Batch fetch registration counts
         const eventIds = events.map(event => event._id);
         const orders = await Order.find({ 
           event: { $in: eventIds } 
@@ -227,7 +210,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
     },
     ['events-list'],
     {
-      revalidate: 3600, // Match the API cache duration
+      revalidate: 3600, // Reduce to 1 minute to match API
       tags: ['events']
     }
   )();

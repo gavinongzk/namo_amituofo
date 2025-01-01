@@ -2,6 +2,7 @@
 
 import { unstable_cache } from 'next/cache';
 import { getAllEvents } from './event.actions';
+import { IEvent } from '@/lib/database/models/event.model';
 
 export const preloadEvents = unstable_cache(
   async (country: string) => {
@@ -32,7 +33,7 @@ export const preloadEvents = unstable_cache(
       
       console.log('📅 Filtering events after:', fiveDaysAgo);
       
-      const filteredData = events.data.filter(event => {
+      const filteredData = events.data.filter((event: IEvent) => {
         const eventEndDate = new Date(event.endDateTime);
         console.log(`🎯 Checking event ${event._id}:`, {
           endDateTime: event.endDateTime,

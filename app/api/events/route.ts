@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents } from '@/lib/actions/event.actions';
 import { unstable_cache } from 'next/cache';
+import { IEvent } from '@/lib/database/models/event.model';
 
 const getCachedEvents = unstable_cache(
   async (country: string) => {
-    return getAllEvents({
+    const events = await getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 1000,
       country: country
     });
+
+    // Ensure all fields are present in the response
+    const eventsWithAllFields = {
+      ...events,
+      data: events.data?.map((event: IEvent) => ({
+        ...event,
+        location: event.location || '',  // Explicitly include location
+      }))
+    };
+
+    return eventsWithAllFields;
   },
   ['api-events-list'],
   {
-    revalidate: 3600,
+    revalidate: 60,
     tags: ['events']
   }
 );
@@ -43,9 +55,9 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
-        'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
-        'Vercel-CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
+        'CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
+        'Vercel-CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
       },
     });
   } catch (error) {

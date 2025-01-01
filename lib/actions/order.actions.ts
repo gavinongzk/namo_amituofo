@@ -105,7 +105,7 @@ export async function getOrdersByEvent({ searchString, eventId, select }: GetOrd
         .filter(f => f.startsWith('event.'))
         .map(f => f.replace('event.', ''))
         .join(' ') : 
-      'title imageUrl startDateTime endDateTime';
+      'title imageUrl startDateTime endDateTime location';
 
     const orders = await baseQuery
       .populate({

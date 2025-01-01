@@ -44,6 +44,7 @@ const SelectEventPage = () => {
         const country = user?.publicMetadata.country as string | undefined;
         const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
         const result = await response.json();
+        console.log('API Response:', result);
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();

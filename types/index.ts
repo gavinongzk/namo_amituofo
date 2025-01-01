@@ -150,6 +150,7 @@ export interface IRegistration {
     endDateTime?: Date;
     organizer: { _id: string };
     orderId?: string;
+    location?: string;
     customFieldValues: {
       groupId: string;
       fields: {

@@ -13,6 +13,7 @@ export interface IOrder extends Document {
     startDateTime?: Date;
     endDateTime?: Date;
     organizer?: { _id: string };
+    location: string;
   };
   customFieldValues: CustomFieldGroup[];
 }
@@ -27,6 +28,7 @@ export interface IOrderItem {
     startDateTime: Date;
     endDateTime: Date;
     organizer?: { _id: string };
+    location: string;
   };
   customFieldValues: CustomFieldGroup[];
 }
