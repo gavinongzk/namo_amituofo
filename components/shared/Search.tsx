@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react'
 import { Input } from '../ui/input';
 import { formUrlQuery, removeKeysFromQuery } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const Search = ({ placeholder = '搜索名称... / Search name...' }: { placeholder?: string }) => {
   const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -35,18 +37,28 @@ const Search = ({ placeholder = '搜索名称... / Search name...' }: { placehol
   }, [query, searchParams, router])
 
   return (
-    <div className="flex-center min-h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+    <div className={cn(
+      "flex-center min-h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2",
+      "transition-all duration-300 border-2 border-transparent",
+      isFocused && "border-primary/20 bg-white shadow-sm"
+    )}>
       <Image 
         src="/assets/icons/search.svg" 
         alt="搜索 / Search" 
         width={24} 
-        height={24} 
+        height={24}
+        className={cn(
+          "transition-transform duration-300",
+          isFocused && "scale-110"
+        )}
       />
       <Input 
         type="text"
         placeholder={placeholder}
         onChange={(e) => setQuery(e.target.value)}
-        className="p-regular-16 border-0 bg-grey-50 outline-offset-0 placeholder:text-grey-500 focus:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className="p-regular-16 border-0 bg-transparent outline-offset-0 placeholder:text-grey-500 focus:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
         aria-label="搜索输入框 / Search input field"
       />
     </div>
