@@ -50,7 +50,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
             <div className="flex items-center justify-between mb-6">
               <h2 className='h2-bold text-secondary-500'>Events Organized 我组织的活动</h2>
               <Button asChild size="lg" className="button hidden sm:flex">
-                <Link href="/events/create">
+                <Link href="/events/new">
                   Create New Event
                 </Link>
               </Button>

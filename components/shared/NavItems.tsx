@@ -53,7 +53,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           </li>
           {isSuperAdmin && (
             <li>
-              <Link href="/events/create" className={navItemClass('/events/create')} onClick={handleClick}>
+              <Link href="/events/new" className={navItemClass('/events/new')} onClick={handleClick}>
                 <span className="font-medium">创建活动</span>
                 <span className="text-xs mt-1">Create Event</span>
               </Link>
