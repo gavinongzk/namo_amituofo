@@ -5,14 +5,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
-import { CustomField } from '@/types';
+import { CustomField } from '@/types'
+import { motion } from 'framer-motion'
 
 type CardProps = {
   event: IEvent & { 
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    registrationCount?: number  // Changed from attendeeCount to registrationCount
+    registrationCount?: number
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
@@ -25,24 +26,44 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   const isEventCreator = userId === event.organizer._id.toString();
 
   return (
-    <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
-      <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
-        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
-        style={{backgroundImage: `url(${event.imageUrl})`}}
-      />
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.02 }}
+      className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]"
+    >
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Link 
+          href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
+          className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
+          style={{backgroundImage: `url(${event.imageUrl})`}}
+        />
+      </motion.div>
 
       {isEventCreator && (
-        <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all"
+        >
           <Link href={`/events/${event._id}/update`}>
             <Image src="/assets/icons/edit.svg" alt="edit" width={20} height={20} />
           </Link>
 
           <DeleteConfirmation eventId={event._id} />
-        </div>
+        </motion.div>
       )}
 
-      <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"
+      > 
         <p className="p-medium-16 p-medium-18 text-grey-500">
           {formatDateTime(event.startDateTime).dateTime}
         </p>
@@ -69,8 +90,8 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
             </Link>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
