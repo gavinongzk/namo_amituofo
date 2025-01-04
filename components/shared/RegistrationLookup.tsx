@@ -9,6 +9,8 @@ import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface RegistrationLookupProps {
   showManualInput?: boolean;
@@ -23,12 +25,32 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
 
+  const validatePhoneNumber = (number: string) => {
+    if (!number) return false;
+    if (useManualInput) {
+      return number.length >= 8 && number.length <= 15;
+    }
+    return true; // PhoneInput component handles validation for SG/MY numbers
+  };
+
   const handleLookup = async () => {
+    if (!validatePhoneNumber(phoneNumber)) {
+      toast.error('Please enter a valid phone number / 请输入有效的电话号码');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setHasSearched(true);
+
     try {
       const orders = await getOrdersByPhoneNumber(phoneNumber);
+
+      if (!orders || orders.length === 0) {
+        toast.info('No registrations found for this number / 未找到与此号码相关的注册信息');
+        setRegistrations([]);
+        return;
+      }
 
       // Transform each order into IRegistration format
       const transformedRegistrations: IRegistration[] = orders.map((order: any) => ({
@@ -50,13 +72,24 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
       }));
 
       setRegistrations(transformedRegistrations);
+      toast.success('Registrations found! / 已找到注册信息！');
     } catch (err) {
       console.error('Error fetching registrations:', err);
+      toast.error('Failed to fetch registrations. Please try again. / 获取注册信息失败，请重试');
       setError('Failed to fetch registrations. Please try again.');
       setRegistrations([]);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
+
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-48 w-full" />
+      <Skeleton className="h-48 w-full" />
+    </div>
+  );
 
   return (
     <div className={`flex flex-col gap-8 ${className}`}>
@@ -76,6 +109,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="p-regular-16 border-2"
+              disabled={isLoading}
             />
           ) : (
             <PhoneInput
@@ -87,6 +121,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
               international
               countryCallingCodeEditable={false}
               className="p-regular-16 border-2 border-gray-300 rounded-md"
+              disabled={isLoading}
             />
           )}
           
@@ -98,6 +133,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
                 setPhoneNumber('');
               }}
               className="text-primary-500 hover:text-primary-600 hover:underline"
+              disabled={isLoading}
             >
               {useManualInput ? (
                 "Switch back to SG/MY phone number format / 切换回新马电话格式"
@@ -107,21 +143,18 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
             </button>
           </div>
 
-          <Button onClick={handleLookup} disabled={isLoading} className="w-full">
+          <Button 
+            onClick={handleLookup} 
+            disabled={isLoading || !phoneNumber} 
+            className="w-full"
+          >
             {isLoading ? 'Looking up... / 查询中...' : 'Lookup / 查询'}
           </Button>
         </div>
       </div>
 
-      {error && (
-        <p className="text-red-500 text-center">
-          Failed to fetch registrations. Please try again. / 
-          获取注册信息失败。请重试。
-        </p>
-      )}
-
       {isLoading ? (
-        <p className="text-center">Loading... / 加载中...</p>
+        <LoadingSkeleton />
       ) : hasSearched ? (
         <RegistrationCollection
           data={registrations}
