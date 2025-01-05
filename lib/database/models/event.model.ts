@@ -18,6 +18,7 @@ export interface IEvent extends Document {
   registrationSuccessMessage?: string;
   attendeeCount?: number;
   country: string;
+  isDeleted: boolean;
 }
 
 const EventSchema = new Schema({
@@ -38,7 +39,8 @@ const EventSchema = new Schema({
     value: { type: String, required: false }
   }],
   maxSeats: { type: Number, required: true },
-  registrationSuccessMessage: { type: String}
+  registrationSuccessMessage: { type: String},
+  isDeleted: { type: Boolean, default: false }
 })
 
 const Event = mongoose.models.Event || mongoose.model('Event', EventSchema);

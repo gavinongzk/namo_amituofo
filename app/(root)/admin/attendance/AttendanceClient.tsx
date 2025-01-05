@@ -76,6 +76,7 @@ interface AttendanceItem {
   attendance: boolean;
   cancelled: boolean;
   remarks: string;
+  postalCode: string;
 }
 
 interface SortConfig {
@@ -469,6 +470,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         const walkField = group.fields.find(field => 
           field.label.toLowerCase().includes('walk')
         );
+        const postalField = group.fields.find(field => field.type === 'postal');
         const phoneNumber = phoneField ? phoneField.value : '';
         const isDuplicate = isSuperAdmin && phoneGroups[phoneNumber] && phoneGroups[phoneNumber].length > 1;
         const cannotWalk = walkField && ['no', '否', 'false'].includes(walkField.value.toLowerCase());
@@ -483,6 +485,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           attendance: !!group.attendance,
           cancelled: !!group.cancelled,
           remarks: taggedUsers[phoneNumber] || '',
+          postalCode: postalField ? postalField.value : '',
         };
       })
     ),
@@ -738,6 +741,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   {renderHeader('Queue\n排队号', 'queueNumber')}
                   {renderHeader('Name\n姓名', 'name')}
                   {isSuperAdmin && renderHeader('Phone\n电话', 'phoneNumber')}
+                  {isSuperAdmin && renderHeader('Postal Code\n邮区编号', 'postalCode')}
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
                     <span className="block text-xs">Remarks<br/>备注</span>
                   </th>
@@ -770,6 +774,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
                     <td className="py-3 px-4 border-b border-r">{row.name}</td>
                     {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.phoneNumber}</td>}
+                    {isSuperAdmin && <td className="py-3 px-4 border-b border-r whitespace-normal">{row.postalCode}</td>}
                     <td className="py-3 px-4 border-b border-r">
                       {isSuperAdmin ? (
                         <div className="flex items-center gap-2">

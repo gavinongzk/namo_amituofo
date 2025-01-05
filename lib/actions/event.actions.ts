@@ -64,7 +64,7 @@ export const getEventById = unstable_cache(
     try {
       await connectToDatabase();
 
-      const event = await Event.findById(eventId)
+      const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
         .populate({ path: 'organizer', model: User, select: '_id' })
         .populate({ path: 'category', model: Category, select: '_id name' });
 
@@ -124,7 +124,11 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
   try {
     await connectToDatabase()
 
-    const deletedEvent = await Event.findByIdAndDelete(eventId)
+    const deletedEvent = await Event.findByIdAndUpdate(
+      eventId,
+      { isDeleted: true },
+      { new: true }
+    )
     if (deletedEvent) revalidatePath(path)
     revalidatePath('/');
     revalidateTag('events');
@@ -148,7 +152,8 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
           $and: [
             titleCondition,
             categoryCondition ? { category: categoryCondition._id } : {},
-            { country: country }
+            { country: country },
+            { isDeleted: { $ne: true } }
           ]
         }
 
@@ -223,7 +228,11 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
     await connectToDatabase();
 
     const currentDate = new Date();
-    const conditions = { organizer: userId, endDateTime: { $gte: currentDate } }; // Filter out past events
+    const conditions = { 
+      organizer: userId, 
+      endDateTime: { $gte: currentDate },
+      isDeleted: { $ne: true }
+    }; // Filter out past events
     const skipAmount = (page - 1) * limit;
 
     const eventsQuery = Event.find(conditions)
@@ -260,7 +269,13 @@ export async function getRelatedEventsByCategory({
     await connectToDatabase()
 
     const skipAmount = (Number(page) - 1) * limit
-    const conditions = { $and: [{ category: categoryId }, { _id: { $ne: eventId } }] }
+    const conditions = { 
+      $and: [
+        { category: categoryId }, 
+        { _id: { $ne: eventId } },
+        { isDeleted: { $ne: true } }
+      ] 
+    }
 
     const eventsQuery = Event.find(conditions)
       .sort({ createdAt: 'desc' })

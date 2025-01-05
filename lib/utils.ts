@@ -332,3 +332,19 @@ export const debugLog = (component: string, message: string, data?: any) => {
     console.log(`🔍 [${component}] ${message}`, data || '');
   }
 };
+
+export async function validateSingaporePostalCode(postalCode: string): Promise<boolean> {
+  if (!/^\d{6}$/.test(postalCode)) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=N&getAddrDetails=Y`);
+    const data = await response.json();
+    return data.results && data.results.length > 0;
+  } catch (error) {
+    console.error('Error validating postal code:', error);
+    // Fallback to basic validation if API fails
+    return /^\d{6}$/.test(postalCode);
+  }
+}

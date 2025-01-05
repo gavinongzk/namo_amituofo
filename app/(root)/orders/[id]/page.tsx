@@ -159,7 +159,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     customFieldValues: CustomFieldGroup[];
   } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [editingField, setEditingField] = useState<{
     groupId: string;
     field: string;
@@ -231,58 +230,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     // Cleanup interval on unmount
     return () => clearInterval(pollInterval);
   }, [id]);
-
-  const downloadAllQRCodes = async () => {
-    if (!order) return;
-    setIsDownloading(true);
-    try {
-      const qrCodes = order.customFieldValues
-        .filter((group: CustomFieldGroup) => group.qrCode)
-        .map((group: CustomFieldGroup, index: number) => ({
-          qrCode: group.qrCode,
-          personNumber: index + 1
-        }));
-
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.width;
-      const pageHeight = pdf.internal.pageSize.height;
-      const margin = 10;
-      const qrSize = 80;
-      const cols = 2;
-      const rows = Math.ceil(qrCodes.length / cols);
-
-      pdf.setFontSize(16);
-      pdf.text('QR Codes', pageWidth / 2, 20, { align: 'center' });
-
-      for (let i = 0; i < qrCodes.length; i++) {
-        const { qrCode, personNumber } = qrCodes[i];
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-
-        const x = margin + col * (qrSize + margin);
-        const y = 30 + row * (qrSize + margin + 20);
-
-        if (qrCode) {
-          pdf.addImage(qrCode, 'PNG', x, y, qrSize, qrSize);
-          pdf.setFontSize(12);
-          pdf.text(`Person ${personNumber}`, x + qrSize / 2, y + qrSize + 10, { align: 'center' });
-        }
-
-        if (y + qrSize + 30 > pageHeight && i < qrCodes.length - 1) {
-          pdf.addPage();
-          pdf.setFontSize(16);
-          pdf.text('QR Codes (Continued)', pageWidth / 2, 20, { align: 'center' });
-        }
-      }
-
-      pdf.save('all-qr-codes.pdf');
-    } catch (error) {
-      console.error('Error creating QR codes PDF:', error);
-      // Optionally show an error message to the user
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   const handleCancellation = (groupId: string): void => {
     setOrder(prevOrder => {
@@ -490,15 +437,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
-      <div className="grid grid-cols-2 gap-4 mb-4 relative">
-        <button
-          onClick={downloadAllQRCodes}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          disabled={isDownloading}
-        >
-          {isDownloading ? 'Generating...' : 'Download All QR Codes 下载所有二维码'}
-        </button>
-
+      <div className="grid grid-cols-1 gap-4 mb-4 relative">
         <button
           onClick={handleShare}
           className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"

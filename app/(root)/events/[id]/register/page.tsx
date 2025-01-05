@@ -10,7 +10,7 @@ import { headers } from 'next/headers'
 const getCachedEvent = unstable_cache(
   async (id: string) => getEventById(id),
   ['event-registration'],
-  { revalidate: 60 } // Cache for 1 minute
+  { revalidate: 300 }
 )
 
 // Separate loading component for better UX
