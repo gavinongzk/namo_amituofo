@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
+import { validateSingaporePostalCode } from '@/lib/utils';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -36,11 +37,11 @@ const sanitizeName = (name: string) => {
   return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
 };
 
-const isValidPostalCode = (code: string, country: string) => {
+const isValidPostalCode = async (code: string, country: string) => {
   if (!code) return false;
   
   if (country === 'Singapore') {
-    return /^\d{6}$/.test(code);
+    return await validateSingaporePostalCode(code);
   } else if (country === 'Malaysia') {
     return /^\d{5}$/.test(code);
   }
@@ -154,10 +155,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   ? z.string()
                       .min(1, { message: "Postal code is required" })
                       .refine(
-                        (value) => isValidPostalCode(value, userCountry || 'Singapore'),
+                        async (value) => await isValidPostalCode(value, userCountry || 'Singapore'),
                         {
                           message: userCountry === 'Singapore' 
-                            ? "Must be 6 digits for Singapore / 新加坡邮区编号必须是6位数字"
+                            ? "Invalid postal code for Singapore / 新加坡邮区编号无效"
                             : userCountry === 'Malaysia'
                               ? "Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字"
                               : "Please enter a valid postal code / 请输入有效的邮区编号"
