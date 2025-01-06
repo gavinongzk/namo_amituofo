@@ -53,7 +53,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isMyTicket && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">排队号码 · Queue Number: {event.queueNumber || 'N/A'}</p>
+            <p className="p-medium-16 text-grey-500">排队号码 Queue Number: {event.queueNumber || 'N/A'}</p>
             {event.customFieldValues?.map((field) => (
               <p key={field.id} className="p-medium-16 text-grey-500">{field.label}: {field.value}</p>
             ))}
@@ -62,9 +62,9 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">注册人数 · Registrations: {event.registrationCount || 0}</p>
+            <p className="p-medium-16 text-grey-500">注册人数 Registrations: {event.registrationCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline flex items-center gap-2">
-              注册详情 · Registration Details
+              注册详情 Registration Details
               <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
             </Link>
           </div>
