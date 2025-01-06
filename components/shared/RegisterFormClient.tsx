@@ -478,7 +478,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }}
                                             className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            Switch back to SG/MY phone number format / 切换回新马电话格式
+                                            Switch back to SG/MY phone number format · 切换回新马电话格式
                                           </button>
                                         </div>
                                       ) : (
@@ -506,7 +506,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }}
                                             className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            使用其他国家的电话号码？点击这里 / Using a phone number from another country? Click here
+                                            使用其他国家的电话号码？点击这里 · Using a phone number from another country? Click here
                                           </button>
                                         </div>
                                       )}
@@ -556,7 +556,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            使用与参加者1相同 / Use same as Person 1
+                                            使用与参加者1相同 · Use same as Person 1
                                           </label>
                                         </div>
                                       )}
@@ -589,7 +589,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           onClick={() => remove(personIndex)}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          删除参加者 {personIndex + 1} / Remove Person {personIndex + 1}
+                          删除参加者 {personIndex + 1} · Remove Person {personIndex + 1}
                         </Button>
                       </div>
                     )}
@@ -604,7 +604,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-5 h-5" />
-                    添加参加者 / Add Another Person
+                    添加参加者 · Add Another Person
                   </Button>
                   <Button 
                     type="submit" 
@@ -614,10 +614,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     {isSubmitting ? (
                       <div className="flex items-center gap-2">
                         <Loader2Icon className="w-4 h-4 animate-spin" />
-                        提交中... / Submitting...
+                        提交中... · Submitting...
                       </div>
                     ) : (
-                      '完成注册 / Complete Registration'
+                      '完成注册 · Complete Registration'
                     )}
                   </Button>
                 </div>

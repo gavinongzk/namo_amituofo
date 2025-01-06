@@ -30,21 +30,14 @@ export const DeleteConfirmation = ({ eventId }: { eventId: string }) => {
 
       <AlertDialogContent className="bg-white">
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            <span className="block">您确定要删除吗？</span>
-            <span className="block">Are you sure you want to delete?</span>
-          </AlertDialogTitle>
+          <AlertDialogTitle>您确定要删除吗？/ Are you sure you want to delete?</AlertDialogTitle>
           <AlertDialogDescription className="p-regular-16 text-grey-600">
-            <span className="block">此操作将永久删除此活动。</span>
-            <span className="block">This will permanently delete this event.</span>
+            此操作将永久删除此活动。/ This will permanently delete this event.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>
-            <span className="block">取消</span>
-            <span className="block">Cancel</span>
-          </AlertDialogCancel>
+          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
 
           <AlertDialogAction
             onClick={() =>
@@ -52,17 +45,7 @@ export const DeleteConfirmation = ({ eventId }: { eventId: string }) => {
                 await deleteEvent({ eventId, path: pathname })
               })
             }>
-            {isPending ? (
-              <>
-                <span className="block">删除中...</span>
-                <span className="block">Deleting...</span>
-              </>
-            ) : (
-              <>
-                <span className="block">删除</span>
-                <span className="block">Delete</span>
-              </>
-            )}
+            {isPending ? '删除中... / Deleting...' : '删除 / Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
