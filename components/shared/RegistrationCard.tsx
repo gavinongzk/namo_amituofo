@@ -21,6 +21,12 @@ const RegistrationCard = ({ event, registrations }: Props) => {
       />
 
       <div className="flex flex-col gap-3 p-5 md:gap-4">
+        {event.startDateTime && formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
+          <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
+            {line}
+          </p>
+        ))}
+
         <div className="flex flex-col gap-2">
           <h2 className="h3-bold line-clamp-2 text-black group-hover:text-primary-500 transition-colors duration-200">
             {event.title}
