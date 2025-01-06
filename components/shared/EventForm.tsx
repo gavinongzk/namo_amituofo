@@ -318,7 +318,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
-                        timeZone="Asia/Shanghai"
                       />
                     </div>
 
@@ -356,7 +355,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
-                        timeZone="Asia/Shanghai"
                       />
                     </div>
 
