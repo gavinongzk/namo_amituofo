@@ -141,7 +141,7 @@ const AnalyticsDashboard: React.FC = () => {
             accessorKey: 'phoneNumber',
             header: '电话 Phone Number',
             filterFn: (row, id, value) => {
-                return row.getValue(id).toLowerCase().includes(value.toLowerCase())
+                return (row.getValue(id) as string).toLowerCase().includes(value.toLowerCase())
             },
         },
         {
