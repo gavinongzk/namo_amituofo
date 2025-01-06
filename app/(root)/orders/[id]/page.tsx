@@ -35,9 +35,9 @@ const convertLinksInText = (text: string) => {
   let processedText = convertPhoneNumbersToLinks(text);
   // Then convert addresses
   processedText = convertAddressesToLinks(processedText);
-  // Convert Google Maps links - handle both with and without newlines
+  // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
-    /(Google Map:?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
+    /(Google Map[：:]?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
     (match, prefix, url) => {
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
     }
@@ -129,17 +129,17 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-opacity-100 bg-background">
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to cancel this registration? This action cannot be undone.
-            <br />
             您确定要取消此注册吗？此操作无法撤消。
+            <br />
+            Are you sure you want to cancel this registration? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel 取消</AlertDialogCancel>
+          <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleCancel}>
-            Confirm 确认
+            确认 Confirm
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -424,11 +424,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   if (isLoading) {
-    return <div className="wrapper my-8 text-center">Loading...</div>;
+    return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
   }
 
   if (!order) {
-    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">Registration not found 报名资料未找到</div>;
+    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
   }
 
   const customFieldValuesArray = Array.isArray(order.customFieldValues) 
@@ -443,13 +443,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
         >
           <Share2 className="h-4 w-4" />
-          <span>Save for Easy Access 保存快捷方式</span>
+          <span>保存快捷方式 Save for Easy Access</span>
         </button>
         
         {isPolling && (
           <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Checking for updates...</span>
+            <span className="text-sm">正在检查更新... Checking for updates...</span>
           </div>
         )}
       </div>
@@ -457,17 +457,17 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
           <h3 className="text-2xl font-bold text-center text-primary-500">
-            Registration Successful 注册成功
+            注册成功 Registration Successful
           </h3>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
-              <h4 className="text-lg font-bold mb-2 text-primary-700">Event: {order.event.title}</h4>
-              <p><span className="font-semibold">Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
-              <p><span className="font-semibold">Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
-              {order.event.location && <p><span className="font-semibold">Location:</span> {order.event.location}</p>}
+              <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
+              <p><span className="font-semibold">日期 Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
+              <p><span className="font-semibold">时间 Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
+              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
@@ -484,10 +484,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 
                 <div className="bg-primary-100 p-4">
                   <div className="flex justify-between items-center">
-                    <h5 className="text-lg font-semibold text-primary-700">Person 人员 {index + 1}</h5>
+                    <h5 className="text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
                     {group.queueNumber && (
                       <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
-                        <p className="text-sm text-blue-600">Queue Number 队列号</p>
+                        <p className="text-sm text-blue-600">队列号 Queue Number</p>
                         <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                       </div>
                     )}
@@ -533,7 +533,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600"
                                 >
                                   <Pencil className="h-4 w-4" />
-                                  <span className="text-sm">Edit 编辑</span>
+                                  <span className="text-sm">编辑 Edit</span>
                                 </button>
                               )}
                             </>
@@ -556,7 +556,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 {group.cancelled && (
                   <div className="p-4 bg-red-50">
                     <p className="text-red-600 text-center font-semibold">
-                      Registration Cancelled 注册已取消
+                      注册已取消 Registration Cancelled
                     </p>
                   </div>
                 )}
@@ -565,7 +565,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             {order.event.registrationSuccessMessage && (
               <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-                <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
+                <h4 className="text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
                 <div 
                   className="whitespace-pre-wrap text-green-800 break-words"
                   dangerouslySetInnerHTML={{ 
