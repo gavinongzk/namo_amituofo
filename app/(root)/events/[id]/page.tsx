@@ -11,27 +11,27 @@ import Loading from '@/components/shared/Loader';
 const EventInfo = async ({ event }: { event: any }) => {
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
-      {/* Title and Category Section */}
+      {/* Title, Category, and Register Section */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
-        <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex gap-3">
+        <div className="flex flex-col gap-4">
+          <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
+          <div className="flex flex-wrap gap-3 items-center justify-between">
             <p className="text-base font-semibold rounded-full bg-green-50 px-6 py-2.5 text-green-600">
               {event.category.name}
             </p>
+            <CheckoutButton event={event} />
           </div>
         </div>
       </div>
 
-      <CheckoutButton event={event} />
-
-      {/* Date and Location Section */}
+      {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+        {/* Date and Time Section */}
         <div className='flex gap-5 items-start'>
-          <div className="bg-primary-50 p-4 rounded-full">
+          <div className="bg-primary-50 p-4 rounded-full shrink-0">
             <Image src="/assets/icons/calendar.svg" alt="calendar" width={24} height={24} />
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col gap-1">
               <p className="text-lg font-semibold text-gray-800">日期 Date:</p>
               <p className="text-base text-gray-600">{formatBilingualDateTime(event.startDateTime).combined.dateOnly}</p>
@@ -45,8 +45,9 @@ const EventInfo = async ({ event }: { event: any }) => {
 
         <div className="h-px bg-gray-200" />
 
+        {/* Location Section */}
         <div className="flex items-start gap-5">
-          <div className="bg-primary-50 p-4 rounded-full">
+          <div className="bg-primary-50 p-4 rounded-full shrink-0">
             <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
           </div>
           <div className="flex flex-col gap-1">
