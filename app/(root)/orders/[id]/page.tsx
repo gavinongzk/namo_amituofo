@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getOrderById } from '@/lib/actions/order.actions';
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
@@ -465,8 +465,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
               <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
-              <p><span className="font-semibold">日期 Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
-              <p><span className="font-semibold">时间 Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
+              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
+              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).combined.timeOnly}</p>
               {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 

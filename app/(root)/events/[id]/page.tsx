@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import CheckoutButton from '@/components/shared/CheckoutButton';
 import Collection from '@/components/shared/Collection';
 import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.actions';
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { SearchParamProps } from '@/types';
 import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
@@ -28,26 +28,25 @@ const EventInfo = async ({ event }: { event: any }) => {
       <div className="flex flex-col gap-5">
         <div className='flex gap-2 md:gap-3'>
           <Image src="/assets/icons/calendar.svg" alt="calendar" width={32} height={32} />
-          <div className="p-medium-16 lg:p-regular-20 flex flex-wrap items-center">
+          <div className="p-medium-16 lg:p-regular-20 flex flex-col gap-2">
             <p>
-              {formatDateTime(event.startDateTime).dateOnly} - {' '}
-              {formatDateTime(event.startDateTime).timeOnly}
+              日期 Date: {formatBilingualDateTime(event.startDateTime).combined.dateOnly}
             </p>
             <p>
-              {formatDateTime(event.endDateTime).dateOnly} -  {' '}
-              {formatDateTime(event.endDateTime).timeOnly}
+              时间 Time: {formatBilingualDateTime(event.startDateTime).combined.timeOnly} 至 to {' '}
+              {formatBilingualDateTime(event.endDateTime).combined.timeOnly}
             </p>
           </div>
         </div>
 
         <div className="p-regular-20 flex items-center gap-3">
           <Image src="/assets/icons/location.svg" alt="location" width={32} height={32} />
-          <p className="p-medium-16 lg:p-regular-20">{event.location}</p>
+          <p className="p-medium-16 lg:p-regular-20">地点 Location: {event.location}</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="p-bold-20 text-grey-600">Event Description / 活动描述:</p>
+        <p className="p-bold-20 text-grey-600">活动描述 Event Description:</p>
         <p 
           className="p-medium-16 lg:p-regular-18" 
           style={{ whiteSpace: 'pre-wrap' }}
@@ -56,7 +55,7 @@ const EventInfo = async ({ event }: { event: any }) => {
           }}
         />
         <p className="p-medium-16 lg:p-regular-18 truncate text-primary-500 underline">
-          {event.url}
+          网址 URL: {event.url}
         </p>
       </div>
     </div>

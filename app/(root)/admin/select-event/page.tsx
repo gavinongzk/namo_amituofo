@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
@@ -141,8 +141,8 @@ const SelectEventPage = () => {
                             <div className="flex flex-col">
                               <span className="font-medium">{event.title}</span>
                               <span className="text-sm text-gray-500">
-                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} | 
+                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}
                               </span>
                             </div>
                           </SelectItem>
@@ -166,13 +166,13 @@ const SelectEventPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+                  <span className="text-lg">{formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.dateOnly}</span>
                 </div>
                 <div className="flex items-center">
                   <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
-                    {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
+                    {formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.timeOnly} - 
+                    {formatBilingualDateTime(new Date(selectedEvent.endDateTime)).combined.timeOnly}
                   </span>
                 </div>
                 <div className="flex items-center">

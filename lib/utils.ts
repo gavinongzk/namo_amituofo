@@ -9,10 +9,43 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatDateTime = (dateString: Date) => {
+export interface BilingualDateTime {
+  en: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+  cn: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+  combined: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+}
+
+export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => {
+  const enFormatted = formatDateTime(dateString, 'en-US')
+  const cnFormatted = formatDateTime(dateString, 'zh-CN')
+
+  return {
+    en: enFormatted,
+    cn: cnFormatted,
+    combined: {
+      dateTime: `${cnFormatted.dateTime} / ${enFormatted.dateTime}`,
+      dateOnly: `${cnFormatted.dateOnly} / ${enFormatted.dateOnly}`,
+      timeOnly: `${cnFormatted.timeOnly} / ${enFormatted.timeOnly}`,
+    }
+  }
+}
+
+export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en-US') => {
   const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    month: 'short',
+    weekday: locale === 'en-US' ? 'short' : 'long',
+    month: locale === 'en-US' ? 'short' : 'long',
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
@@ -21,8 +54,8 @@ export const formatDateTime = (dateString: Date) => {
   }
 
   const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    month: 'short',
+    weekday: locale === 'en-US' ? 'short' : 'long',
+    month: locale === 'en-US' ? 'short' : 'long',
     year: 'numeric',
     day: 'numeric',
     timeZone: 'Asia/Shanghai', // GMT+8
@@ -35,9 +68,9 @@ export const formatDateTime = (dateString: Date) => {
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
-  const formattedDateTime: string = new Date(dateString).toLocaleString('en-US', dateTimeOptions)
-  const formattedDate: string = new Date(dateString).toLocaleString('en-US', dateOptions)
-  const formattedTime: string = new Date(dateString).toLocaleString('en-US', timeOptions)
+  const formattedDateTime: string = new Date(dateString).toLocaleString(locale, dateTimeOptions)
+  const formattedDate: string = new Date(dateString).toLocaleString(locale, dateOptions)
+  const formattedTime: string = new Date(dateString).toLocaleString(locale, timeOptions)
 
   return {
     dateTime: formattedDateTime,

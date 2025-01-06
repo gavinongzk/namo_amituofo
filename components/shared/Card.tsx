@@ -1,5 +1,5 @@
 import { IEvent } from '@/lib/database/models/event.model'
-import { formatDateTime } from '@/lib/utils'
+import { formatBilingualDateTime } from '@/lib/utils'
 import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -44,7 +44,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
       <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
         <p className="p-medium-16 p-medium-18 text-grey-500">
-          {formatDateTime(event.startDateTime).dateTime}
+          {formatBilingualDateTime(event.startDateTime).combined.dateTime}
         </p>
 
         <Link href={`/events/${event._id}`}>

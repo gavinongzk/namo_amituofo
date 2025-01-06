@@ -1,5 +1,5 @@
 import { IEvent } from '@/lib/database/models/event.model'
-import { formatDateTime } from '@/lib/utils'
+import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import { IRegistration } from '@/types'
 
@@ -26,7 +26,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
             {event.title}
           </h2>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 text-grey-500">
-            {event.startDateTime && formatDateTime(event.startDateTime).dateTime}
+            {event.startDateTime && formatBilingualDateTime(event.startDateTime).combined.dateTime}
           </p>
         </div>
 
