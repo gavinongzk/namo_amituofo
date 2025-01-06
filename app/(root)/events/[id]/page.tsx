@@ -11,21 +11,21 @@ import Loading from '@/components/shared/Loader';
 const EventInfo = async ({ event }: { event: any }) => {
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
-      {/* Title, Category, and Register Section */}
+      {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+        {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
           <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
-          <div className="flex flex-wrap gap-3 items-center justify-between">
-            <p className="text-base font-semibold rounded-full bg-green-50 px-6 py-2.5 text-green-600">
-              {event.category.name}
-            </p>
+          <p className="text-base font-semibold rounded-full bg-green-50 px-6 py-2.5 text-green-600 w-fit">
+            {event.category.name}
+          </p>
+          <div className="flex justify-start">
             <CheckoutButton event={event} />
           </div>
         </div>
-      </div>
 
-      {/* Event Details Card */}
-      <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+        <div className="h-px bg-gray-200" />
+
         {/* Date and Time Section */}
         <div className='flex gap-5 items-start'>
           <div className="bg-primary-50 p-4 rounded-full shrink-0">
