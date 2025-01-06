@@ -61,10 +61,10 @@ async function AsyncRegisterForm({
     return (
       <div className="text-center py-10">
         <h3 className="text-2xl font-bold text-gray-900">
-          Event not found
+          未找到活动 / Event not found
         </h3>
         <p className="mt-2 text-gray-600">
-          The event you're looking for doesn't exist or has been removed.
+          您要查找的活动不存在或已被删除。/ The event you're looking for doesn't exist or has been removed.
         </p>
       </div>
     )

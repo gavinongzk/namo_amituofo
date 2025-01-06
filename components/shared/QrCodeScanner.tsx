@@ -261,7 +261,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
                 onClick={retry} 
                 disabled={isRetrying}
               >
-                {isRetrying ? <Loader2Icon className="animate-spin" /> : 'Retry'}
+                {isRetrying ? <Loader2Icon className="animate-spin" /> : '重试 / Retry'}
               </Button>
             </div>
           </div>
@@ -269,9 +269,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
       </div>
 
       <p className="mt-2 text-sm text-gray-600 text-center">
-        Position the QR code within the frame to scan.
-        <br />
         将二维码置于框内以进行扫描。
+        <br />
+        Position the QR code within the frame to scan.
       </p>
     </div>
   );

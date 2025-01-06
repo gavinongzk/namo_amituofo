@@ -28,7 +28,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
 
     return (
       <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">
-        <h2 className="h2-bold">Latest Events 最新活动</h2>
+        <h2 className="h2-bold">最新活动 / Latest Events</h2>
 
         <div className="flex w-full flex-col gap-5 md:flex-row">
           <CategoryFilter />
@@ -48,7 +48,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
     console.error('Error in Home page:', error);
     return (
       <div className="wrapper my-8 text-center">
-        <p className="text-red-500">Something went wrong. Please try again later.</p>
+        <p className="text-red-500">出错了，请稍后再试。/ Something went wrong. Please try again later.</p>
       </div>
     );
   }
