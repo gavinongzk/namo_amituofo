@@ -75,9 +75,14 @@ export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en
   let formattedTime: string
 
   if (locale === 'zh-CN') {
-    formattedDateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })} ${date.toLocaleString('zh-CN', timeOptions)}`
+    const hour = date.getHours();
+    const minute = date.getMinutes().toString().padStart(2, '0');
+    const period = hour < 12 ? '上午' : '下午';
+    const hour12 = hour % 12 || 12;
+    
+    formattedDateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })} ${period}${hour12}:${minute}`
     formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })}`
-    formattedTime = date.toLocaleString('zh-CN', timeOptions)
+    formattedTime = `${period}${hour12}:${minute}`
   } else {
     formattedDateTime = date.toLocaleString('en-US', dateTimeOptions)
     formattedDate = date.toLocaleString('en-US', dateOptions)

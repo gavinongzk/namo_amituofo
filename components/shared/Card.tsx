@@ -43,9 +43,11 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
       )}
 
       <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
-        <p className="p-medium-16 p-medium-18 text-grey-500">
-          {formatBilingualDateTime(event.startDateTime).combined.dateTime}
-        </p>
+        {formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
+          <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
+            {line}
+          </p>
+        ))}
 
         <Link href={`/events/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>

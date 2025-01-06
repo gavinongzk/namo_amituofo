@@ -51,7 +51,7 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
   isNewlyMarked?: boolean 
 }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
-    <h6 className="text-lg font-semibold mb-2 text-center">QR Code</h6>
+    <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
     <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
       ${isNewlyMarked ? 'animate-flash' : ''}`}>
       <Image 
@@ -79,12 +79,12 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
                   d="M5 13l4 4L19 7" 
                 />
               </svg>
-              <span className="text-lg font-semibold text-green-700">Attendance Marked</span>
+              <span className="text-lg font-semibold text-green-700">出席已记录</span>
             </div>
-            <p className="text-sm text-green-600 text-center mt-1">出席已记录</p>
+            <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
           </div>
           <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-            <p className="text-sm text-yellow-700">Please keep this QR code for verification 请保留此二维码以供核实</p>
+            <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
           </div>
         </div>
       )}

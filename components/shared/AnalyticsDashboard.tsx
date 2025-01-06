@@ -128,19 +128,19 @@ const AnalyticsDashboard: React.FC = () => {
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
             accessorKey: 'name',
-            header: 'Name',
+            header: '姓名 Name',
         },
         {
             accessorKey: 'phoneNumber',
-            header: 'Phone Number',
+            header: '电话 Phone Number',
         },
         {
             accessorKey: 'eventCount',
-            header: 'Event Count',
+            header: '参与次数 Event Count',
         },
         {
             accessorKey: 'lastEventDate',
-            header: 'Last Attended',
+            header: '最近参与 Last Attended',
         },
         {
             id: 'actions',
@@ -182,34 +182,47 @@ const AnalyticsDashboard: React.FC = () => {
     });
 
     const processFrequentAttendees = (attendees: Attendee[]) => {
-        const sortedAttendees: FrequentAttendee[] = attendees
-            .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
-            .sort((a, b) => b.eventCount - a.eventCount)
-            .map(attendee => ({
-                name: attendee.name,
-                phoneNumber: attendee.phoneNumber,
-                eventCount: attendee.eventCount,
-                lastEventDate: attendee.lastEventDate ? format(parseISO(attendee.lastEventDate), 'dd MMM yyyy') : 'Unknown'
-            }));
-
-        setFrequentAttendees(sortedAttendees);
-    };
-
-    const processPopularEvents = (attendees: Attendee[]) => {
-        const categoryCounts: Record<string, number> = {};
-
-        attendees.forEach(attendee => {
-            if (attendee.events && Array.isArray(attendee.events)) {
-                const uniqueCategories = new Set(
-                    attendee.events.map(event => event.category?.name || 'Uncategorized')
-                );
-                uniqueCategories.forEach(categoryName => {
-                    categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
-                });
+        const attendeeCounts: Record<string, { count: number; lastDate: string; phoneNumber: string }> = {};
+        
+        attendees.forEach((a: Attendee) => {
+            const key = `${a.name}-${a.phoneNumber}`;
+            if (!attendeeCounts[key]) {
+                attendeeCounts[key] = {
+                    count: 0,
+                    lastDate: '',
+                    phoneNumber: a.phoneNumber
+                };
+            }
+            attendeeCounts[key].count += 1;
+            if (!attendeeCounts[key].lastDate || new Date(a.eventDate) > new Date(attendeeCounts[key].lastDate)) {
+                attendeeCounts[key].lastDate = a.eventDate;
             }
         });
 
-        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCounts)
+        const frequentAttendeesList: FrequentAttendee[] = Object.entries(attendeeCounts)
+            .map(([key, value]) => ({
+                name: key.split('-')[0],
+                phoneNumber: value.phoneNumber,
+                eventCount: value.count,
+                lastEventDate: value.lastDate
+            }))
+            .sort((a, b) => b.eventCount - a.eventCount)
+            .slice(0, 10);
+
+        setFrequentAttendees(frequentAttendeesList);
+    };
+
+    const processPopularEvents = (attendees: Attendee[]) => {
+        const categoryCount: Record<string, number> = {};
+        
+        attendees.forEach((attendee: Attendee) => {
+            attendee.events.forEach(event => {
+                const cat = event.category.name;
+                categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+            });
+        });
+
+        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCount)
             .map(([categoryName, attendeeCount]) => ({
                 categoryName,
                 attendeeCount
@@ -224,7 +237,7 @@ const AnalyticsDashboard: React.FC = () => {
         const regionCounts: Record<string, number> = {};
         const townCounts: Record<string, number> = {};
         
-        attendees.forEach(attendee => {
+        attendees.forEach((attendee: Attendee) => {
             const region = attendee.region === 'Unknown' ? '' : attendee.region;
             const town = attendee.town === 'Unknown' ? '' : attendee.town;
             
@@ -447,7 +460,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Top 5 Popular Events',
+                text: '前五大热门活动 Top 5 Popular Events',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -459,13 +472,13 @@ const AnalyticsDashboard: React.FC = () => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: 'Number of Attendees',
+                    text: '参与人数 Number of Attendees',
                 }
             },
             x: {
                 title: {
                     display: true,
-                    text: 'Category Name',
+                    text: '活动类别 Category Name',
                 }
             }
         },
@@ -517,7 +530,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Attendee Distribution by Region',
+                text: '地区分布 Attendee Distribution by Region',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -535,7 +548,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Top 10 Towns by Attendee Count',
+                text: '前十大城镇分布 Top 10 Towns by Attendee Count',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -547,13 +560,13 @@ const AnalyticsDashboard: React.FC = () => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: 'Number of Attendees'
+                    text: '参与人数 Number of Attendees'
                 }
             },
             y: {
                 title: {
                     display: true,
-                    text: 'Town'
+                    text: '城镇 Town'
                 }
             }
         }
@@ -756,7 +769,7 @@ const AnalyticsDashboard: React.FC = () => {
     return (
         <div className="p-6 space-y-8">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold">Analytics Dashboard</h2>
+                <h2 className="text-3xl font-bold">数据分析 Analytics Dashboard</h2>
                 <div className="flex gap-4">
                     <Button
                         variant="outline"
@@ -766,7 +779,7 @@ const AnalyticsDashboard: React.FC = () => {
                             console.log('Export data');
                         }}
                     >
-                        Export Data
+                        导出数据 Export Data
                     </Button>
                 </div>
             </div>
@@ -925,7 +938,7 @@ const AnalyticsDashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">Attendance Trend</h3>
+                        <h3 className="text-xl font-semibold">出席趋势 Attendance Trend</h3>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -935,7 +948,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     // TODO: Implement view toggle
                                 }}
                             >
-                                Monthly
+                                按月 Monthly
                             </Button>
                             <Button
                                 variant="outline"
@@ -945,7 +958,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     // TODO: Implement view toggle
                                 }}
                             >
-                                Yearly
+                                按年 Yearly
                             </Button>
                         </div>
                     </div>
@@ -953,27 +966,27 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
+                    <h3 className="text-xl font-semibold mb-4">热门活动 Popular Events</h3>
                     <Bar data={categoryDistributionData} options={popularEventsOptions} />
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Region Distribution</h3>
+                    <h3 className="text-xl font-semibold mb-4">地区分布 Region Distribution</h3>
                     <Doughnut data={regionDistributionData} options={regionDistributionOptions} />
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Town Distribution</h3>
+                    <h3 className="text-xl font-semibold mb-4">城镇分布 Town Distribution</h3>
                     <Bar data={townDistributionData} options={townDistributionOptions} />
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Frequent Attendees</h3>
+                <h3 className="text-xl font-semibold mb-4">常客分析 Frequent Attendees</h3>
                 <div className="mb-4">
                     <Input
                         type="text"
-                        placeholder="Filter by name"
+                        placeholder="按名字筛选 Filter by name"
                         value={nameFilter}
                         onChange={(e) => {
                             setNameFilter(e.target.value);
@@ -1065,7 +1078,7 @@ const AnalyticsDashboard: React.FC = () => {
 
             {/* Predictive Analytics Section */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Attendance Forecast</h3>
+                <h3 className="text-xl font-semibold mb-4">出席预测 Attendance Forecast</h3>
                 <div className="h-[400px]">
                     <Line data={attendanceTrendData} options={attendanceTrendOptions} />
                 </div>
@@ -1086,26 +1099,26 @@ const AnalyticsDashboard: React.FC = () => {
 
             {/* Cohort Analysis Section */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Cohort Analysis</h3>
+                <h3 className="text-xl font-semibold mb-4">群组分析 Cohort Analysis</h3>
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead>
                             <tr className="bg-gray-50">
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Cohort</th>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Size</th>
-                                {Array.from({ length: 6 }, (_, i) => (
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">群组 Cohort</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">人数 Size</th>
+                                {Array.from({ length: 6 }, (_, i: number) => (
                                     <th key={i} className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                                        Month {i + 1}
+                                        第{i + 1}月 Month {i + 1}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {cohortAnalytics.map((cohort) => (
+                            {cohortAnalytics.map((cohort: CohortData) => (
                                 <tr key={cohort.cohortMonth} className="border-t border-gray-200">
                                     <td className="px-4 py-2">{format(parseISO(cohort.cohortMonth + '-01'), 'MMM yyyy')}</td>
                                     <td className="px-4 py-2">{cohort.originalSize}</td>
-                                    {cohort.retentionData.map((data, i) => (
+                                    {cohort.retentionData.map((data, i: number) => (
                                         <td key={i} className="px-4 py-2">
                                             <div className="flex items-center">
                                                 <div 
