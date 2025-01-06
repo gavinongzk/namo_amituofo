@@ -36,7 +36,7 @@ export default async function RegisterPage({
     <>
       <section className="bg-primary-50 bg-dotted-pattern md:bg-dotted-pattern bg-cover bg-center py-2 md:py-10">
         <h3 className="wrapper h3-bold text-center sm:text-left text-lg md:text-2xl px-2 md:px-4">
-          Register for Event
+          报名活动 / Register for Event
         </h3>
       </section>
 
