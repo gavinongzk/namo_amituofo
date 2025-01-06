@@ -58,10 +58,6 @@ interface CategoryDistribution {
     attendeeCount: number;
 }
 
-interface CategoryData {
-    name: string;
-}
-
 interface RegionDistribution {
     region: string;
     attendeeCount: number;
@@ -103,15 +99,6 @@ const AnalyticsDashboard: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
-    const [categories, setCategories] = useState<Record<string, string>>({});
-    const [selectedRegion, setSelectedRegion] = useState<string>('all');
-    const [selectedTown, setSelectedTown] = useState<string>('all');
-    const [locationFilteredAttendees, setLocationFilteredAttendees] = useState<Attendee[]>([]);
-    const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
-        start: subMonths(new Date(), 6),
-        end: new Date()
-    });
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -185,9 +172,14 @@ const AnalyticsDashboard: React.FC = () => {
         attendees.forEach((a: Attendee) => {
             const key = `${a.name}-${a.phoneNumber}`;
             if (!attendeeCounts[key]) {
+                const sortedEvents = [...a.events].sort((a, b) => 
+                    new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+                );
+                const lastEventDate = sortedEvents[0]?.eventDate || a.lastEventDate;
+                
                 attendeeCounts[key] = {
                     count: a.events.length,
-                    lastDate: a.lastEventDate,
+                    lastDate: lastEventDate,
                     phoneNumber: a.phoneNumber
                 };
             }
@@ -198,7 +190,7 @@ const AnalyticsDashboard: React.FC = () => {
                 name: key.split('-')[0],
                 phoneNumber: value.phoneNumber,
                 eventCount: value.count,
-                lastEventDate: value.lastDate
+                lastEventDate: format(parseISO(value.lastDate), 'yyyy-MM-dd')
             }))
             .sort((a, b) => b.eventCount - a.eventCount);
 
@@ -292,24 +284,6 @@ const AnalyticsDashboard: React.FC = () => {
         fetchAnalytics();
     }, []);
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('/api/categories');
-                const data = await response.json();
-                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
-                    acc[cat.name] = cat.name;
-                    return acc;
-                }, {});
-                setCategories(categoryMap);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-
-        fetchCategories();
-    }, []);
-
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
         const now = new Date();
         const sixMonthsAgo = subMonths(now, 5);
@@ -328,19 +302,8 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     useEffect(() => {
-        if (attendees.length > 0) {
-            calculateAttendanceTrend(attendees);
-        }
+        calculateAttendanceTrend(attendees);
     }, [attendees]);
-
-    useEffect(() => {
-        const filtered = attendees.filter(attendee => {
-            const matchesRegion = selectedRegion === 'all' || attendee.region === selectedRegion;
-            const matchesTown = selectedTown === 'all' || attendee.town === selectedTown;
-            return matchesRegion && matchesTown;
-        });
-        setLocationFilteredAttendees(filtered);
-    }, [attendees, selectedRegion, selectedTown]);
 
     const nameFilteredAttendees = frequentAttendees.filter(attendee =>
         attendee.name.toLowerCase().includes(searchFilter.toLowerCase())
@@ -722,106 +685,6 @@ const AnalyticsDashboard: React.FC = () => {
                     ))}
                 </div>
             )}
-
-            {/* Enhanced Filtering Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-md">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Region</label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Regions</SelectItem>
-                            {regionDistribution.map(({ region }) => (
-                                <SelectItem key={region} value={region}>{region}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Town</label>
-                    <Select value={selectedTown} onValueChange={setSelectedTown}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Town" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Towns</SelectItem>
-                            {townDistribution.map(({ town }) => (
-                                <SelectItem key={town} value={town}>{town}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Category</label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {Object.keys(categories).map((category) => (
-                                <SelectItem key={category} value={category}>{category}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Date Range</label>
-                    <div className="flex gap-2">
-                        <Input
-                            type="date"
-                            value={format(dateRange.start, 'yyyy-MM-dd')}
-                            onChange={(e) => setDateRange(prev => ({
-                                ...prev,
-                                start: parseISO(e.target.value)
-                            }))}
-                        />
-                        <Input
-                            type="date"
-                            value={format(dateRange.end, 'yyyy-MM-dd')}
-                            onChange={(e) => setDateRange(prev => ({
-                                ...prev,
-                                end: parseISO(e.target.value)
-                            }))}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Filtered Attendees Table */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-lg font-semibold mb-2">
-                    Filtered Attendees ({locationFilteredAttendees.length} total)
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
-                    <table className="w-full">
-                        <thead className="text-sm text-gray-600">
-                            <tr>
-                                <th className="text-left py-2">Name</th>
-                                <th className="text-left py-2">Region</th>
-                                <th className="text-left py-2">Town</th>
-                                <th className="text-left py-2">Event Count</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                            {locationFilteredAttendees.map((attendee, index) => (
-                                <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
-                                    className="border-t border-gray-200">
-                                    <td className="py-2">{attendee.name}</td>
-                                    <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
-                                    <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
-                                    <td className="py-2">{attendee.eventCount}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
