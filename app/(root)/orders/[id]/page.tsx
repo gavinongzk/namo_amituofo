@@ -466,7 +466,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
               <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
               <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly}
-              <span className="ml-[4.2rem] text-gray-600">{formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}</span></p>
+              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
+              </p>
               {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
