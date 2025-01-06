@@ -109,7 +109,7 @@ const AnalyticsDashboard: React.FC = () => {
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [nameFilter, setNameFilter] = useState('');
+    const [searchFilter, setSearchFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
@@ -129,10 +129,20 @@ const AnalyticsDashboard: React.FC = () => {
         {
             accessorKey: 'name',
             header: '姓名 Name',
+            filterFn: (row, id, value) => {
+                const name = row.getValue(id) as string;
+                const phone = row.getValue('phoneNumber') as string;
+                const searchTerm = value.toLowerCase();
+                return name.toLowerCase().includes(searchTerm) || 
+                       phone.toLowerCase().includes(searchTerm);
+            },
         },
         {
             accessorKey: 'phoneNumber',
             header: '电话 Phone Number',
+            filterFn: (row, id, value) => {
+                return row.getValue(id).toLowerCase().includes(value.toLowerCase())
+            },
         },
         {
             accessorKey: 'eventCount',
@@ -350,7 +360,7 @@ const AnalyticsDashboard: React.FC = () => {
     }, [attendees, selectedRegion, selectedTown]);
 
     const nameFilteredAttendees = frequentAttendees.filter(attendee =>
-        attendee.name.toLowerCase().includes(nameFilter.toLowerCase())
+        attendee.name.toLowerCase().includes(searchFilter.toLowerCase())
     );
 
     const pageCount = Math.ceil(nameFilteredAttendees.length / itemsPerPage);
@@ -986,13 +996,13 @@ const AnalyticsDashboard: React.FC = () => {
                 <div className="mb-4">
                     <Input
                         type="text"
-                        placeholder="按名字筛选 Filter by name"
-                        value={nameFilter}
+                        placeholder="按名字或电话号码筛选 Filter by name or phone number"
+                        value={searchFilter}
                         onChange={(e) => {
-                            setNameFilter(e.target.value);
+                            setSearchFilter(e.target.value);
                             table.getColumn('name')?.setFilterValue(e.target.value);
                         }}
-                        className="max-w-xs"
+                        className="max-w-md"
                     />
                 </div>
                 
@@ -1002,28 +1012,38 @@ const AnalyticsDashboard: React.FC = () => {
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <TableHead key={header.id}>
-                                        {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext()
-                                        )}
-                                    </TableCell>
-                                ))}
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && "selected"}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    No results.
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
 
