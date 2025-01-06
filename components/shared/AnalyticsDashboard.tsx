@@ -186,14 +186,10 @@ const AnalyticsDashboard: React.FC = () => {
             const key = `${a.name}-${a.phoneNumber}`;
             if (!attendeeCounts[key]) {
                 attendeeCounts[key] = {
-                    count: 0,
-                    lastDate: '',
+                    count: a.events.length,
+                    lastDate: a.lastEventDate,
                     phoneNumber: a.phoneNumber
                 };
-            }
-            attendeeCounts[key].count += 1;
-            if (!attendeeCounts[key].lastDate || new Date(a.eventDate) > new Date(attendeeCounts[key].lastDate)) {
-                attendeeCounts[key].lastDate = a.eventDate;
             }
         });
 
