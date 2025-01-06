@@ -22,7 +22,6 @@ const EventInfo = async ({ event }: { event: any }) => {
             <CheckoutButton event={event} />
           </div>
         </div>
-      </div>
 
       {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
@@ -55,18 +54,20 @@ const EventInfo = async ({ event }: { event: any }) => {
             <p className="text-base text-gray-600">{event.location}</p>
           </div>
         </div>
-      </div>
 
-      {/* Description Section */}
-      <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100">
-        <p className="text-xl font-bold text-gray-800 mb-6">活动描述 Event Description:</p>
-        <p 
-          className="text-base text-gray-600 leading-relaxed" 
-          style={{ whiteSpace: 'pre-wrap' }}
-          dangerouslySetInnerHTML={{ 
-            __html: convertPhoneNumbersToLinks(event.description) 
-          }}
-        />
+        <div className="h-px bg-gray-200" />
+
+        {/* Description Section */}
+        <div className="flex flex-col gap-4">
+          <p className="text-xl font-bold text-gray-800">活动描述 Event Description:</p>
+          <p 
+            className="text-base text-gray-600 leading-relaxed" 
+            style={{ whiteSpace: 'pre-wrap' }}
+            dangerouslySetInnerHTML={{ 
+              __html: convertPhoneNumbersToLinks(event.description) 
+            }}
+          />
+        </div>
       </div>
     </div>
   );
