@@ -30,7 +30,6 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
     try {
       const orders = await getOrdersByPhoneNumber(phoneNumber);
 
-      /Transform each order into IRegistration format
       const transformedRegistrations: IRegistration[] = orders.map((order: any) => ({
         event: {
           _id: order.event._id,
