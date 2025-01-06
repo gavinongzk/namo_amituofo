@@ -84,8 +84,7 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
             <p className="text-sm text-green-600 text-center mt-1">出席已记录</p>
           </div>
           <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-            <p className="text-sm text-yellow-700">Please keep this QR code for verification</p>
-            <p className="text-xs text-yellow-600">请保留此二维码以供核实</p>
+            <p className="text-sm text-yellow-700">Please keep this QR code for verification · 请保留此二维码以供核实</p>
           </div>
         </div>
       )}
