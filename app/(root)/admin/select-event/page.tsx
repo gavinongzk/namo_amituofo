@@ -182,19 +182,22 @@ const SelectEventPage = () => {
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    已注册 / Registered: {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}
+                    <span className="block">已注册</span>
+                    <span className="block">Registered: {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}</span>
                   </span>
                 </div>
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    已出席 / Attended: {selectedEvent.attendedUsers}
+                    <span className="block">已出席</span>
+                    <span className="block">Attended: {selectedEvent.attendedUsers}</span>
                   </span>
                 </div>
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    不能绕佛 / Cannot Recite & Walk: {selectedEvent.cannotReciteAndWalk}
+                    <span className="block">不能绕佛</span>
+                    <span className="block">Cannot Recite & Walk: {selectedEvent.cannotReciteAndWalk}</span>
                   </span>
                 </div>
               </div>
@@ -204,7 +207,17 @@ const SelectEventPage = () => {
                 {selectedEvent.category.name}
               </Badge>
               <Badge variant="outline" className="text-sm">
-                {new Date(selectedEvent.startDateTime) > new Date() ? '即将开始 / Upcoming' : '进行中 / Ongoing'}
+                {new Date(selectedEvent.startDateTime) > new Date() ? (
+                  <>
+                    <span className="block">即将开始</span>
+                    <span className="block">Upcoming</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="block">进行中</span>
+                    <span className="block">Ongoing</span>
+                  </>
+                )}
               </Badge>
             </CardFooter>
           </Card>

@@ -35,10 +35,12 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           {registrations.slice(0, initialDisplayCount).map((registration, index) => (
             <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
               <p className="p-medium-16 md:p-medium-18 text-black">
-                排队号码 / Queue Number: {registration.queueNumber || 'N/A'}
+                <span className="block">排队号码</span>
+                <span className="block">Queue Number: {registration.queueNumber || 'N/A'}</span>
               </p>
               <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                姓名 / Name: {registration.name || 'N/A'}
+                <span className="block">姓名</span>
+                <span className="block">Name: {registration.name || 'N/A'}</span>
               </p>
             </div>
           ))}
@@ -49,7 +51,8 @@ const RegistrationCard = ({ event, registrations }: Props) => {
               <summary className="cursor-pointer text-primary-500 hover:text-primary-600 transition-colors list-none">
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm font-medium">
-                    显示更多 {registrations.length - initialDisplayCount} 个 / Show {registrations.length - initialDisplayCount} More
+                    <span className="block">显示更多 {registrations.length - initialDisplayCount} 个</span>
+                    <span className="block">Show {registrations.length - initialDisplayCount} More</span>
                   </span>
                   <svg 
                     className="w-4 h-4 transition-transform group-open/details:rotate-180" 
@@ -68,10 +71,12 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                     className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
                   >
                     <p className="p-medium-16 md:p-medium-18 text-black">
-                      排队号码 / Queue Number: {registration.queueNumber || 'N/A'}
+                      <span className="block">排队号码</span>
+                      <span className="block">Queue Number: {registration.queueNumber || 'N/A'}</span>
                     </p>
                     <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                      姓名 / Name: {registration.name || 'N/A'}
+                      <span className="block">姓名</span>
+                      <span className="block">Name: {registration.name || 'N/A'}</span>
                     </p>
                   </div>
                 ))}
@@ -84,7 +89,10 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           href={`/orders/${event.orderId}`} 
           className="flex gap-2 mt-4 text-primary-500 underline hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
         >
-          <p>查看详情 / View Details</p>
+          <p>
+            <span className="block">查看详情</span>
+            <span className="block">View Details</span>
+          </p>
         </Link>
       </div>
     </div>

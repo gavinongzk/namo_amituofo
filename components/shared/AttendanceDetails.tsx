@@ -124,19 +124,31 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Registrations 总注册</p>
+              <p className="text-sm text-gray-600">
+                <span className="block">总注册</span>
+                <span className="block">Total Registrations</span>
+              </p>
               <p className="font-semibold">{totalRegistrations}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Attended Users 已出席用户</p>
+              <p className="text-sm text-gray-600">
+                <span className="block">已出席用户</span>
+                <span className="block">Attended Users</span>
+              </p>
               <p className="font-semibold">{attendedUsersCount}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cannot Recite & Walk 不能绕佛</p>
+              <p className="text-sm text-gray-600">
+                <span className="block">不能绕佛</span>
+                <span className="block">Cannot Recite & Walk</span>
+              </p>
               <p className="font-semibold">{cannotReciteAndWalkCount}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cancelled Users 已取消用户</p>
+              <p className="text-sm text-gray-600">
+                <span className="block">已取消用户</span>
+                <span className="block">Cancelled Users</span>
+              </p>
               <p className="font-semibold">{cancelledUsersCount}</p>
             </div>
           </div>
