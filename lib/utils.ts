@@ -75,7 +75,9 @@ export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en
   let formattedTime: string
 
   if (locale === 'zh-CN') {
-    const hour = date.getHours();
+    const date = new Date(dateString)
+    const utcHour = date.getUTCHours();
+    const hour = (utcHour + 8) % 24; // Convert to GMT+8
     const minute = date.getMinutes().toString().padStart(2, '0');
     const period = hour < 12 ? '上午' : '下午';
     const hour12 = hour % 12 || 12;
