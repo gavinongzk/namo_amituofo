@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear, startOfMonth, endOfMonth, addMonths } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,16 +72,6 @@ interface TownDistribution {
     attendeeCount: number;
 }
 
-interface CohortData {
-    cohortMonth: string;
-    originalSize: number;
-    retentionData: {
-        month: string;
-        count: number;
-        percentage: number;
-    }[];
-}
-
 const userAttendanceOptions: ChartOptions<'line'> = {
   responsive: true,
   plugins: {
@@ -122,8 +112,6 @@ const AnalyticsDashboard: React.FC = () => {
         end: new Date()
     });
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    const [predictedAttendance, setPredictedAttendance] = useState<number[]>([]);
-    const [cohortAnalytics, setCohortAnalytics] = useState<CohortData[]>([]);
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -216,8 +204,7 @@ const AnalyticsDashboard: React.FC = () => {
                 eventCount: value.count,
                 lastEventDate: value.lastDate
             }))
-            .sort((a, b) => b.eventCount - a.eventCount)
-            .slice(0, 10);
+            .sort((a, b) => b.eventCount - a.eventCount);
 
         setFrequentAttendees(frequentAttendeesList);
     };
@@ -379,30 +366,16 @@ const AnalyticsDashboard: React.FC = () => {
     }).map(date => format(date, 'MMM yyyy'));
 
     const attendanceTrendData = {
-        labels: [
-            ...eachMonthOfInterval({
-                start: subMonths(new Date(), 5),
-                end: new Date()
-            }).map(date => format(date, 'MMM yyyy')),
-            ...Array(3).fill(0).map((_, i) => 
-                format(addMonths(new Date(), i + 1), 'MMM yyyy')
-            )
-        ],
+        labels: eachMonthOfInterval({
+            start: subMonths(new Date(), 5),
+            end: new Date()
+        }).map(date => format(date, 'MMM yyyy')),
         datasets: [
             {
                 label: 'Actual Attendance',
-                data: [...attendanceTrend, ...new Array(3).fill(null)],
+                data: attendanceTrend,
                 borderColor: 'rgb(53, 162, 235)',
                 backgroundColor: 'rgba(53, 162, 235, 0.5)',
-                tension: 0.3,
-                fill: true,
-            },
-            {
-                label: 'Predicted Attendance',
-                data: [...new Array(6).fill(null), ...predictedAttendance],
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                borderDash: [5, 5],
                 tension: 0.3,
                 fill: true,
             }
@@ -600,7 +573,8 @@ const AnalyticsDashboard: React.FC = () => {
         }).length;
 
         const momGrowth = lastMonth > 0 ? 
-            (((thisMonth - lastMonth) / lastMonth) * 100).toFixed(1) : '0';
+            (((thisMonth - lastMonth) / lastMonth) * 100).toFixed(1)
+            : '0';
 
         return {
             totalUniqueAttendees,
@@ -669,98 +643,6 @@ const AnalyticsDashboard: React.FC = () => {
             attendeesAtRisk
         };
     };
-
-    // Add predictive analytics calculation
-    const calculatePredictedAttendance = (attendees: Attendee[]) => {
-        const now = new Date();
-        const monthlyAttendance = new Array(6).fill(0);
-        
-        // Calculate past 6 months attendance
-        for (let i = 5; i >= 0; i--) {
-            const monthStart = startOfMonth(subMonths(now, i));
-            const monthEnd = endOfMonth(subMonths(now, i));
-            
-            const count = attendees.reduce((acc, attendee) => {
-                return acc + attendee.events.filter(event => {
-                    const eventDate = parseISO(event.eventDate);
-                    return eventDate >= monthStart && eventDate <= monthEnd;
-                }).length;
-            }, 0);
-            
-            monthlyAttendance[5-i] = count;
-        }
-
-        // Simple moving average prediction for next 3 months
-        const predictions = [];
-        const windowSize = 3;
-        
-        for (let i = 0; i < 3; i++) {
-            const recentMonths = monthlyAttendance.slice(-windowSize);
-            const prediction = Math.round(recentMonths.reduce((a, b) => a + b, 0) / windowSize);
-            predictions.push(prediction);
-            monthlyAttendance.push(prediction);
-        }
-
-        setPredictedAttendance(predictions);
-    };
-
-    // Add cohort analysis calculation
-    const calculateCohortAnalytics = (attendees: Attendee[]) => {
-        const cohorts: Map<string, Attendee[]> = new Map();
-        
-        // Group attendees by their first event month
-        attendees.forEach(attendee => {
-            if (attendee.events.length === 0) return;
-            
-            const firstEventDate = parseISO(attendee.events[0].eventDate);
-            const cohortMonth = format(firstEventDate, 'yyyy-MM');
-            
-            if (!cohorts.has(cohortMonth)) {
-                cohorts.set(cohortMonth, []);
-            }
-            cohorts.get(cohortMonth)!.push(attendee);
-        });
-
-        const cohortData: CohortData[] = [];
-        const months = Array.from(cohorts.keys()).sort();
-
-        months.forEach(cohortMonth => {
-            const cohortAttendees = cohorts.get(cohortMonth)!;
-            const originalSize = cohortAttendees.length;
-            const retentionData = [];
-
-            // Calculate retention for each month after cohort month
-            for (let i = 0; i <= months.indexOf(cohortMonth); i++) {
-                const targetMonth = format(addMonths(parseISO(cohortMonth + '-01'), i), 'yyyy-MM');
-                const activeInMonth = cohortAttendees.filter(attendee =>
-                    attendee.events.some(event => 
-                        format(parseISO(event.eventDate), 'yyyy-MM') === targetMonth
-                    )
-                ).length;
-
-                retentionData.push({
-                    month: targetMonth,
-                    count: activeInMonth,
-                    percentage: Math.round((activeInMonth / originalSize) * 100)
-                });
-            }
-
-            cohortData.push({
-                cohortMonth,
-                originalSize,
-                retentionData
-            });
-        });
-
-        setCohortAnalytics(cohortData);
-    };
-
-    useEffect(() => {
-        if (attendees.length > 0) {
-            calculatePredictedAttendance(attendees);
-            calculateCohortAnalytics(attendees);
-        }
-    }, [attendees]);
 
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
@@ -1095,69 +977,6 @@ const AnalyticsDashboard: React.FC = () => {
                     />
                 </div>
             )}
-
-            {/* Predictive Analytics Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">出席预测 Attendance Forecast</h3>
-                <div className="h-[400px]">
-                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                    {predictedAttendance.map((prediction, index) => (
-                        <Card key={index} className="p-4">
-                            <h5 className="text-sm font-medium text-gray-500">
-                                {format(addMonths(new Date(), index + 1), 'MMMM yyyy')}
-                            </h5>
-                            <p className="mt-2 text-2xl font-semibold">
-                                {prediction}
-                                <span className="text-sm text-gray-500 ml-2">attendees</span>
-                            </p>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-
-            {/* Cohort Analysis Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">群组分析 Cohort Analysis</h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                        <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">群组 Cohort</th>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">人数 Size</th>
-                                {Array.from({ length: 6 }, (_, i: number) => (
-                                    <th key={i} className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                                        第{i + 1}月 Month {i + 1}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {cohortAnalytics.map((cohort: CohortData) => (
-                                <tr key={cohort.cohortMonth} className="border-t border-gray-200">
-                                    <td className="px-4 py-2">{format(parseISO(cohort.cohortMonth + '-01'), 'MMM yyyy')}</td>
-                                    <td className="px-4 py-2">{cohort.originalSize}</td>
-                                    {cohort.retentionData.map((data, i: number) => (
-                                        <td key={i} className="px-4 py-2">
-                                            <div className="flex items-center">
-                                                <div 
-                                                    className="h-8 bg-blue-100 rounded"
-                                                    style={{ width: `${data.percentage}%` }}
-                                                >
-                                                    <div className="px-2 py-1 text-xs">
-                                                        {data.percentage}%
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 };
