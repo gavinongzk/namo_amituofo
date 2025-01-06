@@ -99,23 +99,39 @@ const EventLookupPage = () => {
                             className="text-primary-500 hover:text-primary-600 hover:underline"
                         >
                             {useManualInput ? (
-                                "切换回新马电话格式 / Switch back to SG/MY phone number format"
+                                <>
+                                    <span className="block">切换回新马电话格式</span>
+                                    <span className="block">Switch back to SG/MY phone number format</span>
+                                </>
                             ) : (
-                                "使用其他国家的电话号码？点击这里 / Using a phone number from another country? Click here"
+                                <>
+                                    <span className="block">使用其他国家的电话号码？点击这里</span>
+                                    <span className="block">Using a phone number from another country? Click here</span>
+                                </>
                             )}
                         </button>
                     </div>
 
                     <Button onClick={handleLookup} disabled={isLoading} className="w-full">
-                        {isLoading ? '查询中... / Looking up...' : '查询 / Lookup'}
+                        {isLoading ? (
+                            <>
+                                <span className="block">查询中...</span>
+                                <span className="block">Looking up...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="block">查询</span>
+                                <span className="block">Lookup</span>
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
 
             {error && (
                 <p className="text-red-500 text-center">
-                    获取注册信息失败。请重试。 / 
-                    Failed to fetch registrations. Please try again.
+                    <span className="block">获取注册信息失败。请重试。</span>
+                    <span className="block">Failed to fetch registrations. Please try again.</span>
                 </p>
             )}
 

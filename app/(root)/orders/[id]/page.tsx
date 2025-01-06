@@ -124,7 +124,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
           className="w-full sm:w-auto mt-4"
           disabled={isLoading}
         >
-          {isLoading ? 'Cancelling...' : 'Cancel Registration 取消注册'}
+          {isLoading ? '取消中... Cancelling...' : '取消注册 Cancel Registration'}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-opacity-100 bg-background">

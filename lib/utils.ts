@@ -35,42 +35,54 @@ export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => 
     en: enFormatted,
     cn: cnFormatted,
     combined: {
-      dateTime: `${cnFormatted.dateTime} / ${enFormatted.dateTime}`,
-      dateOnly: `${cnFormatted.dateOnly} / ${enFormatted.dateOnly}`,
-      timeOnly: `${cnFormatted.timeOnly} / ${enFormatted.timeOnly}`,
+      dateTime: `${cnFormatted.dateTime}\n${enFormatted.dateTime}`,
+      dateOnly: `${cnFormatted.dateOnly}\n${enFormatted.dateOnly}`,
+      timeOnly: `${cnFormatted.timeOnly}\n${enFormatted.timeOnly}`,
     }
   }
 }
 
 export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en-US') => {
   const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    weekday: locale === 'en-US' ? 'short' : 'long',
-    month: locale === 'en-US' ? 'short' : 'long',
+    year: 'numeric',
+    month: locale === 'en-US' ? 'short' : 'numeric',
     day: 'numeric',
+    weekday: locale === 'en-US' ? 'short' : 'long',
     hour: 'numeric',
-    minute: 'numeric',
+    minute: '2-digit',
     hour12: true,
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
   const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: locale === 'en-US' ? 'short' : 'long',
-    month: locale === 'en-US' ? 'short' : 'long',
     year: 'numeric',
+    month: locale === 'en-US' ? 'short' : 'numeric',
     day: 'numeric',
+    weekday: locale === 'en-US' ? 'short' : 'long',
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
-    minute: 'numeric',
+    minute: '2-digit',
     hour12: true,
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
-  const formattedDateTime: string = new Date(dateString).toLocaleString(locale, dateTimeOptions)
-  const formattedDate: string = new Date(dateString).toLocaleString(locale, dateOptions)
-  const formattedTime: string = new Date(dateString).toLocaleString(locale, timeOptions)
+  const date = new Date(dateString)
+  let formattedDateTime: string
+  let formattedDate: string
+  let formattedTime: string
+
+  if (locale === 'zh-CN') {
+    formattedDateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })} ${date.toLocaleString('zh-CN', timeOptions)}`
+    formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })}`
+    formattedTime = date.toLocaleString('zh-CN', timeOptions)
+  } else {
+    formattedDateTime = date.toLocaleString('en-US', dateTimeOptions)
+    formattedDate = date.toLocaleString('en-US', dateOptions)
+    formattedTime = date.toLocaleString('en-US', timeOptions)
+  }
 
   return {
     dateTime: formattedDateTime,

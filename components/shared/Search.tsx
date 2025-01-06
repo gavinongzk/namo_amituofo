@@ -6,7 +6,7 @@ import { Input } from '../ui/input';
 import { formUrlQuery, removeKeysFromQuery } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const Search = ({ placeholder = '搜索名称... / Search name...' }: { placeholder?: string }) => {
+const Search = ({ placeholder = '搜索名称...\nSearch name...' }: { placeholder?: string }) => {
   const [query, setQuery] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,7 +38,7 @@ const Search = ({ placeholder = '搜索名称... / Search name...' }: { placehol
     <div className="flex-center min-h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
       <Image 
         src="/assets/icons/search.svg" 
-        alt="搜索 / Search" 
+        alt="搜索 Search" 
         width={24} 
         height={24} 
       />
@@ -47,7 +47,7 @@ const Search = ({ placeholder = '搜索名称... / Search name...' }: { placehol
         placeholder={placeholder}
         onChange={(e) => setQuery(e.target.value)}
         className="p-regular-16 border-0 bg-grey-50 outline-offset-0 placeholder:text-grey-500 focus:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-        aria-label="搜索输入框 / Search input field"
+        aria-label="搜索输入框 Search input field"
       />
     </div>
   )

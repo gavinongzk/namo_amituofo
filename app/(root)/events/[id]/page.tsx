@@ -29,13 +29,14 @@ const EventInfo = async ({ event }: { event: any }) => {
         <div className='flex gap-2 md:gap-3'>
           <Image src="/assets/icons/calendar.svg" alt="calendar" width={32} height={32} />
           <div className="p-medium-16 lg:p-regular-20 flex flex-col gap-2">
-            <p>
-              日期 Date: {formatBilingualDateTime(event.startDateTime).combined.dateOnly}
-            </p>
-            <p>
-              时间 Time: {formatBilingualDateTime(event.startDateTime).combined.timeOnly} 至 to {' '}
-              {formatBilingualDateTime(event.endDateTime).combined.timeOnly}
-            </p>
+            <div className="flex flex-col">
+              <p className="font-semibold">日期 Date:</p>
+              <p>{formatBilingualDateTime(event.startDateTime).combined.dateOnly}</p>
+            </div>
+            <div className="flex flex-col">
+              <p className="font-semibold">时间 Time:</p>
+              <p>{formatBilingualDateTime(event.startDateTime).combined.timeOnly} - {formatBilingualDateTime(event.endDateTime).combined.timeOnly}</p>
+            </div>
           </div>
         </div>
 
@@ -54,9 +55,6 @@ const EventInfo = async ({ event }: { event: any }) => {
             __html: convertPhoneNumbersToLinks(event.description) 
           }}
         />
-        <p className="p-medium-16 lg:p-regular-18 truncate text-primary-500 underline">
-          网址 URL: {event.url}
-        </p>
       </div>
     </div>
   );

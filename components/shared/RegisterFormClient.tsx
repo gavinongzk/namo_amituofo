@@ -506,7 +506,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }}
                                             className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            Using a phone number from another country? Click here / 使用其他国家的电话号码？点击这里
+                                            使用其他国家的电话号码？点击这里 / Using a phone number from another country? Click here
                                           </button>
                                         </div>
                                       )}
@@ -556,7 +556,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            Use same as Person 1 / 使用与参加者1相同
+                                            使用与参加者1相同 / Use same as Person 1
                                           </label>
                                         </div>
                                       )}
