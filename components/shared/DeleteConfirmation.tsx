@@ -30,14 +30,14 @@ export const DeleteConfirmation = ({ eventId }: { eventId: string }) => {
 
       <AlertDialogContent className="bg-white">
         <AlertDialogHeader>
-          <AlertDialogTitle>您确定要删除吗？· Are you sure you want to delete?</AlertDialogTitle>
+          <AlertDialogTitle>您确定要删除吗？/ Are you sure you want to delete?</AlertDialogTitle>
           <AlertDialogDescription className="p-regular-16 text-grey-600">
-            此操作将永久删除此活动。· This will permanently delete this event.
+            此操作将永久删除此活动。/ This will permanently delete this event.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>取消 · Cancel</AlertDialogCancel>
+          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
 
           <AlertDialogAction
             onClick={() =>
@@ -45,7 +45,7 @@ export const DeleteConfirmation = ({ eventId }: { eventId: string }) => {
                 await deleteEvent({ eventId, path: pathname })
               })
             }>
-            {isPending ? '删除中... · Deleting...' : '删除 · Delete'}
+            {isPending ? '删除中... / Deleting...' : '删除 / Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
