@@ -12,11 +12,12 @@ import Loading from '@/components/shared/Loader';
 const EventInfo = async ({ event }: { event: any }) => {
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
-      <div className="flex flex-col gap-6">
-        <h2 className='h2-bold'>{event.title}</h2>
+      {/* Title and Category Section */}
+      <div className="flex flex-col gap-6 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 className='h2-bold text-gray-800'>{event.title}</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex gap-3">
-            <p className="p-medium-16 rounded-full bg-green-500/10 px-4 py-2.5 text-green-700">
+            <p className="p-medium-16 rounded-full bg-green-50 px-5 py-2.5 text-green-600 font-semibold">
               {event.category.name}
             </p>
           </div>
@@ -25,31 +26,42 @@ const EventInfo = async ({ event }: { event: any }) => {
 
       <CheckoutButton event={event} />
 
-      <div className="flex flex-col gap-5">
-        <div className='flex gap-2 md:gap-3'>
-          <Image src="/assets/icons/calendar.svg" alt="calendar" width={32} height={32} />
-          <div className="p-medium-16 lg:p-regular-20 flex flex-col gap-2">
+      {/* Date and Location Section */}
+      <div className="flex flex-col gap-5 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className='flex gap-4 items-start'>
+          <div className="bg-primary-50 p-3 rounded-full">
+            <Image src="/assets/icons/calendar.svg" alt="calendar" width={24} height={24} />
+          </div>
+          <div className="p-medium-16 lg:p-regular-20 flex flex-col gap-3">
             <div className="flex flex-col">
-              <p className="font-semibold">日期 Date:</p>
-              <p>{formatBilingualDateTime(event.startDateTime).combined.dateOnly}</p>
+              <p className="font-semibold text-gray-700">日期 Date:</p>
+              <p className="text-gray-600">{formatBilingualDateTime(event.startDateTime).combined.dateOnly}</p>
             </div>
             <div className="flex flex-col">
-              <p className="font-semibold">时间 Time:</p>
-              <p>{formatBilingualDateTime(event.startDateTime).combined.timeOnly} - {formatBilingualDateTime(event.endDateTime).combined.timeOnly}</p>
+              <p className="font-semibold text-gray-700">时间 Time:</p>
+              <p className="text-gray-600">{formatBilingualDateTime(event.startDateTime).combined.timeOnly} - {formatBilingualDateTime(event.endDateTime).combined.timeOnly}</p>
             </div>
           </div>
         </div>
 
-        <div className="p-regular-20 flex items-center gap-3">
-          <Image src="/assets/icons/location.svg" alt="location" width={32} height={32} />
-          <p className="p-medium-16 lg:p-regular-20">地点 Location: {event.location}</p>
+        <div className="h-px bg-gray-200 my-2" />
+
+        <div className="flex items-start gap-4">
+          <div className="bg-primary-50 p-3 rounded-full">
+            <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-700 mb-2">地点 Location:</p>
+            <p className="text-gray-600">{event.location}</p>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="p-bold-20 text-grey-600">活动描述 Event Description:</p>
+      {/* Description Section */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <p className="p-bold-20 text-gray-800 mb-4">活动描述 Event Description:</p>
         <p 
-          className="p-medium-16 lg:p-regular-18" 
+          className="p-medium-16 lg:p-regular-18 text-gray-600 leading-relaxed" 
           style={{ whiteSpace: 'pre-wrap' }}
           dangerouslySetInnerHTML={{ 
             __html: convertPhoneNumbersToLinks(event.description) 
