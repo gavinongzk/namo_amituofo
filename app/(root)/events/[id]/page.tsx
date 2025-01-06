@@ -22,6 +22,7 @@ const EventInfo = async ({ event }: { event: any }) => {
             <CheckoutButton event={event} />
           </div>
         </div>
+      </div>
 
       {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
@@ -75,10 +76,12 @@ const EventInfo = async ({ event }: { event: any }) => {
 
 export const revalidate = 3600;
 
-export default async function EventDetails({ params: { id }, searchParams }: { 
-  params: { id: string }, 
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+type EventDetailsProps = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
   const eventPromise = getEventById(id);
   const event = await eventPromise;
 

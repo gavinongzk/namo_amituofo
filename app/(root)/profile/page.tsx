@@ -28,10 +28,10 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
         <section className="bg-primary-50">
           <div className="wrapper py-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className='h2-bold text-primary-500'>My Registrations 我的注册</h2>
+              <h2 className='h2-bold text-primary-500'>我的注册 My Registrations</h2>
               <Button asChild size="lg" className="button hidden sm:flex">
                 <Link href="/#events">
-                  Explore More Events
+                  探索更多活动 Explore More Events
                 </Link>
               </Button>
             </div>
