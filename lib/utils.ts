@@ -356,17 +356,17 @@ export const findPhoneField = (fields: any[]) => {
 
 export const MODAL_MESSAGES = {
   SUCCESS_ATTENDANCE: (queueNumber: string) => ({
-    title: 'Success · 成功',
+    title: 'Success 成功',
     message: `Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`,
     type: 'success' as const
   }),
   ERROR_NOT_FOUND: (queueNumber: string) => ({
-    title: 'Error · 错误',
+    title: 'Error 错误',
     message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
     type: 'error' as const
   }),
   ERROR_INVALID_QR: {
-    title: 'Error · 错误',
+    title: 'Error 错误',
     message: 'Invalid QR code for this event\n此活动的二维码无效',
     type: 'error' as const
   }

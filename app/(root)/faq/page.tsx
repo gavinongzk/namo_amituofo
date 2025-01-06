@@ -46,7 +46,7 @@ export default function FAQPage() {
       )
     },
     {
-      question: "2. 如何确定自己已经报名成功？ · How to confirm successful registration?",
+      question: "2. 如何确定自己已经报名成功？ How to confirm successful registration?",
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">
@@ -82,7 +82,7 @@ export default function FAQPage() {
       )
     },
     {
-      question: "3. 名字或电话输入错误，如何更改？ · How to correct name or phone number?",
+      question: "3. 名字或电话输入错误，如何更改？ How to correct name or phone number?",
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">
@@ -256,7 +256,7 @@ export default function FAQPage() {
       )
     },
     {
-      question: "7. 无法成功报名，该怎么做？ · What to do if registration fails?",
+      question: "7. 无法成功报名，该怎么做？ What to do if registration fails?",
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">

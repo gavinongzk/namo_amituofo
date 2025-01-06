@@ -676,7 +676,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       <div className="mt-8">
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
           <Input
-            placeholder="Enter Queue Number · 输入排队号码"
+            placeholder="Enter Queue Number 输入排队号码"
             value={queueNumber}
             onChange={(e) => setQueueNumber(e.target.value)}
             className="flex-grow text-lg p-3"
@@ -685,7 +685,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             onClick={handleQueueNumberSubmit} 
             className="bg-blue-500 text-white text-lg p-3 w-full sm:w-auto"
           >
-            Mark Attendance · 标记出席
+            Mark Attendance 标记出席
           </Button>
           <Button
             onClick={() => setShowScanner(!showScanner)}
@@ -717,12 +717,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           </div>
         )}
 
-        <h4 className="text-xl font-bold mb-4">Registered Users · 注册用户</h4>
+        <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
         
         {/* Search input */}
         <div className="mb-4">
           <Input
-            placeholder="Search by name or phone number · 按姓名或电话号码搜索"
+            placeholder="Search by name or phone number 按姓名或电话号码搜索"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full text-lg p-3"
@@ -738,23 +738,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  {renderHeader('Queue · 排队号', 'queueNumber')}
-                  {renderHeader('Name · 姓名', 'name')}
-                  {isSuperAdmin && renderHeader('Phone · 电话', 'phoneNumber')}
-                  {isSuperAdmin && renderHeader('Postal Code · 邮区编号', 'postalCode')}
+                  {renderHeader('Queue 排队号', 'queueNumber')}
+                  {renderHeader('Name 姓名', 'name')}
+                  {isSuperAdmin && renderHeader('Phone 电话', 'phoneNumber')}
+                  {isSuperAdmin && renderHeader('Postal Code 邮区编号', 'postalCode')}
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block text-xs">Remarks · 备注</span>
+                    <span className="block text-xs">Remarks 备注</span>
                   </th>
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block text-xs">Attendance · 出席</span>
+                    <span className="block text-xs">Attendance 出席</span>
                   </th>
                   {isSuperAdmin && (
                     <>
                       <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Cancelled · 已取消</span>
+                        <span className="block text-xs">Cancelled 已取消</span>
                       </th>
                       <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Delete · 删除</span>
+                        <span className="block text-xs">Delete 删除</span>
                       </th>
                     </>
                   )}
