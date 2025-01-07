@@ -9,35 +9,87 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatDateTime = (dateString: Date) => {
+export interface BilingualDateTime {
+  en: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+  cn: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+  combined: {
+    dateTime: string;
+    dateOnly: string;
+    timeOnly: string;
+  };
+}
+
+export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => {
+  const enFormatted = formatDateTime(dateString, 'en-US')
+  const cnFormatted = formatDateTime(dateString, 'zh-CN')
+
+  return {
+    en: enFormatted,
+    cn: cnFormatted,
+    combined: {
+      dateTime: `${cnFormatted.dateTime}\n${enFormatted.dateTime}`,
+      dateOnly: `${cnFormatted.dateOnly}\n${enFormatted.dateOnly}`,
+      timeOnly: `${cnFormatted.timeOnly}\n${enFormatted.timeOnly}`,
+    }
+  }
+}
+
+export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en-US') => {
   const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    month: 'short',
+    year: 'numeric',
+    month: locale === 'en-US' ? 'short' : 'numeric',
     day: 'numeric',
+    weekday: locale === 'en-US' ? 'short' : 'long',
     hour: 'numeric',
-    minute: 'numeric',
+    minute: '2-digit',
     hour12: true,
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
   const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    month: 'short',
     year: 'numeric',
+    month: locale === 'en-US' ? 'short' : 'numeric',
     day: 'numeric',
+    weekday: locale === 'en-US' ? 'short' : 'long',
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
-    minute: 'numeric',
+    minute: '2-digit',
     hour12: true,
     timeZone: 'Asia/Shanghai', // GMT+8
   }
 
-  const formattedDateTime: string = new Date(dateString).toLocaleString('en-US', dateTimeOptions)
-  const formattedDate: string = new Date(dateString).toLocaleString('en-US', dateOptions)
-  const formattedTime: string = new Date(dateString).toLocaleString('en-US', timeOptions)
+  const date = new Date(dateString)
+  let formattedDateTime: string
+  let formattedDate: string
+  let formattedTime: string
+
+  if (locale === 'zh-CN') {
+    const date = new Date(dateString)
+    const utcHour = date.getUTCHours();
+    const hour = (utcHour + 8) % 24; // Convert to GMT+8
+    const minute = date.getMinutes().toString().padStart(2, '0');
+    const period = hour < 12 ? '上午' : '下午';
+    const hour12 = hour % 12 || 12;
+    
+    formattedDateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })} ${period}${hour12}:${minute}`
+    formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })}`
+    formattedTime = `${period}${hour12}:${minute}`
+  } else {
+    formattedDateTime = date.toLocaleString('en-US', dateTimeOptions)
+    formattedDate = date.toLocaleString('en-US', dateOptions)
+    formattedTime = date.toLocaleString('en-US', timeOptions)
+  }
 
   return {
     dateTime: formattedDateTime,
@@ -311,17 +363,17 @@ export const findPhoneField = (fields: any[]) => {
 
 export const MODAL_MESSAGES = {
   SUCCESS_ATTENDANCE: (queueNumber: string) => ({
-    title: 'Success / 成功',
+    title: 'Success 成功',
     message: `Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`,
     type: 'success' as const
   }),
   ERROR_NOT_FOUND: (queueNumber: string) => ({
-    title: 'Error / 错误',
+    title: 'Error 错误',
     message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
     type: 'error' as const
   }),
   ERROR_INVALID_QR: {
-    title: 'Error / 错误',
+    title: 'Error 错误',
     message: 'Invalid QR code for this event\n此活动的二维码无效',
     type: 'error' as const
   }

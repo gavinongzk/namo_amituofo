@@ -56,8 +56,8 @@ async function EventList({ page, searchText, category, country }: EventListProps
           queueNumber?: string;
           registrationCount?: number;
         })[]}
-        emptyTitle="No Events Found"
-        emptyStateSubtext="Come back later for more events."
+        emptyTitle="未找到活动 / No Events Found"
+        emptyStateSubtext="请稍后再来查看更多活动。/ Come back later for more events."
         collectionType="All_Events"
         limit={6}
         page={page}
@@ -73,8 +73,8 @@ async function EventList({ page, searchText, category, country }: EventListProps
     return (
       <Collection
         data={[]}
-        emptyTitle="Error Loading Events"
-        emptyStateSubtext="Please try again later."
+        emptyTitle="加载出错 / Error Loading Events"
+        emptyStateSubtext="请稍后再试。/ Please try again later."
         collectionType="All_Events"
         limit={6}
         page={page}

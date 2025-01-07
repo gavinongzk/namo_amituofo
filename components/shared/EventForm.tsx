@@ -306,7 +306,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <p className="ml-3 whitespace-nowrap text-grey-600">Start Date:</p>
                       <DatePicker 
                         selected={field.value} 
-                        onChange={(date: Date) => field.onChange(date)} 
+                        onChange={(date: Date) => {
+                          const tzOffset = 8 * 60; // GMT+8 offset in minutes
+                          const localOffset = date.getTimezoneOffset();
+                          const totalOffset = tzOffset + localOffset;
+                          const adjustedDate = new Date(date.getTime() + totalOffset * 60000);
+                          field.onChange(adjustedDate);
+                        }} 
                         showTimeSelect
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
@@ -337,7 +343,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <p className="ml-3 whitespace-nowrap text-grey-600">End Date:</p>
                       <DatePicker 
                         selected={field.value} 
-                        onChange={(date: Date) => field.onChange(date)} 
+                        onChange={(date: Date) => {
+                          const tzOffset = 8 * 60; // GMT+8 offset in minutes
+                          const localOffset = date.getTimezoneOffset();
+                          const totalOffset = tzOffset + localOffset;
+                          const adjustedDate = new Date(date.getTime() + totalOffset * 60000);
+                          field.onChange(adjustedDate);
+                        }} 
                         showTimeSelect
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"

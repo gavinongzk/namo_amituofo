@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getOrderById } from '@/lib/actions/order.actions';
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
@@ -36,9 +36,9 @@ const convertLinksInText = (text: string) => {
   let processedText = convertPhoneNumbersToLinks(text);
   // Then convert addresses
   processedText = convertAddressesToLinks(processedText);
-  // Convert Google Maps links - handle both with and without newlines
+  // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
-    /(Google Map:?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
+    /(Google Map[：:]?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
     (match, prefix, url) => {
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
     }
@@ -52,7 +52,7 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
   isNewlyMarked?: boolean 
 }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
-    <h6 className="text-lg font-semibold mb-2 text-center">QR Code</h6>
+    <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
     <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
       ${isNewlyMarked ? 'animate-flash' : ''}`}>
       <Image 
@@ -80,13 +80,12 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
                   d="M5 13l4 4L19 7" 
                 />
               </svg>
-              <span className="text-lg font-semibold text-green-700">Attendance Marked</span>
+              <span className="text-lg font-semibold text-green-700">出席已记录</span>
             </div>
-            <p className="text-sm text-green-600 text-center mt-1">出席已记录</p>
+            <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
           </div>
           <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-            <p className="text-sm text-yellow-700">Please keep this QR code for verification</p>
-            <p className="text-xs text-yellow-600">请保留此二维码以供核实</p>
+            <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
           </div>
         </div>
       )}
@@ -125,22 +124,22 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
           className="w-full sm:w-auto mt-4"
           disabled={isLoading}
         >
-          {isLoading ? 'Cancelling...' : 'Cancel Registration 取消注册'}
+          {isLoading ? '取消中... Cancelling...' : '取消注册 Cancel Registration'}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-opacity-100 bg-background">
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to cancel this registration? This action cannot be undone.
-            <br />
             您确定要取消此注册吗？此操作无法撤消。
+            <br />
+            Are you sure you want to cancel this registration? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel 取消</AlertDialogCancel>
+          <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleCancel}>
-            Confirm 确认
+            确认 Confirm
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -425,11 +424,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   if (isLoading) {
-    return <div className="wrapper my-8 text-center">Loading...</div>;
+    return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
   }
 
   if (!order) {
-    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">Registration not found 报名资料未找到</div>;
+    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
   }
 
   const customFieldValuesArray = Array.isArray(order.customFieldValues) 
@@ -444,13 +443,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
         >
           <Share2 className="h-4 w-4" />
-          <span>Save for Easy Access 保存快捷方式</span>
+          <span>保存快捷方式 Save for Easy Access</span>
         </button>
         
         {isPolling && (
           <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Checking for updates...</span>
+            <span className="text-sm">正在检查更新... Checking for updates...</span>
           </div>
         )}
       </div>
@@ -458,17 +457,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
           <h3 className="text-2xl font-bold text-center text-primary-500">
-            Registration Successful 注册成功
+            注册成功 Registration Successful
           </h3>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
-              <h4 className="text-lg font-bold mb-2 text-primary-700">Event: {order.event.title}</h4>
-              <p><span className="font-semibold">Date:</span> {formatDateTime(new Date(order.event.startDateTime)).dateOnly}</p>
-              <p><span className="font-semibold">Time:</span> {formatDateTime(new Date(order.event.startDateTime)).timeOnly} - {formatDateTime(new Date(order.event.endDateTime)).timeOnly}</p>
-              {order.event.location && <p><span className="font-semibold">Location:</span> {order.event.location}</p>}
+              <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
+              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
+              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
+              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
+              </p>
+              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
@@ -485,10 +486,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 
                 <div className="bg-primary-100 p-4">
                   <div className="flex justify-between items-center">
-                    <h5 className="text-lg font-semibold text-primary-700">Person 人员 {index + 1}</h5>
+                    <h5 className="text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
                     {group.queueNumber && (
                       <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
-                        <p className="text-sm text-blue-600">Queue Number 队列号</p>
+                        <p className="text-sm text-blue-600">队列号 Queue Number</p>
                         <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                       </div>
                     )}
@@ -534,7 +535,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600"
                                 >
                                   <Pencil className="h-4 w-4" />
-                                  <span className="text-sm">Edit 编辑</span>
+                                  <span className="text-sm">编辑 Edit</span>
                                 </button>
                               )}
                             </>
@@ -557,7 +558,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 {group.cancelled && (
                   <div className="p-4 bg-red-50">
                     <p className="text-red-600 text-center font-semibold">
-                      Registration Cancelled 注册已取消
+                      注册已取消 Registration Cancelled
                     </p>
                   </div>
                 )}

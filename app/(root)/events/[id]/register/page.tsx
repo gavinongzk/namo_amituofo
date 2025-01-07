@@ -36,7 +36,7 @@ export default async function RegisterPage({
     <>
       <section className="bg-primary-50 bg-dotted-pattern md:bg-dotted-pattern bg-cover bg-center py-2 md:py-10">
         <h3 className="wrapper h3-bold text-center sm:text-left text-lg md:text-2xl px-2 md:px-4">
-          Register for Event
+          报名活动 / Register for Event
         </h3>
       </section>
 
@@ -61,10 +61,10 @@ async function AsyncRegisterForm({
     return (
       <div className="text-center py-10">
         <h3 className="text-2xl font-bold text-gray-900">
-          Event not found
+          未找到活动 / Event not found
         </h3>
         <p className="mt-2 text-gray-600">
-          The event you're looking for doesn't exist or has been removed.
+          您要查找的活动不存在或已被删除。/ The event you're looking for doesn't exist or has been removed.
         </p>
       </div>
     )

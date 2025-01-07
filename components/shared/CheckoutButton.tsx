@@ -23,7 +23,7 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
   return (
     <div className="flex items-center gap-3">
       {hasEventFinished ? (
-        <p className="p-2 text-red-400">Sorry, registration is closed.</p>
+        <p className="p-2 text-red-400">抱歉，报名已截止。/ Sorry, registration is closed.</p>
       ) : (
         <Button 
           onClick={handleRegisterClick} 
@@ -31,7 +31,7 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
           size="lg"
           disabled={isLoading}
         >
-          {isLoading ? 'Loading...' : 'Register 报名'}
+          {isLoading ? '加载中... / Loading...' : '报名 / Register'}
         </Button>
       )}
     </div>

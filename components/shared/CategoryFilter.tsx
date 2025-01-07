@@ -56,7 +56,7 @@ const CategoryFilter = () => {
 
   if (isLoading) {
     return <div className="select-field flex items-center justify-between">
-      <span className="text-gray-500">Loading categories...</span>
+      <span className="text-gray-500">加载中... Loading categories...</span>
     </div>;
   }
 

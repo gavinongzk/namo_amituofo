@@ -143,35 +143,35 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               ? z.boolean()
               : field.type === 'phone'
                 ? z.string()
-                    .min(1, { message: "Phone number is required" })
+                    .min(1, { message: "此栏位为必填 / This field is required" })
                     .refine(
                       (value) => {
                         const index = parseInt(field.id.split('_')[1]) - 1;
                         return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
                       },
-                      { message: "Invalid phone number" }
+                      { message: "无效的电话号码 / Invalid phone number" }
                     )
                 : field.type === 'postal'
                   ? z.string()
-                      .min(1, { message: "Postal code is required" })
+                      .min(1, { message: "此栏位为必填 / This field is required" })
                       .refine(
                         async (value) => await isValidPostalCode(value, userCountry || 'Singapore'),
                         {
                           message: userCountry === 'Singapore' 
-                            ? "Invalid postal code for Singapore / 新加坡邮区编号无效"
+                            ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
                             : userCountry === 'Malaysia'
-                              ? "Must be 5 digits for Malaysia / 马来西亚邮区编号必须是5位数字"
-                              : "Please enter a valid postal code / 请输入有效的邮区编号"
+                              ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                              : "请输入有效的邮区编号 / Please enter a valid postal code"
                         }
                       )
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
-                        .min(1, { message: "This field is required" })
+                        .min(1, { message: "此栏位为必填 / This field is required" })
                         .refine(
                           (value) => isValidName(value),
-                          { message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                          { message: "姓名只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
                         )
-                    : z.string().min(1, { message: "This field is required" })
+                    : z.string().min(1, { message: "此栏位为必填 / This field is required" })
           ])
         )
       )
@@ -221,7 +221,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("Checking registration details... / 检查注册详情中...");
+    const toastId = toast.loading("检查注册详情中... / Checking registration details...");
     
     saveFormData(values);
     
@@ -242,7 +242,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     setIsSubmitting(true);
     setMessage('');
     
-    toast.loading("Processing registration... / 处理注册中...", { id: toastId });
+    toast.loading("处理注册中... / Processing registration...", { id: toastId });
     
     try {
       const customFieldValues = values.groups.map((group, index) => ({
@@ -285,13 +285,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
       const data = await response.json();
       
-      toast.success("Registration successful! / 注册成功！", { id: toastId });
+      toast.success("注册成功！/ Registration successful!", { id: toastId });
       router.push(`/orders/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
       
-      toast.error("Registration failed. Please try again. / 注册失败，请重试。", { id: toastId });
-      setMessage('Failed to submit registration. Please try again.');
+      toast.error("注册失败，请重试。/ Registration failed. Please try again.", { id: toastId });
+      setMessage('注册失败，请重试。/ Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -406,7 +406,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
-            <p className="text-gray-600 font-medium">Loading... 加载中...</p>
+            <p className="text-gray-600 font-medium">加载中... / Loading...</p>
           </div>
         </div>
       ) : (
@@ -415,7 +415,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             {message && <p className="text-red-500">{message}</p>}
             {isFullyBooked ? (
               <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
-                <p className="text-red-600 font-medium text-lg">This event is fully booked. 此活动已满员。</p>
+                <p className="text-red-600 font-medium text-lg">此活动已满员。/ This event is fully booked.</p>
               </div>
             ) : (
               <>
@@ -427,7 +427,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   >
                     <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-6 py-4 border-b border-gray-200">
                       <h3 className="text-xl font-semibold text-primary-700">
-                        Person {personIndex + 1} / 参加者 {personIndex + 1}
+                        参加者 {personIndex + 1} / Person {personIndex + 1}
                       </h3>
                     </div>
 
@@ -478,7 +478,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }}
                                             className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            Switch back to SG/MY phone number format / 切换回新马电话格式
+                                            Switch back to SG/MY phone number format 切换回新马电话格式
                                           </button>
                                         </div>
                                       ) : (
@@ -506,7 +506,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             }}
                                             className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                           >
-                                            Using a phone number from another country? Click here / 使用其他国家的电话号码？点击这里
+                                            使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
                                           </button>
                                         </div>
                                       )}
@@ -556,7 +556,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            Use same as Person 1 / 使用与参加者1相同
+                                            使用与参加者1相同 Use same as Person 1
                                           </label>
                                         </div>
                                       )}
@@ -589,7 +589,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           onClick={() => remove(personIndex)}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          Remove Person {personIndex + 1} / 删除参加者 {personIndex + 1}
+                          删除参加者 {personIndex + 1} Remove Person {personIndex + 1}
                         </Button>
                       </div>
                     )}
@@ -604,7 +604,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-5 h-5" />
-                    Add Another Person / 添加参加者
+                    添加参加者 Add Another Person
                   </Button>
                   <Button 
                     type="submit" 
@@ -614,10 +614,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     {isSubmitting ? (
                       <div className="flex items-center gap-2">
                         <Loader2Icon className="w-4 h-4 animate-spin" />
-                        Submitting... / 提交中...
+                        提交中... Submitting...
                       </div>
                     ) : (
-                      'Complete Registration / 完成注册'
+                      '完成注册 Complete Registration'
                     )}
                   </Button>
                 </div>
@@ -631,11 +631,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         <DialogContent className="bg-white sm:max-w-md">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
-              Duplicate Registration Found / 发现重复注册
+              发现重复注册 / Duplicate Registration Found
             </DialogTitle>
             <DialogDescription className="space-y-4">
               <p className="text-gray-700 text-base">
-                The following phone numbers are already registered: / 以下电话号码已注册：
+                以下电话号码已注册：/ The following phone numbers are already registered:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 {duplicatePhoneNumbers.map((phone) => (
@@ -643,7 +643,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                 ))}
               </ul>
               <p className="text-gray-700 text-base pt-2">
-                Do you still want to proceed? / 您是否仍要继续？
+                您是否仍要继续？/ Do you still want to proceed?
               </p>
             </DialogDescription>
           </DialogHeader>
@@ -653,18 +653,18 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               onClick={() => setShowConfirmation(false)}
               className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
             >
-              Cancel / 取消
+              取消 / Cancel
             </Button>
             <Button
               onClick={() => {
                 setShowConfirmation(false);
                 if (formValues) {
-                  submitForm(formValues, toast.loading("Processing registration... / 处理注册中..."));
+                  submitForm(formValues, toast.loading("处理注册中... / Processing registration..."));
                 }
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Continue / 继续
+              继续 / Continue
             </Button>
           </DialogFooter>
         </DialogContent>
