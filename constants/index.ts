@@ -8,19 +8,19 @@ export const eventDefaultValues = {
   categoryId: '',
   maxSeats: 300,
   registrationSuccessMessage: `
-    📣 Notice / 通知
-    🪷 Registration Received / 已收到您的报名
-    👉🏻 Please use this QR code to check in at the registration counter on the event day. / 当天请在报到处以此二维码登记。
+    📣 通知 / Notice
+    🪷 已收到您的报名 / Registration Received
+    👉🏻 当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.
 
-    Note / 注：
-    Those who are unable to participate in the circumambulation session can sit in the non-circumambulation area. / 无法参与绕佛的大众，可以坐在不绕佛区。
+    注：/ Note:
+    无法参与绕佛的大众，可以坐在不绕佛区。/ Those who are unable to participate in the circumambulation session can sit in the non-circumambulation area.
 
     ▫▫▫▫▫▫▫▫
-    ⧉ Namo Amituofo Organization Ltd / 净土宗弥陀寺（新加坡）⧉
+    ⧉ 净土宗弥陀寺（新加坡）/ Namo Amituofo Organization Ltd⧉
     ≡ 27, Lor 27, Geylang, S'pore 388163 ≡
     ≡ +65-8818 4848 ≡
-    Nearby Aljunied MRT / 阿裕尼地铁站附近
-    Google Map：https://goo.gl/maps/9LsNw8fSLmqRD64X6
+    阿裕尼地铁站附近 / Nearby Aljunied MRT
+    Google Maps：https://goo.gl/maps/9LsNw8fSLmqRD64X6
   `
 }
 
