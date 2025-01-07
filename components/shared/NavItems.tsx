@@ -31,7 +31,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     <ul className={`flex flex-col md:flex-row md:items-center gap-4 md:gap-6 ${className}`}>
       <li>
         <Link href="/" className={navItemClass('/')} onClick={handleClick}>
-          <span className="font-medium">寺院活动</span>
+          <span className="font-medium">净土宗活动</span>
           <span className="text-xs mt-1">Events</span>
         </Link>
       </li>
