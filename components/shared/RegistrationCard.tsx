@@ -1,5 +1,5 @@
 import { IEvent } from '@/lib/database/models/event.model'
-import { formatDateTime } from '@/lib/utils'
+import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import { IRegistration } from '@/types'
 
@@ -20,36 +20,36 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
 
-      <div className="flex flex-col gap-3 p-5 md:gap-4">
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-col flex-grow p-5">
+        <div className="flex flex-col gap-2 mb-4">
           <h2 className="h3-bold line-clamp-2 text-black group-hover:text-primary-500 transition-colors duration-200">
             {event.title}
           </h2>
-          <p className="p-medium-16 md:p-medium-20 line-clamp-2 text-grey-500">
-            {event.startDateTime && formatDateTime(event.startDateTime).dateTime}
-          </p>
+          {event.startDateTime && formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
+            <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
+              {line}
+            </p>
+          ))}
         </div>
 
-        <div className="flex flex-col gap-2 mt-4">
-          {/* Always show initial registrations */}
+        <div className="flex flex-col gap-2 flex-grow">
           {registrations.slice(0, initialDisplayCount).map((registration, index) => (
             <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
               <p className="p-medium-16 md:p-medium-18 text-black">
-                Queue Number: {registration.queueNumber || 'N/A'}
+                排队号码 Queue Number: {registration.queueNumber || 'N/A'}
               </p>
               <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                Name: {registration.name || 'N/A'}
+                姓名 Name: {registration.name || 'N/A'}
               </p>
             </div>
           ))}
 
-          {/* Show remaining registrations in an expandable details element */}
           {hasMoreRegistrations && (
-            <details className="group/details">
+            <details className="group/details mt-2">
               <summary className="cursor-pointer text-primary-500 hover:text-primary-600 transition-colors list-none">
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    Show {registrations.length - initialDisplayCount} More
+                    显示更多 {registrations.length - initialDisplayCount} 个 Show {registrations.length - initialDisplayCount} More
                   </span>
                   <svg 
                     className="w-4 h-4 transition-transform group-open/details:rotate-180" 
@@ -68,10 +68,10 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                     className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
                   >
                     <p className="p-medium-16 md:p-medium-18 text-black">
-                      Queue Number: {registration.queueNumber || 'N/A'}
+                      排队号码 Queue Number: {registration.queueNumber || 'N/A'}
                     </p>
                     <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                      Name: {registration.name || 'N/A'}
+                      姓名 Name: {registration.name || 'N/A'}
                     </p>
                   </div>
                 ))}
@@ -82,9 +82,9 @@ const RegistrationCard = ({ event, registrations }: Props) => {
 
         <Link 
           href={`/orders/${event.orderId}`} 
-          className="flex gap-2 mt-4 text-primary-500 underline hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
+          className="flex gap-2 mt-4 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
         >
-          <p>View Details</p>
+          <p>查看详情 View Details</p>
         </Link>
       </div>
     </div>

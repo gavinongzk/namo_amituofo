@@ -324,7 +324,7 @@ export default function FAQPage() {
             常见问题 / FAQ
           </h1>
           <p className="text-gray-600 text-lg">
-            Find answers to commonly asked questions about registration and events
+            查询常见问题 / Find answers to commonly asked questions
           </p>
         </div>
 

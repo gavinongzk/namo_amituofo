@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
@@ -111,23 +111,23 @@ const SelectEventPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Select an Event for Attendance</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">选择活动记录出席 / Select an Event for Attendance</h1>
       <div className="max-w-2xl mx-auto">
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-xl">Choose an Event</CardTitle>
-            <CardDescription>Select an event to view details and manage attendance</CardDescription>
+            <CardTitle className="text-xl">选择活动 / Choose an Event</CardTitle>
+            <CardDescription>选择一个活动以查看详情和管理出席 / Select an event to view details and manage attendance</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>Loading events...</span>
+                <span>加载中... / Loading events...</span>
               </div>
             ) : (
               <Select onValueChange={handleSelectEvent} value={selectedEventId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an event" />
+                  <SelectValue placeholder="选择一个活动 / Select an event" />
                 </SelectTrigger>
                 <SelectContent>
                   <ScrollArea className="h-[300px]">
@@ -141,8 +141,8 @@ const SelectEventPage = () => {
                             <div className="flex flex-col">
                               <span className="font-medium">{event.title}</span>
                               <span className="text-sm text-gray-500">
-                                {formatDateTime(new Date(event.startDateTime)).dateOnly} | 
-                                {formatDateTime(new Date(event.startDateTime)).timeOnly}
+                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} | 
+                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}
                               </span>
                             </div>
                           </SelectItem>
@@ -166,13 +166,13 @@ const SelectEventPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{formatDateTime(new Date(selectedEvent.startDateTime)).dateOnly}</span>
+                  <span className="text-lg">{formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.dateOnly}</span>
                 </div>
                 <div className="flex items-center">
                   <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    {formatDateTime(new Date(selectedEvent.startDateTime)).timeOnly} - 
-                    {formatDateTime(new Date(selectedEvent.endDateTime)).timeOnly}
+                    {formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.timeOnly} - 
+                    {formatBilingualDateTime(new Date(selectedEvent.endDateTime)).combined.timeOnly}
                   </span>
                 </div>
                 <div className="flex items-center">
@@ -182,19 +182,19 @@ const SelectEventPage = () => {
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats} registered
+                    已注册 Registered: {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}
                   </span>
                 </div>
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    {selectedEvent.attendedUsers} attended
+                    已出席 Attended: {selectedEvent.attendedUsers}
                   </span>
                 </div>
                 <div className="flex items-center">
                   <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
                   <span className="text-lg">
-                    {selectedEvent.cannotReciteAndWalk} cannot recite and walk
+                    不能绕佛 Cannot Recite & Walk: {selectedEvent.cannotReciteAndWalk}
                   </span>
                 </div>
               </div>
@@ -204,13 +204,13 @@ const SelectEventPage = () => {
                 {selectedEvent.category.name}
               </Badge>
               <Badge variant="outline" className="text-sm">
-                {new Date(selectedEvent.startDateTime) > new Date() ? 'Upcoming' : 'Ongoing'}
+                {new Date(selectedEvent.startDateTime) > new Date() ? '即将开始 Upcoming' : '进行中 Ongoing'}
               </Badge>
             </CardFooter>
           </Card>
         ) : (
           <Card className="mb-8 text-center p-8">
-            <CardDescription>Select an event to view its details</CardDescription>
+            <CardDescription>选择一个活动以查看详情 / Select an event to view its details</CardDescription>
           </Card>
         )}
 
@@ -222,10 +222,10 @@ const SelectEventPage = () => {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
+              加载中... / Loading...
             </>
           ) : (
-            'Go to Attendance'
+            '前往记录出席 / Go to Attendance'
           )}
         </Button>
       </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear, startOfMonth, endOfMonth, addMonths } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,10 +58,6 @@ interface CategoryDistribution {
     attendeeCount: number;
 }
 
-interface CategoryData {
-    name: string;
-}
-
 interface RegionDistribution {
     region: string;
     attendeeCount: number;
@@ -70,16 +66,6 @@ interface RegionDistribution {
 interface TownDistribution {
     town: string;
     attendeeCount: number;
-}
-
-interface CohortData {
-    cohortMonth: string;
-    originalSize: number;
-    retentionData: {
-        month: string;
-        count: number;
-        percentage: number;
-    }[];
 }
 
 const userAttendanceOptions: ChartOptions<'line'> = {
@@ -109,38 +95,37 @@ const AnalyticsDashboard: React.FC = () => {
     const [attendanceTrend, setAttendanceTrend] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [nameFilter, setNameFilter] = useState('');
+    const [searchFilter, setSearchFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
-    const [categories, setCategories] = useState<Record<string, string>>({});
-    const [selectedRegion, setSelectedRegion] = useState<string>('all');
-    const [selectedTown, setSelectedTown] = useState<string>('all');
-    const [locationFilteredAttendees, setLocationFilteredAttendees] = useState<Attendee[]>([]);
-    const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
-        start: subMonths(new Date(), 6),
-        end: new Date()
-    });
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    const [predictedAttendance, setPredictedAttendance] = useState<number[]>([]);
-    const [cohortAnalytics, setCohortAnalytics] = useState<CohortData[]>([]);
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
             accessorKey: 'name',
-            header: 'Name',
+            header: '姓名 Name',
+            filterFn: (row, id, value) => {
+                const name = row.getValue(id) as string;
+                const phone = row.getValue('phoneNumber') as string;
+                const searchTerm = value.toLowerCase();
+                return name.toLowerCase().includes(searchTerm) || 
+                       phone.toLowerCase().includes(searchTerm);
+            },
         },
         {
             accessorKey: 'phoneNumber',
-            header: 'Phone Number',
+            header: '电话 Phone Number',
+            filterFn: (row, id, value) => {
+                return (row.getValue(id) as string).toLowerCase().includes(value.toLowerCase())
+            },
         },
         {
             accessorKey: 'eventCount',
-            header: 'Event Count',
+            header: '参与次数 Event Count',
         },
         {
             accessorKey: 'lastEventDate',
-            header: 'Last Attended',
+            header: '最近参与 Last Attended',
         },
         {
             id: 'actions',
@@ -182,34 +167,47 @@ const AnalyticsDashboard: React.FC = () => {
     });
 
     const processFrequentAttendees = (attendees: Attendee[]) => {
-        const sortedAttendees: FrequentAttendee[] = attendees
-            .filter(attendee => attendee && attendee.name && attendee.phoneNumber && attendee.eventCount && attendee.lastEventDate)
-            .sort((a, b) => b.eventCount - a.eventCount)
-            .map(attendee => ({
-                name: attendee.name,
-                phoneNumber: attendee.phoneNumber,
-                eventCount: attendee.eventCount,
-                lastEventDate: attendee.lastEventDate ? format(parseISO(attendee.lastEventDate), 'dd MMM yyyy') : 'Unknown'
-            }));
-
-        setFrequentAttendees(sortedAttendees);
-    };
-
-    const processPopularEvents = (attendees: Attendee[]) => {
-        const categoryCounts: Record<string, number> = {};
-
-        attendees.forEach(attendee => {
-            if (attendee.events && Array.isArray(attendee.events)) {
-                const uniqueCategories = new Set(
-                    attendee.events.map(event => event.category?.name || 'Uncategorized')
+        const attendeeCounts: Record<string, { count: number; lastDate: string; phoneNumber: string }> = {};
+        
+        attendees.forEach((a: Attendee) => {
+            const key = `${a.name}-${a.phoneNumber}`;
+            if (!attendeeCounts[key]) {
+                const sortedEvents = [...a.events].sort((a, b) => 
+                    new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
                 );
-                uniqueCategories.forEach(categoryName => {
-                    categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
-                });
+                const lastEventDate = sortedEvents[0]?.eventDate || a.lastEventDate;
+                
+                attendeeCounts[key] = {
+                    count: a.events.length,
+                    lastDate: lastEventDate,
+                    phoneNumber: a.phoneNumber
+                };
             }
         });
 
-        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCounts)
+        const frequentAttendeesList: FrequentAttendee[] = Object.entries(attendeeCounts)
+            .map(([key, value]) => ({
+                name: key.split('-')[0],
+                phoneNumber: value.phoneNumber,
+                eventCount: value.count,
+                lastEventDate: format(parseISO(value.lastDate), 'yyyy-MM-dd')
+            }))
+            .sort((a, b) => b.eventCount - a.eventCount);
+
+        setFrequentAttendees(frequentAttendeesList);
+    };
+
+    const processPopularEvents = (attendees: Attendee[]) => {
+        const categoryCount: Record<string, number> = {};
+        
+        attendees.forEach((attendee: Attendee) => {
+            attendee.events.forEach(event => {
+                const cat = event.category.name;
+                categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+            });
+        });
+
+        const sortedCategories: CategoryDistribution[] = Object.entries(categoryCount)
             .map(([categoryName, attendeeCount]) => ({
                 categoryName,
                 attendeeCount
@@ -224,7 +222,7 @@ const AnalyticsDashboard: React.FC = () => {
         const regionCounts: Record<string, number> = {};
         const townCounts: Record<string, number> = {};
         
-        attendees.forEach(attendee => {
+        attendees.forEach((attendee: Attendee) => {
             const region = attendee.region === 'Unknown' ? '' : attendee.region;
             const town = attendee.town === 'Unknown' ? '' : attendee.town;
             
@@ -286,24 +284,6 @@ const AnalyticsDashboard: React.FC = () => {
         fetchAnalytics();
     }, []);
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('/api/categories');
-                const data = await response.json();
-                const categoryMap = data.reduce((acc: Record<string, string>, cat: CategoryData) => {
-                    acc[cat.name] = cat.name;
-                    return acc;
-                }, {});
-                setCategories(categoryMap);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-
-        fetchCategories();
-    }, []);
-
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
         const now = new Date();
         const sixMonthsAgo = subMonths(now, 5);
@@ -322,22 +302,11 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     useEffect(() => {
-        if (attendees.length > 0) {
-            calculateAttendanceTrend(attendees);
-        }
+        calculateAttendanceTrend(attendees);
     }, [attendees]);
 
-    useEffect(() => {
-        const filtered = attendees.filter(attendee => {
-            const matchesRegion = selectedRegion === 'all' || attendee.region === selectedRegion;
-            const matchesTown = selectedTown === 'all' || attendee.town === selectedTown;
-            return matchesRegion && matchesTown;
-        });
-        setLocationFilteredAttendees(filtered);
-    }, [attendees, selectedRegion, selectedTown]);
-
     const nameFilteredAttendees = frequentAttendees.filter(attendee =>
-        attendee.name.toLowerCase().includes(nameFilter.toLowerCase())
+        attendee.name.toLowerCase().includes(searchFilter.toLowerCase())
     );
 
     const pageCount = Math.ceil(nameFilteredAttendees.length / itemsPerPage);
@@ -356,30 +325,16 @@ const AnalyticsDashboard: React.FC = () => {
     }).map(date => format(date, 'MMM yyyy'));
 
     const attendanceTrendData = {
-        labels: [
-            ...eachMonthOfInterval({
-                start: subMonths(new Date(), 5),
-                end: new Date()
-            }).map(date => format(date, 'MMM yyyy')),
-            ...Array(3).fill(0).map((_, i) => 
-                format(addMonths(new Date(), i + 1), 'MMM yyyy')
-            )
-        ],
+        labels: eachMonthOfInterval({
+            start: subMonths(new Date(), 5),
+            end: new Date()
+        }).map(date => format(date, 'MMM yyyy')),
         datasets: [
             {
                 label: 'Actual Attendance',
-                data: [...attendanceTrend, ...new Array(3).fill(null)],
+                data: attendanceTrend,
                 borderColor: 'rgb(53, 162, 235)',
                 backgroundColor: 'rgba(53, 162, 235, 0.5)',
-                tension: 0.3,
-                fill: true,
-            },
-            {
-                label: 'Predicted Attendance',
-                data: [...new Array(6).fill(null), ...predictedAttendance],
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                borderDash: [5, 5],
                 tension: 0.3,
                 fill: true,
             }
@@ -447,7 +402,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Top 5 Popular Events',
+                text: '前五大热门活动 Top 5 Popular Events',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -459,13 +414,13 @@ const AnalyticsDashboard: React.FC = () => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: 'Number of Attendees',
+                    text: '参与人数 Number of Attendees',
                 }
             },
             x: {
                 title: {
                     display: true,
-                    text: 'Category Name',
+                    text: '活动类别 Category Name',
                 }
             }
         },
@@ -517,7 +472,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Attendee Distribution by Region',
+                text: '地区分布 Attendee Distribution by Region',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -535,7 +490,7 @@ const AnalyticsDashboard: React.FC = () => {
             },
             title: {
                 display: true,
-                text: 'Top 10 Towns by Attendee Count',
+                text: '前十大城镇分布 Top 10 Towns by Attendee Count',
                 font: {
                     size: 16,
                     weight: 'bold',
@@ -547,13 +502,13 @@ const AnalyticsDashboard: React.FC = () => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: 'Number of Attendees'
+                    text: '参与人数 Number of Attendees'
                 }
             },
             y: {
                 title: {
                     display: true,
-                    text: 'Town'
+                    text: '城镇 Town'
                 }
             }
         }
@@ -577,7 +532,8 @@ const AnalyticsDashboard: React.FC = () => {
         }).length;
 
         const momGrowth = lastMonth > 0 ? 
-            (((thisMonth - lastMonth) / lastMonth) * 100).toFixed(1) : '0';
+            (((thisMonth - lastMonth) / lastMonth) * 100).toFixed(1)
+            : '0';
 
         return {
             totalUniqueAttendees,
@@ -647,98 +603,6 @@ const AnalyticsDashboard: React.FC = () => {
         };
     };
 
-    // Add predictive analytics calculation
-    const calculatePredictedAttendance = (attendees: Attendee[]) => {
-        const now = new Date();
-        const monthlyAttendance = new Array(6).fill(0);
-        
-        // Calculate past 6 months attendance
-        for (let i = 5; i >= 0; i--) {
-            const monthStart = startOfMonth(subMonths(now, i));
-            const monthEnd = endOfMonth(subMonths(now, i));
-            
-            const count = attendees.reduce((acc, attendee) => {
-                return acc + attendee.events.filter(event => {
-                    const eventDate = parseISO(event.eventDate);
-                    return eventDate >= monthStart && eventDate <= monthEnd;
-                }).length;
-            }, 0);
-            
-            monthlyAttendance[5-i] = count;
-        }
-
-        // Simple moving average prediction for next 3 months
-        const predictions = [];
-        const windowSize = 3;
-        
-        for (let i = 0; i < 3; i++) {
-            const recentMonths = monthlyAttendance.slice(-windowSize);
-            const prediction = Math.round(recentMonths.reduce((a, b) => a + b, 0) / windowSize);
-            predictions.push(prediction);
-            monthlyAttendance.push(prediction);
-        }
-
-        setPredictedAttendance(predictions);
-    };
-
-    // Add cohort analysis calculation
-    const calculateCohortAnalytics = (attendees: Attendee[]) => {
-        const cohorts: Map<string, Attendee[]> = new Map();
-        
-        // Group attendees by their first event month
-        attendees.forEach(attendee => {
-            if (attendee.events.length === 0) return;
-            
-            const firstEventDate = parseISO(attendee.events[0].eventDate);
-            const cohortMonth = format(firstEventDate, 'yyyy-MM');
-            
-            if (!cohorts.has(cohortMonth)) {
-                cohorts.set(cohortMonth, []);
-            }
-            cohorts.get(cohortMonth)!.push(attendee);
-        });
-
-        const cohortData: CohortData[] = [];
-        const months = Array.from(cohorts.keys()).sort();
-
-        months.forEach(cohortMonth => {
-            const cohortAttendees = cohorts.get(cohortMonth)!;
-            const originalSize = cohortAttendees.length;
-            const retentionData = [];
-
-            // Calculate retention for each month after cohort month
-            for (let i = 0; i <= months.indexOf(cohortMonth); i++) {
-                const targetMonth = format(addMonths(parseISO(cohortMonth + '-01'), i), 'yyyy-MM');
-                const activeInMonth = cohortAttendees.filter(attendee =>
-                    attendee.events.some(event => 
-                        format(parseISO(event.eventDate), 'yyyy-MM') === targetMonth
-                    )
-                ).length;
-
-                retentionData.push({
-                    month: targetMonth,
-                    count: activeInMonth,
-                    percentage: Math.round((activeInMonth / originalSize) * 100)
-                });
-            }
-
-            cohortData.push({
-                cohortMonth,
-                originalSize,
-                retentionData
-            });
-        });
-
-        setCohortAnalytics(cohortData);
-    };
-
-    useEffect(() => {
-        if (attendees.length > 0) {
-            calculatePredictedAttendance(attendees);
-            calculateCohortAnalytics(attendees);
-        }
-    }, [attendees]);
-
     if (isLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
@@ -756,7 +620,7 @@ const AnalyticsDashboard: React.FC = () => {
     return (
         <div className="p-6 space-y-8">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold">Analytics Dashboard</h2>
+                <h2 className="text-3xl font-bold">数据分析 Analytics Dashboard</h2>
                 <div className="flex gap-4">
                     <Button
                         variant="outline"
@@ -766,7 +630,7 @@ const AnalyticsDashboard: React.FC = () => {
                             console.log('Export data');
                         }}
                     >
-                        Export Data
+                        导出数据 Export Data
                     </Button>
                 </div>
             </div>
@@ -822,110 +686,10 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Enhanced Filtering Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-md">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Region</label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Regions</SelectItem>
-                            {regionDistribution.map(({ region }) => (
-                                <SelectItem key={region} value={region}>{region}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Town</label>
-                    <Select value={selectedTown} onValueChange={setSelectedTown}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Town" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Towns</SelectItem>
-                            {townDistribution.map(({ town }) => (
-                                <SelectItem key={town} value={town}>{town}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Filter by Category</label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {Object.keys(categories).map((category) => (
-                                <SelectItem key={category} value={category}>{category}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Date Range</label>
-                    <div className="flex gap-2">
-                        <Input
-                            type="date"
-                            value={format(dateRange.start, 'yyyy-MM-dd')}
-                            onChange={(e) => setDateRange(prev => ({
-                                ...prev,
-                                start: parseISO(e.target.value)
-                            }))}
-                        />
-                        <Input
-                            type="date"
-                            value={format(dateRange.end, 'yyyy-MM-dd')}
-                            onChange={(e) => setDateRange(prev => ({
-                                ...prev,
-                                end: parseISO(e.target.value)
-                            }))}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Filtered Attendees Table */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-lg font-semibold mb-2">
-                    Filtered Attendees ({locationFilteredAttendees.length} total)
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
-                    <table className="w-full">
-                        <thead className="text-sm text-gray-600">
-                            <tr>
-                                <th className="text-left py-2">Name</th>
-                                <th className="text-left py-2">Region</th>
-                                <th className="text-left py-2">Town</th>
-                                <th className="text-left py-2">Event Count</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                            {locationFilteredAttendees.map((attendee, index) => (
-                                <tr key={`${attendee.name}-${attendee.phoneNumber}-${index}`} 
-                                    className="border-t border-gray-200">
-                                    <td className="py-2">{attendee.name}</td>
-                                    <td className="py-2">{attendee.region === 'Unknown' ? '' : attendee.region}</td>
-                                    <td className="py-2">{attendee.town === 'Unknown' ? '' : attendee.town}</td>
-                                    <td className="py-2">{attendee.eventCount}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">Attendance Trend</h3>
+                        <h3 className="text-xl font-semibold">出席趋势 Attendance Trend</h3>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -935,7 +699,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     // TODO: Implement view toggle
                                 }}
                             >
-                                Monthly
+                                按月 Monthly
                             </Button>
                             <Button
                                 variant="outline"
@@ -945,7 +709,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     // TODO: Implement view toggle
                                 }}
                             >
-                                Yearly
+                                按年 Yearly
                             </Button>
                         </div>
                     </div>
@@ -953,33 +717,33 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Popular Events</h3>
+                    <h3 className="text-xl font-semibold mb-4">热门活动 Popular Events</h3>
                     <Bar data={categoryDistributionData} options={popularEventsOptions} />
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Region Distribution</h3>
+                    <h3 className="text-xl font-semibold mb-4">地区分布 Region Distribution</h3>
                     <Doughnut data={regionDistributionData} options={regionDistributionOptions} />
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">Town Distribution</h3>
+                    <h3 className="text-xl font-semibold mb-4">城镇分布 Town Distribution</h3>
                     <Bar data={townDistributionData} options={townDistributionOptions} />
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Frequent Attendees</h3>
+                <h3 className="text-xl font-semibold mb-4">常客分析 Frequent Attendees</h3>
                 <div className="mb-4">
                     <Input
                         type="text"
-                        placeholder="Filter by name"
-                        value={nameFilter}
+                        placeholder="按名字或电话号码筛选 Filter by name or phone number"
+                        value={searchFilter}
                         onChange={(e) => {
-                            setNameFilter(e.target.value);
+                            setSearchFilter(e.target.value);
                             table.getColumn('name')?.setFilterValue(e.target.value);
                         }}
-                        className="max-w-xs"
+                        className="max-w-md"
                     />
                 </div>
                 
@@ -989,28 +753,38 @@ const AnalyticsDashboard: React.FC = () => {
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <TableHead key={header.id}>
-                                        {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext()
-                                        )}
-                                    </TableCell>
-                                ))}
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && "selected"}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    No results.
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
 
@@ -1062,69 +836,6 @@ const AnalyticsDashboard: React.FC = () => {
                     />
                 </div>
             )}
-
-            {/* Predictive Analytics Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Attendance Forecast</h3>
-                <div className="h-[400px]">
-                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                    {predictedAttendance.map((prediction, index) => (
-                        <Card key={index} className="p-4">
-                            <h5 className="text-sm font-medium text-gray-500">
-                                {format(addMonths(new Date(), index + 1), 'MMMM yyyy')}
-                            </h5>
-                            <p className="mt-2 text-2xl font-semibold">
-                                {prediction}
-                                <span className="text-sm text-gray-500 ml-2">attendees</span>
-                            </p>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-
-            {/* Cohort Analysis Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Cohort Analysis</h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                        <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Cohort</th>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Size</th>
-                                {Array.from({ length: 6 }, (_, i) => (
-                                    <th key={i} className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                                        Month {i + 1}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {cohortAnalytics.map((cohort) => (
-                                <tr key={cohort.cohortMonth} className="border-t border-gray-200">
-                                    <td className="px-4 py-2">{format(parseISO(cohort.cohortMonth + '-01'), 'MMM yyyy')}</td>
-                                    <td className="px-4 py-2">{cohort.originalSize}</td>
-                                    {cohort.retentionData.map((data, i) => (
-                                        <td key={i} className="px-4 py-2">
-                                            <div className="flex items-center">
-                                                <div 
-                                                    className="h-8 bg-blue-100 rounded"
-                                                    style={{ width: `${data.percentage}%` }}
-                                                >
-                                                    <div className="px-2 py-1 text-xs">
-                                                        {data.percentage}%
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 };

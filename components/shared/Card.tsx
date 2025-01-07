@@ -1,5 +1,5 @@
 import { IEvent } from '@/lib/database/models/event.model'
-import { formatDateTime } from '@/lib/utils'
+import { formatBilingualDateTime } from '@/lib/utils'
 import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -43,9 +43,11 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
       )}
 
       <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
-        <p className="p-medium-16 p-medium-18 text-grey-500">
-          {formatDateTime(event.startDateTime).dateTime}
-        </p>
+        {formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
+          <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
+            {line}
+          </p>
+        ))}
 
         <Link href={`/events/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
@@ -53,7 +55,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isMyTicket && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">Queue Number: {event.queueNumber || 'N/A'}</p>
+            <p className="p-medium-16 text-grey-500">排队号码 Queue Number: {event.queueNumber || 'N/A'}</p>
             {event.customFieldValues?.map((field) => (
               <p key={field.id} className="p-medium-16 text-grey-500">{field.label}: {field.value}</p>
             ))}
@@ -62,9 +64,9 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
 
         {isEventCreator && (
           <div className="flex flex-col gap-2">
-            <p className="p-medium-16 text-grey-500">Registrations: {event.registrationCount || 0}</p>
+            <p className="p-medium-16 text-grey-500">注册人数 Registrations: {event.registrationCount || 0}</p>
             <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline flex items-center gap-2">
-              Registration Details
+              注册详情 Registration Details
               <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
             </Link>
           </div>

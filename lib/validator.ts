@@ -9,9 +9,9 @@ const customFieldSchema = z.object({
 })
 
 export const eventFormSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(3, 'Description must be at least 3 characters').max(400, 'Description must be less than 400 characters'),
-  location: z.string().min(3, 'Location must be at least 3 characters').max(400, 'Location must be less than 400 characters'),
+  title: z.string().min(3, '标题至少需要3个字符 / Title must be at least 3 characters'),
+  description: z.string().min(3, '描述至少需要3个字符 / Description must be at least 3 characters').max(400, '描述必须少于400个字符 / Description must be less than 400 characters'),
+  location: z.string().min(3, '地点至少需要3个字符 / Location must be at least 3 characters').max(400, '地点必须少于400个字符 / Location must be less than 400 characters'),
   imageUrl: z.string(),
   startDateTime: z.date(),
   endDateTime: z.date(),

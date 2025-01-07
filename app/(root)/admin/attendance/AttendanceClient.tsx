@@ -738,23 +738,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  {renderHeader('Queue\n排队号', 'queueNumber')}
-                  {renderHeader('Name\n姓名', 'name')}
-                  {isSuperAdmin && renderHeader('Phone\n电话', 'phoneNumber')}
-                  {isSuperAdmin && renderHeader('Postal Code\n邮区编号', 'postalCode')}
+                  {renderHeader('Queue 排队号', 'queueNumber')}
+                  {renderHeader('Name 姓名', 'name')}
+                  {isSuperAdmin && renderHeader('Phone 电话', 'phoneNumber')}
+                  {isSuperAdmin && renderHeader('Postal Code 邮区编号', 'postalCode')}
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block text-xs">Remarks<br/>备注</span>
+                    <span className="block text-xs">Remarks 备注</span>
                   </th>
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                    <span className="block text-xs">Attendance<br/>出席</span>
+                    <span className="block text-xs">Attendance 出席</span>
                   </th>
                   {isSuperAdmin && (
                     <>
                       <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Cancelled<br/>已取消</span>
+                        <span className="block text-xs">Cancelled 已取消</span>
                       </th>
                       <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Delete<br/>删除</span>
+                        <span className="block text-xs">Delete 删除</span>
                       </th>
                     </>
                   )}
