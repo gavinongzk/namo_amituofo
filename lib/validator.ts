@@ -24,6 +24,5 @@ export const eventFormSchema = z.object({
     value: z.union([z.string(), z.boolean()]).optional(),
     options: z.array(z.string()).optional()
   })),
-  registrationSuccessMessage: z.string().optional(),
   country: z.string(),
 })

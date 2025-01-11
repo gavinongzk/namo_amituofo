@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema, model, models } from "mongoose";
 import { CustomField } from "@/types";
-
+import { eventDefaultValues } from "@/constants";
 
 export interface IEvent extends Document {
   _id: string;
@@ -15,7 +15,6 @@ export interface IEvent extends Document {
   organizer: { _id: string }
   customFields: CustomField[];
   maxSeats: number;
-  registrationSuccessMessage?: string;
   attendeeCount?: number;
   country: string;
   isDeleted: boolean;
@@ -39,7 +38,6 @@ const EventSchema = new Schema({
     value: { type: String, required: false }
   }],
   maxSeats: { type: Number, required: true },
-  registrationSuccessMessage: { type: String},
   isDeleted: { type: Boolean, default: false }
 })
 

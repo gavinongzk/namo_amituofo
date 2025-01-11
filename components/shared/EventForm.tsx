@@ -55,7 +55,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               typeof option === 'string' ? option : option.value
             )
           })) || [],
-          registrationSuccessMessage: event.registrationSuccessMessage || "",
         }
       : { ...eventDefaultValues, country: "" }
   })
