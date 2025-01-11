@@ -142,6 +142,63 @@ const EventLookupPage = () => {
                     </p>
                 </div>
             )}
+
+            {/* Attendance Statistics Section */}
+            {hasSearched && registrations.length > 0 && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-bold mb-4 text-center text-primary-500">
+                        参与统计 Attendance Statistics
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">总参与次数 Total Events</p>
+                            <p className="text-2xl font-bold text-primary-500">{registrations.length}</p>
+                        </div>
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">最近参与 Last Attended</p>
+                            <p className="text-2xl font-bold text-primary-500">
+                                {registrations.length > 0
+                                    ? new Date(String(registrations[0].event.startDateTime)).toLocaleDateString()
+                                    : '-'}
+                            </p>
+                        </div>
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">参与活动 Recent Event</p>
+                            <p className="text-lg font-semibold text-primary-500 truncate">
+                                {registrations.length > 0
+                                    ? registrations[0].event.title
+                                    : '-'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Recent Events List */}
+                    <div className="mt-6">
+                        <h4 className="text-lg font-semibold mb-3 text-primary-500">
+                            近期活动记录 Recent Event History
+                        </h4>
+                        <div className="space-y-2">
+                            {registrations.slice(0, 5).map((registration, index) => (
+                                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p className="font-medium text-gray-800">{registration.event.title}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {registration.event.startDateTime 
+                                                ? new Date(String(registration.event.startDateTime)).toLocaleDateString()
+                                                : '-'}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-600">
+                                            Queue: {registration.registrations[0]?.queueNumber || '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
