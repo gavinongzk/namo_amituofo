@@ -9,11 +9,7 @@ import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
-import { IOrderItem } from '@/lib/database/models/order.model';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { IOrderItem } from '@/lib/database/models/order.model'; // Import IOrderItem
 
 const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -23,7 +19,6 @@ const EventLookupPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
-    const [categoryStats, setCategoryStats] = useState<{ [key: string]: number }>({});
 
     const handleLookup = async () => {
         console.log('handleLookup called with phone number:', phoneNumber);
@@ -40,28 +35,6 @@ const EventLookupPage = () => {
             console.log('Calling getAllOrdersByPhoneNumber for statistics...');
             const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
             console.log('All orders received:', allOrders);
-
-            // Calculate category statistics
-            const categoryCount: { [key: string]: number } = {};
-            allOrders.forEach((order: any) => {
-                order.customFieldValues.forEach((group: any) => {
-                    if (order.event?.category?.name) {
-                        const category = order.event.category.name;
-                        categoryCount[category] = (categoryCount[category] || 0) + 1;
-                    }
-                });
-            });
-            
-            // Sort categories by count and take top 5
-            const sortedCategories = Object.entries(categoryCount)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 5)
-                .reduce((acc, [key, value]) => {
-                    acc[key] = value;
-                    return acc;
-                }, {} as { [key: string]: number });
-
-            setCategoryStats(sortedCategories);
 
             // Transform recent orders for display
             const transformedRegistrations: IRegistration[] = recentOrders
@@ -84,8 +57,29 @@ const EventLookupPage = () => {
                     })),
                 }));
 
+            // Transform all orders for statistics
+            const transformedAllRegistrations: IRegistration[] = allOrders
+                .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                .map((order: any) => ({
+                    event: {
+                        _id: order.event._id,
+                        title: order.event.title,
+                        imageUrl: order.event.imageUrl,
+                        startDateTime: order.event.startDateTime,
+                        endDateTime: order.event.endDateTime,
+                        orderId: order._id.toString(),
+                        organizer: { _id: order.event.organizer?.toString() || '' },
+                        customFieldValues: order.customFieldValues,
+                    },
+                    registrations: order.customFieldValues.map((group: any) => ({
+                        queueNumber: group.queueNumber || '',
+                        name: group.fields?.find((field: any) => 
+                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                    })),
+                }));
+
             setRegistrations(transformedRegistrations);
-            setAllRegistrations(transformedRegistrations);
+            setAllRegistrations(transformedAllRegistrations);
         } catch (err) {
             console.error('Error fetching registrations:', err);
             setError('Failed to fetch registrations. Please try again.');
@@ -160,71 +154,15 @@ const EventLookupPage = () => {
             {isLoading ? (
                 <p className="text-center">加载中... Loading...</p>
             ) : hasSearched ? (
-                <>
-                    <RegistrationCollection
-                        data={registrations}
-                        emptyTitle="未找到注册信息 No registrations found"
-                        emptyStateSubtext="未找到与此电话号码相关的注册信息。请检查后重试。 No registrations were found for this phone number. Please check and try again."
-                        collectionType="All_Registrations"
-                        limit={6}
-                        page={1}
-                        totalPages={1}
-                    />
-
-                    {/* Category Distribution Chart - Moved below RegistrationCollection */}
-                    {Object.keys(categoryStats).length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-                            <h3 className="text-xl font-semibold mb-4 text-center text-primary-500">
-                                活动类别分布 Event Category Distribution
-                            </h3>
-                            <div className="h-[300px] flex justify-center items-center">
-                                <div className="w-[300px]">
-                                    <Doughnut
-                                        data={{
-                                            labels: Object.keys(categoryStats),
-                                            datasets: [
-                                                {
-                                                    data: Object.values(categoryStats),
-                                                    backgroundColor: [
-                                                        'rgba(54, 162, 235, 0.7)',  // Blue
-                                                        'rgba(75, 192, 192, 0.7)',  // Teal
-                                                        'rgba(255, 206, 86, 0.7)',  // Yellow
-                                                        'rgba(255, 99, 132, 0.7)',  // Red
-                                                        'rgba(153, 102, 255, 0.7)', // Purple
-                                                    ],
-                                                    borderColor: [
-                                                        'rgba(54, 162, 235, 1)',
-                                                        'rgba(75, 192, 192, 1)',
-                                                        'rgba(255, 206, 86, 1)',
-                                                        'rgba(255, 99, 132, 1)',
-                                                        'rgba(153, 102, 255, 1)',
-                                                    ],
-                                                    borderWidth: 1,
-                                                },
-                                            ],
-                                        }}
-                                        options={{
-                                            responsive: true,
-                                            plugins: {
-                                                legend: {
-                                                    position: 'right',
-                                                },
-                                                title: {
-                                                    display: true,
-                                                    text: '您参与的活动类别 Your Event Categories',
-                                                    font: {
-                                                        size: 16,
-                                                        weight: 'bold',
-                                                    }
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
+                <RegistrationCollection
+                    data={registrations}
+                    emptyTitle="未找到注册信息 No registrations found"
+                    emptyStateSubtext="未找到与此电话号码相关的注册信息。请检查后重试。 No registrations were found for this phone number. Please check and try again."
+                    collectionType="All_Registrations"
+                    limit={6}
+                    page={1}
+                    totalPages={1}
+                />
             ) : (
                 <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-primary-50 py-28 text-center">
                     <h3 className="p-bold-20 md:h5-bold text-primary-500">
@@ -234,6 +172,63 @@ const EventLookupPage = () => {
                         使用上方的表单搜索您的注册信息和排队号码。
                         Use the form above to search for your registrations and queue numbers.
                     </p>
+                </div>
+            )}
+
+            {/* Attendance Statistics Section */}
+            {hasSearched && allRegistrations.length > 0 && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-bold mb-4 text-center text-primary-500">
+                        参与统计 Attendance Statistics
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">总参与次数 Total Events</p>
+                            <p className="text-2xl font-bold text-primary-500">{allRegistrations.length}</p>
+                        </div>
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">最近参与 Last Attended</p>
+                            <p className="text-2xl font-bold text-primary-500">
+                                {allRegistrations.length > 0
+                                    ? new Date(String(allRegistrations[0].event.startDateTime)).toLocaleDateString()
+                                    : '-'}
+                            </p>
+                        </div>
+                        <div className="bg-primary-50 p-4 rounded-lg text-center">
+                            <p className="text-gray-600">参与活动 Recent Event</p>
+                            <p className="text-lg font-semibold text-primary-500 truncate">
+                                {allRegistrations.length > 0
+                                    ? allRegistrations[0].event.title
+                                    : '-'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Recent Events List */}
+                    <div className="mt-6">
+                        <h4 className="text-lg font-semibold mb-3 text-primary-500">
+                            近期活动记录 Recent Event History
+                        </h4>
+                        <div className="space-y-2">
+                            {allRegistrations.slice(0, 5).map((registration, index) => (
+                                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p className="font-medium text-gray-800">{registration.event.title}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {registration.event.startDateTime 
+                                                ? new Date(String(registration.event.startDateTime)).toLocaleDateString()
+                                                : '-'}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-600">
+                                            Queue: {registration.registrations[0]?.queueNumber || '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
