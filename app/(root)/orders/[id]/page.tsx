@@ -566,7 +566,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             ))}
 
             <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-              <h4 className="text-lg font-bold mb-2 text-green-700">Important Information 重要信息</h4>
+              <h4 className="text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
               <div 
                 className="whitespace-pre-wrap text-green-800 break-words"
                 dangerouslySetInnerHTML={{ 
