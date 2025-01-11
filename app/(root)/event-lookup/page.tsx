@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import RegistrationCollection from '@/components/shared/RegistrationCollection';
-import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals';
+import EventLookupAnalytics from '@/components/shared/EventLookupAnalytics';
 import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -234,7 +234,7 @@ const EventLookupPage = () => {
                     </div>
 
                     {/* Analytics Charts */}
-                    <UserAnalyticsVisuals registrations={allRegistrations} />
+                    <EventLookupAnalytics registrations={allRegistrations} />
                 </>
             )}
         </div>

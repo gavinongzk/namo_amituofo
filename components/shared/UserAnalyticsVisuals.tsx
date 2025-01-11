@@ -1,139 +1,208 @@
-import React from 'react';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { format, parseISO } from 'date-fns';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
-
-interface Event {
-    _id: string;
-    title: string;
-    startDateTime?: string | Date;
-    endDateTime?: string | Date;
-    category?: {
-        name: string;
-    };
-}
-
-interface Registration {
-    event: Event;
-    registrations: Array<{
-        queueNumber?: string;
-        name?: string;
-    }>;
-}
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  Legend
+} from 'recharts';
+import { format, parseISO, startOfYear, addMonths } from 'date-fns';
+import { Card } from '@/components/ui/card';
 
 interface UserAnalyticsVisualsProps {
-    registrations: Registration[];
+  attendee: {
+    name: string;
+    phoneNumber: string;
+    eventCount: number;
+    region: string;
+    town: string;
+    events: {
+      eventDate: string;
+      eventTitle: string;
+      category: {
+        name: string;
+      };
+    }[];
+    lastEventDate: string;
+  };
+  allEvents: {
+    eventDate: string;
+    eventTitle: string;
+    category: {
+      name: string;
+    };
+  }[];
 }
 
-const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ registrations }) => {
-    // Process data for category distribution
-    const categoryData = React.useMemo(() => {
-        const categoryCount: { [key: string]: number } = {};
-        registrations.forEach(reg => {
-            const category = reg.event.category?.name || 'Uncategorized';
-            categoryCount[category] = (categoryCount[category] || 0) + 1;
-        });
+const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, allEvents }) => {
+  // Sort events chronologically
+  const sortedEvents = [...attendee.events].sort((a, b) => 
+    parseISO(a.eventDate).getTime() - parseISO(b.eventDate).getTime()
+  );
 
-        const labels = Object.keys(categoryCount);
-        const data = Object.values(categoryCount);
+  const firstEvent = sortedEvents[0];
+  const lastEvent = sortedEvents[sortedEvents.length - 1];
 
-        return {
-            labels,
-            datasets: [{
-                label: 'Events by Category',
-                data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 206, 86, 0.5)',
-                    'rgba(75, 192, 192, 0.5)',
-                    'rgba(153, 102, 255, 0.5)',
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                ],
-                borderWidth: 1,
-            }],
-        };
-    }, [registrations]);
+  // Process data for visualizations
+  const monthlyAttendance = attendee.events.reduce((acc, event) => {
+    const month = format(parseISO(event.eventDate), 'MMM yyyy');
+    acc[month] = (acc[month] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-    // Process data for monthly attendance
-    const monthlyData = React.useMemo(() => {
-        const monthlyCount: { [key: string]: number } = {};
-        
-        registrations.forEach(reg => {
-            if (reg.event.startDateTime) {
-                const date = new Date(reg.event.startDateTime);
-                const monthYear = format(date, 'MMM yyyy');
-                monthlyCount[monthYear] = (monthlyCount[monthYear] || 0) + 1;
-            }
-        });
+  const attendanceData = Object.entries(monthlyAttendance).map(([month, count]) => ({
+    month,
+    count,
+  }));
 
-        // Sort by date
-        const sortedMonths = Object.keys(monthlyCount).sort((a, b) => {
-            return parseISO(a).getTime() - parseISO(b).getTime();
-        });
+  // Updated category distribution calculation
+  const eventCategoryData = attendee.events.reduce((acc, event) => {
+    const category = event.category.name;
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-        return {
-            labels: sortedMonths,
-            datasets: [{
-                label: 'Monthly Attendance',
-                data: sortedMonths.map(month => monthlyCount[month]),
-                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1,
-            }],
-        };
-    }, [registrations]);
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-    const options = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const,
-            },
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1,
-                }
-            }
-        }
-    };
+  // Group events by category and sort by date
+  const eventsByCategory = attendee.events.reduce((acc, event) => {
+    const category = event.category.name;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(event);
+    return acc;
+  }, {} as Record<string, typeof attendee.events>);
 
-    const doughnutOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const,
-            },
-        },
-    };
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="text-lg font-semibold mb-4 text-primary-500 text-center">
-                    活动类型分布 Event Category Distribution
-                </h4>
-                <Doughnut data={categoryData} options={doughnutOptions} />
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="text-lg font-semibold mb-4 text-primary-500 text-center">
-                    每月参与趋势 Monthly Attendance Trend
-                </h4>
-                <Bar data={monthlyData} options={options} />
-            </div>
-        </div>
+  // Sort events within each category by date (newest first)
+  Object.keys(eventsByCategory).forEach(category => {
+    eventsByCategory[category].sort((a, b) => 
+      new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
     );
+  });
+
+  // Sort categories by their most recent event date
+  const sortedCategories = Object.entries(eventsByCategory).sort(([, eventsA], [, eventsB]) => {
+    const latestA = new Date(eventsA[0].eventDate).getTime();
+    const latestB = new Date(eventsB[0].eventDate).getTime();
+    return latestB - latestA;
+  });
+
+  return (
+    <div className="space-y-8">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Total Events</h5>
+          <p className="mt-1 text-2xl font-semibold">{attendee.eventCount}</p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">First Event</h5>
+          <p className="mt-1 text-sm font-medium">
+            {firstEvent ? format(parseISO(firstEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Last Event</h5>
+          <p className="mt-1 text-sm font-medium">
+            {lastEvent ? format(parseISO(lastEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Region</h5>
+          <p className="mt-1 text-sm font-medium">
+            {attendee.region === 'Unknown' ? 'Not specified' : attendee.region}
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h5 className="text-sm font-medium text-gray-500">Town</h5>
+          <p className="mt-1 text-sm font-medium">
+            {attendee.town === 'Unknown' ? 'Not specified' : attendee.town}
+          </p>
+        </Card>
+      </div>
+
+      {/* Attendance Timeline */}
+      <Card className="p-6">
+        <h4 className="text-lg font-semibold mb-4">Attendance Timeline</h4>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={attendanceData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Area 
+                type="monotone" 
+                dataKey="count" 
+                stroke="#8884d8" 
+                fill="#8884d8" 
+                fillOpacity={0.3} 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Event Category Distribution */}
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold mb-4">Event Category Distribution</h4>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={Object.entries(eventCategoryData).map(([name, value]) => ({ name, value }))}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {Object.entries(eventCategoryData).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Updated Event History with sorting */}
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold mb-4">Event History</h4>
+          <div className="max-h-[300px] overflow-y-auto">
+            {sortedCategories.map(([category, events]) => (
+              <div key={category} className="mb-4">
+                <h5 className="font-medium text-base mb-2">{category} ({events.length})</h5>
+                <ul className="space-y-2 pl-4">
+                  {events.map((event, idx) => (
+                    <li key={idx} className="text-sm border-b pb-2">
+                      <span className="font-medium">
+                        {format(parseISO(event.eventDate), 'MMM dd, yyyy')}
+                      </span>
+                      {' - '}
+                      <span className="text-gray-600">{event.eventTitle}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 };
 
 export default UserAnalyticsVisuals; 
