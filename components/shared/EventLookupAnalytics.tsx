@@ -42,19 +42,15 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
     }))
     .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
 
-  // Calculate event timing distribution (morning/afternoon/evening)
-  const timeDistribution = registrations.reduce((acc, reg) => {
+  // Calculate category distribution
+  const categoryDistribution = registrations.reduce((acc, reg) => {
     if (!reg.event.startDateTime) return acc;
-    const hour = new Date(String(reg.event.startDateTime)).getHours();
-    let timeOfDay = 
-      hour < 12 ? 'Morning (6am-12pm)' :
-      hour < 18 ? 'Afternoon (12pm-6pm)' :
-      'Evening (6pm-12am)';
-    acc[timeOfDay] = (acc[timeOfDay] || 0) + 1;
+    const category = reg.event.category?.name || 'Uncategorized';
+    acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
   return (
     <div className="space-y-8">
@@ -105,14 +101,14 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
           </div>
         </Card>
 
-        {/* Time Distribution Chart */}
+        {/* Category Distribution Chart */}
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">时段分布 Time Distribution</h4>
+          <h4 className="text-lg font-semibold mb-4">类别分布 Category Distribution</h4>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={Object.entries(timeDistribution).map(([name, value]) => ({ name, value }))}
+                  data={Object.entries(categoryDistribution).map(([name, value]) => ({ name, value }))}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -120,7 +116,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {Object.entries(timeDistribution).map((entry, index) => (
+                  {Object.entries(categoryDistribution).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
