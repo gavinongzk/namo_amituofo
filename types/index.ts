@@ -151,6 +151,10 @@ export interface IRegistration {
     organizer: { _id: string };
     orderId?: string;
     location?: string;
+    category?: {
+      _id: string;
+      name: string;
+    };
     customFieldValues: {
       groupId: string;
       fields: {
