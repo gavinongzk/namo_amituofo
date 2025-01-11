@@ -152,7 +152,7 @@ export interface IRegistration {
     orderId?: string;
     location?: string;
     customFieldValues: {
-      groupId?: string;
+      groupId: string;
       fields: {
         id: string;
         label: string;
@@ -162,16 +162,12 @@ export interface IRegistration {
       }[];
     }[];
     queueNumber?: string;
-    attendeeCount: number;
+    attendeeCount?: number;
     cancelled?: boolean;
-    category?: {
-      _id: string;
-      name: string;
-    };
   };
   registrations: {
-    queueNumber: string;
-    name: string;
+    queueNumber?: string;
+    name?: string;
   }[];
 }
 
