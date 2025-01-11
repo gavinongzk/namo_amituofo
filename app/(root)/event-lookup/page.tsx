@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import RegistrationCollection from '@/components/shared/RegistrationCollection';
-import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+import EventLookupAnalytics from '@/components/shared/EventLookupAnalytics';
+import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
@@ -15,6 +16,7 @@ const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [useManualInput, setUseManualInput] = useState(false);
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
+    const [allRegistrations, setAllRegistrations] = useState<IRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
@@ -25,34 +27,73 @@ const EventLookupPage = () => {
         setError('');
         setHasSearched(true);
         try {
-            console.log('Calling getOrdersByPhoneNumber...');
-            const orders = await getOrdersByPhoneNumber(phoneNumber);
-            console.log('Orders received:', orders);
+            // Get recent registrations
+            console.log('Calling getOrdersByPhoneNumber for recent registrations...');
+            const recentOrders = await getOrdersByPhoneNumber(phoneNumber);
+            console.log('Recent orders received:', recentOrders);
 
-            // Transform each order into IRegistration format
-            const transformedRegistrations: IRegistration[] = orders.map((order: any) => ({
-                event: {
-                    _id: order.event._id,
-                    title: order.event.title,
-                    imageUrl: order.event.imageUrl,
-                    startDateTime: order.event.startDateTime,
-                    endDateTime: order.event.endDateTime,
-                    orderId: order._id.toString(),
-                    organizer: { _id: order.event.organizer?.toString() || '' },
-                    customFieldValues: order.customFieldValues,
-                },
-                registrations: order.customFieldValues.map((group: any) => ({
-                    queueNumber: group.queueNumber || '',
-                    name: group.fields?.find((field: any) => 
-                        field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                })),
-            }));
+            // Get all registrations for statistics
+            console.log('Calling getAllOrdersByPhoneNumber for statistics...');
+            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
+            console.log('All orders received:', allOrders);
+
+            // Transform recent orders for display
+            const transformedRegistrations: IRegistration[] = recentOrders
+                .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                .map((order: any) => ({
+                    event: {
+                        _id: order.event._id,
+                        title: order.event.title,
+                        imageUrl: order.event.imageUrl,
+                        startDateTime: order.event.startDateTime,
+                        endDateTime: order.event.endDateTime,
+                        orderId: order._id.toString(),
+                        organizer: { _id: order.event.organizer?.toString() || '' },
+                        category: order.event.category ? {
+                            _id: order.event.category._id.toString(),
+                            name: order.event.category.name
+                        } : undefined,
+                        customFieldValues: order.customFieldValues,
+                    },
+                    registrations: order.customFieldValues.map((group: any) => ({
+                        queueNumber: group.queueNumber || '',
+                        name: group.fields?.find((field: any) => 
+                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                    })),
+                }));
+
+            // Transform all orders for statistics
+            const transformedAllRegistrations: IRegistration[] = allOrders
+                .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                .map((order: any) => ({
+                    event: {
+                        _id: order.event._id,
+                        title: order.event.title,
+                        imageUrl: order.event.imageUrl,
+                        startDateTime: order.event.startDateTime,
+                        endDateTime: order.event.endDateTime,
+                        orderId: order._id.toString(),
+                        organizer: { _id: order.event.organizer?.toString() || '' },
+                        category: order.event.category ? {
+                            _id: order.event.category._id.toString(),
+                            name: order.event.category.name
+                        } : undefined,
+                        customFieldValues: order.customFieldValues,
+                    },
+                    registrations: order.customFieldValues.map((group: any) => ({
+                        queueNumber: group.queueNumber || '',
+                        name: group.fields?.find((field: any) => 
+                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                    })),
+                }));
 
             setRegistrations(transformedRegistrations);
+            setAllRegistrations(transformedAllRegistrations);
         } catch (err) {
             console.error('Error fetching registrations:', err);
             setError('Failed to fetch registrations. Please try again.');
             setRegistrations([]);
+            setAllRegistrations([]);
         }
         setIsLoading(false);
     };
@@ -141,6 +182,68 @@ const EventLookupPage = () => {
                         Use the form above to search for your registrations and queue numbers.
                     </p>
                 </div>
+            )}
+
+            {/* Attendance Statistics Section */}
+            {hasSearched && allRegistrations.length > 0 && (
+                <>
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4 text-center text-primary-500">
+                            参与统计 Attendance Statistics
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-primary-50 p-4 rounded-lg text-center">
+                                <p className="text-gray-600">总参与次数 Total Events</p>
+                                <p className="text-2xl font-bold text-primary-500">{allRegistrations.length}</p>
+                            </div>
+                            <div className="bg-primary-50 p-4 rounded-lg text-center">
+                                <p className="text-gray-600">最近参与 Last Attended</p>
+                                <p className="text-2xl font-bold text-primary-500">
+                                    {allRegistrations.length > 0
+                                        ? new Date(String(allRegistrations[0].event.startDateTime)).toLocaleDateString()
+                                        : '-'}
+                                </p>
+                            </div>
+                            <div className="bg-primary-50 p-4 rounded-lg text-center">
+                                <p className="text-gray-600">参与活动 Recent Event</p>
+                                <p className="text-lg font-semibold text-primary-500 truncate">
+                                    {allRegistrations.length > 0
+                                        ? allRegistrations[0].event.title
+                                        : '-'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Recent Events List */}
+                        <div className="mt-6">
+                            <h4 className="text-lg font-semibold mb-3 text-primary-500">
+                                近期活动记录 Recent Event History
+                            </h4>
+                            <div className="space-y-2">
+                                {allRegistrations.slice(0, 5).map((registration, index) => (
+                                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-800">{registration.event.title}</p>
+                                            <p className="text-sm text-gray-600">
+                                                {registration.event.startDateTime 
+                                                    ? new Date(String(registration.event.startDateTime)).toLocaleDateString()
+                                                    : '-'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-600">
+                                                Queue: {registration.registrations[0]?.queueNumber || '-'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Analytics Charts */}
+                    <EventLookupAnalytics registrations={allRegistrations} />
+                </>
             )}
         </div>
     );

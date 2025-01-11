@@ -200,7 +200,11 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     .populate({
       path: 'event',
       match: { startDateTime: { $gte: twoDaysAgo } },
-      select: '_id title imageUrl startDateTime endDateTime organizer'
+      select: '_id title imageUrl startDateTime endDateTime organizer category',
+      populate: {
+        path: 'category',
+        select: '_id name'
+      }
     });
 
     // Filter out any null events (those that didn't match the date criteria)
@@ -209,6 +213,41 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     return filteredOrders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
+    throw error;
+  }
+};
+
+export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
+  try {
+    await connectToDatabase();
+    
+    const orders = await Order.find({
+      'customFieldValues': {
+        $elemMatch: {
+          'fields': {
+            $elemMatch: {
+              $or: [
+                { type: 'phone', value: phoneNumber },
+                { label: { $regex: /phone/i }, value: phoneNumber }
+              ]
+            }
+          },
+          'cancelled': { $ne: true }
+        }
+      }
+    })
+    .populate({
+      path: 'event',
+      select: '_id title imageUrl startDateTime endDateTime organizer category',
+      populate: {
+        path: 'category',
+        select: '_id name'
+      }
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error in getAllOrdersByPhoneNumber:', error);
     throw error;
   }
 };
