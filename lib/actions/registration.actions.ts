@@ -14,11 +14,17 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
     const orders = await Order.find({ buyer: userId })
       .populate({
         path: 'event',
-        select: '_id title imageUrl organizer attendeeCount endDateTime', // Include endDateTime
-        populate: {
-          path: 'organizer',
-          select: '_id', // Populate the organizer field if it's a reference
-        },
+        select: '_id title imageUrl organizer attendeeCount endDateTime startDateTime category',
+        populate: [
+          {
+            path: 'organizer',
+            select: '_id',
+          },
+          {
+            path: 'category',
+            select: '_id name',
+          }
+        ],
       })
       .exec();
 
@@ -34,9 +40,12 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
               title: order.event.title,
               imageUrl: order.event.imageUrl,
               organizer: order.event.organizer,
-              orderId: order._id?.toString(), // Use optional chaining
+              orderId: order._id?.toString(),
               customFieldValues: order.customFieldValues,
               attendeeCount: order.event.attendeeCount ?? 0,
+              startDateTime: order.event.startDateTime,
+              endDateTime: order.event.endDateTime,
+              category: order.event.category,
             },
             registrations: [],
           };

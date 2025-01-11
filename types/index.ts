@@ -164,6 +164,10 @@ export interface IRegistration {
     queueNumber?: string;
     attendeeCount?: number;
     cancelled?: boolean;
+    category?: {
+      _id: string;
+      name: string;
+    };
   };
   registrations: {
     queueNumber?: string;
