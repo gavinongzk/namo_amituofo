@@ -831,8 +831,17 @@ const AnalyticsDashboard: React.FC = () => {
                     </div>
                     
                     <UserAnalyticsVisuals 
-                        attendee={selectedAttendee} 
-                        allEvents={attendees.flatMap(a => a.events)} 
+                        registrations={selectedAttendee.events.map(event => ({
+                            event: {
+                                _id: event.eventTitle,
+                                title: event.eventTitle,
+                                startDateTime: event.eventDate,
+                                category: event.category
+                            },
+                            registrations: [{
+                                name: selectedAttendee.name
+                            }]
+                        }))}
                     />
                 </div>
             )}
