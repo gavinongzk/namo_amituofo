@@ -26,37 +26,48 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
           }
         ],
       })
+      .lean()
       .exec();
 
     const eventMap: { [key: string]: IRegistration } = {};
 
     orders.forEach(order => {
+      if (!order.event) return;
+      
       const eventId = order.event._id.toString();
-      if (new Date(order.event.endDateTime) >= currentDate) { // Filter out past events
+      const eventEndDate = order.event.endDateTime ? new Date(order.event.endDateTime) : null;
+      
+      if (eventEndDate && eventEndDate >= currentDate) {
         if (!eventMap[eventId]) {
           eventMap[eventId] = {
             event: {
               _id: eventId,
-              title: order.event.title,
+              title: order.event.title || '',
               imageUrl: order.event.imageUrl,
-              organizer: order.event.organizer,
+              organizer: { _id: order.event.organizer?._id?.toString() || '' },
               orderId: order._id?.toString(),
-              customFieldValues: order.customFieldValues,
+              customFieldValues: order.customFieldValues || [],
               attendeeCount: order.event.attendeeCount ?? 0,
-              startDateTime: order.event.startDateTime,
-              endDateTime: order.event.endDateTime,
-              category: order.event.category,
+              startDateTime: order.event.startDateTime || undefined,
+              endDateTime: order.event.endDateTime || undefined,
+              category: order.event.category ? {
+                _id: order.event.category._id?.toString() || '',
+                name: order.event.category.name || 'Uncategorized'
+              } : undefined
             },
             registrations: [],
           };
         }
-        order.customFieldValues.forEach((group: CustomFieldGroup) => {
-          const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
-          eventMap[eventId].registrations.push({
-            queueNumber: group.queueNumber,
-            name: nameField && typeof nameField.value === 'string' ? nameField.value : 'Unknown',
+        
+        if (Array.isArray(order.customFieldValues)) {
+          order.customFieldValues.forEach((group: CustomFieldGroup) => {
+            const nameField = group.fields?.find(field => field.label.toLowerCase().includes('name'));
+            eventMap[eventId].registrations.push({
+              queueNumber: group.queueNumber || '',
+              name: nameField && typeof nameField.value === 'string' ? nameField.value : 'Unknown',
+            });
           });
-        });
+        }
       }
     });
 
@@ -65,4 +76,4 @@ export const getRegistrationsByUser = async (userId: string): Promise<IRegistrat
     console.error('Error fetching registrations:', error);
     throw new Error('Error fetching registrations');
   }
-};
+}
