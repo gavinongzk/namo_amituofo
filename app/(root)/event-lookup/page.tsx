@@ -44,10 +44,24 @@ const EventLookupPage = () => {
             // Calculate category statistics
             const categoryCount: { [key: string]: number } = {};
             allOrders.forEach((order: any) => {
-                const category = order.event.category?.name || 'Uncategorized';
-                categoryCount[category] = (categoryCount[category] || 0) + 1;
+                order.customFieldValues.forEach((group: any) => {
+                    if (order.event?.category?.name) {
+                        const category = order.event.category.name;
+                        categoryCount[category] = (categoryCount[category] || 0) + 1;
+                    }
+                });
             });
-            setCategoryStats(categoryCount);
+            
+            // Sort categories by count and take top 5
+            const sortedCategories = Object.entries(categoryCount)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .reduce((acc, [key, value]) => {
+                    acc[key] = value;
+                    return acc;
+                }, {} as { [key: string]: number });
+
+            setCategoryStats(sortedCategories);
 
             // Transform recent orders for display
             const transformedRegistrations: IRegistration[] = recentOrders
@@ -147,9 +161,19 @@ const EventLookupPage = () => {
                 <p className="text-center">加载中... Loading...</p>
             ) : hasSearched ? (
                 <>
-                    {/* Category Distribution Chart */}
+                    <RegistrationCollection
+                        data={registrations}
+                        emptyTitle="未找到注册信息 No registrations found"
+                        emptyStateSubtext="未找到与此电话号码相关的注册信息。请检查后重试。 No registrations were found for this phone number. Please check and try again."
+                        collectionType="All_Registrations"
+                        limit={6}
+                        page={1}
+                        totalPages={1}
+                    />
+
+                    {/* Category Distribution Chart - Moved below RegistrationCollection */}
                     {Object.keys(categoryStats).length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-md">
+                        <div className="bg-white p-6 rounded-lg shadow-md mt-8">
                             <h3 className="text-xl font-semibold mb-4 text-center text-primary-500">
                                 活动类别分布 Event Category Distribution
                             </h3>
@@ -200,16 +224,6 @@ const EventLookupPage = () => {
                             </div>
                         </div>
                     )}
-
-                    <RegistrationCollection
-                        data={registrations}
-                        emptyTitle="未找到注册信息 No registrations found"
-                        emptyStateSubtext="未找到与此电话号码相关的注册信息。请检查后重试。 No registrations were found for this phone number. Please check and try again."
-                        collectionType="All_Registrations"
-                        limit={6}
-                        page={1}
-                        totalPages={1}
-                    />
                 </>
             ) : (
                 <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-primary-50 py-28 text-center">
