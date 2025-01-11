@@ -213,6 +213,37 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   }
 };
 
+export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
+  try {
+    await connectToDatabase();
+    
+    const orders = await Order.find({
+      'customFieldValues': {
+        $elemMatch: {
+          'fields': {
+            $elemMatch: {
+              $or: [
+                { type: 'phone', value: phoneNumber },
+                { label: { $regex: /phone/i }, value: phoneNumber }
+              ]
+            }
+          },
+          'cancelled': { $ne: true }
+        }
+      }
+    })
+    .populate({
+      path: 'event',
+      select: '_id title imageUrl startDateTime endDateTime organizer'
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error in getAllOrdersByPhoneNumber:', error);
+    throw error;
+  }
+};
+
 export const getGroupIdsByEventId = async (eventId: string): Promise<string[]> => {
   try {
     await connectToDatabase();
