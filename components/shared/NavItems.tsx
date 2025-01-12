@@ -51,6 +51,12 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
               <span className="text-xs mt-1">My Events</span>
             </Link>
           </li>
+          <li>
+            <Link href="/chanting" className={navItemClass('/chanting')} onClick={handleClick}>
+              <span className="font-medium">念佛记录</span>
+              <span className="text-xs mt-1">Chanting Records</span>
+            </Link>
+          </li>
           {isSuperAdmin && (
             <li>
               <Link href="/events/create" className={navItemClass('/events/create')} onClick={handleClick}>
