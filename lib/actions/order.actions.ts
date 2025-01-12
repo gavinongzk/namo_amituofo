@@ -182,20 +182,18 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
+    console.log('Searching for phone number:', phoneNumber);
+
     const orders = await Order.find({
-      'customFieldValues': {
+      'customFieldValues.fields': {
         $elemMatch: {
-          'fields': {
-            $elemMatch: {
-              $or: [
-                { type: 'phone', value: phoneNumber },
-                { label: { $regex: /phone/i }, value: phoneNumber }
-              ]
-            }
-          },
-          'cancelled': { $ne: true }
+          $or: [
+            { type: 'phone', value: phoneNumber },
+            { label: { $regex: /phone/i }, value: phoneNumber }
+          ]
         }
-      }
+      },
+      'customFieldValues.cancelled': { $ne: true }
     })
     .populate({
       path: 'event',
@@ -203,16 +201,23 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
       select: '_id title imageUrl startDateTime endDateTime organizer category',
       populate: {
         path: 'category',
-        select: '_id name'
+        select: 'name',
+        options: { lean: true }
       }
-    });
+    })
+    .lean();
+
+    console.log('Found orders:', JSON.stringify(orders, null, 2));
 
     // Filter out any null events (those that didn't match the date criteria)
     const filteredOrders = orders.filter(order => order.event);
+    
+    console.log('Filtered orders:', JSON.stringify(filteredOrders, null, 2));
 
     return filteredOrders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 };
@@ -221,33 +226,36 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
     
+    console.log('Searching for all orders with phone number:', phoneNumber);
+
     const orders = await Order.find({
-      'customFieldValues': {
+      'customFieldValues.fields': {
         $elemMatch: {
-          'fields': {
-            $elemMatch: {
-              $or: [
-                { type: 'phone', value: phoneNumber },
-                { label: { $regex: /phone/i }, value: phoneNumber }
-              ]
-            }
-          },
-          'cancelled': { $ne: true }
+          $or: [
+            { type: 'phone', value: phoneNumber },
+            { label: { $regex: /phone/i }, value: phoneNumber }
+          ]
         }
-      }
+      },
+      'customFieldValues.cancelled': { $ne: true }
     })
     .populate({
       path: 'event',
       select: '_id title imageUrl startDateTime endDateTime organizer category',
       populate: {
         path: 'category',
-        select: '_id name'
+        select: 'name',
+        options: { lean: true }
       }
-    });
+    })
+    .lean();
+
+    console.log('Found all orders:', JSON.stringify(orders, null, 2));
 
     return orders;
   } catch (error) {
     console.error('Error in getAllOrdersByPhoneNumber:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 };
