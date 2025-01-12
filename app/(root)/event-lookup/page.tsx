@@ -10,7 +10,8 @@ import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
-import { IOrderItem } from '@/lib/database/models/order.model'; // Import IOrderItem
+import { IOrderItem } from '@/lib/database/models/order.model';
+import { formatBilingualDateTime } from '@/lib/utils';
 
 const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -49,11 +50,8 @@ const EventLookupPage = () => {
                         endDateTime: order.event.endDateTime,
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
-                        category: order.event.category ? {
-                            _id: order.event.category._id.toString(),
-                            name: order.event.category.name
-                        } : undefined,
                         customFieldValues: order.customFieldValues,
+                        category: order.event.category,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
                         queueNumber: group.queueNumber || '',
@@ -74,11 +72,8 @@ const EventLookupPage = () => {
                         endDateTime: order.event.endDateTime,
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
-                        category: order.event.category ? {
-                            _id: order.event.category._id.toString(),
-                            name: order.event.category.name
-                        } : undefined,
                         customFieldValues: order.customFieldValues,
+                        category: order.event.category,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
                         queueNumber: group.queueNumber || '',
@@ -197,15 +192,15 @@ const EventLookupPage = () => {
                                 <p className="text-2xl font-bold text-primary-500">{allRegistrations.length}</p>
                             </div>
                             <div className="bg-primary-50 p-4 rounded-lg text-center">
-                                <p className="text-gray-600">最近参与 Last Attended</p>
+                                <p className="text-gray-600">最近参与日期 Last Attended</p>
                                 <p className="text-2xl font-bold text-primary-500">
                                     {allRegistrations.length > 0
-                                        ? new Date(String(allRegistrations[0].event.startDateTime)).toLocaleDateString()
+                                        ? formatBilingualDateTime(new Date(String(allRegistrations[0].event.startDateTime))).combined.dateOnly
                                         : '-'}
                                 </p>
                             </div>
                             <div className="bg-primary-50 p-4 rounded-lg text-center">
-                                <p className="text-gray-600">参与活动 Recent Event</p>
+                                <p className="text-gray-600">最近参与活动 Recent Event</p>
                                 <p className="text-lg font-semibold text-primary-500 truncate">
                                     {allRegistrations.length > 0
                                         ? allRegistrations[0].event.title
@@ -226,13 +221,13 @@ const EventLookupPage = () => {
                                             <p className="font-medium text-gray-800">{registration.event.title}</p>
                                             <p className="text-sm text-gray-600">
                                                 {registration.event.startDateTime 
-                                                    ? new Date(String(registration.event.startDateTime)).toLocaleDateString()
+                                                    ? formatBilingualDateTime(new Date(String(registration.event.startDateTime))).combined.dateTime
                                                     : '-'}
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm text-gray-600">
-                                                Queue: {registration.registrations[0]?.queueNumber || '-'}
+                                                排队号码 Queue: {registration.registrations[0]?.queueNumber || '-'}
                                             </p>
                                         </div>
                                     </div>
