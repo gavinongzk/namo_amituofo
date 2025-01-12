@@ -49,10 +49,6 @@ const EventLookupPage = () => {
                         endDateTime: order.event.endDateTime,
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
-                        category: order.event.category ? {
-                            _id: order.event.category._id.toString(),
-                            name: order.event.category.name
-                        } : undefined,
                         customFieldValues: order.customFieldValues,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
@@ -74,10 +70,6 @@ const EventLookupPage = () => {
                         endDateTime: order.event.endDateTime,
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
-                        category: order.event.category ? {
-                            _id: order.event.category._id.toString(),
-                            name: order.event.category.name
-                        } : undefined,
                         customFieldValues: order.customFieldValues,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
