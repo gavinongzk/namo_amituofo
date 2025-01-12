@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createOrUpdateChantingRecord, getChantingRecords } from '@/lib/actions/chanting.actions'
 import { Loader2 } from 'lucide-react'
-import { DayContent } from 'react-day-picker'
 
 interface ChantingRecord {
   _id: string
