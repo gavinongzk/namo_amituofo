@@ -200,7 +200,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     .populate({
       path: 'event',
       match: { startDateTime: { $gte: twoDaysAgo } },
-      select: '_id title imageUrl startDateTime endDateTime organizer'
+      select: '_id title imageUrl startDateTime endDateTime organizer category',
     });
 
     // Filter out any null events (those that didn't match the date criteria)
@@ -234,7 +234,7 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
-      select: '_id title imageUrl startDateTime endDateTime organizer'
+      select: '_id title imageUrl startDateTime endDateTime organizer category'
     });
 
     return orders;

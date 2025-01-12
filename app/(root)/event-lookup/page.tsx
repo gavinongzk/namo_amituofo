@@ -50,6 +50,7 @@ const EventLookupPage = () => {
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
                         customFieldValues: order.customFieldValues,
+                        category: order.event.category,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
                         queueNumber: group.queueNumber || '',
@@ -71,6 +72,7 @@ const EventLookupPage = () => {
                         orderId: order._id.toString(),
                         organizer: { _id: order.event.organizer?.toString() || '' },
                         customFieldValues: order.customFieldValues,
+                        category: order.event.category,
                     },
                     registrations: order.customFieldValues.map((group: any) => ({
                         queueNumber: group.queueNumber || '',
