@@ -617,7 +617,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         提交中... Submitting...
                       </div>
                     ) : (
-                      '完成注册 Complete Registration'
+                      '呈交报名 Complete Registration'
                     )}
                   </Button>
                 </div>
