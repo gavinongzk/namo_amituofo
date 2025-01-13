@@ -21,25 +21,20 @@ const EventLookupPage = () => {
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
     const [allRegistrations, setAllRegistrations] = useState<IRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
 
     const handleLookup = async () => {
-        console.log('handleLookup called with phone number:', phoneNumber);
         setIsLoading(true);
+        setIsLoadingStats(true);
         setError('');
         setHasSearched(true);
+        
         try {
-            // Get recent registrations
-            console.log('Calling getOrdersByPhoneNumber for recent registrations...');
+            // Get recent registrations first
             const recentOrders = await getOrdersByPhoneNumber(phoneNumber);
-            console.log('Recent orders received:', recentOrders);
-
-            // Get all registrations for statistics
-            console.log('Calling getAllOrdersByPhoneNumber for statistics...');
-            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
-            console.log('All orders received:', allOrders);
-
+            
             // Transform recent orders for display
             const transformedRegistrations: IRegistration[] = recentOrders
                 .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
@@ -62,6 +57,12 @@ const EventLookupPage = () => {
                     })),
                 }));
 
+            setRegistrations(transformedRegistrations);
+            setIsLoading(false);
+
+            // Then get all registrations for statistics
+            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
+            
             // Transform all orders for statistics
             const transformedAllRegistrations: IRegistration[] = allOrders
                 .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
@@ -84,15 +85,15 @@ const EventLookupPage = () => {
                     })),
                 }));
 
-            setRegistrations(transformedRegistrations);
             setAllRegistrations(transformedAllRegistrations);
         } catch (err) {
             console.error('Error fetching registrations:', err);
             setError('Failed to fetch registrations. Please try again.');
             setRegistrations([]);
             setAllRegistrations([]);
+        } finally {
+            setIsLoadingStats(false);
         }
-        setIsLoading(false);
     };
 
     return (
@@ -217,93 +218,98 @@ const EventLookupPage = () => {
             )}
 
             {/* Attendance Statistics Section */}
-            {hasSearched && allRegistrations.length > 0 && (
+            {hasSearched && !error && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                        <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                            参与统计 Attendance Statistics
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <motion.div 
-                                whileHover={{ scale: 1.02 }}
-                                className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
-                            >
-                                <p className="text-gray-600 mb-2">总参与次数 Total Events</p>
-                                <p className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                                    {allRegistrations.length}
-                                </p>
-                            </motion.div>
-                            <motion.div 
-                                whileHover={{ scale: 1.02 }}
-                                className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
-                            >
-                                <p className="text-gray-600 mb-2">最近参与日期 Last Attended</p>
-                                <p className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                                    {allRegistrations.length > 0
-                                        ? formatBilingualDateTime(new Date(String(allRegistrations[0].event.startDateTime))).combined.dateOnly
-                                        : '-'}
-                                </p>
-                            </motion.div>
-                            <motion.div 
-                                whileHover={{ scale: 1.02 }}
-                                className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
-                            >
-                                <p className="text-gray-600 mb-2">最近参与活动 Recent Event</p>
-                                <p className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent truncate">
-                                    {allRegistrations.length > 0
-                                        ? allRegistrations[0].event.title
-                                        : '-'}
-                                </p>
-                            </motion.div>
-                        </div>
-
-                        {/* Recent Events List */}
-                        <div className="mt-8">
-                            <h4 className="text-xl font-bold mb-4 text-primary-500">
-                                近期活动记录 Recent Event History
-                            </h4>
-                            <div className="space-y-3">
-                                {allRegistrations.slice(0, 5).map((registration, index) => (
-                                    <motion.div 
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        whileHover={{ scale: 1.01 }}
-                                        className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 shadow-sm transition-all duration-200 hover:bg-gray-100"
-                                    >
-                                        <div>
-                                            <p className="font-semibold text-gray-800">{registration.event.title}</p>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                {registration.event.startDateTime 
-                                                    ? formatBilingualDateTime(new Date(String(registration.event.startDateTime))).combined.dateTime
-                                                    : '-'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-medium text-primary-500">
-                                                排队号码 Queue: {registration.registrations[0]?.queueNumber || '-'}
-                                            </p>
-                                        </div>
-                                    </motion.div>
-                                ))}
+                    {isLoadingStats ? (
+                        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                            <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                加载参与统计中... Loading Statistics...
+                            </h3>
+                            <div className="flex-center py-12">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
                             </div>
                         </div>
-                    </div>
+                    ) : allRegistrations.length > 0 && (
+                        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                            <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                参与统计 Attendance Statistics
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <motion.div 
+                                    whileHover={{ scale: 1.02 }}
+                                    className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
+                                >
+                                    <p className="text-gray-600 mb-2">总参与次数 Total Events</p>
+                                    <p className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                        {allRegistrations.length}
+                                    </p>
+                                </motion.div>
+                                <motion.div 
+                                    whileHover={{ scale: 1.02 }}
+                                    className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
+                                >
+                                    <p className="text-gray-600 mb-2">最近参与日期 Last Attended</p>
+                                    <p className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                        {formatBilingualDateTime(new Date(String(allRegistrations[0].event.startDateTime))).combined.dateOnly}
+                                    </p>
+                                </motion.div>
+                                <motion.div 
+                                    whileHover={{ scale: 1.02 }}
+                                    className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
+                                >
+                                    <p className="text-gray-600 mb-2">最近参与活动 Recent Event</p>
+                                    <p className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent truncate">
+                                        {allRegistrations[0].event.title}
+                                    </p>
+                                </motion.div>
+                            </div>
 
-                    {/* Analytics Charts */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="mt-8"
-                    >
-                        <EventLookupAnalytics registrations={allRegistrations} />
-                    </motion.div>
+                            {/* Recent Events List */}
+                            <div className="mt-8">
+                                <h4 className="text-xl font-bold mb-4 text-primary-500">
+                                    近期活动记录 Recent Event History
+                                </h4>
+                                <div className="space-y-3">
+                                    {allRegistrations.slice(0, 5).map((registration, index) => (
+                                        <motion.div 
+                                            key={index}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            whileHover={{ scale: 1.01 }}
+                                            className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 shadow-sm transition-all duration-200 hover:bg-gray-100"
+                                        >
+                                            <div>
+                                                <p className="font-semibold text-gray-800">{registration.event.title}</p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {formatBilingualDateTime(new Date(String(registration.event.startDateTime))).combined.dateTime}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-medium text-primary-500">
+                                                    排队号码 Queue: {registration.registrations[0]?.queueNumber || '-'}
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Analytics Charts */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="mt-8"
+                            >
+                                <EventLookupAnalytics registrations={allRegistrations} />
+                            </motion.div>
+                        </div>
+                    )}
                 </motion.div>
             )}
         </div>
