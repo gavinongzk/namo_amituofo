@@ -103,7 +103,7 @@ const EventLookupPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white p-8 rounded-xl shadow-lg border border-gray-100"
             >
-                <h2 className="text-3xl font-bold mb-4 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold mb-4 text-center text-primary-500">
                     活动查询 Event Lookup
                 </h2>
                 <p className="text-gray-600 mb-8 text-center max-w-2xl mx-auto">
@@ -226,7 +226,7 @@ const EventLookupPage = () => {
                 >
                     {isLoadingStats ? (
                         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                            <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                            <h3 className="text-2xl font-bold mb-6 text-center text-primary-500">
                                 加载参与统计中... Loading Statistics...
                             </h3>
                             <div className="flex-center py-12">
@@ -235,7 +235,7 @@ const EventLookupPage = () => {
                         </div>
                     ) : allRegistrations.length > 0 && (
                         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                            <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                            <h3 className="text-2xl font-bold mb-6 text-center text-primary-500">
                                 参与统计 Attendance Statistics
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -244,7 +244,7 @@ const EventLookupPage = () => {
                                     className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
                                 >
                                     <p className="text-gray-600 mb-2">总参与次数 Total Events</p>
-                                    <p className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                    <p className="text-3xl font-bold text-primary-500">
                                         {allRegistrations.length}
                                     </p>
                                 </motion.div>
@@ -253,7 +253,7 @@ const EventLookupPage = () => {
                                     className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
                                 >
                                     <p className="text-gray-600 mb-2">最近参与日期 Last Attended</p>
-                                    <p className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                    <p className="text-2xl font-bold text-primary-500">
                                         {formatBilingualDateTime(new Date(String(allRegistrations[0].event.startDateTime))).combined.dateOnly}
                                     </p>
                                 </motion.div>
@@ -262,7 +262,7 @@ const EventLookupPage = () => {
                                     className="bg-primary-50 p-6 rounded-xl text-center border border-primary-100 shadow-sm transition-all duration-200"
                                 >
                                     <p className="text-gray-600 mb-2">最近参与活动 Recent Event</p>
-                                    <p className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent truncate">
+                                    <p className="text-xl font-bold text-primary-500 truncate">
                                         {allRegistrations[0].event.title}
                                     </p>
                                 </motion.div>
