@@ -35,9 +35,9 @@ export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => 
     en: enFormatted,
     cn: cnFormatted,
     combined: {
-      dateTime: `${cnFormatted.dateTime}\n${enFormatted.dateTime}`,
-      dateOnly: `${cnFormatted.dateOnly}\n${enFormatted.dateOnly}`,
-      timeOnly: `${cnFormatted.timeOnly}\n${enFormatted.timeOnly}`,
+      dateTime: `${cnFormatted.dateTime}\n|${enFormatted.dateTime}`,
+      dateOnly: `${cnFormatted.dateOnly}\n|${enFormatted.dateOnly}`,
+      timeOnly: `${cnFormatted.timeOnly}\n|${enFormatted.timeOnly}`,
     }
   }
 }
