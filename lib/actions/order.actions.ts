@@ -5,6 +5,7 @@ import { handleError } from '../utils';
 import { connectToDatabase } from '../database';
 import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
+import Category from '../database/models/category.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
 import QRCode from 'qrcode';
