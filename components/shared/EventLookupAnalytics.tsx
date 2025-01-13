@@ -115,6 +115,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  label={({ value }) => `${value}`}
                 >
                   {Object.entries(categoryDistribution).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
