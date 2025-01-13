@@ -40,7 +40,13 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
       month,
       count,
     }))
-    .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+    .sort((a, b) => {
+      const [monthA, yearA] = a.month.split(' ');
+      const [monthB, yearB] = b.month.split(' ');
+      const dateA = new Date(`${monthA} 1, ${yearA}`);
+      const dateB = new Date(`${monthB} 1, ${yearB}`);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   // Calculate category distribution
   const categoryDistribution = registrations.reduce((acc, reg) => {
@@ -51,6 +57,27 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
   }, {} as Record<string, number>);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+  // Custom label renderer for pie chart
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, index }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        className="text-xs md:text-sm font-medium"
+      >
+        {value}
+      </text>
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -115,7 +142,8 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ value }) => `${value}`}
+                  label={renderCustomizedLabel}
+                  labelLine={false}
                 >
                   {Object.entries(categoryDistribution).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
