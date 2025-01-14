@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +24,11 @@ const EventLookupPage = () => {
     const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        setIsReady(true);
+    }, []);
 
     const handleLookup = async () => {
         setIsLoading(true);
@@ -154,10 +159,15 @@ const EventLookupPage = () => {
 
                     <Button 
                         onClick={handleLookup} 
-                        disabled={isLoading} 
+                        disabled={isLoading || !isReady || !phoneNumber} 
                         className="w-full h-12 text-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
                     >
-                        {isLoading ? (
+                        {!isReady ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>页面加载中... Loading page...</span>
+                            </div>
+                        ) : isLoading ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="h-5 w-5 animate-spin" />
                                 <span>查询中... Looking up...</span>
