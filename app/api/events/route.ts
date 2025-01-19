@@ -43,21 +43,15 @@ preloadEvents();
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const country = searchParams.get('country') || '';
-
-    const nextCountry = COMMON_COUNTRIES.find(c => c !== country);
-    if (nextCountry) {
-      void getCachedEvents(nextCountry);
-    }
-
+    const country = searchParams.get('country') || 'Singapore';
+    
     const events = await getCachedEvents(country);
     
+    // Implement stale-while-revalidate caching
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=1800',
-        'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=1800',
-        'Vercel-CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=1800',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     });
   } catch (error) {
