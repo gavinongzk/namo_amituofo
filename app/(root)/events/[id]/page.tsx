@@ -8,6 +8,29 @@ import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
 
+// Cache page for 5 minutes
+export const revalidate = 300;
+
+// Generate static metadata
+export async function generateMetadata({ params: { id } }: { params: { id: string } }) {
+  const event = await getEventById(id);
+  
+  if (!event) {
+    return {
+      title: 'Event Not Found',
+      description: 'The requested event could not be found.'
+    };
+  }
+
+  return {
+    title: event.title,
+    description: event.description?.slice(0, 160),
+    openGraph: {
+      images: [event.imageUrl],
+    },
+  };
+}
+
 const EventInfo = async ({ event }: { event: any }) => {
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
@@ -29,7 +52,7 @@ const EventInfo = async ({ event }: { event: any }) => {
         {/* Date and Time Section */}
         <div className='flex gap-5 items-start'>
           <div className="bg-primary-50 p-4 rounded-full shrink-0">
-            <Image src="/assets/icons/calendar.svg" alt="calendar" width={24} height={24} />
+            <Image src="/assets/icons/calendar.svg" alt="calendar" width={24} height={24} priority />
           </div>
           <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col gap-1">
@@ -52,7 +75,7 @@ const EventInfo = async ({ event }: { event: any }) => {
         {/* Location Section */}
         <div className="flex items-start gap-5">
           <div className="bg-primary-50 p-4 rounded-full shrink-0">
-            <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
+            <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} priority />
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-lg font-semibold text-gray-800">地点 Location:</p>
@@ -78,24 +101,16 @@ const EventInfo = async ({ event }: { event: any }) => {
   );
 };
 
-export const revalidate = 3600;
+export default async function EventDetails({ params: { id } }: { params: { id: string } }) {
+  const event = await getEventById(id);
 
-type EventDetailsProps = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
-  const eventPromise = getEventById(id);
-  const event = await eventPromise;
-
-  const metadata = {
-    title: event.title || '',
-    description: event.description?.slice(0, 160) || '',
-    openGraph: {
-      images: [event.imageUrl || ''],
-    },
-  };
+  if (!event) {
+    return (
+      <div className="flex-center min-h-screen">
+        <p className="text-red-500">活动未找到。/ Event not found.</p>
+      </div>
+    );
+  }
 
   return (
     <section className="w-full bg-gray-50 min-h-screen py-10">
@@ -108,6 +123,7 @@ export default async function EventDetails({ params: { id }, searchParams }: Eve
             height={500}
             className="rounded-2xl object-contain w-full h-auto shadow-lg"
             priority
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
         

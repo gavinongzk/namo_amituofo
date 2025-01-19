@@ -3,6 +3,7 @@ import { preloadEvents } from '@/lib/actions/preload';
 import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
+import { memo } from 'react';
 
 interface EventListProps {
   page: number;
@@ -85,4 +86,4 @@ async function EventList({ page, searchText, category, country }: EventListProps
   }
 }
 
-export default EventList; 
+export default memo(EventList); 

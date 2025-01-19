@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,18 +25,21 @@ const EventLookupPage = () => {
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
 
-    const handleLookup = async () => {
+    const handleSearch = useCallback(async () => {
+        if (!phoneNumber || phoneNumber.length < 8) {
+            alert('请输入有效的电话号码。/ Please enter a valid phone number.');
+            return;
+        }
+
         setIsLoading(true);
         setIsLoadingStats(true);
         setError('');
         setHasSearched(true);
         
         try {
-            // Get recent registrations first
             const recentOrders = await getOrdersByPhoneNumber(phoneNumber);
             
-            // Transform recent orders for display
-            const transformedRegistrations: IRegistration[] = recentOrders
+            const transformedRegistrations = useMemo(() => recentOrders
                 .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
                 .map((order: any) => ({
                     event: {
@@ -55,16 +58,14 @@ const EventLookupPage = () => {
                         name: group.fields?.find((field: any) => 
                             field.label.toLowerCase().includes('name'))?.value || 'Unknown',
                     })),
-                }));
+                })), [recentOrders]);
 
             setRegistrations(transformedRegistrations);
             setIsLoading(false);
 
-            // Then get all registrations for statistics
+            // Fetch all registrations for analytics
             const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
-            
-            // Transform all orders for statistics
-            const transformedAllRegistrations: IRegistration[] = allOrders
+            const allTransformedRegistrations = useMemo(() => allOrders
                 .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
                 .map((order: any) => ({
                     event: {
@@ -83,18 +84,24 @@ const EventLookupPage = () => {
                         name: group.fields?.find((field: any) => 
                             field.label.toLowerCase().includes('name'))?.value || 'Unknown',
                     })),
-                }));
+                })), [allOrders]);
 
-            setAllRegistrations(transformedAllRegistrations);
-        } catch (err) {
-            console.error('Error fetching registrations:', err);
+            setAllRegistrations(allTransformedRegistrations);
+        } catch (error) {
+            console.error('Error fetching registrations:', error);
             setError('Failed to fetch registrations. Please try again.');
             setRegistrations([]);
             setAllRegistrations([]);
         } finally {
             setIsLoadingStats(false);
         }
-    };
+    }, [phoneNumber]);
+
+    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    }, [handleSearch]);
 
     return (
         <div className="wrapper my-8 flex flex-col gap-8 max-w-6xl mx-auto">
@@ -119,6 +126,7 @@ const EventLookupPage = () => {
                                 placeholder="输入电话号码 Enter phone number"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
+                                onKeyPress={handleKeyPress}
                                 className="p-regular-16 border-2 h-12 transition-all duration-200 focus:ring-2 focus:ring-primary-500"
                             />
                         ) : (
@@ -153,17 +161,17 @@ const EventLookupPage = () => {
                     </div>
 
                     <Button 
-                        onClick={handleLookup} 
-                        disabled={isLoading} 
+                        onClick={handleSearch}
+                        disabled={isLoading || !phoneNumber}
                         className="w-full h-12 text-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
                     >
                         {isLoading ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="h-5 w-5 animate-spin" />
-                                <span>查询中... Looking up...</span>
+                                <span>查询中... Searching...</span>
                             </div>
                         ) : (
-                            '查询 Lookup'
+                            '查询 Search'
                         )}
                     </Button>
                 </div>
@@ -276,7 +284,7 @@ const EventLookupPage = () => {
                                 <div className="space-y-3">
                                     {allRegistrations.slice(0, 5).map((registration, index) => (
                                         <motion.div 
-                                            key={index}
+                                            key={`${registration.event._id}-${index}`}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.1 }}
