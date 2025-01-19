@@ -47,8 +47,9 @@ export default async function Home({ searchParams }: SearchParamProps) {
 
       <Suspense fallback={<EventSkeleton />}>
         <EventList 
-          eventsPromise={eventsPromise}
-          searchParams={searchParams}
+          page={Number(searchParams.page) || 1}
+          searchText={searchParams.query?.toString() || ''}
+          category={searchParams.category?.toString() || ''}
           country={country}
         />
       </Suspense>
