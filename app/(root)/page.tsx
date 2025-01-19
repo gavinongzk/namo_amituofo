@@ -1,56 +1,58 @@
-import { preloadEvents } from '@/lib/actions/preload';
 import { Suspense } from 'react';
-import CategoryFilter from '@/components/shared/CategoryFilter';
-import Loading from '@/components/shared/Loader';
+import { preloadEvents } from '@/lib/actions/preload';
+import dynamic from 'next/dynamic';
 import { cookies } from 'next/headers';
 import { SearchParamProps } from '@/types';
-import EventList from '@/components/shared/EventList';
+
+// Dynamically import components
+const CategoryFilter = dynamic(() => 
+  import('@/components/shared/CategoryFilter'),
+  { ssr: true }
+);
+
+const EventList = dynamic(() => 
+  import('@/components/shared/EventList'),
+  { ssr: true }
+);
+
+// Add progressive loading skeleton
+const EventSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {[...Array(6)].map((_, i) => (
+      <div key={i} className="animate-pulse">
+        <div className="h-48 bg-gray-200 rounded-t-lg" />
+        <div className="p-4 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-3 bg-gray-200 rounded w-1/2" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export default async function Home({ searchParams }: SearchParamProps) {
-  try {
-    const page = Number(searchParams?.page) || 1;
-    const searchText = '';
-    const category = (searchParams?.category as string) || '';
-    
-    const cookieStore = cookies();
-    const country = cookieStore.get('userCountry')?.value || 'Singapore';
+  const cookieStore = cookies();
+  const country = cookieStore.get('userCountry')?.value || 'Singapore';
 
-    if (!category) {
-      try {
-        const preloadedData = await preloadEvents(country);
-        if (!preloadedData || typeof preloadedData !== 'object') {
-          console.warn('Invalid preloaded data format');
-        }
-      } catch (error) {
-        console.error('Error preloading events:', error);
-      }
-    }
+  // Start data fetch early
+  const eventsPromise = preloadEvents(country);
 
-    return (
-      <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">
-        <h2 className="h2-bold">最新活动 Latest Events</h2>
+  return (
+    <section className="wrapper my-8 flex flex-col gap-8">
+      <h2 className="h2-bold">最新活动 Latest Events</h2>
+      
+      <Suspense>
+        <CategoryFilter />
+      </Suspense>
 
-        <div className="flex w-full flex-col gap-5 md:flex-row">
-          <CategoryFilter />
-        </div>
-
-        <Suspense fallback={<Loading />}>
-          <EventList 
-            page={page}
-            searchText={searchText}
-            category={category}
-            country={country}
-          />
-        </Suspense>
-      </section>
-    );
-  } catch (error) {
-    console.error('Error in Home page:', error);
-    return (
-      <div className="wrapper my-8 text-center">
-        <p className="text-red-500">出错了，请稍后再试。 Something went wrong. Please try again later.</p>
-      </div>
-    );
-  }
+      <Suspense fallback={<EventSkeleton />}>
+        <EventList 
+          eventsPromise={eventsPromise}
+          searchParams={searchParams}
+          country={country}
+        />
+      </Suspense>
+    </section>
+  );
 }
 

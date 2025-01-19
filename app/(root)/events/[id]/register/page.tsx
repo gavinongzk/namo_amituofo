@@ -1,16 +1,28 @@
 // app/(root)/events/[id]/register/page.tsx
 import { Suspense } from 'react'
 import Loading from '@/components/shared/Loader'
-import RegisterFormWrapper from '@/components/shared/RegisterFormWrapper'
 import { getEventById } from '@/lib/actions/event.actions'
 import { unstable_cache } from 'next/cache'
 import { headers } from 'next/headers'
+import dynamic from 'next/dynamic'
 
-// Cache the event data
+// Dynamically import heavy components
+const RegisterFormWrapper = dynamic(() => 
+  import('@/components/shared/RegisterFormWrapper'),
+  { 
+    loading: () => <RegisterFormSkeleton />,
+    ssr: true
+  }
+)
+
+// Cache event data
 const getCachedEvent = unstable_cache(
   async (id: string) => getEventById(id),
   ['event-registration'],
-  { revalidate: 300 }
+  { 
+    revalidate: 300,
+    tags: ['event-details']
+  }
 )
 
 // Separate loading component for better UX
@@ -29,7 +41,7 @@ export default async function RegisterPage({
 }: { 
   params: { id: string } 
 }) {
-  // Start fetching event data immediately
+  // Start data fetch immediately
   const eventPromise = getCachedEvent(id)
 
   return (
