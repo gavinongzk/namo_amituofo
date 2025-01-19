@@ -24,6 +24,7 @@ import {
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
 import { X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import useSWR from 'swr';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -99,6 +100,28 @@ const AnalyticsDashboard: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
+
+    const { data: analyticsData, isLoading: swrIsLoading } = useSWR('/api/analytics', async (url) => {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch analytics data');
+            }
+            const data = await response.json();
+            if (!data.attendees || !Array.isArray(data.attendees)) {
+                throw new Error('Invalid data structure received from API');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error fetching analytics data:', error);
+            setError(error instanceof Error ? error.message : 'An unknown error occurred');
+            return { attendees: [] };
+        }
+    }, {
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        refreshInterval: 300000 // Refresh every 5 minutes
+    });
 
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
@@ -254,35 +277,12 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
-                console.log('Fetching analytics data...');
-                const response = await fetch('/api/analytics');
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch analytics data: ${response.status} ${response.statusText}. ${errorText}`);
-                }
-                const data = await response.json();
-                console.log('Received analytics data:', JSON.stringify(data, null, 2));
-                if (!data.attendees || !Array.isArray(data.attendees)) {
-                    throw new Error('Invalid data structure received from API');
-                }
-                setAttendees(data.attendees);
-                processFrequentAttendees(data.attendees);
-                processPopularEvents(data.attendees);
-                processRegionAndTownDistribution(data.attendees);
-            } catch (error) {
-                console.error('Error fetching analytics data:', error);
-                setError(error instanceof Error ? error.message : 'An unknown error occurred');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAnalytics();
-    }, []);
+        if (analyticsData?.attendees) {
+            processFrequentAttendees(analyticsData.attendees);
+            processPopularEvents(analyticsData.attendees);
+            processRegionAndTownDistribution(analyticsData.attendees);
+        }
+    }, [analyticsData]);
 
     const calculateAttendanceTrend = (attendees: Attendee[]) => {
         const now = new Date();
@@ -603,7 +603,7 @@ const AnalyticsDashboard: React.FC = () => {
         };
     };
 
-    if (isLoading) {
+    if (swrIsLoading) {
         return <div className="p-6">Loading analytics data...</div>;
     }
 
