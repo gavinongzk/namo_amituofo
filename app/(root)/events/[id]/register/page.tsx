@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic'
 const RegisterFormWrapper = dynamic(() => 
   import('@/components/shared/RegisterFormWrapper'),
   { 
-    loading: () => <RegisterFormSkeleton />,
+    loading: () => <RegisterPageSkeleton />,
     ssr: true
   }
 )
