@@ -8,7 +8,11 @@ export const routeCacheConfig = {
     prefetch: true
   },
   '/api/*': {
-    revalidate: 60,
+    revalidate: 0,
+    prefetch: false
+  },
+  '/event-lookup': {
+    revalidate: 0,
     prefetch: false
   }
 }; 
