@@ -185,12 +185,15 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
 
     console.log('Searching for phone number:', phoneNumber);
 
+    // Remove any cache-busting query params from the phone number
+    const cleanPhoneNumber = phoneNumber.split('?')[0];
+
     const orders = await Order.find({
       'customFieldValues.fields': {
         $elemMatch: {
           $or: [
-            { type: 'phone', value: phoneNumber },
-            { label: { $regex: /phone/i }, value: phoneNumber }
+            { type: 'phone', value: cleanPhoneNumber },
+            { label: { $regex: /phone/i }, value: cleanPhoneNumber }
           ]
         }
       },
@@ -206,7 +209,14 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
         options: { lean: true }
       }
     })
-    .lean();
+    .lean()
+    .setOptions({ 
+      cache: false,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
 
     console.log('Found orders:', JSON.stringify(orders, null, 2));
 
@@ -229,12 +239,15 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     
     console.log('Searching for all orders with phone number:', phoneNumber);
 
+    // Remove any cache-busting query params from the phone number
+    const cleanPhoneNumber = phoneNumber.split('?')[0];
+
     const orders = await Order.find({
       'customFieldValues.fields': {
         $elemMatch: {
           $or: [
-            { type: 'phone', value: phoneNumber },
-            { label: { $regex: /phone/i }, value: phoneNumber }
+            { type: 'phone', value: cleanPhoneNumber },
+            { label: { $regex: /phone/i }, value: cleanPhoneNumber }
           ]
         }
       },
@@ -249,14 +262,18 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
         options: { lean: true }
       }
     })
-    .lean();
-
-    console.log('Found all orders:', JSON.stringify(orders, null, 2));
+    .lean()
+    .setOptions({ 
+      cache: false,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
 
     return orders;
   } catch (error) {
     console.error('Error in getAllOrdersByPhoneNumber:', error);
-    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 };

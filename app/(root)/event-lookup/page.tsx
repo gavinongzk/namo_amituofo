@@ -37,8 +37,8 @@ const EventLookupPage = () => {
         setHasSearched(true);
         
         try {
-            // Get recent registrations first
-            const recentOrders = await getOrdersByPhoneNumber(phoneNumber);
+            // Get recent registrations first with cache-busting query param
+            const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
             
             // Transform recent orders for display
             const transformedRegistrations: IRegistration[] = recentOrders
@@ -65,8 +65,8 @@ const EventLookupPage = () => {
             setRegistrations(transformedRegistrations);
             setIsLoading(false);
 
-            // Then get all registrations for statistics
-            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber);
+            // Then get all registrations for statistics with cache-busting query param
+            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
             
             // Transform all orders for statistics
             const transformedAllRegistrations: IRegistration[] = allOrders
