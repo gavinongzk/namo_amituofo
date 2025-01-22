@@ -27,34 +27,54 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
     setIsLoading(true);
     setError('');
     setHasSearched(true);
-    try {
-      const orders = await getOrdersByPhoneNumber(phoneNumber);
+    
+    const maxRetries = 2;
+    let retryCount = 0;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        // Add cache-busting query param
+        const orders = await getOrdersByPhoneNumber(`${phoneNumber}?t=${Date.now()}`);
 
-      const transformedRegistrations: IRegistration[] = orders.map((order: any) => ({
-        event: {
-          _id: order.event._id,
-          title: order.event.title,
-          imageUrl: order.event.imageUrl,
-          startDateTime: order.event.startDateTime,
-          endDateTime: order.event.endDateTime,
-          orderId: order._id.toString(),
-          organizer: { _id: order.event.organizer?.toString() || '' },
-          customFieldValues: order.customFieldValues,
-        },
-        registrations: order.customFieldValues.map((group: any) => ({
-          queueNumber: group.queueNumber || '',
-          name: group.fields?.find((field: any) => 
-            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-        })),
-      }));
+        const transformedRegistrations: IRegistration[] = orders
+          .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+          .map((order: any) => ({
+            event: {
+              _id: order.event._id,
+              title: order.event.title,
+              imageUrl: order.event.imageUrl,
+              startDateTime: order.event.startDateTime,
+              endDateTime: order.event.endDateTime,
+              orderId: order._id.toString(),
+              organizer: { _id: order.event.organizer?.toString() || '' },
+              customFieldValues: order.customFieldValues,
+            },
+            registrations: order.customFieldValues.map((group: any) => ({
+              queueNumber: group.queueNumber,
+              name: group.fields?.find((field: any) => 
+                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+            })),
+          }));
 
-      setRegistrations(transformedRegistrations);
-    } catch (err) {
-      console.error('Error fetching registrations:', err);
-      setError('报名查询失败。请重试。Registration lookup failed. Please try again.');
-      setRegistrations([]);
+        setRegistrations(transformedRegistrations);
+        setIsLoading(false);
+        break; // Exit the retry loop if successful
+      } catch (err) {
+        console.error(`Attempt ${retryCount + 1} failed:`, err);
+        if (retryCount === maxRetries) {
+          setError('报名查询失败。请重试。Registration lookup failed. Please try again.');
+          setRegistrations([]);
+        } else {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        }
+        retryCount++;
+      } finally {
+        if (retryCount === maxRetries) {
+          setIsLoading(false);
+        }
+      }
     }
-    setIsLoading(false);
   };
 
   return (
