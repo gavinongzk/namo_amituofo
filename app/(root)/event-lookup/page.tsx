@@ -36,68 +36,87 @@ const EventLookupPage = () => {
         setError('');
         setHasSearched(true);
         
-        try {
-            // Get recent registrations first with cache-busting query param
-            const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
-            
-            // Transform recent orders for display
-            const transformedRegistrations: IRegistration[] = recentOrders
-                .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                .map((order: any) => ({
-                    event: {
-                        _id: order.event._id,
-                        title: order.event.title,
-                        imageUrl: order.event.imageUrl,
-                        startDateTime: order.event.startDateTime,
-                        endDateTime: order.event.endDateTime,
-                        orderId: order._id.toString(),
-                        organizer: { _id: order.event.organizer?.toString() || '' },
-                        customFieldValues: order.customFieldValues,
-                        category: order.event.category,
-                    },
-                    registrations: order.customFieldValues.map((group: any) => ({
-                        queueNumber: group.queueNumber || '',
-                        name: group.fields?.find((field: any) => 
-                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                    })),
-                }));
+        const maxRetries = 2;
+        let retryCount = 0;
+        
+        while (retryCount <= maxRetries) {
+            try {
+                // Get recent registrations first with cache-busting query param
+                const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
+                
+                // Transform recent orders for display
+                const transformedRegistrations: IRegistration[] = recentOrders
+                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                    .map((order: any) => ({
+                        event: {
+                            _id: order.event._id,
+                            title: order.event.title,
+                            imageUrl: order.event.imageUrl,
+                            startDateTime: order.event.startDateTime,
+                            endDateTime: order.event.endDateTime,
+                            orderId: order._id.toString(),
+                            organizer: { _id: order.event.organizer?.toString() || '' },
+                            customFieldValues: order.customFieldValues,
+                            category: order.event.category,
+                        },
+                        registrations: order.customFieldValues.map((group: any) => ({
+                            queueNumber: group.queueNumber,
+                            name: group.fields?.find((field: any) => 
+                                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                        })),
+                    }));
 
-            setRegistrations(transformedRegistrations);
-            setIsLoading(false);
+                setRegistrations(transformedRegistrations);
+                setIsLoading(false);
 
-            // Then get all registrations for statistics with cache-busting query param
-            const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
-            
-            // Transform all orders for statistics
-            const transformedAllRegistrations: IRegistration[] = allOrders
-                .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                .map((order: any) => ({
-                    event: {
-                        _id: order.event._id,
-                        title: order.event.title,
-                        imageUrl: order.event.imageUrl,
-                        startDateTime: order.event.startDateTime,
-                        endDateTime: order.event.endDateTime,
-                        orderId: order._id.toString(),
-                        organizer: { _id: order.event.organizer?.toString() || '' },
-                        customFieldValues: order.customFieldValues,
-                        category: order.event.category,
-                    },
-                    registrations: order.customFieldValues.map((group: any) => ({
-                        queueNumber: group.queueNumber || '',
-                        name: group.fields?.find((field: any) => 
-                            field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                    })),
-                }));
+                // Add delay between requests to prevent race conditions
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-            setAllRegistrations(transformedAllRegistrations);
-        } catch (err) {
-            console.error('Error fetching registrations:', err);
-            setError('Failed to fetch registrations. Please try again.');
-            setRegistrations([]);
-            setAllRegistrations([]);
-        } finally {
-            setIsLoadingStats(false);
+                // Then get all registrations for statistics with cache-busting query param
+                const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
+                
+                // Transform all orders for statistics
+                const transformedAllRegistrations: IRegistration[] = allOrders
+                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                    .map((order: any) => ({
+                        event: {
+                            _id: order.event._id,
+                            title: order.event.title,
+                            imageUrl: order.event.imageUrl,
+                            startDateTime: order.event.startDateTime,
+                            endDateTime: order.event.endDateTime,
+                            orderId: order._id.toString(),
+                            organizer: { _id: order.event.organizer?.toString() || '' },
+                            customFieldValues: order.customFieldValues,
+                            category: order.event.category,
+                        },
+                        registrations: order.customFieldValues.map((group: any) => ({
+                            queueNumber: group.queueNumber,
+                            name: group.fields?.find((field: any) => 
+                                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                        })),
+                    }));
+
+                setAllRegistrations(transformedAllRegistrations);
+                setIsLoadingStats(false);
+                break; // Exit the retry loop if successful
+            } catch (err) {
+                console.error(`Attempt ${retryCount + 1} failed:`, err);
+                if (retryCount === maxRetries) {
+                    setError('Failed to fetch registrations. Please try again.');
+                    setRegistrations([]);
+                    setAllRegistrations([]);
+                } else {
+                    // Wait before retrying (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+                }
+                retryCount++;
+            } finally {
+                if (retryCount === maxRetries) {
+                    setIsLoading(false);
+                    setIsLoadingStats(false);
+                }
+            }
         }
     };
 
