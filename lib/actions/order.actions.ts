@@ -236,8 +236,6 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
 export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
-    
-    console.log('Searching for all orders with phone number:', phoneNumber);
 
     // Remove any cache-busting query params from the phone number
     const cleanPhoneNumber = phoneNumber.split('?')[0];
@@ -271,12 +269,12 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
       }
     });
 
-    return orders;
+    return JSON.parse(JSON.stringify(orders));
   } catch (error) {
-    console.error('Error in getAllOrdersByPhoneNumber:', error);
+    console.error(error);
     throw error;
   }
-};
+}
 
 export const getGroupIdsByEventId = async (eventId: string): Promise<string[]> => {
   try {

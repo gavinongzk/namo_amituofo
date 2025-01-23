@@ -41,6 +41,11 @@ const EventLookupPage = () => {
         
         while (retryCount <= maxRetries) {
             try {
+                // Add minimum delay between retries
+                if (retryCount > 0) {
+                    await new Promise(resolve => setTimeout(resolve, Math.max(1000, Math.pow(2, retryCount) * 1000)));
+                }
+
                 // Get recent registrations first with cache-busting query param
                 const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
                 
@@ -102,17 +107,12 @@ const EventLookupPage = () => {
                 break; // Exit the retry loop if successful
             } catch (err) {
                 console.error(`Attempt ${retryCount + 1} failed:`, err);
+                retryCount++;
+                
                 if (retryCount === maxRetries) {
                     setError('Failed to fetch registrations. Please try again.');
                     setRegistrations([]);
                     setAllRegistrations([]);
-                } else {
-                    // Wait before retrying (exponential backoff)
-                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
-                }
-                retryCount++;
-            } finally {
-                if (retryCount === maxRetries) {
                     setIsLoading(false);
                     setIsLoadingStats(false);
                 }
