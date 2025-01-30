@@ -188,6 +188,9 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     // Remove any cache-busting query params from the phone number
     const cleanPhoneNumber = phoneNumber.split('?')[0];
 
+    // Ensure Category model is registered before using it
+    require('../database/models/category.model');
+
     const orders = await Order.find({
       'customFieldValues.fields': {
         $elemMatch: {
@@ -202,11 +205,11 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     .populate({
       path: 'event',
       match: { startDateTime: { $gte: twoDaysAgo } },
-      select: '_id title imageUrl startDateTime endDateTime organizer category',
+      select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
-        select: 'name',
-        options: { lean: true }
+        model: 'Category',
+        select: '_id name'
       }
     })
     .lean();
@@ -246,21 +249,9 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
-      select: '_id title imageUrl startDateTime endDateTime organizer category',
-      populate: {
-        path: 'category',
-        select: 'name',
-        options: { lean: true }
-      }
+      select: '_id title imageUrl startDateTime endDateTime organizer'
     })
-    .lean()
-    .setOptions({ 
-      cache: false,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    });
+    .lean();
 
     return JSON.parse(JSON.stringify(orders));
   } catch (error) {
