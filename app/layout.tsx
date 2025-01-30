@@ -28,25 +28,33 @@ export default function RootLayout({
   // Add preload hints for critical resources
   const preloadResources = (
     <>
+      {/* Critical resources */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link rel="dns-prefetch" href="https://utfs.io" />
+      
+      {/* Preload critical images */}
       <link 
         rel="preload" 
         href="/assets/images/logo.svg" 
         as="image" 
+        type="image/svg+xml"
       />
-      <link 
-        rel="preconnect" 
-        href="https://fonts.googleapis.com" 
-      />
+      
+      {/* Preload critical data */}
       <link 
         rel="preload"
         href="/api/events?country=Singapore"
         as="fetch"
         crossOrigin="anonymous"
       />
-      <link 
+      
+      {/* Preload critical fonts */}
+      <link
         rel="preload"
-        href="/api/events?country=Malaysia"
-        as="fetch"
+        href="/fonts/poppins-regular.woff2"
+        as="font"
+        type="font/woff2"
         crossOrigin="anonymous"
       />
     </>

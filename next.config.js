@@ -2,6 +2,12 @@
 const nextConfig = {
   images: {
     domains: ['utfs.io'],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    formats: ['image/webp'],
+    minimumCacheTTL: 3600,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
@@ -9,6 +15,11 @@ const nextConfig = {
         port: ''
       }
     ]
+  },
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@radix-ui', '@clerk/nextjs'],
+    scrollRestoration: true
   }
 }
 
