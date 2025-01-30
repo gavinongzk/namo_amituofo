@@ -236,6 +236,9 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     // Remove any cache-busting query params from the phone number
     const cleanPhoneNumber = phoneNumber.split('?')[0];
 
+    // Ensure Category model is registered
+    require('../database/models/category.model');
+
     const orders = await Order.find({
       'customFieldValues.fields': {
         $elemMatch: {
@@ -249,7 +252,12 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
-      select: '_id title imageUrl startDateTime endDateTime organizer'
+      select: '_id title imageUrl startDateTime endDateTime organizer',
+      populate: {
+        path: 'category',
+        model: 'Category',
+        select: '_id name'
+      }
     })
     .lean();
 
