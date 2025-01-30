@@ -209,14 +209,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
         options: { lean: true }
       }
     })
-    .lean()
-    .setOptions({ 
-      cache: false,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    });
+    .lean();
 
     console.log('Found orders:', JSON.stringify(orders, null, 2));
 
