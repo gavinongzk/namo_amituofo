@@ -272,7 +272,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> 刷新页面重试
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 如果问题持续，请通过WhatsApp联系寺院工作人员获取帮助：{' '}
+                <span className="font-medium text-gray-900">4.</span> 如果问题持续，请通过WhatsApp联系寺院义工获取帮助：{' '}
                 <a 
                   href="https://wa.me/6588184848" 
                   target="_blank" 
@@ -298,7 +298,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> Refresh the page and try again
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> If the problem persists, contact temple staff via WhatsApp:{' '}
+                <span className="font-medium text-gray-900">4.</span> If the problem persists, contact volunteers via WhatsApp:{' '}
                 <a 
                   href="https://wa.me/6588184848" 
                   target="_blank" 
