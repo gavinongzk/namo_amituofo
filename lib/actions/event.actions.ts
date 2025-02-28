@@ -138,7 +138,7 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
   }
 }
 
-// GET ALL EVENTS
+// GET ALL EVENTS (Regular users - with date filtering)
 export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
   const cacheKey = `events-${query}-${limit}-${page}-${category}-${country}`;
   
@@ -160,7 +160,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
             categoryCondition ? { category: categoryCondition._id } : {},
             { country: country },
             { isDeleted: { $ne: true } },
-            dateCondition // Add the date condition
+            dateCondition
           ]
         }
 
@@ -222,12 +222,96 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
     },
     ['events-list'],
     {
-      revalidate: 3600, // Reduce to 1 minute to match API
+      revalidate: 3600,
       tags: ['events']
     }
   )();
 }
 
+// GET ALL EVENTS (Superadmin - without date filtering)
+export async function getAllEventsForSuperAdmin({ query, limit = 6, page, category, country }: GetAllEventsParams) {
+  const cacheKey = `superadmin-events-${query}-${limit}-${page}-${category}-${country}`;
+  
+  return unstable_cache(
+    async () => {
+      try {
+        await connectToDatabase()
+
+        const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+        const categoryCondition = category ? await getCategoryByName(category) : null
+
+        const conditions = {
+          $and: [
+            titleCondition,
+            categoryCondition ? { category: categoryCondition._id } : {},
+            { country: country },
+            { isDeleted: { $ne: true } }
+          ]
+        }
+
+        const skipAmount = (Number(page) - 1) * limit
+        
+        // Parallel queries without field projection to get all fields
+        const [events, eventsCount] = await Promise.all([
+          Event.find(conditions)
+            .sort({ startDateTime: 'desc', createdAt: 'desc' })
+            .skip(skipAmount)
+            .limit(limit)
+            .populate({ 
+              path: 'organizer', 
+              model: User,
+              select: '_id firstName lastName'
+            })
+            .populate({ 
+              path: 'category', 
+              model: Category,
+              select: '_id name'
+            })
+            .lean()
+            .exec(),
+          Event.countDocuments(conditions)
+        ]);
+
+        // Batch fetch registration counts
+        const eventIds = events.map(event => event._id);
+        const orders = await Order.find({ 
+          event: { $in: eventIds } 
+        })
+        .select('event customFieldValues')
+        .lean()
+        .exec();
+
+        // Create a map for faster lookup using Set for O(1) lookups
+        const registrationCountMap = new Map();
+        orders.forEach(order => {
+          const eventId = order.event.toString();
+          registrationCountMap.set(
+            eventId, 
+            (registrationCountMap.get(eventId) || 0) + order.customFieldValues.length
+          );
+        });
+
+        const eventsWithCount = events.map((event: any) => ({
+          ...event,
+          registrationCount: registrationCountMap.get(event._id.toString()) || 0
+        }));
+
+        return { 
+          data: eventsWithCount, 
+          totalPages: Math.ceil(eventsCount / limit) 
+        }
+      } catch (error) {
+        handleError(error)
+        return { data: [], totalPages: 0 }
+      }
+    },
+    ['superadmin-events-list'],
+    {
+      revalidate: 3600,
+      tags: ['events']
+    }
+  )();
+}
 
 // GET EVENTS BY ORGANIZER
 export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUserParams) {
