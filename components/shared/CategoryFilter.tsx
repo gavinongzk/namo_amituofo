@@ -21,6 +21,14 @@ const CategoryFilter = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Define category colors
+  const categoryColors: { [key: string]: string } = {
+    'All': 'bg-gray-200',
+    '念佛共修': 'bg-orange-200',
+    '念佛｜闻法｜祈福｜超荐': 'bg-blue-200',
+    '外出结缘法会': 'bg-green-200',
+  };
+
   useEffect(() => {
     const getCategories = async () => {
       try {
@@ -75,14 +83,18 @@ const CategoryFilter = () => {
         onValueChange={(value: string) => onSelectCategory(value)}
         disabled={isFiltering}
       >
-        <SelectTrigger className={`select-field ${isFiltering ? 'opacity-50' : ''}`}>
+        <SelectTrigger className={`select-field ${isFiltering ? 'opacity-50' : ''} min-w-[180px]`}>
           <SelectValue placeholder="类别 / Category" />
           {isFiltering && (
             <Loader2 className="h-4 w-4 animate-spin ml-2" />
           )}
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="All" className="select-item p-regular-14">
+          <SelectItem 
+            value="All" 
+            className="select-item p-regular-14 flex items-center gap-2 hover:bg-gray-50"
+          >
+            <div className={`w-3 h-3 rounded-full ${categoryColors['All']}`} />
             全部 / All
           </SelectItem>
 
@@ -90,8 +102,9 @@ const CategoryFilter = () => {
             <SelectItem 
               value={category.name} 
               key={category._id} 
-              className="select-item p-regular-14"
+              className="select-item p-regular-14 flex items-center gap-2 hover:bg-gray-50"
             >
+              <div className={`w-3 h-3 rounded-full ${categoryColors[category.name] || 'bg-gray-200'}`} />
               {category.name}
             </SelectItem>
           ))}

@@ -5,6 +5,7 @@ import { getAllEvents } from './event.actions';
 import { IEvent } from '@/lib/database/models/event.model';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
 import { getAllCategories } from './category.actions';
+import { ICategory } from '@/lib/database/models/category.model';
 
 // Cache events by category
 export const preloadEventsByCategory = unstable_cache(
@@ -113,7 +114,7 @@ export const preloadEvents = unstable_cache(
 
       // Preload events for common categories
       const categories = await preloadCategories();
-      categories.forEach(category => {
+      categories.forEach((category: ICategory) => {
         void preloadEventsByCategory(country, category.name);
       });
 
