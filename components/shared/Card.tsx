@@ -7,12 +7,20 @@ import React from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types';
 
+// Shared category colors - matching with actual categories
+export const categoryColors: { [key: string]: string } = {
+  'All': 'bg-gray-200',
+  '念佛共修': 'bg-orange-200',
+  '念佛｜闻法｜祈福｜超荐': 'bg-blue-200',
+  '外出结缘法会': 'bg-green-200',
+};
+
 type CardProps = {
   event: IEvent & { 
     orderId?: string, 
     customFieldValues?: CustomField[], 
     queueNumber?: string, 
-    registrationCount?: number  // Changed from attendeeCount to registrationCount
+    registrationCount?: number
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
@@ -21,8 +29,8 @@ type CardProps = {
 const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   const { sessionClaims } = auth();
   const userId = sessionClaims?.dbUserId as string;
-
   const isEventCreator = userId === event.organizer._id.toString();
+  const categoryColor = categoryColors[event.category.name] || 'bg-gray-200';
 
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
@@ -42,7 +50,12 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         </div>
       )}
 
-      <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4"> 
+      <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4">
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${categoryColor}`} />
+          <p className="text-sm text-gray-600">{event.category.name}</p>
+        </div>
+        
         {formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
           <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
             {line}
