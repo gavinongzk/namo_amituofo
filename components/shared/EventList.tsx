@@ -1,5 +1,5 @@
 import { getAllEvents } from '@/lib/actions/event.actions';
-import { preloadEvents } from '@/lib/actions/preload';
+import { preloadEvents, preloadEventsByCategory } from '@/lib/actions/preload';
 import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
@@ -26,6 +26,10 @@ async function EventList({ page, searchText, category, country }: EventListProps
       console.log('📥 Using preloadEvents cache');
       events = await preloadEvents(country) as EventsResponse;
       console.log('📦 Preloaded events:', JSON.stringify(events, null, 2));
+    } else if (!searchText && category) {
+      console.log('📥 Using preloadEventsByCategory cache');
+      events = await preloadEventsByCategory(country, category) as EventsResponse;
+      console.log('📦 Preloaded category events:', JSON.stringify(events, null, 2));
     } else {
       console.log('🔍 Fetching events directly');
       events = await getAllEvents({
@@ -66,21 +70,11 @@ async function EventList({ page, searchText, category, country }: EventListProps
       />
     );
   } catch (error) {
-    console.error('❌ Error in EventList:', error);
-    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-    
-    // Return empty collection on error
+    console.error('Error in EventList:', error);
     return (
-      <Collection
-        data={[]}
-        emptyTitle="加载出错 / Error Loading Events"
-        emptyStateSubtext="请稍后再试。/ Please try again later."
-        collectionType="All_Events"
-        limit={6}
-        page={page}
-        totalPages={0}
-        urlParamName="page"
-      />
+      <div className="text-center py-10">
+        <p className="text-gray-500">Error loading events. Please try again later.</p>
+      </div>
     );
   }
 }
