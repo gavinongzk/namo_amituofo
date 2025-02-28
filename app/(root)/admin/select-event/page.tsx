@@ -11,7 +11,8 @@ import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline
 import { formatBilingualDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
-import { addDays, isAfter, isBefore, parseISO } from 'date-fns';
+import { isAfter, isBefore, parseISO } from 'date-fns';
+import { EVENT_CONFIG } from '@/lib/config/event.config';
 
 type Event = {
   _id: string;
@@ -35,7 +36,7 @@ const SelectEventPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -48,12 +49,12 @@ const SelectEventPage = () => {
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
-          const fiveDaysAgo = addDays(currentDate, -5);
+          const expirationDate = EVENT_CONFIG.getExpirationDate();
           const recentAndUpcomingEvents = await Promise.all(result.data
             .filter((event: Event) => {
               if (user?.publicMetadata?.role === 'superadmin') return true;
               const endDate = parseISO(event.endDateTime);
-              return isAfter(endDate, fiveDaysAgo) || isAfter(endDate, currentDate);
+              return isAfter(endDate, expirationDate) || isAfter(endDate, currentDate);
             })
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
@@ -79,10 +80,10 @@ const SelectEventPage = () => {
       }
     };
 
-    if (isLoaded && user) {
+    if (user) {
       fetchEvents();
     }
-  }, [isLoaded, user]);
+  }, [user]);
 
   const handleSelectEvent = (eventId: string) => {
     setSelectedEventId(eventId);

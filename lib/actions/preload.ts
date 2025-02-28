@@ -3,6 +3,7 @@
 import { unstable_cache } from 'next/cache';
 import { getAllEvents } from './event.actions';
 import { IEvent } from '@/lib/database/models/event.model';
+import { EVENT_CONFIG } from '@/lib/config/event.config';
 
 export const preloadEvents = unstable_cache(
   async (country: string) => {
@@ -28,18 +29,17 @@ export const preloadEvents = unstable_cache(
         };
       }
 
-      const currentDate = new Date();
-      const fiveDaysAgo = new Date(currentDate.setDate(currentDate.getDate() - 5));
+      const expirationDate = EVENT_CONFIG.getExpirationDate();
       
-      console.log('📅 Filtering events after:', fiveDaysAgo);
+      console.log('📅 Filtering events after:', expirationDate);
       
       const filteredData = events.data.filter((event: IEvent) => {
         const eventEndDate = new Date(event.endDateTime);
         console.log(`🎯 Checking event ${event._id}:`, {
           endDateTime: event.endDateTime,
-          isAfterFiveDays: eventEndDate >= fiveDaysAgo
+          isAfterExpiration: eventEndDate >= expirationDate
         });
-        return eventEndDate >= fiveDaysAgo;
+        return eventEndDate >= expirationDate;
       });
 
       const result = {

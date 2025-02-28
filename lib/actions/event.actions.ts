@@ -22,6 +22,7 @@ import { IEvent } from '@/lib/database/models/event.model';
 import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 import type { Document } from 'mongoose';
+import { EVENT_CONFIG } from '@/lib/config/event.config';
 
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
@@ -148,12 +149,18 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
 
         const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
         const categoryCondition = category ? await getCategoryByName(category) : null
+        
+        // Add date filtering condition
+        const expirationDate = EVENT_CONFIG.getExpirationDate();
+        const dateCondition = { endDateTime: { $gte: expirationDate } };
+
         const conditions = {
           $and: [
             titleCondition,
             categoryCondition ? { category: categoryCondition._id } : {},
             { country: country },
-            { isDeleted: { $ne: true } }
+            { isDeleted: { $ne: true } },
+            dateCondition // Add the date condition
           ]
         }
 
