@@ -98,7 +98,24 @@ const SelectEventPage = () => {
   };
 
   const groupEventsByCategory = (events: Event[]) => {
-    return events.reduce((acc, event) => {
+    const currentDate = new Date();
+    const expirationDate = EVENT_CONFIG.getExpirationDate();
+
+    // Separate expired and active events
+    const { expired, active } = events.reduce((acc, event) => {
+      const endDate = parseISO(event.endDateTime);
+      const isExpired = isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
+      
+      if (isExpired) {
+        acc.expired.push(event);
+      } else {
+        acc.active.push(event);
+      }
+      return acc;
+    }, { expired: [] as Event[], active: [] as Event[] });
+
+    // Group active events by category
+    const activeGrouped = active.reduce((acc, event) => {
       const category = event.category.name;
       if (!acc[category]) {
         acc[category] = [];
@@ -106,6 +123,16 @@ const SelectEventPage = () => {
       acc[category].push(event);
       return acc;
     }, {} as Record<string, Event[]>);
+
+    // Add expired events as a separate category if user is superadmin and there are expired events
+    if (user?.publicMetadata?.role === 'superadmin' && expired.length > 0) {
+      return {
+        ...activeGrouped,
+        'Expired Events / 已过期活动': expired
+      };
+    }
+
+    return activeGrouped;
   };
 
   const groupedEvents = groupEventsByCategory(events);
