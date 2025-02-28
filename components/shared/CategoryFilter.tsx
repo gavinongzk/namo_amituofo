@@ -92,20 +92,24 @@ const CategoryFilter = () => {
         <SelectContent>
           <SelectItem 
             value="All" 
-            className="select-item p-regular-14 flex items-start gap-2 hover:bg-gray-50"
+            className="select-item p-regular-14 hover:bg-gray-50"
           >
-            <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${categoryColors['All']}`} />
-            全部 / All
+            <div className="flex items-center gap-2 w-full">
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors['All']}`} />
+              <span>全部 / All</span>
+            </div>
           </SelectItem>
 
           {categories.map((category) => (
             <SelectItem 
               value={category.name} 
               key={category._id} 
-              className="select-item p-regular-14 flex items-start gap-2 hover:bg-gray-50"
+              className="select-item p-regular-14 hover:bg-gray-50"
             >
-              <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${categoryColors[category.name] || 'bg-gray-200'}`} />
-              {category.name}
+              <div className="flex items-center gap-2 w-full">
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors[category.name] || 'bg-gray-200'}`} />
+                <span>{category.name}</span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>
