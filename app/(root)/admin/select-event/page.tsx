@@ -115,24 +115,24 @@ const SelectEventPage = () => {
     }, { expired: [] as Event[], active: [] as Event[] });
 
     // Group active events by category
-    const activeGrouped = active.reduce((acc, event) => {
-      const category = event.category.name;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(event);
-      return acc;
-    }, {} as Record<string, Event[]>);
+    const groupedEvents: Record<string, Event[]> = {};
 
-    // Add expired events as a separate category if user is superadmin and there are expired events
+    // First add all active events
+    active.forEach(event => {
+      const category = event.category.name;
+      if (!groupedEvents[category]) {
+        groupedEvents[category] = [];
+      }
+      groupedEvents[category].push(event);
+    });
+
+    // Then add expired events at the end if user is superadmin
     if (user?.publicMetadata?.role === 'superadmin' && expired.length > 0) {
-      return {
-        ...activeGrouped,
-        'Expired Events / 已过期活动': expired
-      };
+      groupedEvents['──────────────'] = []; // Add a separator
+      groupedEvents['Expired Events / 已过期活动'] = expired;
     }
 
-    return activeGrouped;
+    return groupedEvents;
   };
 
   const groupedEvents = groupEventsByCategory(events);
@@ -161,7 +161,7 @@ const SelectEventPage = () => {
                   <ScrollArea className="h-[300px]">
                     {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
-                        <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                        <SelectLabel className={`px-2 py-1 rounded-md text-sm font-semibold mb-2 ${category === '──────────────' ? 'text-gray-400' : 'bg-gray-100'}`}>
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
