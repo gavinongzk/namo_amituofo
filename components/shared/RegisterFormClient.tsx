@@ -600,7 +600,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button 
                     type="button" 
                     onClick={handleAddPerson}
-                    disabled={isFullyBooked || (fields.length >= event.maxAttendeeCount)}
+                    disabled={isFullyBooked || (fields.length >= event.maxSeats)}
                     className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-4"
                   >
                     <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
