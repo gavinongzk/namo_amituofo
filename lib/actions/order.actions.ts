@@ -179,10 +179,6 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
   try {
     await connectToDatabase();
     
-    // Calculate date for 2 days ago
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
     console.log('Searching for phone number:', phoneNumber);
 
     // Remove any cache-busting query params from the phone number
@@ -204,7 +200,6 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
-      match: { startDateTime: { $gte: twoDaysAgo } },
       select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
@@ -215,13 +210,8 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     .lean();
 
     console.log('Found orders:', JSON.stringify(orders, null, 2));
-
-    // Filter out any null events (those that didn't match the date criteria)
-    const filteredOrders = orders.filter(order => order.event);
     
-    console.log('Filtered orders:', JSON.stringify(filteredOrders, null, 2));
-
-    return filteredOrders;
+    return orders;
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
