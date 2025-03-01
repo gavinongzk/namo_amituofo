@@ -529,7 +529,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   ? (field.value === 'yes' ? '是 Yes' : '否 No')
                                   : (field.value || 'N/A')}
                               </span>
-                              {(field.label.toLowerCase().includes('name') || field.label.toLowerCase().includes('contact')) && !group.cancelled && (
+                              {(field.label.toLowerCase().includes('name') || 
+                                field.label.toLowerCase().includes('contact') || 
+                                field.label.toLowerCase().includes('postal') || 
+                                field.label.toLowerCase().includes('zip') || 
+                                field.label.toLowerCase().includes('邮编') || 
+                                field.label.toLowerCase().includes('邮政编码')) && !group.cancelled && (
                                 <button
                                   onClick={() => handleEdit(group.groupId, field.id, field.value?.toString() ?? '')}
                                   className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600"
