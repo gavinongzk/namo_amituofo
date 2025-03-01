@@ -184,6 +184,9 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     // Remove any cache-busting query params from the phone number
     const cleanPhoneNumber = phoneNumber.split('?')[0];
 
+    // Get current date for filtering events that haven't ended yet
+    const currentDate = new Date();
+
     // Ensure Category model is registered before using it
     require('../database/models/category.model');
 
@@ -200,6 +203,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
+      match: { endDateTime: { $gte: currentDate } }, // Only include events that haven't ended yet
       select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
@@ -211,7 +215,13 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
 
     console.log('Found orders:', JSON.stringify(orders, null, 2));
     
-    return orders;
+    // Filter out any null events (those that didn't match the date criteria)
+    const filteredOrders = orders.filter(order => order.event);
+    
+    console.log('Filtered orders:', JSON.stringify(filteredOrders, null, 2));
+
+    // Explicitly mark this response as uncacheable
+    return JSON.parse(JSON.stringify(filteredOrders));
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
