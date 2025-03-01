@@ -453,11 +453,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   )}
                 />
               )}
-              <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">Remove Question</Button>
+              <Button type="button" onClick={() => remove(index)} className="small-button bg-red-500 hover:bg-red-600 text-white rounded-md">
+                <span className="truncate text-xs sm:text-sm">Remove Question</span>
+              </Button>
             </div>
           ))}
           <Button type="button" onClick={() => append({ id: Date.now().toString(), label: "", type: "text" })} className="small-button bg-blue-500 hover:bg-blue-600 text-white rounded-md">
-            Add Question
+            <span className="truncate text-xs sm:text-sm">Add Question</span>
           </Button>
         </div>
 
@@ -469,8 +471,14 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           className="button col-span-2 w-full"
         >
           {form.formState.isSubmitting ? (
-            'Submitting...'
-          ): `${type} Event `}</Button>
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              <span className="truncate text-sm sm:text-base">Submitting...</span>
+            </span>
+          ): (
+            <span className="truncate text-sm sm:text-base">{`${type} Event`}</span>
+          )}
+        </Button>
       </form>
     </Form>
   )

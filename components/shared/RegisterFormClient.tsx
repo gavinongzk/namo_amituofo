@@ -596,28 +596,36 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
 
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                  <Button
-                    type="button"
+                <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <Button 
+                    type="button" 
                     onClick={handleAddPerson}
-                    disabled={fields.length >= event.maxSeats}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isFullyBooked || (fields.length >= event.maxAttendeeCount)}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-4"
                   >
-                    <PlusIcon className="w-5 h-5" />
-                    添加参加者 Add Another Person
+                    <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
+                      <span className="truncate">添加参加者</span>
+                      <span className="truncate">Add Person</span>
+                    </span>
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium h-12 disabled:bg-blue-400"
+                    disabled={isSubmitting || isFullyBooked}
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-4"
                   >
                     {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2Icon className="w-4 h-4 animate-spin" />
-                        提交中... Submitting...
-                      </div>
+                      <span className="flex items-center gap-2">
+                        <Loader2Icon className="h-4 w-4 animate-spin" />
+                        <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
+                          <span className="truncate">提交中...</span>
+                          <span className="truncate">Submitting...</span>
+                        </span>
+                      </span>
                     ) : (
-                      '呈交报名 Complete Registration'
+                      <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
+                        <span className="truncate">呈交报名</span>
+                        <span className="truncate">Complete Registration</span>
+                      </span>
                     )}
                   </Button>
                 </div>
@@ -653,7 +661,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               onClick={() => setShowConfirmation(false)}
               className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
             >
-              取消 / Cancel
+              <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
+                <span className="truncate">取消</span>
+                <span className="truncate">Cancel</span>
+              </span>
             </Button>
             <Button
               onClick={() => {
@@ -664,7 +675,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
             >
-              继续 / Continue
+              <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1 text-xs sm:text-sm">
+                <span className="truncate">继续</span>
+                <span className="truncate">Continue</span>
+              </span>
             </Button>
           </DialogFooter>
         </DialogContent>

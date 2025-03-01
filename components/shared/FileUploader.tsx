@@ -39,12 +39,12 @@ export function FileUploader({ imageUrl, onFieldChange, setFiles }: FileUploader
           />
         </div>
       ) : (
-        <div className="flex-center flex-col py-5 text-grey-500">
-          <img src="/assets/icons/upload.svg" width={77} height={77} alt="file upload" />
-          <h3 className="mb-2 mt-2">Drag photo here</h3>
-          <p className="p-medium-12 mb-4">SVG, PNG, JPG</p>
-          <Button type="button" className="rounded-full">
-            Select from computer
+        <div className="flex-center flex-col py-5 text-grey-500 text-center px-4">
+          <img src="/assets/icons/upload.svg" width={77} height={77} alt="file upload" className="w-16 h-16 sm:w-20 sm:h-20" />
+          <h3 className="mb-2 mt-2 text-sm sm:text-base">Drag photo here</h3>
+          <p className="text-xs sm:text-sm mb-4">SVG, PNG, JPG</p>
+          <Button type="button" className="rounded-full text-xs sm:text-sm">
+            <span className="truncate">Select from computer</span>
           </Button>
         </div>
       )}

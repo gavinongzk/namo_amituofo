@@ -15,7 +15,7 @@ import Link from "next/link";
 const AdminLoginButton = () => (
   <Link 
     href="/sign-in" 
-    className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-300"
+    className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-300 w-full"
     onClick={(e) => e.stopPropagation()}
   >
     <Image 
@@ -23,11 +23,11 @@ const AdminLoginButton = () => (
       width={24}
       height={24}
       alt="Admin login"
-      className="object-contain"
+      className="object-contain flex-shrink-0"
     />
-    <div className="flex flex-col">
-      <span className="font-medium">管理员登录</span>
-      <span className="text-xs">Admin Login</span>
+    <div className="flex flex-col overflow-hidden">
+      <span className="font-medium truncate">管理员登录</span>
+      <span className="text-xs truncate">Admin Login</span>
     </div>
   </Link>
 )
