@@ -45,17 +45,11 @@ const SelectEventPage = () => {
         const country = user?.publicMetadata.country as string | undefined;
         const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
         const result = await response.json();
-        console.log('API Response:', result);
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
           const expirationDate = EVENT_CONFIG.getExpirationDate();
           const recentAndUpcomingEvents = await Promise.all(result.data
-            .filter((event: Event) => {
-              if (user?.publicMetadata?.role === 'superadmin') return true;
-              const endDate = parseISO(event.endDateTime);
-              return isAfter(endDate, expirationDate) || isAfter(endDate, currentDate);
-            })
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
               const countsResponse = await fetch(`/api/events/${event._id}/counts`);
@@ -98,14 +92,41 @@ const SelectEventPage = () => {
   };
 
   const groupEventsByCategory = (events: Event[]) => {
-    return events.reduce((acc, event) => {
-      const category = event.category.name;
-      if (!acc[category]) {
-        acc[category] = [];
+    const currentDate = new Date();
+    const expirationDate = EVENT_CONFIG.getExpirationDate();
+
+    // Separate expired and active events
+    const { expired, active } = events.reduce((acc, event) => {
+      const endDate = parseISO(event.endDateTime);
+      const isExpired = isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
+      
+      if (isExpired) {
+        acc.expired.push(event);
+      } else {
+        acc.active.push(event);
       }
-      acc[category].push(event);
       return acc;
-    }, {} as Record<string, Event[]>);
+    }, { expired: [] as Event[], active: [] as Event[] });
+
+    // Group active events by category
+    const groupedEvents: Record<string, Event[]> = {};
+
+    // First add all active events
+    active.forEach(event => {
+      const category = event.category.name;
+      if (!groupedEvents[category]) {
+        groupedEvents[category] = [];
+      }
+      groupedEvents[category].push(event);
+    });
+
+    // Then add expired events at the end if user is superadmin
+    if (user?.publicMetadata?.role === 'superadmin' && expired.length > 0) {
+      groupedEvents['──────────────'] = []; // Add a separator
+      groupedEvents['Expired Events / 已过期活动'] = expired;
+    }
+
+    return groupedEvents;
   };
 
   const groupedEvents = groupEventsByCategory(events);
@@ -134,7 +155,7 @@ const SelectEventPage = () => {
                   <ScrollArea className="h-[300px]">
                     {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
-                        <SelectLabel className="bg-gray-100 px-2 py-1 rounded-md text-sm font-semibold mb-2">
+                        <SelectLabel className={`px-2 py-1 rounded-md text-sm font-semibold mb-2 ${category === '──────────────' ? 'text-gray-400' : 'bg-gray-100'}`}>
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (

@@ -7,6 +7,7 @@ import { SearchParamProps } from '@/types';
 import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
+import { Metadata } from 'next';
 
 const EventInfo = async ({ event }: { event: any }) => {
   return (
@@ -85,17 +86,41 @@ type EventDetailsProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
+// Generate metadata for social sharing
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const event = await getEventById(params.id);
+  
+  return {
+    title: event.title || 'Event Details',
+    description: event.description?.slice(0, 160) || 'Event details',
+    openGraph: {
+      title: event.title || 'Event Details',
+      description: event.description?.slice(0, 160) || 'Event details',
+      images: [
+        {
+          url: event.imageUrl || '',
+          width: 1200,
+          height: 630,
+          alt: event.title,
+        }
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title || 'Event Details',
+      description: event.description?.slice(0, 160) || 'Event details',
+      images: [event.imageUrl || ''],
+    },
+    other: {
+      'whatsapp-preview': 'true',
+    }
+  };
+}
+
 export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
   const eventPromise = getEventById(id);
   const event = await eventPromise;
-
-  const metadata = {
-    title: event.title || '',
-    description: event.description?.slice(0, 160) || '',
-    openGraph: {
-      images: [event.imageUrl || ''],
-    },
-  };
 
   return (
     <section className="w-full bg-gray-50 min-h-screen py-10">
