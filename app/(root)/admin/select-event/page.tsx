@@ -50,11 +50,6 @@ const SelectEventPage = () => {
           const currentDate = new Date();
           const expirationDate = EVENT_CONFIG.getExpirationDate();
           const recentAndUpcomingEvents = await Promise.all(result.data
-            .filter((event: Event) => {
-              if (user?.publicMetadata?.role === 'superadmin') return true;
-              const endDate = parseISO(event.endDateTime);
-              return isAfter(endDate, expirationDate) || isAfter(endDate, currentDate);
-            })
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
               const countsResponse = await fetch(`/api/events/${event._id}/counts`);
