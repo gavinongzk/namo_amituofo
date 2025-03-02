@@ -1,0 +1,7 @@
+{
+    "icons": [
+      { "src": "/android-launchericon-192-192.png", "type": "image/png", "sizes": "192x192" },
+      { "src": "/maskable-icon.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" },
+      { "src": "/android-launchericon-512-512.png", "type": "image/png", "sizes": "512x512" }
+    ]
+  }
