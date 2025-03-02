@@ -15,24 +15,6 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Namo Amituofo Registration',
   description: 'Namo Amituofo Registration is a platform for users to register for events.',
-  icons: {
-    icon: [
-      { url: '/assets/images/logo.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180' },
-      { url: '/apple-touch-icon-180x180.png', sizes: '180x180' },
-      { url: '/apple-touch-icon-152x152.png', sizes: '152x152' },
-      { url: '/apple-touch-icon-144x144.png', sizes: '144x144' },
-      { url: '/apple-touch-icon-120x120.png', sizes: '120x120' },
-      { url: '/apple-touch-icon-114x114.png', sizes: '114x114' },
-      { url: '/apple-touch-icon-76x76.png', sizes: '76x76' },
-      { url: '/apple-touch-icon-72x72.png', sizes: '72x72' },
-      { url: '/apple-touch-icon-57x57.png', sizes: '57x57' }
-    ],
-    shortcut: '/assets/images/logo.svg'
-  },
   openGraph: {
     type: 'website',
     title: 'Namo Amituofo Registration',
@@ -53,7 +35,6 @@ export const metadata: Metadata = {
     description: 'Namo Amituofo Registration is a platform for users to register for events.',
     images: ['/assets/images/amitabha_image.png'],
   },
-  manifest: '/manifest.json',
   themeColor: '#ffffff',
   appleWebApp: {
     title: 'Namo Amituofo',
@@ -99,15 +80,10 @@ export default function RootLayout({
         <head>
           {preloadResources}
           <link rel="icon" href="/favicon.ico" sizes="any" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="57x57" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="72x72" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="76x76" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="114x114" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="120x120" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="144x144" />        
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="152x152" />        
-          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="180x180" />        
-        </head>
+          <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml"/>
+          <link rel="manifest" href="/manifest.webmanifest"/>
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+          </head>
         <body className={poppins.variable}>
           <div className="context-container">
             {children}
