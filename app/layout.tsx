@@ -98,6 +98,15 @@ export default function RootLayout({
       <html lang="en">
         <head>
           {preloadResources}
+          <link rel="icon" href="/favicon.ico" sizes="any" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="57x57" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="72x72" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="76x76" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="114x114" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="120x120" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="144x144" />        
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="152x152" />        
+          <link rel="apple-touch-icon" href="/apple-touch-icon?<generated>" type="image/png" sizes="180x180" />        
         </head>
         <body className={poppins.variable}>
           <div className="context-container">
