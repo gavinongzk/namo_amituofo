@@ -16,7 +16,12 @@ export const metadata: Metadata = {
   title: 'Namo Amituofo Registration',
   description: 'Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
-    icon: '/assets/images/logo.svg'
+    icon: [
+      { url: '/assets/images/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: '/assets/images/logo.svg',
+    shortcut: '/assets/images/logo.svg'
   },
   openGraph: {
     type: 'website',
