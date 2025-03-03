@@ -28,6 +28,7 @@ export const metadata: Metadata = {
         alt: 'Namo Amituofo',
       }
     ],
+    
   },
   twitter: {
     card: 'summary_large_image',
@@ -38,7 +39,16 @@ export const metadata: Metadata = {
   themeColor: '#ffffff',
   appleWebApp: {
     title: 'Namo Amituofo',
-    statusBarStyle: 'black-translucent'
+    statusBarStyle: 'black-translucent',
+    capable: true,
+    startupImage: [
+      '/apple-touch-icon.png'
+    ]
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    shortcut: '/icon.png'
   }
 }
 
