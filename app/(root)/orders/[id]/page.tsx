@@ -303,7 +303,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       });
     } catch (error) {
       console.error('Error updating field:', error);
-      toast.error('Failed to update field', {
+      toast.error('更新失败 Failed to update field', {
         duration: 4000,
         position: 'bottom-center',
       });
