@@ -1,18 +1,15 @@
 import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
 import { NextRequest } from 'next/server'
-import { format } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = decodeURIComponent(searchParams.get('category') || '')
     const date = searchParams.get('date')
-    const title = decodeURIComponent(searchParams.get('title') || '')
 
-    if (!category || !date || !title) {
+    if (!date) {
       return Response.json(
-        { error: 'Missing required parameters' },
+        { error: 'Missing date parameter' },
         { status: 400 }
       )
     }
@@ -24,19 +21,14 @@ export async function GET(request: NextRequest) {
     const nextDay = new Date(searchDate)
     nextDay.setDate(nextDay.getDate() + 1)
 
-    console.log('Looking for event with:', {
-      category,
-      date: searchDate,
-      title: title.replace(/-/g, ' ')
-    })
+    console.log('Looking for event on:', searchDate)
 
     const event = await Event.findOne({
-      'category.name': category,
       startDateTime: {
         $gte: searchDate,
         $lt: nextDay
       },
-      title: new RegExp(title.replace(/-/g, ' '), 'i')
+      isDeleted: { $ne: true }
     }).select('_id')
 
     if (!event) {
