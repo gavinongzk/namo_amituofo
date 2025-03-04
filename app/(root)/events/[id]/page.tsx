@@ -87,10 +87,31 @@ type EventDetailsProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
+// Function to check if a string is a valid date in YYYY-MM-DD format
+function isValidDateFormat(dateStr: string): boolean {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateStr)) return false;
+  
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date.getTime());
+}
+
+// Function to check if a string is a valid MongoDB ObjectId
+function isValidObjectId(str: string): boolean {
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  return objectIdRegex.test(str);
+}
+
 // Generate metadata for social sharing
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  // Try to get event by ID first, then by date if ID fails
-  const event = await getEventById(params.id) || await getEventByDate(params.id);
+  let event;
+  const { id } = params;
+
+  if (isValidDateFormat(id)) {
+    event = await getEventByDate(id);
+  } else if (isValidObjectId(id)) {
+    event = await getEventById(id);
+  }
   
   if (!event) {
     return {
@@ -128,15 +149,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
-  // Try to get event by ID first
-  let event = await getEventById(id);
+  let event;
 
-  // If not found by ID, try to get by date
-  if (!event) {
+  // Check if the ID parameter is in date format (YYYY-MM-DD)
+  if (isValidDateFormat(id)) {
     event = await getEventByDate(id);
+  } 
+  // If not a date, check if it's a valid MongoDB ObjectId
+  else if (isValidObjectId(id)) {
+    event = await getEventById(id);
   }
 
-  // If still not found, return 404
+  // If no event found or invalid format, return 404
   if (!event) {
     notFound();
   }

@@ -407,16 +407,22 @@ export const getEventByDate = unstable_cache(
 
       // Parse the date string (format: YYYY-MM-DD)
       const searchDate = new Date(dateStr);
-      searchDate.setHours(0, 0, 0, 0);
-      const nextDay = new Date(searchDate);
-      nextDay.setDate(nextDay.getDate() + 1);
+      searchDate.setUTCHours(0, 0, 0, 0);
+      
+      // Set the time to the end of the day in UTC
+      const endDate = new Date(dateStr);
+      endDate.setUTCHours(23, 59, 59, 999);
 
       const event = await Event.findOne({
-        startDateTime: {
-          $gte: searchDate,
-          $lt: nextDay
-        },
-        isDeleted: { $ne: true }
+        $and: [
+          {
+            startDateTime: {
+              $gte: searchDate,
+              $lte: endDate
+            }
+          },
+          { isDeleted: { $ne: true } }
+        ]
       })
       .populate({ path: 'organizer', model: User, select: '_id' })
       .populate({ path: 'category', model: Category, select: '_id name' });
