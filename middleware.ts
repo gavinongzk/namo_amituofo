@@ -5,8 +5,8 @@ import type { NextRequest } from 'next/server';
 const handleCustomMiddleware = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
-  // Match URLs like /events/category/2024-03-20/event-title
-  const eventUrlPattern = /^\/events\/([^\/]+)\/(\d{4}-\d{2}-\d{2})\/([^\/]+)$/;
+  // Match URLs like /events/2024-03-20
+  const eventUrlPattern = /^\/events\/(\d{4}-\d{2}-\d{2})$/;
   const match = pathname.match(eventUrlPattern);
 
   // Handle old format URLs (redirect them)
@@ -14,15 +14,15 @@ const handleCustomMiddleware = async (request: NextRequest) => {
   const oldMatch = pathname.match(oldFormatPattern);
   
   if (oldMatch) {
-    // Extract date from old format and convert to new format
+    // Extract date from old format and redirect to new simple format
     const [_, isoDate] = oldMatch;
-    return NextResponse.redirect(new URL(`/events/uncategorized/${isoDate}/event`, request.url));
+    return NextResponse.redirect(new URL(`/events/${isoDate}`, request.url));
   }
 
   if (match) {
     try {
-      const [_, category, date, title] = match;
-      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?category=${encodeURIComponent(category)}&date=${date}&title=${encodeURIComponent(title)}`);
+      const [_, date] = match;
+      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?date=${date}`);
       const data = await response.json();
       
       if (data.eventId) {

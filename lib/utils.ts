@@ -405,16 +405,5 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
 
 export const createEventUrl = (event: IEvent) => {
   const date = format(new Date(event.startDateTime), 'yyyy-MM-dd')
-  const titleSlug = event.title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  const categorySlug = event.category?.name
-    ? event.category.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-    : 'uncategorized'
-  
-  return `/events/${categorySlug}/${date}/${titleSlug}`
+  return `/events/${date}`
 }
