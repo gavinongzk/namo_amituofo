@@ -398,3 +398,47 @@ export const getEventCategory = async (eventId: string): Promise<string | null> 
     return null; // Return null in case of an error
   }
 };
+
+// GET EVENT BY DATE
+export const getEventByDate = unstable_cache(
+  async (dateStr: string) => {
+    try {
+      await connectToDatabase();
+
+      // Parse the date string (format: YYYY-MM-DD)
+      const searchDate = new Date(dateStr);
+      searchDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(searchDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      const event = await Event.findOne({
+        startDateTime: {
+          $gte: searchDate,
+          $lt: nextDay
+        },
+        isDeleted: { $ne: true }
+      })
+      .populate({ path: 'organizer', model: User, select: '_id' })
+      .populate({ path: 'category', model: Category, select: '_id name' });
+
+      if (!event) {
+        return null;
+      }
+
+      const attendeeCount = await Order.countDocuments({ event: event._id });
+
+      return {
+        ...JSON.parse(JSON.stringify(event)),
+        attendeeCount,
+      };
+    } catch (error) {
+      handleError(error);
+      return null;
+    }
+  },
+  ['event-by-date'],
+  {
+    revalidate: 3600,
+    tags: ['event']
+  }
+);

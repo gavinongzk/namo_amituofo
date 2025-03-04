@@ -400,3 +400,7 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
     return /^\d{6}$/.test(postalCode);
   }
 }
+
+export function formatDateForUrl(date: Date): string {
+  return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+}
