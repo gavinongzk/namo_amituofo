@@ -3,11 +3,12 @@ import { CustomField } from '@/types';
 import React from 'react'
 import Card from './Card'
 import Pagination from './Pagination'
+import { formatBilingualDateTime, createEventUrl } from '@/lib/utils'
 
 type CollectionProps = {
   data: (IEvent & { 
     orderId?: string, 
-    customFieldValues?: CustomField[], 
+    customFieldValues?: any[], 
     queueNumber?: string, 
     registrationCount?: number 
   })[];
@@ -24,38 +25,13 @@ const Collection = ({
   data,
   emptyTitle,
   emptyStateSubtext,
+  limit,
   page,
-  totalPages = 0,
-  collectionType,
+  totalPages = 1,
   urlParamName,
+  collectionType
 }: CollectionProps) => {
-  console.log('🎯 Collection received props:', {
-    dataLength: data?.length,
-    page,
-    totalPages,
-    collectionType
-  });
-
-  // Ensure data is an array and handle null/undefined
-  const safeData = Array.isArray(data) ? data : [];
-  
-  // Filter out null/undefined events and log any that are found
-  const validData = safeData.filter(event => {
-    if (!event) {
-      console.warn('⚠️ Null/undefined event found in collection data');
-      return false;
-    }
-    if (!event._id) {
-      console.warn('⚠️ Event missing _id:', event);
-      return false;
-    }
-    return true;
-  });
-
-  console.log('📦 Processed collection data:', {
-    originalLength: data?.length,
-    validLength: validData.length
-  });
+  const validData = data.filter(event => event !== null);
 
   return (
     <>
@@ -63,11 +39,6 @@ const Collection = ({
         <div className="flex flex-col items-center gap-10">
           <ul className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
             {validData.map((event) => {
-              console.log('🎨 Rendering event:', {
-                id: event._id,
-                title: event.title
-              });
-              
               const hasOrderLink = collectionType === 'Events_Organized';
               const isMyTicket = collectionType === 'My_Tickets';
 

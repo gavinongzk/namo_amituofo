@@ -9,10 +9,19 @@ const handleCustomMiddleware = async (request: NextRequest) => {
   const eventUrlPattern = /^\/events\/([^\/]+)\/(\d{4}-\d{2}-\d{2})\/([^\/]+)$/;
   const match = pathname.match(eventUrlPattern);
 
+  // Handle old format URLs (redirect them)
+  const oldFormatPattern = /^\/events\/(\d{4}-\d{2}-\d{2})\/(\d{2}-\d{2}-\d{4})$/;
+  const oldMatch = pathname.match(oldFormatPattern);
+  
+  if (oldMatch) {
+    // Redirect old format to 404 or home page
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   if (match) {
     try {
       const [_, category, date, title] = match;
-      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?category=${category}&date=${date}&title=${title}`);
+      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?category=${encodeURIComponent(category)}&date=${date}&title=${encodeURIComponent(title)}`);
       const data = await response.json();
       
       if (data.eventId) {

@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
+    const category = decodeURIComponent(searchParams.get('category') || '')
     const date = searchParams.get('date')
     const title = decodeURIComponent(searchParams.get('title') || '')
 
@@ -24,22 +24,30 @@ export async function GET(request: NextRequest) {
     const nextDay = new Date(searchDate)
     nextDay.setDate(nextDay.getDate() + 1)
 
+    console.log('Looking for event with:', {
+      category,
+      date: searchDate,
+      title: title.replace(/-/g, ' ')
+    })
+
     const event = await Event.findOne({
-      'category.name': decodeURIComponent(category),
+      'category.name': category,
       startDateTime: {
         $gte: searchDate,
         $lt: nextDay
       },
-      title: new RegExp(title.replace(/-/g, '.*'), 'i')
+      title: new RegExp(title.replace(/-/g, ' '), 'i')
     }).select('_id')
 
     if (!event) {
+      console.log('Event not found')
       return Response.json(
         { error: 'Event not found' },
         { status: 404 }
       )
     }
 
+    console.log('Found event:', event._id)
     return Response.json({ eventId: event._id })
   } catch (error) {
     console.error('Error in event lookup:', error)
