@@ -1,9 +1,9 @@
 import { IEvent } from '@/lib/database/models/event.model'
-import { formatBilingualDateTime } from '@/lib/utils'
+import { formatBilingualDateTime, createEventUrl } from '@/lib/utils'
 import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import { format } from 'date-fns'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types';
 
@@ -16,26 +16,26 @@ export const categoryColors: { [key: string]: string } = {
 };
 
 type CardProps = {
-  event: IEvent & { 
-    orderId?: string, 
-    customFieldValues?: CustomField[], 
-    queueNumber?: string, 
+  event: IEvent & {
+    orderId?: string,
+    customFieldValues?: any[],
+    queueNumber?: string,
     registrationCount?: number
-  },
-  hasOrderLink?: boolean,
-  isMyTicket?: boolean,
+  }
+  hasOrderLink?: boolean
+  isMyTicket?: boolean
 }
 
 const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
-  const { sessionClaims } = auth();
-  const userId = sessionClaims?.dbUserId as string;
-  const isEventCreator = userId === event.organizer._id.toString();
+  const { sessionClaims } = auth()
+  const userId = sessionClaims?.dbUserId as string
+  const isEventCreator = userId === event.organizer._id.toString()
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200';
 
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
+        href={isMyTicket ? `/orders/${event.orderId}` : createEventUrl(event)}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
