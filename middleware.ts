@@ -2,6 +2,32 @@ import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const handleCustomMiddleware = async (request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+
+  // Match URLs like /events/category/2024-03-20/event-title
+  const eventUrlPattern = /^\/events\/([^\/]+)\/(\d{4}-\d{2}-\d{2})\/([^\/]+)$/;
+  const match = pathname.match(eventUrlPattern);
+
+  if (match) {
+    try {
+      const [_, category, date, title] = match;
+      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?category=${category}&date=${date}&title=${title}`);
+      const data = await response.json();
+      
+      if (data.eventId) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/events/${data.eventId}`;
+        return NextResponse.rewrite(url);
+      }
+    } catch (error) {
+      console.error('Error in middleware:', error);
+    }
+  }
+
+  return null;
+};
+
 export default authMiddleware({
   publicRoutes: [
     '/',
@@ -22,6 +48,8 @@ export default authMiddleware({
     '/api/uploadthing',
   ],
   async beforeAuth(req) {
+    const customResponse = await handleCustomMiddleware(req);
+    if (customResponse) return customResponse;
     return NextResponse.next();
   },
   async afterAuth(auth, req) {
@@ -70,34 +98,4 @@ function getAllowedRoles(pathname: string): string[] {
   };
 
   return routeRoles[pathname] || ['user', 'admin', 'superadmin'];
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Match URLs like /events/category/2024-03-20/event-title
-  const eventUrlPattern = /^\/events\/([^\/]+)\/(\d{4}-\d{2}-\d{2})\/([^\/]+)$/
-  const match = pathname.match(eventUrlPattern)
-
-  if (match) {
-    try {
-      // Extract the components from the URL
-      const [_, category, date, title] = match
-      
-      // Fetch the actual event ID from your API
-      const response = await fetch(`${request.nextUrl.origin}/api/events/lookup?category=${category}&date=${date}&title=${title}`)
-      const data = await response.json()
-      
-      if (data.eventId) {
-        // Rewrite to the ID-based URL internally
-        const url = request.nextUrl.clone()
-        url.pathname = `/events/${data.eventId}`
-        return NextResponse.rewrite(url)
-      }
-    } catch (error) {
-      console.error('Error in middleware:', error)
-    }
-  }
-
-  return NextResponse.next()
 }
