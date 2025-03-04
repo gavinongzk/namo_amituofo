@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 import CheckoutButton from '@/components/shared/CheckoutButton';
-import Collection from '@/components/shared/Collection';
-import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.actions';
+import { getEventByDate, getEventById } from '@/lib/actions/event.actions';
 import { formatBilingualDateTime } from '@/lib/utils';
-import { SearchParamProps } from '@/types';
 import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
@@ -64,22 +63,24 @@ const EventInfo = async ({ event }: { event: any }) => {
         <div className="h-px bg-gray-200" />
 
         {/* Description Section */}
-        <div className="flex flex-col gap-4">
-          <p className="text-xl font-bold text-gray-800">活动描述 Event Description:</p>
-          <p 
-            className="text-base text-gray-600 leading-relaxed" 
-            style={{ whiteSpace: 'pre-wrap' }}
-            dangerouslySetInnerHTML={{ 
-              __html: convertPhoneNumbersToLinks(event.description) 
-            }}
-          />
+        <div className="flex items-start gap-5">
+          <div className="bg-primary-50 p-4 rounded-full shrink-0">
+            <Image src="/assets/icons/description.svg" alt="description" width={24} height={24} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-lg font-semibold text-gray-800">活动详情 Description:</p>
+            <div 
+              className="text-base text-gray-600 prose max-w-none"
+              dangerouslySetInnerHTML={{ 
+                __html: convertPhoneNumbersToLinks(event.description || '') 
+              }} 
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-export const revalidate = 3600;
 
 type EventDetailsProps = {
   params: { id: string };
@@ -88,8 +89,16 @@ type EventDetailsProps = {
 
 // Generate metadata for social sharing
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const event = await getEventById(params.id);
+  // Try to get event by ID first, then by date if ID fails
+  const event = await getEventById(params.id) || await getEventByDate(params.id);
   
+  if (!event) {
+    return {
+      title: 'Event Not Found',
+      description: 'The requested event could not be found.',
+    };
+  }
+
   return {
     title: event.title || 'Event Details',
     description: event.description?.slice(0, 160) || 'Event details',
@@ -119,8 +128,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
-  const eventPromise = getEventById(id);
-  const event = await eventPromise;
+  // Try to get event by ID first
+  let event = await getEventById(id);
+
+  // If not found by ID, try to get by date
+  if (!event) {
+    event = await getEventByDate(id);
+  }
+
+  // If still not found, return 404
+  if (!event) {
+    notFound();
+  }
 
   return (
     <section className="w-full bg-gray-50 min-h-screen py-10">

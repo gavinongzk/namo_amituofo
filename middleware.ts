@@ -1,12 +1,9 @@
 import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from 'next/server';
-import { getEventById } from '@/lib/actions/event.actions';
-import { formatDateForUrl } from '@/lib/utils';
 
 export default authMiddleware({
   publicRoutes: [
     '/',
-    '/events/:date',
     '/events/:id',
     '/api/webhook/clerk',
     '/api/events',
@@ -24,24 +21,6 @@ export default authMiddleware({
     '/api/uploadthing',
   ],
   async beforeAuth(req) {
-    // Check if the request is for an event page with an ID
-    const eventIdMatch = req.nextUrl.pathname.match(/^\/events\/([a-f0-9]{24})$/i);
-    if (eventIdMatch) {
-      try {
-        const eventId = eventIdMatch[1];
-        const event = await getEventById(eventId);
-        
-        if (event) {
-          // Format the date for the URL (YYYY-MM-DD)
-          const dateStr = formatDateForUrl(new Date(event.startDateTime));
-          
-          // Redirect to the date-based URL
-          return NextResponse.redirect(new URL(`/events/${dateStr}`, req.url));
-        }
-      } catch (error) {
-        console.error('Error in event redirect:', error);
-      }
-    }
     return NextResponse.next();
   },
   async afterAuth(auth, req) {
