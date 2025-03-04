@@ -297,7 +297,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       
       setEditingField(null);
       setEditValue('');
-      toast.success('Successfully updated', {
+      toast.success('更新成功 Successfully updated', {
         duration: 3000,
         position: 'bottom-center',
       });
