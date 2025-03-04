@@ -409,10 +409,12 @@ export const createEventUrl = (event: IEvent) => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-  const categorySlug = event.category.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  const categorySlug = event.category?.name
+    ? event.category.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    : 'uncategorized'
   
   return `/events/${categorySlug}/${date}/${titleSlug}`
 }

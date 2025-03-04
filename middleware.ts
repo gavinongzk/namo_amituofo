@@ -14,8 +14,9 @@ const handleCustomMiddleware = async (request: NextRequest) => {
   const oldMatch = pathname.match(oldFormatPattern);
   
   if (oldMatch) {
-    // Redirect old format to 404 or home page
-    return NextResponse.redirect(new URL('/', request.url));
+    // Extract date from old format and convert to new format
+    const [_, isoDate] = oldMatch;
+    return NextResponse.redirect(new URL(`/events/uncategorized/${isoDate}/event`, request.url));
   }
 
   if (match) {
