@@ -35,7 +35,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
+        href={isMyTicket ? `/reg/${event.orderId}` : `/events/${event._id}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
@@ -78,7 +78,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         {isEventCreator && (
           <div className="flex flex-col gap-2">
             <p className="p-medium-16 text-grey-500">注册人数 Registrations: {event.registrationCount || 0}</p>
-            <Link href={`/orders?eventId=${event._id}`} className="text-primary-500 underline flex items-center gap-2">
+            <Link href={`/reg?eventId=${event._id}`} className="text-primary-500 underline flex items-center gap-2">
               注册详情 Registration Details
               <Image src="/assets/icons/arrow.svg" alt="arrow" width={10} height={10} />
             </Link>

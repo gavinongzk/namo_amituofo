@@ -112,7 +112,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
         console.log('Orders to upload:', orders); // Log the orders before sending
 
-        const response = await fetch('/api/orders/upload', {
+        const response = await fetch('/api/reg/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
   return (
     <div className="mb-4">
-      <h2 className="text-3xl font-bold">Upload Orders</h2>
+      <h2 className="text-3xl font-bold">Upload Registrations</h2>
       <h4 className="font-semibold mb-2">Required Excel File Headers:</h4>
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>
@@ -164,7 +164,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
         onClick={handleUpload} // Trigger upload on button click
         disabled={!selectedFile} // Disable button if no file is selected
       >
-        Upload Orders Excel
+        Upload Registrations Excel
       </Button>
       {showModal && (
         <Modal>

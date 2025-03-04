@@ -3,7 +3,7 @@ import { createOrder } from '@/lib/actions/order.actions';
 import { CreateOrderParams, CustomFieldGroup } from '@/types';
 
 export async function POST(req: NextRequest) {
-  console.log("Received POST request to /api/createOrder");
+  console.log("Received POST request to /api/createReg");
 
   try {
     const body = await req.json();
@@ -31,10 +31,10 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    return NextResponse.json({ message: 'Order created successfully', order: newOrder });
+    return NextResponse.json({ message: 'Registration created successfully', order: newOrder });
   } catch (error) {
     console.error('Error in POST /api/reg:', error);
-    return new NextResponse(`Error creating order: ${(error as Error).message}`, { status: 500 });
+    return new NextResponse(`Error creating registration: ${(error as Error).message}`, { status: 500 });
   }
 }
 
