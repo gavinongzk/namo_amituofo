@@ -35,7 +35,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
   return (
     <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${event._id}`}
+        href={isMyTicket ? `/orders/${event.orderId}` : `/events/${new Date(event.startDateTime).toISOString().split('T')[0]}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
@@ -62,7 +62,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           </p>
         ))}
 
-        <Link href={`/events/${event._id}`}>
+        <Link href={`/events/${new Date(event.startDateTime).toISOString().split('T')[0]}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
         </Link>
 

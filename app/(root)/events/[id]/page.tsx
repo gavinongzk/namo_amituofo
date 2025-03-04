@@ -63,19 +63,15 @@ const EventInfo = async ({ event }: { event: any }) => {
         <div className="h-px bg-gray-200" />
 
         {/* Description Section */}
-        <div className="flex items-start gap-5">
-          <div className="bg-primary-50 p-4 rounded-full shrink-0">
-            <Image src="/assets/icons/description.svg" alt="description" width={24} height={24} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <p className="text-lg font-semibold text-gray-800">活动详情 Description:</p>
-            <div 
-              className="text-base text-gray-600 prose max-w-none"
-              dangerouslySetInnerHTML={{ 
-                __html: convertPhoneNumbersToLinks(event.description || '') 
-              }} 
-            />
-          </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-xl font-bold text-gray-800">活动描述 Event Description:</p>
+          <p 
+            className="text-base text-gray-600 leading-relaxed" 
+            style={{ whiteSpace: 'pre-wrap' }}
+            dangerouslySetInnerHTML={{ 
+              __html: convertPhoneNumbersToLinks(event.description) 
+            }}
+          />
         </div>
       </div>
     </div>
@@ -102,15 +98,23 @@ function isValidObjectId(str: string): boolean {
   return objectIdRegex.test(str);
 }
 
+// Function to extract ID and date from the combined parameter
+function extractIdAndDate(combinedId: string): { id: string; date: string | null } {
+  const parts = combinedId.split('-');
+  if (parts.length === 2 && isValidObjectId(parts[0]) && isValidDateFormat(parts[1])) {
+    return { id: parts[0], date: parts[1] };
+  }
+  return { id: combinedId, date: null };
+}
+
 // Generate metadata for social sharing
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   let event;
-  const { id } = params;
 
-  if (isValidDateFormat(id)) {
-    event = await getEventByDate(id);
-  } else if (isValidObjectId(id)) {
-    event = await getEventById(id);
+  if (isValidDateFormat(params.id)) {
+    event = await getEventByDate(params.id);
+  } else {
+    event = await getEventById(params.id);
   }
   
   if (!event) {
@@ -154,9 +158,7 @@ export default async function EventDetails({ params: { id }, searchParams }: Eve
   // Check if the ID parameter is in date format (YYYY-MM-DD)
   if (isValidDateFormat(id)) {
     event = await getEventByDate(id);
-  } 
-  // If not a date, check if it's a valid MongoDB ObjectId
-  else if (isValidObjectId(id)) {
+  } else {
     event = await getEventById(id);
   }
 
