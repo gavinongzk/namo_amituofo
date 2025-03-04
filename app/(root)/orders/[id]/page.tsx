@@ -297,13 +297,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       
       setEditingField(null);
       setEditValue('');
-      toast.success('Successfully updated', {
+      toast.success('更新成功 Successfully updated', {
         duration: 3000,
         position: 'bottom-center',
       });
     } catch (error) {
       console.error('Error updating field:', error);
-      toast.error('Failed to update field', {
+      toast.error('更新失败 Failed to update field', {
         duration: 4000,
         position: 'bottom-center',
       });
