@@ -29,9 +29,18 @@ const handleCustomMiddleware = async (request: NextRequest) => {
         const url = request.nextUrl.clone();
         url.pathname = `/events/${data.eventId}`;
         return NextResponse.rewrite(url);
+      } else {
+        // If no event is found, return a 404 page
+        const url = request.nextUrl.clone();
+        url.pathname = '/404';
+        return NextResponse.rewrite(url);
       }
     } catch (error) {
       console.error('Error in middleware:', error);
+      // On error, redirect to 404 page
+      const url = request.nextUrl.clone();
+      url.pathname = '/404';
+      return NextResponse.rewrite(url);
     }
   }
 
