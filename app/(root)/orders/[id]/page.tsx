@@ -28,13 +28,6 @@ const convertAddressesToLinks = (text: string) => {
   });
 };
 
-// Function to convert phone numbers (if you want to do that too)
-const convertPhoneNumbersToLinks = (text: string) => {
-  const phoneRegex = /(\+65\s?\d{4}-\d{4}|\+65\s?\d{8}|\d{8})/g;
-  return text.replace(phoneRegex, (match) => {
-    return `<a href="tel:${match}" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
-  });
-};
 
 // Function to convert Google Maps URLs into clickable links
 const convertGoogleMapsLinks = (text: string) => {
