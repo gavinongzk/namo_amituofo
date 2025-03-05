@@ -23,7 +23,7 @@ const convertAddressesToLinks = (text: string) => {
   const addressRegex = /(\d{1,5}\s[\w\s,.-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
   
   return text.replace(addressRegex, (match) => {
-    const mapsLink = convertToGoogleMapsLink(match); // Convert address to Google Maps link
+    const mapsLink = convertGoogleMapsLinks(match); // Convert address to Google Maps link
     return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
   });
 };
@@ -42,7 +42,7 @@ const convertGoogleMapsLinks = (text: string) => {
 // Combining all text conversion
 const convertLinksInText = (text: string) => {
   let processedText = convertPhoneNumbersToLinks(text);
-  processedText = convertAddressesToLinks(processedText);
+  // processedText = convertAddressesToLinks(processedText);
   processedText = convertGoogleMapsLinks(processedText);
   return processedText;
 };
