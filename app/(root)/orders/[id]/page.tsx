@@ -16,33 +16,41 @@ import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 
-const convertToGoogleMapsLink = (location: string) => {
-  const encodedLocation = encodeURIComponent(location);
-  return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-};
 
+// Function to convert addresses to Google Maps links
 const convertAddressesToLinks = (text: string) => {
-  // This regex looks for addresses that might contain these patterns
-  const addressRegex = /(?:\d+[A-Za-z\s,-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
+  // Regex to find an address and wrap it with a link to Google Maps
+  const addressRegex = /(\d{1,5}\s[\w\s,.-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
   
   return text.replace(addressRegex, (match) => {
-    const mapsLink = convertToGoogleMapsLink(match);
+    const mapsLink = convertToGoogleMapsLink(match); // Convert address to Google Maps link
     return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
   });
 };
 
-const convertLinksInText = (text: string) => {
-  // First convert phone numbers
-  let processedText = convertPhoneNumbersToLinks(text);
-  // Then convert addresses
-  processedText = convertAddressesToLinks(processedText);
-  // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
-  processedText = processedText.replace(
-    /(Google Map[：:]?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
-    (match, prefix, url) => {
-      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+// Function to convert phone numbers (if you want to do that too)
+const convertPhoneNumbersToLinks = (text: string) => {
+  const phoneRegex = /(\+65\s?\d{4}-\d{4}|\+65\s?\d{8}|\d{8})/g;
+  return text.replace(phoneRegex, (match) => {
+    return `<a href="tel:${match}" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+  });
+};
+
+// Function to convert Google Maps URLs into clickable links
+const convertGoogleMapsLinks = (text: string) => {
+  return text.replace(
+    /(https?:\/\/(?:goo\.gl\/maps\/[^\s]+))/gi,
+    (match) => {
+      return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
     }
   );
+};
+
+// Combining all text conversion
+const convertLinksInText = (text: string) => {
+  let processedText = convertPhoneNumbersToLinks(text);
+  processedText = convertAddressesToLinks(processedText);
+  processedText = convertGoogleMapsLinks(processedText);
   return processedText;
 };
 
