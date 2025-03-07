@@ -62,7 +62,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           </p>
         ))}
 
-        <Link href={`/events/${event._id}`}>
+        <Link href={`/events/details/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
         </Link>
 

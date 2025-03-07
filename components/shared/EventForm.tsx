@@ -142,7 +142,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               value: field.value || '' // Ensure value is never undefined
             })) as CustomField[]
           },
-          path: `/events/${eventId}`
+          path: `/events/details/${eventId}`
         })
 
         if(updatedEvent) {

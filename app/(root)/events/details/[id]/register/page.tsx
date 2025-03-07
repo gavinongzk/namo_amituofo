@@ -1,4 +1,4 @@
-// app/(root)/events/[id]/register/page.tsx
+// app/(root)/events/details/[id]/register/page.tsx
 import { Suspense } from 'react'
 import Loading from '@/components/shared/Loader'
 import { getEventById } from '@/lib/actions/event.actions'
