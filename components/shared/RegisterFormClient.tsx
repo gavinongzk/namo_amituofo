@@ -167,7 +167,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         });
                         
                         // First check if the override is active - do this check before any validation
-                        if (postalOverrides[index] === true) {
+                        if (postalOverrides[index]) {
                           // In override mode, only check if it contains numbers
                           if (!/^\d+$/.test(value)) {
                             ctx.addIssue({
@@ -176,6 +176,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                             });
                             return false;
                           }
+                          console.log(`Override active for index ${index}, bypassing validation`);
                           return true;
                         } 
                         
@@ -621,22 +622,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           // Update the override state
                                           const newOverrideState = !postalOverrides[personIndex];
                                           
-                                          // First clear the field to avoid validation errors
+                                          // Update the override state immediately
+                                          setPostalOverrides(prev => ({
+                                            ...prev,
+                                            [personIndex]: newOverrideState
+                                          }));
+                                          
+                                          // Clear the field to avoid validation errors
                                           form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                           
-                                          // Update the override state after a small delay to ensure UI updates first
+                                          // Force re-validation of the field after state changes
                                           setTimeout(() => {
-                                            setPostalOverrides(prev => ({
-                                              ...prev,
-                                              [personIndex]: newOverrideState
-                                            }));
-                                            
-                                            // Force re-validation of the field after state changes
-                                            setTimeout(() => {
-                                              console.log('Triggering validation with override:', newOverrideState);
-                                              form.trigger(`groups.${personIndex}.${customField.id}`);
-                                            }, 100);
-                                          }, 0);
+                                            console.log('Triggering validation with override:', newOverrideState, personIndex);
+                                            form.trigger(`groups.${personIndex}.${customField.id}`);
+                                          }, 200); // Increased timeout to ensure state updates first
                                         }}
                                         className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                       >
