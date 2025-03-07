@@ -17,11 +17,11 @@ export const metadata: Metadata = {
   description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
     icon: '/assets/images/logo.svg',
-    apple: '/asset/images/amitabha_image.png',
-    shortcut: '/asset/images/amitabha_image.png',
+    apple: '/assets/images/amitabha_image.png',
+    shortcut: '/assets/images/amitabha_image.png',
     other: {
       rel: 'apple-touch-icon',
-      url: '/asset/images/amitabha_image.png'
+      url: '/assets/images/amitabha_image.png'
     }
   },
   openGraph: {
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     capable: true,
     startupImage: [
-      '/asset/images/amitabha_image.png'
+      '/assets/images/amitabha_image.png'
     ]
   }
 }
