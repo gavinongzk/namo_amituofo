@@ -7,7 +7,7 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
   const router = useRouter();
 
   const handleRegister = () => {
-    router.push(`/events/${event._id}/register`);
+    router.push(`/events/details/${event._id}/register`);
   }
 
   return (

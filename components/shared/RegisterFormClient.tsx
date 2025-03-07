@@ -74,6 +74,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
+  const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -144,26 +145,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               : field.type === 'phone'
                 ? z.string()
                     .min(1, { message: "此栏位为必填 / This field is required" })
-                    .refine(
-                      (value) => {
-                        const index = parseInt(field.id.split('_')[1]) - 1;
-                        return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
-                      },
-                      { message: "无效的电话号码 / Invalid phone number" }
-                    )
                 : field.type === 'postal'
                   ? z.string()
                       .min(1, { message: "此栏位为必填 / This field is required" })
-                      .refine(
-                        async (value) => await isValidPostalCode(value, userCountry || 'Singapore'),
-                        {
-                          message: userCountry === 'Singapore' 
-                            ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                            : userCountry === 'Malaysia'
-                              ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                              : "请输入有效的邮区编号 / Please enter a valid postal code"
-                        }
-                      )
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
                         .min(1, { message: "此栏位为必填 / This field is required" })
@@ -177,6 +161,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       )
     )
   });
+
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
     return country === 'Malaysia' ? 'MY' : 'SG';
@@ -199,6 +184,29 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     control: form.control,
     name: "groups"
   });
+
+  // Add effect to revalidate postal fields when override status changes
+  useEffect(() => {
+    const postalFields = customFields.filter(field => field.type === 'postal');
+    if (postalFields.length > 0 && form) {
+      console.log('postalOverrides state changed:', postalOverrides);
+      
+      // For each person with a postal field
+      for (let i = 0; i < form.getValues().groups.length; i++) {
+        if (Object.keys(postalOverrides).includes(i.toString())) {
+          console.log(`Revalidating postal fields for person ${i}, override: ${postalOverrides[i]}`);
+          
+          // Trigger validation for each postal field
+          postalFields.forEach(field => {
+            // Add a small delay to ensure the state is updated before triggering validation
+            setTimeout(() => {
+              form.trigger(`groups.${i}.${field.id}`);
+            }, 100);
+          });
+        }
+      }
+    }
+  }, [postalOverrides, customFields, form]);
 
   const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
     const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
@@ -224,6 +232,78 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     const toastId = toast.loading("检查注册详情中... / Checking registration details...");
     
     saveFormData(values);
+
+    // Validate phone numbers first
+    const phoneField = customFields.find(f => f.type === 'phone')?.id;
+    if (phoneField) {
+      const phoneValidationErrors: string[] = [];
+      
+      for (let i = 0; i < values.groups.length; i++) {
+        const rawValue = values.groups[i][phoneField];
+        const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+        
+        // Skip validation if phone override is active
+        if (phoneOverrides[i]) {
+          // For overridden numbers, just check if it starts with + and contains only numbers after that
+          if (!/^\+\d+$/.test(phoneNumber)) {
+            phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Person ${i + 1}. Must start with + followed by numbers`);
+          }
+          continue;
+        }
+        
+        // Regular phone validation for SG/MY numbers
+        if (!isValidPhoneNumber(phoneNumber)) {
+          phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码无效 / Invalid phone number for Person ${i + 1}`);
+        }
+      }
+      
+      if (phoneValidationErrors.length > 0) {
+        toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+        return;
+      }
+    }
+    
+    // Validate postal codes
+    const postalField = customFields.find(f => f.type === 'postal')?.id;
+    if (postalField) {
+      const postalValidationErrors: string[] = [];
+      
+      for (let i = 0; i < values.groups.length; i++) {
+        // Ensure we're working with a string value
+        const rawValue = values.groups[i][postalField];
+        const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+        
+        // Skip detailed validation if override is active
+        if (postalOverrides[i]) {
+          if (!/^\d+$/.test(postalCode)) {
+            postalValidationErrors.push(`参加者 ${i + 1} 的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
+          }
+          continue;
+        }
+        
+        try {
+          const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
+          if (!isValidCountryPostal) {
+            postalValidationErrors.push(
+              `参加者 ${i + 1}: ${
+                userCountry === 'Singapore'
+                  ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
+                  : userCountry === 'Malaysia'
+                    ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                    : "请输入有效的邮区编号 / Please enter a valid postal code"
+              }`
+            );
+          }
+        } catch (error) {
+          console.error("Error validating postal code:", error);
+        }
+      }
+      
+      if (postalValidationErrors.length > 0) {
+        toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+        return;
+      }
+    }
     
     const duplicates = await checkForDuplicatePhoneNumbers(values);
     
@@ -533,14 +613,53 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         className="max-w-md"
                                         value={String(formField.value)}
                                         placeholder={
-                                          phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                            ? "e.g. 12345"
-                                            : "e.g. 123456"
+                                          postalOverrides[personIndex]
+                                            ? "Enter any numeric postal code"
+                                            : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
+                                              ? "e.g. 12345"
+                                              : "e.g. 123456"
                                         }
                                         onChange={(e) => {
-                                          formField.onChange(e);
+                                          // Only allow numbers when in override mode
+                                          if (postalOverrides[personIndex]) {
+                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                            formField.onChange(numericValue);
+                                          } else {
+                                            formField.onChange(e);
+                                          }
                                         }}
                                       />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          // Update the override state
+                                          const newOverrideState = !postalOverrides[personIndex];
+                                          
+                                          // Clear the field first
+                                          form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
+                                            shouldValidate: false  // Prevent validation on clear
+                                          });
+                                          
+                                          // Update the override state
+                                          setPostalOverrides(prev => ({
+                                            ...prev,
+                                            [personIndex]: newOverrideState
+                                          }));
+                                          
+                                          // Reset form errors for this field
+                                          form.clearErrors(`groups.${personIndex}.${customField.id}`);
+                                          
+                                          // Force revalidation after a small delay to ensure state is updated
+                                          setTimeout(() => {
+                                            form.trigger(`groups.${personIndex}.${customField.id}`);
+                                          }, 100);
+                                        }}
+                                        className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                      >
+                                        {postalOverrides[personIndex] ? 
+                                          "切换回邮区编号验证 Switch back to postal code validation" : 
+                                          "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
+                                      </button>
                                       {personIndex > 0 && (
                                         <div className="flex items-center gap-2 mt-2">
                                           <Checkbox

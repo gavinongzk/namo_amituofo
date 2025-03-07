@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check, Loader2, Share2 } from 'lucide-react';
+import { Pencil, X, Check, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
@@ -18,16 +18,55 @@ import { eventDefaultValues } from "@/constants";
 
 const convertToGoogleMapsLink = (location: string) => {
   const encodedLocation = encodeURIComponent(location);
-  return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+  // Create URLs for both web and mobile deep links
+  const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+  const mobileUrl = `comgooglemaps://?q=${encodedLocation}&zoom=17`;
+  const appleMapsUrl = `maps://maps.apple.com/?q=${encodedLocation}`;
+  
+  return {
+    webUrl,
+    mobileUrl,
+    appleMapsUrl
+  };
 };
 
 const convertAddressesToLinks = (text: string) => {
-  // This regex looks for addresses that might contain these patterns
-  const addressRegex = /(?:\d+[A-Za-z\s,-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
+  // Enhanced regex pattern to catch more Singapore address formats
+  const addressRegex = /(?:\d+(?:\s*,\s*)?(?:Lor(?:ong)?|Jln|Jalan|Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Close|Cl|Way|Walk|Place|Pl|Square|Sq)\s*\d*\s*,\s*[A-Za-z\s,-]+(?:Singapore|S'pore|SG)?(?:\s+#\d{2,3}-\d{2,3})?(?:\s+S?\(?(?:\d{6}|\d{4})\)?)?)/gi;
   
   return text.replace(addressRegex, (match) => {
-    const mapsLink = convertToGoogleMapsLink(match);
-    return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+    const links = convertToGoogleMapsLink(match);
+    return `
+      <span class="inline-flex flex-wrap gap-2 items-center">
+        <span class="text-gray-700">${match}</span>
+        <span class="inline-flex gap-2">
+          <a href="${links.webUrl}" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Open in Maps
+          </a>
+          <a href="${links.mobileUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
+            </svg>
+            Google Maps App
+          </a>
+          <a href="${links.appleMapsUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+            </svg>
+            Apple Maps
+          </a>
+        </span>
+      </span>
+    `;
   });
 };
 
@@ -38,9 +77,37 @@ const convertLinksInText = (text: string) => {
   processedText = convertAddressesToLinks(processedText);
   // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
-    /(Google Map[：:]?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
-    (match, prefix, url) => {
-      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+    /(?:Google Maps[：:]?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+|maps\.google\.com\/[^\s\n]+))/gi,
+    (match, url) => {
+      const links = convertToGoogleMapsLink(url);
+      return `
+        <span class="inline-flex flex-wrap gap-2">
+          <a href="${url}" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Open in Browser
+          </a>
+          <a href="${links.mobileUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
+            </svg>
+            Google Maps App
+          </a>
+          <a href="${links.appleMapsUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+            </svg>
+            Apple Maps
+          </a>
+        </span>
+      `;
     }
   );
   return processedText;
@@ -262,6 +329,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           groupId,
           field: editingField.field,
           value: editValue,
+          isFromOrderDetails: true
         }),
       });
 
@@ -315,114 +383,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
-  const handleShare = async () => {
-    const userAgent = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
-    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    const isAndroid = /Android/.test(userAgent);
-    const isChrome = /Chrome/.test(userAgent) && !/Edg/.test(userAgent);
-    const isEdge = /Edg/.test(userAgent);
-    const isFirefox = /Firefox/.test(userAgent);
-    const isSamsung = /SamsungBrowser/.test(userAgent);
-    const isOpera = /OPR|Opera/.test(userAgent);
-
-    if (isIOS && isSafari) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the share button <span className="inline-block">⬆️</span> at the bottom of Safari</li>
-            <li>Scroll down and tap "Add to Home Screen"</li>
-            <li>Tap "Add" in the top right corner</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isIOS && !isSafari) {
-      toast((t) => (
-        <div>
-          <p>Please open this page in Safari to add it to your home screen</p>
-          <p className="mt-2">在Safari浏览器中打开此页面以添加到主屏幕</p>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isAndroid && (isChrome || isSamsung)) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the menu icon (⋮) at the top right</li>
-            <li>Select "Add to Home screen" or "Install app"</li>
-            <li>Tap "Add" to confirm</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isAndroid && isFirefox) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the menu icon (⋮) at the top right</li>
-            <li>Tap "Page" then "Add to Home Screen"</li>
-            <li>Tap "Add" to confirm</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isEdge) {
-      toast((t) => (
-        <div>
-          <p>To add to favorites:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
-            <li>Or click the star icon in the address bar</li>
-            <li>Choose a folder and click "Done"</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else {
-      // Default instructions for other browsers (Chrome, Firefox, Opera, etc.)
-      toast((t) => (
-        <div>
-          <p>To bookmark this page:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
-            <li>Or click the star/menu icon in your browser</li>
-            <li>Select "Add bookmark" or "Add to favorites"</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    }
-
-    // Try to use the Web Share API if available
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Order Details',
-          text: 'View my order details',
-          url: window.location.href
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
-
   if (isLoading) {
     return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
   }
@@ -438,14 +398,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
       <div className="grid grid-cols-1 gap-4 mb-4 relative">
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
-        >
-          <Share2 className="h-4 w-4" />
-          <span>保存快捷方式 Save for Easy Access</span>
-        </button>
-        
         {isPolling && (
           <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -5,7 +5,7 @@ import { isValidPhoneNumber, formatPhoneNumber } from '@/lib/utils';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, groupId, field: fieldId, value } = await req.json();
+    const { orderId, groupId, field: fieldId, value, isFromOrderDetails = false } = await req.json();
 
     await connectToDatabase();
 
@@ -40,8 +40,8 @@ export async function POST(req: Request) {
 
     // Now we can safely check the field label
     let formattedValue = value;
-    if (fieldData.label.toLowerCase().includes('phone') || 
-        fieldData.label.toLowerCase().includes('contact')) {
+    if (!isFromOrderDetails && (fieldData.label.toLowerCase().includes('phone') || 
+        fieldData.label.toLowerCase().includes('contact'))) {
       formattedValue = formatPhoneNumber(value);
       if (!isValidPhoneNumber(formattedValue)) {
         return NextResponse.json(

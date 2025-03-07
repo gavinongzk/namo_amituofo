@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 const EventInfo = async ({ event }: { event: any }) => {
   return (
@@ -52,13 +53,23 @@ const EventInfo = async ({ event }: { event: any }) => {
 
         {/* Location Section */}
         <div className="flex items-start gap-5">
-          <div className="bg-primary-50 p-4 rounded-full shrink-0">
+          <Link 
+            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-primary-50 p-4 rounded-full shrink-0 hover:bg-primary-100 transition-colors"
+          >
             <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
-          </div>
-          <div className="flex flex-col gap-1">
+          </Link>
+          <Link 
+            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col gap-1 hover:text-primary-500 transition-colors"
+          >
             <p className="text-lg font-semibold text-gray-800">地点 Location:</p>
             <p className="text-base text-gray-600">{event.location}</p>
-          </div>
+          </Link>
         </div>
 
         <div className="h-px bg-gray-200" />

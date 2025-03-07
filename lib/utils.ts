@@ -141,7 +141,20 @@ export function removeKeysFromQuery({ params, keysToRemove }: RemoveUrlQueryPara
 }
 
 export const handleError = (error: unknown) => {
-  console.error(error)
+  console.error('Error details:', error)
+  
+  // Extract more information from the error
+  if (error instanceof Error) {
+    console.error('Error name:', error.name)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+  }
+  
+  // If it's a MongoDB validation error, it might have more details
+  if (typeof error === 'object' && error !== null && 'errors' in error) {
+    console.error('Validation errors:', (error as any).errors)
+  }
+  
   throw new Error(typeof error === 'string' ? error : JSON.stringify(error))
 }
 
@@ -391,7 +404,15 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
   }
 
   try {
-    const response = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=N&getAddrDetails=Y`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    
+    const response = await fetch(
+      `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=N&getAddrDetails=Y`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    
     const data = await response.json();
     return data.results && data.results.length > 0;
   } catch (error) {
