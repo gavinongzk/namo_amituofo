@@ -340,7 +340,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat={formatDateForPicker}
+                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
                         wrapperClassName="datePicker"
                       />
                     </div>
@@ -377,7 +377,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat={formatDateForPicker}
+                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
                         wrapperClassName="datePicker"
                       />
                     </div>
