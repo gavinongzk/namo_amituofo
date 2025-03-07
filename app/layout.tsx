@@ -16,7 +16,13 @@ export const metadata: Metadata = {
   title: '净土宗报名系统 | Namo Amituofo Registration',
   description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
-    icon: '/assets/images/logo.svg'
+    icon: '/assets/images/logo.svg',
+    apple: '/asset/images/amitabha_image.png',
+    shortcut: '/asset/images/amitabha_image.png',
+    other: {
+      rel: 'apple-touch-icon',
+      url: '/asset/images/amitabha_image.png'
+    }
   },
   openGraph: {
     type: 'website',
