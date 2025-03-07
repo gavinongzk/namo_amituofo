@@ -5,6 +5,7 @@ import { getEventById } from '@/lib/actions/event.actions'
 import { unstable_cache } from 'next/cache'
 import { headers } from 'next/headers'
 import dynamic from 'next/dynamic'
+import { redirect } from 'next/navigation'
 
 // Dynamically import heavy components
 const RegisterFormWrapper = dynamic(() => 
@@ -41,6 +42,11 @@ export default async function RegisterPage({
 }: { 
   params: { id: string } 
 }) {
+  // Special case: if id is 'create', redirect to events page
+  if (id === 'create') {
+    redirect('/events');
+  }
+
   // Start data fetch immediately
   const eventPromise = getCachedEvent(id)
 
@@ -71,28 +77,12 @@ async function AsyncRegisterForm({
     const event = await eventPromise
     
     if (!event) {
-      return (
-        <div className="flex flex-col items-center justify-center py-10">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Event Not Found</h1>
-          <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-          <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            View All Events
-          </a>
-        </div>
-      );
+      redirect('/events');
     }
     
     return <RegisterFormWrapper event={event} />
   } catch (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">Error Loading Event</h1>
-        <p className="text-gray-600 mb-6">There was a problem loading this event.</p>
-        <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-          View All Events
-        </a>
-      </div>
-    );
+    redirect('/events');
   }
 }
 

@@ -14,6 +14,11 @@ const UpdateEvent = async ({ params: { id } }: UpdateEventProps) => {
   const userId = user?.publicMetadata.userId as string;
 
   try {
+    // Special case: if id is 'create', redirect to events page
+    if (id === 'create') {
+      redirect('/events');
+    }
+
     const event = await getEventById(id);
 
     if (!event) {

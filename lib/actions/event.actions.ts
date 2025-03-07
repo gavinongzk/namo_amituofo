@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { unstable_cache } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
@@ -63,10 +64,9 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 export const getEventById = unstable_cache(
   async (eventId: string) => {
     try {
-      // Special case: if eventId is 'create', this is probably meant to access the create page
-      // not trying to fetch an event with ID 'create'
+      // Special case: if eventId is 'create', redirect to events page
       if (eventId === 'create') {
-        throw new Error('Invalid event ID: "create" is a reserved path');
+        redirect('/events');
       }
 
       await connectToDatabase();

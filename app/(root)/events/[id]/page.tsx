@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
 const EventInfo = async ({ event }: { event: any }) => {
   return (
@@ -134,12 +135,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
   try {
+    // Special case: if id is 'create', redirect to events page
+    if (id === 'create') {
+      redirect('/events');
+    }
+
     const eventPromise = getEventById(id);
     const event = await eventPromise;
 
     if (!event) {
-      // This could happen if the ID is 'create' or an invalid ID
-      throw new Error('Event not found');
+      // This could happen if the ID is invalid or the event doesn't exist
+      redirect('/events');
     }
 
     return (
@@ -164,14 +170,6 @@ export default async function EventDetails({ params: { id }, searchParams }: Eve
     );
   } catch (error) {
     // Redirect to events page or show an error message
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-10">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">Event Not Found</h1>
-        <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-        <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-          View All Events
-        </a>
-      </div>
-    );
+    redirect('/events');
   }
 }
