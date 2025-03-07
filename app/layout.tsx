@@ -13,12 +13,47 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'Namo Amituofo Registration',
-  description: 'Namo Amituofo Registration is a platform for users to register for events.',
+  title: '净土宗报名系统 | Namo Amituofo Registration',
+  description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
-    icon: '/assets/images/logo.svg'
+    icon: '/assets/images/logo.svg',
+    apple: '/asset/images/amitabha_image.png',
+    shortcut: '/asset/images/amitabha_image.png',
+    other: {
+      rel: 'apple-touch-icon',
+      url: '/asset/images/amitabha_image.png'
+    }
+  },
+  openGraph: {
+    type: 'website',
+    title: '净土宗报名系统 | Namo Amituofo Registration',
+    description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
+    siteName: '净土宗 | Namo Amituofo',
+    images: [
+      {
+        url: '/assets/images/amitabha_image.png',
+        width: 1200,
+        height: 630,
+        alt: '净土宗 | Namo Amituofo',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '净土宗报名系统 | Namo Amituofo Registration',
+    description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
+    images: ['/assets/images/amitabha_image.png'],
+  },
+  appleWebApp: {
+    title: '净土宗报名系统 | Namo Amituofo Registration',
+    statusBarStyle: 'black-translucent',
+    capable: true,
+    startupImage: [
+      '/asset/images/amitabha_image.png'
+    ]
   }
 }
+
 
 export default function RootLayout({
   children,
@@ -56,7 +91,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <head>
-          <meta name="apple-mobile-web-app-title" content="Namo Amituofo" />
+          <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}

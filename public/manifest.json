@@ -1,0 +1,21 @@
+{
+  "name": "净土宗报名系统 | Namo Amituofo Registration",
+  "short_name": "净土宗 | Namo Amituofo",
+  "description": "净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8a4600",
+  "icons": [
+    {
+      "src": "/assets/images/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/assets/images/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+} 
