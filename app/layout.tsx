@@ -15,8 +15,23 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Namo Amituofo Registration',
   description: 'Namo Amituofo Registration is a platform for users to register for events.',
+  applicationName: 'Namo Amituofo',
+  appleWebApp: {
+    capable: true,
+    title: 'Namo Amituofo',
+    statusBarStyle: 'default'
+  },
+  manifest: '/manifest.json',
+  themeColor: '#a2826c',
   icons: {
-    icon: '/assets/images/logo.svg'
+    icon: [
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/assets/images/logo.svg' }
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ]
   }
 }
 
@@ -56,9 +71,11 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Namo Amituofo" />
-          <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
-          <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
+          <link rel="manifest" href="/manifest.json" />
           {preloadResources}
         </head>
         <body className={poppins.variable}>

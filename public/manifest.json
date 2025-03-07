@@ -1,0 +1,40 @@
+{
+  "name": "Namo Amituofo Registration",
+  "short_name": "Namo Amituofo",
+  "description": "Namo Amituofo Registration is a platform for users to register for events.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f2f0",
+  "theme_color": "#a2826c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+} 
