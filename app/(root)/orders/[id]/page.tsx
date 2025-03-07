@@ -417,11 +417,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <div className="p-6 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
               <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
-              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
-              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
-              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
-              </p>
-              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
@@ -447,6 +442,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     )}
                   </div>
                 </div>
+              </div>
+            ))}
+
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
+              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
+              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
+              </p>
+              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+            </div>
+
+            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
+              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 <div className="p-4">
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {group.fields.map((field: CustomField) => (
