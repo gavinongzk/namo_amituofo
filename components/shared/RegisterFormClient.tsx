@@ -159,13 +159,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       .superRefine(async (value, ctx) => {
                         const index = parseInt(field.id.split('_')[1]) - 1;
                         
-                        // Debug logging to check the state
-                        console.log(`Postal validation for index ${index}: Override = ${postalOverrides[index] === true}`, {
-                          postalOverrides,
-                          index,
-                          value
-                        });
-                        
                         // First check if the override is active - do this check before any validation
                         if (postalOverrides[index]) {
                           // In override mode, only check if it contains numbers
@@ -176,17 +169,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                             });
                             return false;
                           }
-                          console.log(`Override active for index ${index}, bypassing validation`);
                           return true; // Early return here to skip the country-specific validation
                         }
                         
-                        console.log(`No override for index ${index}, proceeding with normal validation`);
-                        
                         // If not in override mode, proceed with country-specific validation
                         try {
-                          console.log(`Calling isValidPostalCode for ${value}, country: ${userCountry || 'Singapore'}`);
                           const isValidCountryPostal = await isValidPostalCode(value, userCountry || 'Singapore');
-                          console.log(`isValidPostalCode result: ${isValidCountryPostal}`);
                           if (!isValidCountryPostal) {
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
@@ -636,34 +624,14 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           // Clear the field first
                                           form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                           
-                                          // Update the override state using functional update
-                                          setPostalOverrides(prev => {
-                                            const newOverrides = {
-                                              ...prev,
-                                              [personIndex]: newOverrideState
-                                            };
-                                            
-                                            console.log('Setting new postal overrides:', newOverrides);
-                                            
-                                            // Use a callback after state update
-                                            setTimeout(() => {
-                                              // Wait for React to process the state update
-                                              console.log('State should be updated, current override for index', 
-                                                personIndex, ':', newOverrideState);
-                                              
-                                              // Force a re-render first to ensure state is updated
-                                              form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
-                                                shouldValidate: false 
-                                              });
-                                              
-                                              // Now trigger validation with the updated state
-                                              setTimeout(() => {
-                                                form.trigger(`groups.${personIndex}.${customField.id}`);
-                                              }, 100);
-                                            }, 200);
-                                            
-                                            return newOverrides;
-                                          });
+                                          // Update the override state
+                                          setPostalOverrides(prev => ({
+                                            ...prev,
+                                            [personIndex]: newOverrideState
+                                          }));
+                                          
+                                          // Immediately trigger validation with the updated state
+                                          form.trigger(`groups.${personIndex}.${customField.id}`);
                                         }}
                                         className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                       >
