@@ -74,6 +74,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
+  const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -155,7 +156,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   ? z.string()
                       .min(1, { message: "此栏位为必填 / This field is required" })
                       .refine(
-                        async (value) => await isValidPostalCode(value, userCountry || 'Singapore'),
+                        async (value) => {
+                          const index = parseInt(field.id.split('_')[1]) - 1;
+                          return postalOverrides[index] || await isValidPostalCode(value, userCountry || 'Singapore');
+                        },
                         {
                           message: userCountry === 'Singapore' 
                             ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
@@ -541,6 +545,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           formField.onChange(e);
                                         }}
                                       />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPostalOverrides(prev => ({
+                                            ...prev,
+                                            [personIndex]: !prev[personIndex]
+                                          }));
+                                        }}
+                                        className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                      >
+                                        {postalOverrides[personIndex] ? 
+                                          "Switch back to postal code validation 切换回邮区编号验证" : 
+                                          "Using a postal code from another country? Click here 使用其他国家的邮区编号？点击这里"}
+                                      </button>
                                       {personIndex > 0 && (
                                         <div className="flex items-center gap-2 mt-2">
                                           <Checkbox

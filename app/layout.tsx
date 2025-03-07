@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
+import { Analytics } from "@vercel/analytics/react"
 
 import './globals.css'
 
@@ -64,6 +65,7 @@ export default function RootLayout({
         <body className={poppins.variable}>
           <div className="context-container">
             {children}
+            <Analytics />
           </div>
           <Toaster
             position="top-center"
