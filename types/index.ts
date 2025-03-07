@@ -22,6 +22,7 @@ export type CreateEventParams = {
     endDateTime: Date
     categoryId: string
     customFields: CustomField[]
+    country: string
   }
   path: string
 }
@@ -38,6 +39,7 @@ export type UpdateEventParams = {
     endDateTime: Date
     categoryId: string
     customFields: CustomField[]
+    country: string
   }
   path: string
 }

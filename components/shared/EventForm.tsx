@@ -42,7 +42,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     defaultValues: event && type === 'Update'
       ? {
           ...event,
-          country: event.country || "",
+          country: event.country || "Singapore",
           startDateTime: new Date(event.startDateTime),
           endDateTime: new Date(event.endDateTime),
           categoryId: event.category._id,
@@ -56,7 +56,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             )
           })) || [],
         }
-      : { ...eventDefaultValues, country: "" }
+      : { ...eventDefaultValues }
   })
 
   useEffect(() => {
@@ -86,20 +86,44 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   });
 
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+    console.log("Form submitted with values:", values);
+    
+    // Ensure country is set
+    if (!values.country) {
+      console.error("Country is required but not set");
+      // Set a default country if not provided
+      values.country = "Singapore";
+      console.log("Set default country to Singapore");
+    }
+    
     let uploadedImageUrl = values.imageUrl;
 
     if(files.length > 0) {
+      console.log("Uploading files...");
       const uploadedImages = await startUpload(files)
 
       if(!uploadedImages) {
+        console.error("File upload failed");
         return
       }
 
       uploadedImageUrl = uploadedImages[0].url
+      console.log("File uploaded successfully:", uploadedImageUrl);
     }
 
     if(type === 'Create') {
       try {
+        console.log("Attempting to create event with data:", {
+          event: { 
+            ...values, 
+            imageUrl: uploadedImageUrl,
+            customFields: values.customFields,
+            country: values.country // Explicitly include country
+          },
+          userId,
+          path: '/profile'
+        });
+        
         const newEvent = await createEvent({
           event: { 
             ...values, 
@@ -113,14 +137,16 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           path: '/profile'
         })
         
-        console.log("newEvent created")
+        console.log("newEvent created:", newEvent);
 
         if(newEvent) {
           form.reset();
           router.push(`/events/details/${newEvent._id}`)
+        } else {
+          console.error("Event creation failed: newEvent is undefined or null");
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error creating event:", error);
       }
     }
 
@@ -225,42 +251,27 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 <FormControl>
                   <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
                     <Image
-                      src="/assets/icons/world.svg"
-                      alt="globe"
+                      src="/assets/icons/location-grey.svg"
+                      alt="country"
                       width={24}
                       height={24}
-                      className="filter-grey"
+                      className="filter-grey mr-3"
                     />
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                        <SelectValue placeholder="Select a country" />
+                    <p className="mr-3 whitespace-nowrap text-grey-600">Country:</p>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="w-full bg-transparent border-none focus:outline-none">
+                        <SelectValue placeholder="Select Country" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Singapore">
-                          <div className="flex items-center gap-2">
-                            <Image src="/assets/flags/sg.svg" alt="Singapore flag" width={20} height={15} />
-                            <span>Singapore</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="Malaysia">
-                          <div className="flex items-center gap-2">
-                            <Image src="/assets/flags/my.svg" alt="Malaysia flag" width={20} height={15} />
-                            <span>Malaysia</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="Others">
-                          <div className="flex items-center gap-2">
-                            <Image src="/assets/icons/world.svg" alt="World" width={20} height={15} />
-                            <span>Others</span>
-                          </div>
-                        </SelectItem>
+                        <SelectItem value="Singapore">Singapore</SelectItem>
+                        <SelectItem value="Malaysia">Malaysia</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </FormControl>
-                <FormDescription className="text-xs text-gray-500 mt-1 ml-4">
-                  Select the country where the event will take place.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
