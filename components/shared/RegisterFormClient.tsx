@@ -145,14 +145,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               : field.type === 'phone'
                 ? z.string()
                     .min(1, { message: "此栏位为必填 / This field is required" })
-                    .refine(
-                      (value) => {
-                        const index = parseInt(field.id.split('_')[1]) - 1;
-                        // Skip isValidPhoneNumber check if phoneOverride is true
-                        return phoneOverrides[index] || isValidPhoneNumber(value);
-                      },
-                      { message: "无效的电话号码 / Invalid phone number" }
-                    )
                 : field.type === 'postal'
                   ? z.string()
                       .min(1, { message: "此栏位为必填 / This field is required" })
@@ -240,8 +232,38 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     const toastId = toast.loading("检查注册详情中... / Checking registration details...");
     
     saveFormData(values);
+
+    // Validate phone numbers first
+    const phoneField = customFields.find(f => f.type === 'phone')?.id;
+    if (phoneField) {
+      const phoneValidationErrors: string[] = [];
+      
+      for (let i = 0; i < values.groups.length; i++) {
+        const rawValue = values.groups[i][phoneField];
+        const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+        
+        // Skip validation if phone override is active
+        if (phoneOverrides[i]) {
+          // For overridden numbers, just check if it starts with + and contains only numbers after that
+          if (!/^\+\d+$/.test(phoneNumber)) {
+            phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Person ${i + 1}. Must start with + followed by numbers`);
+          }
+          continue;
+        }
+        
+        // Regular phone validation for SG/MY numbers
+        if (!isValidPhoneNumber(phoneNumber)) {
+          phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码无效 / Invalid phone number for Person ${i + 1}`);
+        }
+      }
+      
+      if (phoneValidationErrors.length > 0) {
+        toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+        return;
+      }
+    }
     
-    // Validate postal codes first
+    // Validate postal codes
     const postalField = customFields.find(f => f.type === 'postal')?.id;
     if (postalField) {
       const postalValidationErrors: string[] = [];
