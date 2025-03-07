@@ -88,58 +88,90 @@ type EventDetailsProps = {
 
 // Generate metadata for social sharing
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const event = await getEventById(params.id);
-  
-  return {
-    title: event.title || 'Event Details',
-    description: event.description?.slice(0, 160) || 'Event details',
-    openGraph: {
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
-      images: [
-        {
-          url: event.imageUrl || '',
-          width: 1200,
-          height: 630,
-          alt: event.title,
-        }
-      ],
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
-      images: [event.imageUrl || ''],
-    },
-    other: {
-      'whatsapp-preview': 'true',
+  try {
+    const event = await getEventById(params.id);
+    
+    if (!event) {
+      return {
+        title: 'Event Not Found',
+        description: 'The requested event could not be found.'
+      };
     }
-  };
+    
+    return {
+      title: event.title || 'Event Details',
+      description: event.description?.slice(0, 160) || 'Event details',
+      openGraph: {
+        title: event.title || 'Event Details',
+        description: event.description?.slice(0, 160) || 'Event details',
+        images: [
+          {
+            url: event.imageUrl || '',
+            width: 1200,
+            height: 630,
+            alt: event.title,
+          }
+        ],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: event.title || 'Event Details',
+        description: event.description?.slice(0, 160) || 'Event details',
+        images: [event.imageUrl || ''],
+      },
+      other: {
+        'whatsapp-preview': 'true',
+      }
+    };
+  } catch (error) {
+    return {
+      title: 'Event Not Found',
+      description: 'The requested event could not be found.'
+    };
+  }
 }
 
 export default async function EventDetails({ params: { id }, searchParams }: EventDetailsProps) {
-  const eventPromise = getEventById(id);
-  const event = await eventPromise;
+  try {
+    const eventPromise = getEventById(id);
+    const event = await eventPromise;
 
-  return (
-    <section className="w-full bg-gray-50 min-h-screen py-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
-        <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-5">
-          <Image 
-            src={event.imageUrl}
-            alt={event.title}
-            width={500}
-            height={500}
-            className="rounded-2xl object-contain w-full h-auto shadow-lg"
-            priority
-          />
+    if (!event) {
+      // This could happen if the ID is 'create' or an invalid ID
+      throw new Error('Event not found');
+    }
+
+    return (
+      <section className="w-full bg-gray-50 min-h-screen py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-5">
+            <Image 
+              src={event.imageUrl}
+              alt={event.title}
+              width={500}
+              height={500}
+              className="rounded-2xl object-contain w-full h-auto shadow-lg"
+              priority
+            />
+          </div>
+          
+          <Suspense fallback={<Loading />}>
+            <EventInfo event={event} />
+          </Suspense>
         </div>
-        
-        <Suspense fallback={<Loading />}>
-          <EventInfo event={event} />
-        </Suspense>
+      </section>
+    );
+  } catch (error) {
+    // Redirect to events page or show an error message
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen py-10">
+        <h1 className="text-2xl font-bold text-red-500 mb-4">Event Not Found</h1>
+        <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+        <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          View All Events
+        </a>
       </div>
-    </section>
-  );
+    );
+  }
 }

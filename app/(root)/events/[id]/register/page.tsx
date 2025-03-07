@@ -67,34 +67,58 @@ async function AsyncRegisterForm({
 }: { 
   eventPromise: Promise<any> 
 }) {
-  const event = await eventPromise
-
-  if (!event) {
+  try {
+    const event = await eventPromise
+    
+    if (!event) {
+      return (
+        <div className="flex flex-col items-center justify-center py-10">
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Event Not Found</h1>
+          <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+          <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            View All Events
+          </a>
+        </div>
+      );
+    }
+    
+    return <RegisterFormWrapper event={event} />
+  } catch (error) {
     return (
-      <div className="text-center py-10">
-        <h3 className="text-2xl font-bold text-gray-900">
-          未找到活动 / Event not found
-        </h3>
-        <p className="mt-2 text-gray-600">
-          您要查找的活动不存在或已被删除。/ The event you're looking for doesn't exist or has been removed.
-        </p>
+      <div className="flex flex-col items-center justify-center py-10">
+        <h1 className="text-2xl font-bold text-red-500 mb-4">Error Loading Event</h1>
+        <p className="text-gray-600 mb-6">There was a problem loading this event.</p>
+        <a href="/events" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          View All Events
+        </a>
       </div>
-    )
+    );
   }
-
-  return <RegisterFormWrapper event={event} />
 }
-
 
 export async function generateMetadata({ 
   params: { id } 
 }: { 
   params: { id: string } 
 }) {
-  const event = await getCachedEvent(id)
-  
-  return {
-    title: `Register for ${event?.title || 'Event'}`,
-    description: `Register for ${event?.title}. ${event?.description?.slice(0, 100)}...`,
+  try {
+    const event = await getCachedEvent(id)
+    
+    if (!event) {
+      return {
+        title: 'Event Not Found',
+        description: 'The requested event could not be found.'
+      };
+    }
+    
+    return {
+      title: `Register for ${event.title}`,
+      description: `Register for ${event.title}. ${event.description?.slice(0, 100)}...`,
+    }
+  } catch (error) {
+    return {
+      title: 'Event Not Found',
+      description: 'The requested event could not be found.'
+    };
   }
 }

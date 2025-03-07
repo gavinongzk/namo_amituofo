@@ -63,6 +63,12 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 export const getEventById = unstable_cache(
   async (eventId: string) => {
     try {
+      // Special case: if eventId is 'create', this is probably meant to access the create page
+      // not trying to fetch an event with ID 'create'
+      if (eventId === 'create') {
+        throw new Error('Invalid event ID: "create" is a reserved path');
+      }
+
       await connectToDatabase();
 
       const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
@@ -86,7 +92,7 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: 3600, // Cache for 1 minute
+    revalidate: 3600, // Cache for 1 hour
     tags: ['event']
   }
 );
