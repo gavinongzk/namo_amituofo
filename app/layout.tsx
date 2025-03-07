@@ -15,44 +15,8 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Namo Amituofo Registration',
   description: 'Namo Amituofo Registration is a platform for users to register for events.',
-  openGraph: {
-    type: 'website',
-    title: 'Namo Amituofo Registration',
-    description: 'Namo Amituofo Registration is a platform for users to register for events.',
-    siteName: 'Namo Amituofo',
-    images: [
-      {
-        url: '/assets/images/amitabha_image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Namo Amituofo',
-      }
-    ],
-    
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Namo Amituofo Registration',
-    description: 'Namo Amituofo Registration is a platform for users to register for events.',
-    images: ['/assets/images/amitabha_image.png'],
-  },
-  themeColor: '#ffffff',
-  appleWebApp: {
-    title: 'Namo Amituofo',
-    statusBarStyle: 'black-translucent',
-    capable: true,
-    startupImage: [
-      '/apple-touch-icon.png'
-    ]
-  },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-    shortcut: '/apple-touch-icon.png',
-    other: {
-      rel: 'apple-touch-icon',
-      url: '/apple-touch-icon.png'
-    }
+    icon: '/assets/images/logo.svg'
   }
 }
 
@@ -92,11 +56,11 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <head>
+          <meta name="apple-mobile-web-app-title" content="Namo Amituofo" />
+          <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
+          <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}
-          <link rel="icon" href="/favicon.ico" sizes="any" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-          <link rel="manifest" href="/manifest.webmanifest"/>
-          </head>
+        </head>
         <body className={poppins.variable}>
           <div className="context-container">
             {children}
