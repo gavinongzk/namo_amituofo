@@ -21,7 +21,7 @@ export function RouteWarmer() {
       } 
       else if (pathname.startsWith('/events/')) {
         // Preload registration form if on event details
-        if (!pathname.includes('/register')) {
+        if (!pathname.includes('/register') && !pathname.includes('/create')) {
           const RegisterFormWrapper = dynamic(() => 
             import('@/components/shared/RegisterFormWrapper')
           );

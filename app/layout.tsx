@@ -36,7 +36,6 @@ export const metadata: Metadata = {
     description: 'Namo Amituofo Registration is a platform for users to register for events.',
     images: ['/assets/images/amitabha_image.png'],
   },
-  themeColor: '#ffffff',
   appleWebApp: {
     title: 'Namo Amituofo',
     statusBarStyle: 'black-translucent',
@@ -54,6 +53,10 @@ export const metadata: Metadata = {
       url: '/apple-touch-icon.png'
     }
   }
+}
+
+export const viewport = {
+  themeColor: '#ffffff'
 }
 
 export default function RootLayout({
