@@ -43,8 +43,17 @@ export const metadata: Metadata = {
     title: '净土宗报名系统 | Namo Amituofo Registration',
     description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
     images: ['/assets/images/amitabha_image.png'],
+  },
+  appleWebApp: {
+    title: '净土宗报名系统 | Namo Amituofo Registration',
+    statusBarStyle: 'black-translucent',
+    capable: true,
+    startupImage: [
+      '/asset/images/amitabha_image.png'
+    ]
   }
 }
+
 
 export default function RootLayout({
   children,
