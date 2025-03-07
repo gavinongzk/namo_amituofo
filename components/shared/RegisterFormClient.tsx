@@ -155,19 +155,34 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                 : field.type === 'postal'
                   ? z.string()
                       .min(1, { message: "此栏位为必填 / This field is required" })
-                      .refine(
-                        async (value) => {
-                          const index = parseInt(field.id.split('_')[1]) - 1;
-                          return postalOverrides[index] || await isValidPostalCode(value, userCountry || 'Singapore');
-                        },
-                        {
-                          message: userCountry === 'Singapore' 
-                            ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                            : userCountry === 'Malaysia'
-                              ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                              : "请输入有效的邮区编号 / Please enter a valid postal code"
+                      .superRefine(async (value, ctx) => {
+                        const index = parseInt(field.id.split('_')[1]) - 1;
+                        if (postalOverrides[index]) {
+                          const isValid = /^\d+$/.test(value);
+                          if (!isValid) {
+                            ctx.addIssue({
+                              code: z.ZodIssueCode.custom,
+                              message: "邮区编号必须只包含数字 / Postal code must contain only numbers"
+                            });
+                            return false;
+                          }
+                          return true;
                         }
-                      )
+                        
+                        const isValid = await isValidPostalCode(value, userCountry || 'Singapore');
+                        if (!isValid) {
+                          ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: userCountry === 'Singapore' 
+                              ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
+                              : userCountry === 'Malaysia'
+                                ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                                : "请输入有效的邮区编号 / Please enter a valid postal code"
+                          });
+                          return false;
+                        }
+                        return true;
+                      })
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
                         .min(1, { message: "此栏位为必填 / This field is required" })
@@ -537,12 +552,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         className="max-w-md"
                                         value={String(formField.value)}
                                         placeholder={
-                                          phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                            ? "e.g. 12345"
-                                            : "e.g. 123456"
+                                          postalOverrides[personIndex]
+                                            ? "Enter any numeric postal code"
+                                            : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
+                                              ? "e.g. 12345"
+                                              : "e.g. 123456"
                                         }
                                         onChange={(e) => {
-                                          formField.onChange(e);
+                                          // Only allow numbers when in override mode
+                                          if (postalOverrides[personIndex]) {
+                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                            formField.onChange(numericValue);
+                                          } else {
+                                            formField.onChange(e);
+                                          }
                                         }}
                                       />
                                       <button
@@ -552,12 +575,14 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             ...prev,
                                             [personIndex]: !prev[personIndex]
                                           }));
+                                          // Clear the field when toggling override
+                                          form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                         }}
                                         className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                       >
                                         {postalOverrides[personIndex] ? 
-                                          "Switch back to postal code validation 切换回邮区编号验证" : 
-                                          "Using a postal code from another country? Click here 使用其他国家的邮区编号？点击这里"}
+                                          "切换回邮区编号验证 Switch back to postal code validation" : 
+                                          "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
                                       </button>
                                       {personIndex > 0 && (
                                         <div className="flex items-center gap-2 mt-2">
