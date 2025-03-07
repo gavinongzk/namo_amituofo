@@ -715,24 +715,24 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
 
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 md:pt-6">
                   <Button
                     type="button"
                     onClick={handleAddPerson}
                     disabled={fields.length >= event.maxSeats}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-base font-medium h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <PlusIcon className="w-5 h-5" />
+                    <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
                     添加参加者 Add Another Person
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium h-12 disabled:bg-blue-400"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-base font-medium h-10 md:h-12 disabled:bg-blue-400"
                   >
                     {isSubmitting ? (
                       <div className="flex items-center gap-2">
-                        <Loader2Icon className="w-4 h-4 animate-spin" />
+                        <Loader2Icon className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                         提交中... Submitting...
                       </div>
                     ) : (

@@ -377,20 +377,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       </div>
 
       <div id="order-details">
-        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
-          <h3 className="text-2xl font-bold text-center text-primary-500">
+        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-3 md:py-6 rounded-t-2xl">
+          <h3 className="text-xl md:text-2xl font-bold text-center text-primary-500">
             注册成功 Registration Successful
           </h3>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
-          <div className="p-6 space-y-6">
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
+          <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+            <div className="bg-gray-50 p-3 md:p-4 rounded-xl">
+              <h4 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
+              <div key={group.groupId} className={`mt-4 md:mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
                     <QRCodeDisplay 
@@ -401,13 +401,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
                 
-                <div className="bg-primary-100 p-4">
-                  <div className="flex justify-between items-center">
-                    <h5 className="text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
+                <div className="bg-primary-100 p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <h5 className="text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
                     {group.queueNumber && (
-                      <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
-                        <p className="text-sm text-blue-600">队列号 Queue Number</p>
-                        <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                      <div className="bg-blue-100 p-2 md:p-3 rounded-xl text-center w-full sm:w-auto">
+                        <p className="text-xs md:text-sm text-blue-600">队列号 Queue Number</p>
+                        <p className="text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                       </div>
                     )}
                   </div>

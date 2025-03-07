@@ -13,20 +13,20 @@ const RegistrationCard = ({ event, registrations }: Props) => {
   const hasMoreRegistrations = registrations.length > initialDisplayCount;
 
   return (
-    <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
+    <div className="group relative flex min-h-[320px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[380px]">
       <Link 
         href={`/orders/${event.orderId}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500 transition-transform duration-300 group-hover:scale-105"
         style={{backgroundImage: `url(${event.imageUrl})`}}
       />
 
-      <div className="flex flex-col flex-grow p-5">
-        <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col flex-grow p-3 md:p-5">
+        <div className="flex flex-col gap-1 md:gap-2 mb-3 md:mb-4">
           <h2 className="h3-bold line-clamp-2 text-black group-hover:text-primary-500 transition-colors duration-200">
             {event.title}
           </h2>
           {event.startDateTime && formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
-            <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
+            <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}>
               {line}
             </p>
           ))}

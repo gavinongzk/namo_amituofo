@@ -43,52 +43,57 @@ export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => 
 }
 
 export const formatDateTime = (dateString: Date, locale: 'en-US' | 'zh-CN' = 'en-US') => {
-  const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: locale === 'en-US' ? 'short' : 'numeric',
-    day: 'numeric',
-    weekday: locale === 'en-US' ? 'short' : 'long',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: 'Asia/Shanghai', // GMT+8
-  }
-
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: locale === 'en-US' ? 'short' : 'numeric',
-    day: 'numeric',
-    weekday: locale === 'en-US' ? 'short' : 'long',
-    timeZone: 'Asia/Shanghai', // GMT+8
-  }
-
-  const timeOptions: Intl.DateTimeFormatOptions = {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: 'Asia/Shanghai', // GMT+8
-  }
-
   const date = new Date(dateString)
   let formattedDateTime: string
   let formattedDate: string
   let formattedTime: string
 
-  if (locale === 'zh-CN') {
-    const date = new Date(dateString)
+  // Helper function to format date in DD-MM-YYYY format
+  const formatDatePart = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  // Helper function to format time in Chinese format
+  const formatChineseTime = (date: Date) => {
     const utcHour = date.getUTCHours();
     const hour = (utcHour + 8) % 24; // Convert to GMT+8
     const minute = date.getMinutes().toString().padStart(2, '0');
     const period = hour < 12 ? '上午' : '下午';
     const hour12 = hour % 12 || 12;
+    return `${period}${hour12}.${minute}`;
+  }
+
+  // Helper function to format time in English format
+  const formatEnglishTime = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Shanghai'
+    });
+  }
+
+  if (locale === 'zh-CN') {
+    const weekdayCN = date.toLocaleString('zh-CN', { weekday: 'long' });
+    const weekdayEN = date.toLocaleString('en-US', { weekday: 'short' });
+    const formattedDatePart = formatDatePart(date);
+    const formattedTimePart = formatChineseTime(date);
     
-    formattedDateTime = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })} ${period}${hour12}:${minute}`
-    formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.toLocaleString('zh-CN', { weekday: 'long' })}`
-    formattedTime = `${period}${hour12}:${minute}`
+    formattedDateTime = `${formattedDatePart} (${weekdayCN} ${weekdayEN}) ${formattedTimePart}`;
+    formattedDate = `${formattedDatePart} (${weekdayCN} ${weekdayEN})`;
+    formattedTime = formattedTimePart;
   } else {
-    formattedDateTime = date.toLocaleString('en-US', dateTimeOptions)
-    formattedDate = date.toLocaleString('en-US', dateOptions)
-    formattedTime = date.toLocaleString('en-US', timeOptions)
+    const weekdayCN = date.toLocaleString('zh-CN', { weekday: 'long' });
+    const weekdayEN = date.toLocaleString('en-US', { weekday: 'short' });
+    const formattedDatePart = formatDatePart(date);
+    const formattedTimePart = formatEnglishTime(date);
+    
+    formattedDateTime = `${formattedDatePart} (${weekdayCN} ${weekdayEN}) ${formattedTimePart}`;
+    formattedDate = `${formattedDatePart} (${weekdayCN} ${weekdayEN})`;
+    formattedTime = formattedTimePart;
   }
 
   return {
