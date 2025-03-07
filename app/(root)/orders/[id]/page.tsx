@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check, Loader2, Share2 } from 'lucide-react';
+import { Pencil, X, Check, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
@@ -383,114 +383,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
-  const handleShare = async () => {
-    const userAgent = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
-    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    const isAndroid = /Android/.test(userAgent);
-    const isChrome = /Chrome/.test(userAgent) && !/Edg/.test(userAgent);
-    const isEdge = /Edg/.test(userAgent);
-    const isFirefox = /Firefox/.test(userAgent);
-    const isSamsung = /SamsungBrowser/.test(userAgent);
-    const isOpera = /OPR|Opera/.test(userAgent);
-
-    if (isIOS && isSafari) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the share button <span className="inline-block">⬆️</span> at the bottom of Safari</li>
-            <li>Scroll down and tap "Add to Home Screen"</li>
-            <li>Tap "Add" in the top right corner</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isIOS && !isSafari) {
-      toast((t) => (
-        <div>
-          <p>Please open this page in Safari to add it to your home screen</p>
-          <p className="mt-2">在Safari浏览器中打开此页面以添加到主屏幕</p>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isAndroid && (isChrome || isSamsung)) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the menu icon (⋮) at the top right</li>
-            <li>Select "Add to Home screen" or "Install app"</li>
-            <li>Tap "Add" to confirm</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isAndroid && isFirefox) {
-      toast((t) => (
-        <div>
-          <p>To add to home screen:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Tap the menu icon (⋮) at the top right</li>
-            <li>Tap "Page" then "Add to Home Screen"</li>
-            <li>Tap "Add" to confirm</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else if (isEdge) {
-      toast((t) => (
-        <div>
-          <p>To add to favorites:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
-            <li>Or click the star icon in the address bar</li>
-            <li>Choose a folder and click "Done"</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    } else {
-      // Default instructions for other browsers (Chrome, Firefox, Opera, etc.)
-      toast((t) => (
-        <div>
-          <p>To bookmark this page:</p>
-          <ol className="list-decimal ml-4 mt-2">
-            <li>Press Ctrl+D (Windows) or Cmd+D (Mac)</li>
-            <li>Or click the star/menu icon in your browser</li>
-            <li>Select "Add bookmark" or "Add to favorites"</li>
-          </ol>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'bottom-center',
-      });
-    }
-
-    // Try to use the Web Share API if available
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Order Details',
-          text: 'View my order details',
-          url: window.location.href
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
-
   if (isLoading) {
     return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
   }
@@ -506,14 +398,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   return (
     <div className="wrapper my-8 max-w-4xl mx-auto">
       <div className="grid grid-cols-1 gap-4 mb-4 relative">
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded justify-center"
-        >
-          <Share2 className="h-4 w-4" />
-          <span>保存快捷方式 Save for Easy Access</span>
-        </button>
-        
         {isPolling && (
           <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
