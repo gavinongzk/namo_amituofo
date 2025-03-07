@@ -148,6 +148,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     .refine(
                       (value) => {
                         const index = parseInt(field.id.split('_')[1]) - 1;
+                        // Skip isValidPhoneNumber check if phoneOverride is true
                         return phoneOverrides[index] || userCountry === 'Others' || isValidPhoneNumber(value);
                       },
                       { message: "无效的电话号码 / Invalid phone number" }
@@ -160,30 +161,29 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         // Check if override is active first
                         if (postalOverrides[index]) {
                           // Only check if it contains numbers when in override mode
-                          const isValid = /^\d+$/.test(value);
-                          if (!isValid) {
+                          const isNumericOnly = /^\d+$/.test(value);
+                          if (!isNumericOnly) {
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
                               message: "邮区编号必须只包含数字 / Postal code must contain only numbers"
                             });
                           }
-                          // Return true to indicate validation passed if it contains only numbers
-                          return isValid;
+                          return isNumericOnly;
+                        } else {
+                          // Proceed with country-specific validation
+                          const isValidCountryPostal = await isValidPostalCode(value, userCountry || 'Singapore');
+                          if (!isValidCountryPostal) {
+                            ctx.addIssue({
+                              code: z.ZodIssueCode.custom,
+                              message: userCountry === 'Singapore' 
+                                ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
+                                : userCountry === 'Malaysia'
+                                  ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                                  : "请输入有效的邮区编号 / Please enter a valid postal code"
+                            });
+                          }
+                          return isValidCountryPostal;
                         }
-                        
-                        // Only proceed with country-specific validation if not in override mode
-                        const isValid = await isValidPostalCode(value, userCountry || 'Singapore');
-                        if (!isValid) {
-                          ctx.addIssue({
-                            code: z.ZodIssueCode.custom,
-                            message: userCountry === 'Singapore' 
-                              ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                              : userCountry === 'Malaysia'
-                                ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                                : "请输入有效的邮区编号 / Please enter a valid postal code"
-                          });
-                        }
-                        return isValid;
                       })
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
