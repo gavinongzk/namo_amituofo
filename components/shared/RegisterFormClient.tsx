@@ -157,18 +157,21 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       .min(1, { message: "此栏位为必填 / This field is required" })
                       .superRefine(async (value, ctx) => {
                         const index = parseInt(field.id.split('_')[1]) - 1;
+                        // Check if override is active first
                         if (postalOverrides[index]) {
+                          // Only check if it contains numbers when in override mode
                           const isValid = /^\d+$/.test(value);
                           if (!isValid) {
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
                               message: "邮区编号必须只包含数字 / Postal code must contain only numbers"
                             });
-                            return false;
                           }
-                          return true;
+                          // Return true to indicate validation passed if it contains only numbers
+                          return isValid;
                         }
                         
+                        // Only proceed with country-specific validation if not in override mode
                         const isValid = await isValidPostalCode(value, userCountry || 'Singapore');
                         if (!isValid) {
                           ctx.addIssue({
@@ -179,9 +182,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                 ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
                                 : "请输入有效的邮区编号 / Please enter a valid postal code"
                           });
-                          return false;
                         }
-                        return true;
+                        return isValid;
                       })
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
