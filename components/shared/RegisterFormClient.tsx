@@ -160,7 +160,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         const index = parseInt(field.id.split('_')[1]) - 1;
                         
                         // First check if the override is active - do this check before any validation
-                        if (postalOverrides[index]) {
+                        if (postalOverrides[index] === true) {  // Explicitly check for true
                           // In override mode, only check if it contains numbers
                           if (!/^\d+$/.test(value)) {
                             ctx.addIssue({
@@ -190,13 +190,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         } catch (error) {
                           console.error("Error validating postal code:", error);
                           // If validation fails due to an error, use basic pattern matching
-                          if (userCountry === 'Singapore' && !/^\d{6}$/.test(value)) {
+                          if (!postalOverrides[index] && userCountry === 'Singapore' && !/^\d{6}$/.test(value)) {  // Add override check here too
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
                               message: "新加坡邮区编号必须是6位数字 / Singapore postal code must be 6 digits"
                             });
                             return false;
-                          } else if (userCountry === 'Malaysia' && !/^\d{5}$/.test(value)) {
+                          } else if (!postalOverrides[index] && userCountry === 'Malaysia' && !/^\d{5}$/.test(value)) {  // Add override check here too
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
                               message: "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
@@ -622,7 +622,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           const newOverrideState = !postalOverrides[personIndex];
                                           
                                           // Clear the field first
-                                          form.setValue(`groups.${personIndex}.${customField.id}`, '');
+                                          form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
+                                            shouldValidate: false  // Prevent validation on clear
+                                          });
                                           
                                           // Update the override state
                                           setPostalOverrides(prev => ({
@@ -630,8 +632,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             [personIndex]: newOverrideState
                                           }));
                                           
-                                          // Immediately trigger validation with the updated state
-                                          form.trigger(`groups.${personIndex}.${customField.id}`);
+                                          // Reset form errors for this field
+                                          form.clearErrors(`groups.${personIndex}.${customField.id}`);
+                                          
+                                          // Force revalidation after a small delay to ensure state is updated
+                                          setTimeout(() => {
+                                            form.trigger(`groups.${personIndex}.${customField.id}`);
+                                          }, 100);
                                         }}
                                         className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                       >
