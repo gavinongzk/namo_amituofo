@@ -9,6 +9,9 @@ const nextConfig = {
         port: ''
       }
     ]
+  },
+  experimental: {
+    optimizeCss: true,
   }
 }
 
