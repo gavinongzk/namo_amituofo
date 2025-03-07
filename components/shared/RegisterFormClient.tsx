@@ -134,22 +134,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
 
-  // Add effect to revalidate postal fields when override status changes
-  useEffect(() => {
-    const postalFields = customFields.filter(field => field.type === 'postal');
-    if (postalFields.length > 0) {
-      // For each person with a postal field
-      for (let i = 0; i < form.getValues().groups.length; i++) {
-        if (Object.keys(postalOverrides).includes(i.toString())) {
-          // Trigger validation for each postal field
-          postalFields.forEach(field => {
-            form.trigger(`groups.${i}.${field.id}`);
-          });
-        }
-      }
-    }
-  }, [postalOverrides, customFields, form]);
-
   const formSchema = z.object({
     groups: z.array(
       z.object(
@@ -242,6 +226,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       )
     )
   });
+
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
     return country === 'Malaysia' ? 'MY' : 'SG';
@@ -264,6 +249,22 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     control: form.control,
     name: "groups"
   });
+
+  // Add effect to revalidate postal fields when override status changes
+  useEffect(() => {
+    const postalFields = customFields.filter(field => field.type === 'postal');
+    if (postalFields.length > 0 && form) {
+      // For each person with a postal field
+      for (let i = 0; i < form.getValues().groups.length; i++) {
+        if (Object.keys(postalOverrides).includes(i.toString())) {
+          // Trigger validation for each postal field
+          postalFields.forEach(field => {
+            form.trigger(`groups.${i}.${field.id}`);
+          });
+        }
+      }
+    }
+  }, [postalOverrides, customFields, form]);
 
   const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
     const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
