@@ -177,12 +177,16 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                             return false;
                           }
                           console.log(`Override active for index ${index}, bypassing validation`);
-                          return true;
-                        } 
+                          return true; // Early return here to skip the country-specific validation
+                        }
+                        
+                        console.log(`No override for index ${index}, proceeding with normal validation`);
                         
                         // If not in override mode, proceed with country-specific validation
                         try {
+                          console.log(`Calling isValidPostalCode for ${value}, country: ${userCountry || 'Singapore'}`);
                           const isValidCountryPostal = await isValidPostalCode(value, userCountry || 'Singapore');
+                          console.log(`isValidPostalCode result: ${isValidCountryPostal}`);
                           if (!isValidCountryPostal) {
                             ctx.addIssue({
                               code: z.ZodIssueCode.custom,
@@ -255,12 +259,19 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   useEffect(() => {
     const postalFields = customFields.filter(field => field.type === 'postal');
     if (postalFields.length > 0 && form) {
+      console.log('postalOverrides state changed:', postalOverrides);
+      
       // For each person with a postal field
       for (let i = 0; i < form.getValues().groups.length; i++) {
         if (Object.keys(postalOverrides).includes(i.toString())) {
+          console.log(`Revalidating postal fields for person ${i}, override: ${postalOverrides[i]}`);
+          
           // Trigger validation for each postal field
           postalFields.forEach(field => {
-            form.trigger(`groups.${i}.${field.id}`);
+            // Add a small delay to ensure the state is updated before triggering validation
+            setTimeout(() => {
+              form.trigger(`groups.${i}.${field.id}`);
+            }, 100);
           });
         }
       }
@@ -622,20 +633,37 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                           // Update the override state
                                           const newOverrideState = !postalOverrides[personIndex];
                                           
-                                          // Update the override state immediately
-                                          setPostalOverrides(prev => ({
-                                            ...prev,
-                                            [personIndex]: newOverrideState
-                                          }));
-                                          
-                                          // Clear the field to avoid validation errors
+                                          // Clear the field first
                                           form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                           
-                                          // Force re-validation of the field after state changes
-                                          setTimeout(() => {
-                                            console.log('Triggering validation with override:', newOverrideState, personIndex);
-                                            form.trigger(`groups.${personIndex}.${customField.id}`);
-                                          }, 200); // Increased timeout to ensure state updates first
+                                          // Update the override state using functional update
+                                          setPostalOverrides(prev => {
+                                            const newOverrides = {
+                                              ...prev,
+                                              [personIndex]: newOverrideState
+                                            };
+                                            
+                                            console.log('Setting new postal overrides:', newOverrides);
+                                            
+                                            // Use a callback after state update
+                                            setTimeout(() => {
+                                              // Wait for React to process the state update
+                                              console.log('State should be updated, current override for index', 
+                                                personIndex, ':', newOverrideState);
+                                              
+                                              // Force a re-render first to ensure state is updated
+                                              form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
+                                                shouldValidate: false 
+                                              });
+                                              
+                                              // Now trigger validation with the updated state
+                                              setTimeout(() => {
+                                                form.trigger(`groups.${personIndex}.${customField.id}`);
+                                              }, 100);
+                                            }, 200);
+                                            
+                                            return newOverrides;
+                                          });
                                         }}
                                         className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                       >
