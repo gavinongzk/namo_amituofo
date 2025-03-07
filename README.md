@@ -1,6 +1,6 @@
-# Namo Amituofo Registration
+# 净土宗报名系统 | Namo Amituofo Registration
 
-Namo Amituofo Registration is a comprehensive platform designed to facilitate user registrations for various Buddhist events. Built with modern web technologies, it offers a seamless experience for both users and administrators, ensuring efficient event management and attendance tracking.
+净土宗报名系统 | Namo Amituofo Registration is a comprehensive platform designed to facilitate user registrations for various Buddhist events. Built with modern web technologies, it offers a seamless experience for both users and administrators, ensuring efficient event management and attendance tracking.
 
 ## Table of Contents
 
