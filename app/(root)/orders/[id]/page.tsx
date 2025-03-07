@@ -18,16 +18,55 @@ import { eventDefaultValues } from "@/constants";
 
 const convertToGoogleMapsLink = (location: string) => {
   const encodedLocation = encodeURIComponent(location);
-  return `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+  // Create URLs for both web and mobile deep links
+  const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+  const mobileUrl = `comgooglemaps://?q=${encodedLocation}&zoom=17`;
+  const appleMapsUrl = `maps://maps.apple.com/?q=${encodedLocation}`;
+  
+  return {
+    webUrl,
+    mobileUrl,
+    appleMapsUrl
+  };
 };
 
 const convertAddressesToLinks = (text: string) => {
-  // This regex looks for addresses that might contain these patterns
-  const addressRegex = /(?:\d+[A-Za-z\s,-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Singapore)(?:\s+\d{6})?)/g;
+  // Enhanced regex pattern to catch more Singapore address formats
+  const addressRegex = /(?:\d+(?:\s*,\s*)?(?:Lor(?:ong)?|Jln|Jalan|Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Close|Cl|Way|Walk|Place|Pl|Square|Sq)\s*\d*\s*,\s*[A-Za-z\s,-]+(?:Singapore|S'pore|SG)?(?:\s+#\d{2,3}-\d{2,3})?(?:\s+S?\(?(?:\d{6}|\d{4})\)?)?)/gi;
   
   return text.replace(addressRegex, (match) => {
-    const mapsLink = convertToGoogleMapsLink(match);
-    return `<a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+    const links = convertToGoogleMapsLink(match);
+    return `
+      <span class="inline-flex flex-wrap gap-2 items-center">
+        <span class="text-gray-700">${match}</span>
+        <span class="inline-flex gap-2">
+          <a href="${links.webUrl}" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Open in Maps
+          </a>
+          <a href="${links.mobileUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
+            </svg>
+            Google Maps App
+          </a>
+          <a href="${links.appleMapsUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+            </svg>
+            Apple Maps
+          </a>
+        </span>
+      </span>
+    `;
   });
 };
 
@@ -38,9 +77,37 @@ const convertLinksInText = (text: string) => {
   processedText = convertAddressesToLinks(processedText);
   // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
-    /(Google Map[：:]?[\s\n]*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+))/gi,
-    (match, prefix, url) => {
-      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline inline-block max-w-full sm:max-w-[300px] truncate align-bottom" style="text-overflow: ellipsis;">${url}</a>`;
+    /(?:Google Maps[：:]?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+|maps\.google\.com\/[^\s\n]+))/gi,
+    (match, url) => {
+      const links = convertToGoogleMapsLink(url);
+      return `
+        <span class="inline-flex flex-wrap gap-2">
+          <a href="${url}" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Open in Browser
+          </a>
+          <a href="${links.mobileUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
+            </svg>
+            Google Maps App
+          </a>
+          <a href="${links.appleMapsUrl}" 
+             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+            </svg>
+            Apple Maps
+          </a>
+        </span>
+      `;
     }
   );
   return processedText;
@@ -262,6 +329,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           groupId,
           field: editingField.field,
           value: editValue,
+          isFromOrderDetails: true
         }),
       });
 
