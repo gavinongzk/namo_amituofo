@@ -156,56 +156,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                 : field.type === 'postal'
                   ? z.string()
                       .min(1, { message: "此栏位为必填 / This field is required" })
-                      .superRefine(async (value, ctx) => {
-                        const index = parseInt(field.id.split('_')[1]) - 1;
-                        
-                        // First check if the override is active - do this check before any validation
-                        if (postalOverrides[index] === true) {  // Explicitly check for true
-                          // In override mode, only check if it contains numbers
-                          if (!/^\d+$/.test(value)) {
-                            ctx.addIssue({
-                              code: z.ZodIssueCode.custom,
-                              message: "邮区编号必须只包含数字 / Postal code must contain only numbers"
-                            });
-                            return false;
-                          }
-                          return true; // Early return here to skip the country-specific validation
-                        }
-                        
-                        // If not in override mode, proceed with country-specific validation
-                        try {
-                          const isValidCountryPostal = await isValidPostalCode(value, userCountry || 'Singapore');
-                          if (!isValidCountryPostal) {
-                            ctx.addIssue({
-                              code: z.ZodIssueCode.custom,
-                              message: userCountry === 'Singapore' 
-                                ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                                : userCountry === 'Malaysia'
-                                  ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                                  : "请输入有效的邮区编号 / Please enter a valid postal code"
-                            });
-                            return false;
-                          }
-                          return true;
-                        } catch (error) {
-                          console.error("Error validating postal code:", error);
-                          // If validation fails due to an error, use basic pattern matching
-                          if (!postalOverrides[index] && userCountry === 'Singapore' && !/^\d{6}$/.test(value)) {  // Add override check here too
-                            ctx.addIssue({
-                              code: z.ZodIssueCode.custom,
-                              message: "新加坡邮区编号必须是6位数字 / Singapore postal code must be 6 digits"
-                            });
-                            return false;
-                          } else if (!postalOverrides[index] && userCountry === 'Malaysia' && !/^\d{5}$/.test(value)) {  // Add override check here too
-                            ctx.addIssue({
-                              code: z.ZodIssueCode.custom,
-                              message: "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                            });
-                            return false;
-                          }
-                          return true;
-                        }
-                      })
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
                         .min(1, { message: "此栏位为必填 / This field is required" })
@@ -290,6 +240,48 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     const toastId = toast.loading("检查注册详情中... / Checking registration details...");
     
     saveFormData(values);
+    
+    // Validate postal codes first
+    const postalField = customFields.find(f => f.type === 'postal')?.id;
+    if (postalField) {
+      const postalValidationErrors: string[] = [];
+      
+      for (let i = 0; i < values.groups.length; i++) {
+        // Ensure we're working with a string value
+        const rawValue = values.groups[i][postalField];
+        const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+        
+        // Skip detailed validation if override is active
+        if (postalOverrides[i]) {
+          if (!/^\d+$/.test(postalCode)) {
+            postalValidationErrors.push(`参加者 ${i + 1} 的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
+          }
+          continue;
+        }
+        
+        try {
+          const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
+          if (!isValidCountryPostal) {
+            postalValidationErrors.push(
+              `参加者 ${i + 1}: ${
+                userCountry === 'Singapore'
+                  ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
+                  : userCountry === 'Malaysia'
+                    ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                    : "请输入有效的邮区编号 / Please enter a valid postal code"
+              }`
+            );
+          }
+        } catch (error) {
+          console.error("Error validating postal code:", error);
+        }
+      }
+      
+      if (postalValidationErrors.length > 0) {
+        toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+        return;
+      }
+    }
     
     const duplicates = await checkForDuplicatePhoneNumbers(values);
     
