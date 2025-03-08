@@ -37,13 +37,13 @@ const EventInfo = async ({ event }: { event: any }) => {
             <div className="flex flex-col gap-1">
               <p className="text-lg font-semibold text-gray-800">日期 Date:</p>
               <p className="text-base text-gray-600">
-                {formatBilingualDateTime(event.startDateTime).cn.dateOnly} {formatBilingualDateTime(event.startDateTime).en.dateOnly}
+                {formatBilingualDateTime(event.startDateTime).combined.dateOnly}
               </p>
             </div>
             <div className="flex flex-col gap-1">
               <p className="text-lg font-semibold text-gray-800">时间 Time:</p>
               <p className="text-base text-gray-600">
-                {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly} {formatBilingualDateTime(event.startDateTime).en.timeOnly} - {formatBilingualDateTime(event.endDateTime).en.timeOnly}
+                {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
               </p>
             </div>
           </div>
