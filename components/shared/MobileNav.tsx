@@ -8,66 +8,107 @@ import {
 import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
+import { Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const AdminLoginButton = () => (
   <Link 
     href="/sign-in" 
-    className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-300"
+    className="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
     onClick={(e) => e.stopPropagation()}
   >
-    <Image 
-      src="/assets/icons/admin.png"
-      width={24}
-      height={24}
-      alt="Admin login"
-      className="object-contain"
-    />
+    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 group-hover:bg-white transition-colors duration-200">
+      <Image 
+        src="/assets/icons/admin.png"
+        width={24}
+        height={24}
+        alt=""
+        className="object-contain w-6 h-6"
+      />
+    </div>
     <div className="flex flex-col">
-      <span className="font-medium">管理员登录</span>
-      <span className="text-xs">Admin Login</span>
+      <span className="font-medium leading-none mb-1">管理员登录</span>
+      <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors duration-200">Admin Login</span>
     </div>
   </Link>
 )
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleClose = () => setIsOpen(false);
 
+  // Prevent scroll when menu is open
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, isMounted]);
+
   return (
-    <nav className="md:hidden">
+    <nav className="md:hidden" aria-label="Mobile navigation">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger className="align-middle">
-          <div className="p-2 rounded-full bg-primary-100 hover:bg-primary-200 transition-colors duration-200">
-            <Image 
-              src="/assets/icons/menu.svg"
-              alt="menu"
-              width={28}
-              height={28}
-              className="cursor-pointer transition-opacity hover:opacity-75"
-            />
-          </div>
+        <SheetTrigger 
+          className={cn(
+            "flex items-center justify-center w-10 h-10 rounded-full",
+            "bg-gray-50 hover:bg-gray-100 active:bg-gray-200",
+            "transition-all duration-200",
+            "focus:outline-none focus:ring-2 focus:ring-primary-500"
+          )}
+          aria-label="Open menu"
+        >
+          <Menu 
+            className={cn(
+              "w-5 h-5 text-gray-700 transition-transform duration-200",
+              isOpen && "transform rotate-90"
+            )} 
+          />
         </SheetTrigger>
-        <SheetContent className="flex flex-col bg-white md:hidden">
-          <div className="flex-1 flex flex-col gap-6">
-            <Image 
-              src="/assets/images/logo.svg"
-              alt="logo"
-              width={96}
-              height={28}
-              className="mx-auto mt-4 w-24 md:w-32 h-auto"
-            />
-            <Separator className="border border-gray-200" />
-            <NavWrapper onClose={handleClose} />
+        <SheetContent 
+          className="flex flex-col bg-white md:hidden border-l"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="flex-1 flex flex-col gap-6 min-h-0">
+            <Link 
+              href="/"
+              onClick={handleClose}
+              className="mx-auto mt-4 focus:outline-none group"
+            >
+              <Image 
+                src="/assets/images/logo.svg"
+                alt="Return to homepage"
+                width={96}
+                height={28}
+                className="w-28 md:w-32 h-auto transition-transform duration-200 group-hover:scale-105"
+                priority
+              />
+            </Link>
+            <Separator className="border-gray-200" />
+            <div className="flex-1 overflow-y-auto">
+              <NavWrapper onClose={handleClose} />
+            </div>
           </div>
           
           <SignedOut>
-            <div className="mt-auto pt-6">
-              <Separator className="border border-gray-200" />
-              <div className="mt-6">
+            <div className="mt-auto pt-4">
+              <Separator className="border-gray-200" />
+              <div className="mt-4 pb-safe">
                 <AdminLoginButton />
               </div>
             </div>
