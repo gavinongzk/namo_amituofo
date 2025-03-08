@@ -104,13 +104,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     
     // Ensure country is set
     if (!values.country) {
-      console.error("Country is required but not set");
+      console.log("Country is required but not set");
       // Set a default country if not provided
       values.country = "Singapore";
       console.log("Set default country to Singapore");
     }
     
-    let uploadedImageUrl = values.imageUrl;
+    let uploadedImageUrl = values.imageUrl || ''; // Ensure it's always a string
 
     if(files.length > 0) {
       console.log("Uploading files...");
@@ -243,6 +243,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               name="imageUrl"
               render={({ field }) => (
                 <FormItem className="w-full">
+                  <FormLabel className="text-grey-600">Event Image (Optional)</FormLabel>
                   <FormControl className="h-72">
                     <FileUploader 
                       onFieldChange={field.onChange}
@@ -250,6 +251,9 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       setFiles={setFiles}
                     />
                   </FormControl>
+                  <FormDescription>
+                    You can upload an image now or add it later
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

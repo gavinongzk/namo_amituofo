@@ -37,8 +37,15 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
       <Link 
         href={isMyTicket ? `/orders/${event.orderId}` : `/events/details/${event._id}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
-        style={{backgroundImage: `url(${event.imageUrl})`}}
-      />
+        style={{backgroundImage: event.imageUrl ? `url(${event.imageUrl})` : 'none'}}
+      >
+        {!event.imageUrl && (
+          <div className="flex-center flex-col text-grey-500">
+            <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
+            <p className="p-medium-14 mt-2">No image available</p>
+          </div>
+        )}
+      </Link>
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all">
@@ -57,7 +64,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         </div>
         
         <p className="text-base text-gray-600">
-          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
+          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
         </p>
 
         <Link href={`/events/details/${event._id}`}>
