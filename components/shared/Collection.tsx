@@ -64,7 +64,7 @@ const Collection = ({
       {validData.length > 0 ? (
         <div className="flex flex-col items-center gap-6 sm:gap-8 md:gap-10">
           <ul className="grid w-full grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-6">
-            {validData.map((event) => {
+            {validData.map((event, index) => {
               console.log('🎨 Rendering event:', {
                 id: event._id,
                 title: event.title
@@ -80,6 +80,7 @@ const Collection = ({
                     hasOrderLink={hasOrderLink} 
                     isMyTicket={isMyTicket} 
                     userId={userId}
+                    priority={index < 3}
                   />
                 </li>
               );

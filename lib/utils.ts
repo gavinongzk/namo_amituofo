@@ -46,7 +46,8 @@ export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => 
     if (isChinese) {
       const period = hour < 12 ? '上午' : '下午';
       const hour12 = hour % 12 || 12;
-      return `${period}${hour12}.${minute}`;
+      const ampm = hour < 12 ? 'am' : 'pm';
+      return `${period}${hour12}.${minute}${ampm}`;
     } else {
       const period = hour < 12 ? 'AM' : 'PM';
       const hour12 = hour % 12 || 12;
