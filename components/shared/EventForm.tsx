@@ -7,7 +7,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
-import { eventDefaultValues } from "@/constants"
+import { eventDefaultValues, categoryCustomFields } from "@/constants"
+import { CategoryName } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUploader } from "./FileUploader"
@@ -423,9 +424,46 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           />
         </div>
 
-
         <div className="flex flex-col gap-5">
-          <h3 className="text-lg font-medium">Custom Questions</h3>
+          <div className="mb-5">
+            <h3 className="text-lg font-medium mb-3">Default Questions</h3>
+            <p className="text-gray-600 mb-4">The following questions will be automatically included for all registrants:</p>
+            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Basic Questions:</h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  {categoryCustomFields.default.map((field) => (
+                    <li key={field.id}>
+                      {field.label} ({field.type === 'radio' ? 'Yes/No' : field.type.charAt(0).toUpperCase() + field.type.slice(1)})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {form.watch('categoryId') && (
+                <div>
+                  <h4 className="font-medium mb-2">Category-Specific Questions:</h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {Object.entries(categoryCustomFields).map(([category, fields]) => {
+                      if (category !== 'default' && fields.some(field => !categoryCustomFields.default.find(defaultField => defaultField.label === field.label))) {
+                        return fields
+                          .filter(field => !categoryCustomFields.default.find(defaultField => defaultField.label === field.label))
+                          .map(field => (
+                            <li key={field.id} className={category === '念佛共修' || category === '念佛｜闻法｜祈福｜超荐' ? '' : 'text-gray-400'}>
+                              {field.label} ({field.type === 'radio' && (field as CustomField).options ? (field as CustomField).options?.map(opt => opt.label).join(' / ') : field.type.charAt(0).toUpperCase() + field.type.slice(1)})
+                              {(category === '念佛共修' || category === '念佛｜闻法｜祈福｜超荐') && <span className="text-green-600 ml-2">(Will be included for this category)</span>}
+                            </li>
+                          ));
+                      }
+                      return null;
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <h3 className="text-lg font-medium">Additional Custom Questions (Optional)</h3>
           {customFields.map((field, index) => (
             <div key={field.id} className="flex flex-col gap-5">
               <FormField
@@ -488,7 +526,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             Add Question
           </Button>
         </div>
-
 
         <Button 
           type="submit"
