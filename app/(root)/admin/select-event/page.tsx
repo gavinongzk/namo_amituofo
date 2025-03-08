@@ -121,11 +121,21 @@ const SelectEventPage = () => {
       return acc;
     }, { expired: [] as Event[], active: [] as Event[] });
 
+    // Sort active events by start date (ascending - upcoming first)
+    const sortedActive = [...active].sort((a, b) => 
+      new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
+    );
+
+    // Sort expired events by end date (descending - most recently expired first)
+    const sortedExpired = [...expired].sort((a, b) => 
+      new Date(b.endDateTime).getTime() - new Date(a.endDateTime).getTime()
+    );
+
     // Group active events by category
     const groupedEvents: Record<string, Event[]> = {};
 
     // First add all active events
-    active.forEach(event => {
+    sortedActive.forEach(event => {
       const category = event.category.name;
       if (!groupedEvents[category]) {
         groupedEvents[category] = [];
@@ -134,9 +144,9 @@ const SelectEventPage = () => {
     });
 
     // Then add expired events at the end if user is superadmin
-    if (user?.publicMetadata?.role === 'superadmin' && expired.length > 0) {
+    if (user?.publicMetadata?.role === 'superadmin' && sortedExpired.length > 0) {
       groupedEvents['──────────────'] = []; // Add a separator
-      groupedEvents['Expired Events / 已过期活动'] = expired;
+      groupedEvents['已过期活动 / Expired Events'] = sortedExpired;
     }
 
     return groupedEvents;
