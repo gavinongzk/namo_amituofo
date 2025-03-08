@@ -444,19 +444,30 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 <div>
                   <h4 className="font-medium mb-2">Category-Specific Questions:</h4>
                   <ul className="list-disc pl-5 space-y-2">
-                    {Object.entries(categoryCustomFields).map(([category, fields]) => {
-                      if (category !== 'default' && fields.some(field => !categoryCustomFields.default.find(defaultField => defaultField.label === field.label))) {
-                        return fields
-                          .filter(field => !categoryCustomFields.default.find(defaultField => defaultField.label === field.label))
-                          .map(field => (
-                            <li key={field.id} className={category === '念佛共修' || category === '念佛｜闻法｜祈福｜超荐' ? '' : 'text-gray-400'}>
-                              {field.label} ({field.type === 'radio' && (field as CustomField).options ? (field as CustomField).options?.map(opt => opt.label).join(' / ') : field.type.charAt(0).toUpperCase() + field.type.slice(1)})
-                              {(category === '念佛共修' || category === '念佛｜闻法｜祈福｜超荐') && <span className="text-green-600 ml-2">(Will be included for this category)</span>}
-                            </li>
-                          ));
-                      }
-                      return null;
-                    })}
+                    {(() => {
+                      const selectedCategory = form.watch('categoryId');
+                      const categoryName = Object.entries(categoryCustomFields).find(([_, fields]) => 
+                        fields.some(field => field.id === selectedCategory)
+                      )?.[0];
+                      
+                      if (!categoryName || categoryName === 'default') return null;
+                      
+                      const fields = categoryCustomFields[categoryName as CategoryName] as CustomField[];
+                      const uniqueFields = fields.filter(field => 
+                        !categoryCustomFields.default.find(defaultField => 
+                          defaultField.label === field.label
+                        )
+                      );
+                      
+                      return uniqueFields.map(field => (
+                        <li key={field.id}>
+                          {field.label} ({field.type === 'radio' && (field as CustomField).options 
+                            ? (field as CustomField).options?.map(opt => opt.label).join(' / ') 
+                            : field.type.charAt(0).toUpperCase() + field.type.slice(1)})
+                          <span className="text-green-600 ml-2">(Will be included for this category)</span>
+                        </li>
+                      ));
+                    })()}
                   </ul>
                 </div>
               )}
