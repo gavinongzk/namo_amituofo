@@ -8,14 +8,15 @@ import {
 import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
+import { usePathname } from 'next/navigation';
 
 const AdminLoginButton = () => (
   <Link 
     href="/sign-in" 
-    className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-300"
+    className="flex items-center gap-3 p-3 text-gray-600 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-all duration-300"
     onClick={(e) => e.stopPropagation()}
   >
     <Image 
@@ -26,48 +27,61 @@ const AdminLoginButton = () => (
       className="object-contain"
     />
     <div className="flex flex-col">
-      <span className="font-medium">管理员登录</span>
-      <span className="text-xs">Admin Login</span>
+      <span className="font-medium text-sm">管理员登录</span>
+      <span className="text-xs text-gray-500">Admin Login</span>
     </div>
   </Link>
 )
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close mobile nav when route changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleClose = () => setIsOpen(false);
 
   return (
     <nav className="md:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger className="align-middle">
-          <div className="p-2 rounded-full bg-primary-100 hover:bg-primary-200 transition-colors duration-200">
+        <SheetTrigger className="align-middle focus:outline-none">
+          <div className="p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation">
             <Image 
               src="/assets/icons/menu.svg"
               alt="menu"
-              width={28}
-              height={28}
-              className="cursor-pointer transition-opacity hover:opacity-75"
+              width={24}
+              height={24}
+              className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
             />
           </div>
         </SheetTrigger>
-        <SheetContent className="flex flex-col bg-white md:hidden">
-          <div className="flex-1 flex flex-col gap-6">
-            <Image 
-              src="/assets/images/logo.svg"
-              alt="logo"
-              width={96}
-              height={28}
-              className="mx-auto mt-4 w-24 md:w-32 h-auto"
-            />
-            <Separator className="border border-gray-200" />
-            <NavWrapper onClose={handleClose} />
+        <SheetContent 
+          className="flex flex-col bg-white md:hidden w-[85vw] max-w-[400px] border-l shadow-lg"
+          side="right"
+        >
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="flex items-center justify-center py-4">
+              <Image 
+                src="/assets/images/logo.svg"
+                alt="logo"
+                width={128}
+                height={38}
+                className="w-32 h-auto transition-opacity hover:opacity-80"
+              />
+            </div>
+            <Separator className="border border-gray-100" />
+            <div className="flex-1 overflow-y-auto">
+              <NavWrapper onClose={handleClose} />
+            </div>
           </div>
           
           <SignedOut>
-            <div className="mt-auto pt-6">
-              <Separator className="border border-gray-200" />
-              <div className="mt-6">
+            <div className="mt-auto pt-4">
+              <Separator className="border border-gray-100" />
+              <div className="mt-4">
                 <AdminLoginButton />
               </div>
             </div>
