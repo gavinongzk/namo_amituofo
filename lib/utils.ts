@@ -28,16 +28,53 @@ export interface BilingualDateTime {
 }
 
 export const formatBilingualDateTime = (dateString: Date): BilingualDateTime => {
-  const enFormatted = formatDateTime(dateString)
-  const cnFormatted = formatDateTime(dateString)
+  const date = new Date(dateString)
 
+  // Helper function to format date in DD-MM-YYYY format
+  const formatDatePart = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  // Helper function to format time
+  const formatTime = (date: Date, isChinese: boolean = false) => {
+    const utcHour = date.getUTCHours();
+    const hour = (utcHour + 8) % 24; // Convert to GMT+8
+    const minute = date.getMinutes().toString().padStart(2, '0');
+    if (isChinese) {
+      const period = hour < 12 ? '上午' : '下午';
+      const hour12 = hour % 12 || 12;
+      return `${period}${hour12}.${minute}`;
+    } else {
+      const period = hour < 12 ? 'AM' : 'PM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minute}${period}`;
+    }
+  }
+
+  const weekdayCN = date.toLocaleString('zh-CN', { weekday: 'long' });
+  const weekdayEN = date.toLocaleString('en-US', { weekday: 'short' });
+  const formattedDatePart = formatDatePart(date);
+  const formattedTimeCN = formatTime(date, true);
+  const formattedTimeEN = formatTime(date, false);
+  
   return {
-    en: enFormatted,
-    cn: cnFormatted,
+    cn: {
+      dateTime: `${formattedDatePart} ${formattedTimeCN}`,
+      dateOnly: formattedDatePart,
+      timeOnly: formattedTimeCN,
+    },
+    en: {
+      dateTime: `${formattedDatePart} ${formattedTimeEN}`,
+      dateOnly: formattedDatePart,
+      timeOnly: formattedTimeEN,
+    },
     combined: {
-      dateTime: `${cnFormatted.dateTime}`,
-      dateOnly: `${cnFormatted.dateOnly}`,
-      timeOnly: `${cnFormatted.timeOnly}`
+      dateTime: `${formattedDatePart}`,
+      dateOnly: `${formattedDatePart}`,
+      timeOnly: `${formattedTimeCN}`,
     }
   }
 }
