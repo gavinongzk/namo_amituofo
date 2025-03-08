@@ -12,27 +12,51 @@ module.exports = withUt({
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: {
+        DEFAULT: '1rem',
+        sm: '2rem',
+        lg: '3rem',
+      },
       screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
         '2xl': '1400px',
       },
     },
     extend: {
       colors: {
         primary: {
-          500: '#a2826c',
           50: '#f5f2f0',
+          100: '#e6ddd8',
+          200: '#d1c1b7',
+          300: '#bca595',
+          400: '#a2826c',
+          500: '#8b6a54',
+          600: '#735644',
+          700: '#5c4536',
+          800: '#44332a',
+          900: '#2d221c',
           DEFAULT: '#a2826c',
           foreground: 'hsl(var(--primary-foreground))',
         },
         coral: {
+          400: '#29D970',
           500: '#15BF59',
+          600: '#0FA649',
         },
         grey: {
-          600: '#545454', // Subdued - color name in figma
-          500: '#757575',
-          400: '#AFAFAF', // Disabled - color name in figma
-          50: '#F6F6F6', // White Grey - color name in figma
+          50: '#F8F9FA',
+          100: '#F1F3F5',
+          200: '#E9ECEF',
+          300: '#DEE2E6',
+          400: '#CED4DA',
+          500: '#ADB5BD',
+          600: '#868E96',
+          700: '#495057',
+          800: '#343A40',
+          900: '#212529',
         },
         black: '#000000',
         white: '#FFFFFF',
@@ -116,7 +140,21 @@ module.exports = withUt({
         'fade-in': 'fadeIn 0.5s ease-out forwards',
         'check-mark': 'checkMark 0.5s ease-out forwards'
       },
+      boxShadow: {
+        'subtle': '0 2px 4px rgba(0,0,0,0.05)',
+        'card': '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+        'card-hover': '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03)',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+      },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
+  ],
 });

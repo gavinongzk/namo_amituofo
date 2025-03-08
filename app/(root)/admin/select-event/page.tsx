@@ -54,13 +54,9 @@ const SelectEventPage = () => {
         }
         
         const result = await response.json();
-        console.log('Fetched events:', result); // Add logging
+        console.log('Fetched events:', result);
 
         if (Array.isArray(result.data)) {
-          const currentDate = new Date();
-          const expirationDate = EVENT_CONFIG.getExpirationDate();
-          console.log('Filtering events. Current date:', currentDate, 'Expiration date:', expirationDate);
-          
           const recentAndUpcomingEvents = await Promise.all(result.data
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {

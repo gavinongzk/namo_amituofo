@@ -5,13 +5,13 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 0 0% 3%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 0 0% 3%;
 
     --primary: 25 24% 53%;
     --primary-foreground: 0 0% 100%;
@@ -19,49 +19,49 @@
     --secondary: 25 24% 95%;
     --secondary-foreground: 25 24% 23%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
     --accent: 22 80% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
     --ring: 22 100% 50%;
 
-    --radius: 0.25rem;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 32% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 32% 17%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
     --ring: 212.7 26.8% 83.9%;
   }
 }
@@ -74,7 +74,9 @@
 }
 
 body {
-  font-family: var(--font-poppins)
+  font-family: var(--font-poppins);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .filter-grey {
@@ -85,7 +87,7 @@ body {
 /* ========================================== TAILWIND STYLES */
 @layer utilities {
   .wrapper {
-    @apply max-w-7xl lg:mx-auto p-3 sm:p-4 md:px-6 xl:px-0 w-full;
+    @apply max-w-7xl lg:mx-auto p-4 sm:p-6 md:px-8 xl:px-0 w-full;
   }
 
   .flex-center {
@@ -99,7 +101,7 @@ body {
   /* TYPOGRAPHY */
   /* 64 */
   .h1-bold {
-    @apply font-bold text-[40px] leading-[48px] lg:text-[48px] lg:leading-[60px]  xl:text-[58px] xl:leading-[74px];
+    @apply font-bold text-[40px] leading-[1.2] lg:text-[48px] xl:text-[58px] tracking-[-0.02em];
   }
 
   .h1-extra-bold {
@@ -212,25 +214,41 @@ body {
     @apply text-[12px] font-medium leading-[20px];
   }
 
-  /* SHADCN OVERRIDES */
+  /* COMPONENT STYLES */
   .select-field {
-    @apply w-full bg-grey-50 h-[54px] placeholder:text-grey-500 rounded-full p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent focus:ring-transparent !important;
+    @apply w-full bg-grey-50 h-[54px] placeholder:text-grey-500 rounded-lg p-regular-16 px-5 py-3 border-2 border-grey-100 focus-visible:border-primary-400 focus-visible:ring-1 focus-visible:ring-primary-400 transition-all duration-200 !important;
   }
 
   .input-field {
-    @apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-4 py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 !important;
+    @apply bg-grey-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-grey-500 rounded-lg p-regular-16 px-4 py-3 border-2 border-grey-100 focus-visible:border-primary-400 focus-visible:ring-1 focus-visible:ring-primary-400 transition-all duration-200 !important;
   }
 
   .textarea {
-    @apply bg-grey-50 flex flex-1 placeholder:text-grey-500 p-regular-16 px-5 py-3 border-none focus-visible:ring-transparent !important;
+    @apply bg-grey-50 flex flex-1 placeholder:text-grey-500 p-regular-16 px-5 py-3 rounded-lg border-2 border-grey-100 focus-visible:border-primary-400 focus-visible:ring-1 focus-visible:ring-primary-400 transition-all duration-200 !important;
   }
 
   .button {
-    @apply rounded-full h-[54px] p-regular-16 transition-all duration-300 hover:shadow-md active:scale-95;
+    @apply rounded-lg h-[54px] p-regular-16 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-card active:scale-[0.98];
+  }
+
+  .button-primary {
+    @apply bg-primary-400 text-white hover:bg-primary-500 focus:ring-2 focus:ring-primary-400 focus:ring-offset-2;
+  }
+
+  .button-secondary {
+    @apply bg-grey-50 text-grey-900 border-2 border-grey-100 hover:bg-grey-100 focus:ring-2 focus:ring-grey-200 focus:ring-offset-2;
   }
 
   .select-item {
-    @apply py-3 cursor-pointer  focus:bg-primary-50;
+    @apply py-3 px-4 cursor-pointer hover:bg-grey-50 focus:bg-grey-50 rounded-md;
+  }
+
+  .card {
+    @apply bg-white rounded-lg border border-grey-100 shadow-card hover:shadow-card-hover transition-shadow duration-200;
+  }
+
+  .section {
+    @apply py-8 md:py-12 lg:py-16;
   }
 
   .toggle-switch {
@@ -333,11 +351,11 @@ body {
 }
 
 .fade-in {
-  @apply transition-opacity duration-300 ease-in-out;
+  @apply animate-[fadeIn_0.3s_ease-out_forwards];
 }
 
 .hover-scale {
-  @apply transition-transform duration-300 hover:scale-105;
+  @apply transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98];
 }
 
 input[type=checkbox] {
@@ -449,4 +467,54 @@ input[type=checkbox] {
 .phone-input-container .PhoneInputCountry {
   margin-right: 0.5rem;
   padding: 0.25rem;
+}
+
+/* FORM STYLES */
+.form-group {
+  @apply space-y-2;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-grey-700;
+}
+
+.form-error {
+  @apply text-sm text-destructive mt-1;
+}
+
+/* TABLE STYLES */
+.table-container {
+  @apply w-full overflow-x-auto rounded-lg border border-grey-100 shadow-subtle;
+}
+
+.table {
+  @apply w-full min-w-full divide-y divide-grey-200;
+}
+
+.table-header {
+  @apply bg-grey-50;
+}
+
+.table-row {
+  @apply hover:bg-grey-50 transition-colors duration-150;
+}
+
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-grey-900;
+}
+
+/* MOBILE OPTIMIZATIONS */
+@media (max-width: 640px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .mobile-menu {
+    @apply fixed inset-0 z-50 bg-white/95 backdrop-blur-sm;
+  }
 }
