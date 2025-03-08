@@ -69,14 +69,24 @@ const getCachedSuperAdminEvents = unstable_cache(
 );
 
 const COMMON_COUNTRIES = ['Singapore', 'Malaysia'];
+
+// Staggered preloading to avoid overwhelming the server
 const preloadEvents = () => {
+  let delay = 0;
   COMMON_COUNTRIES.forEach(country => {
-    void getCachedEvents(country);
+    setTimeout(() => {
+      void getCachedEvents(country);
+      // After events are cached, preload super admin events with a small delay
+      setTimeout(() => {
+        void getCachedSuperAdminEvents(country);
+      }, 500);
+    }, delay);
+    delay += 1000; // Stagger each country's preload by 1 second
   });
 };
 
-// Preload events on startup
-preloadEvents();
+// Preload events on startup with a small initial delay
+setTimeout(preloadEvents, 1000);
 
 export async function GET(request: NextRequest) {
   try {

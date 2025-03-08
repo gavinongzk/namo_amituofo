@@ -67,6 +67,7 @@ export default function RootLayout({
         rel="preload" 
         href="/assets/images/logo.svg" 
         as="image" 
+        fetchPriority="high"
       />
       <link 
         rel="preconnect" 
@@ -87,6 +88,19 @@ export default function RootLayout({
     </>
   );
 
+  // Add Service Worker registration script
+  const swRegistration = `
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered:', registration.scope);
+        }).catch(error => {
+          console.log('SW registration failed:', error);
+        });
+      });
+    }
+  `;
+
   return (
     <ClerkProvider>
       <html lang="en">
@@ -95,6 +109,7 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}
+          <script dangerouslySetInnerHTML={{ __html: swRegistration }} />
         </head>
         <body className={poppins.variable}>
           <div className="context-container">

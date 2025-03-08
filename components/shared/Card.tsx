@@ -18,19 +18,20 @@ export const categoryColors: { [key: string]: string } = {
   '外出结缘法会': 'bg-green-200 text-green-700',
 };
 
-type CardProps = {
-  event: IEvent & { 
-    orderId?: string, 
-    customFieldValues?: CustomField[], 
-    queueNumber?: string, 
-    registrationCount?: number
-  },
-  hasOrderLink?: boolean,
-  isMyTicket?: boolean,
-  userId?: string,
+interface CardProps {
+  event: IEvent & {
+    orderId?: string;
+    customFieldValues?: CustomField[];
+    queueNumber?: string;
+    registrationCount?: number;
+  };
+  hasOrderLink?: boolean;
+  isMyTicket?: boolean;
+  userId?: string;
+  priority?: boolean;
 }
 
-const Card = ({ event, hasOrderLink, isMyTicket, userId }: CardProps) => {
+const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: CardProps) => {
   const isEventCreator = userId === event.organizer._id.toString();
   const [imageLoading, setImageLoading] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
@@ -43,27 +44,31 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId }: CardProps) => {
     >
       <Link 
         href={isMyTicket ? `/orders/${event.orderId}` : `/events/details/${event._id}`}
-        className={cn(
-          "relative flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500 transition-opacity duration-300",
-          imageLoading ? "animate-pulse" : "animate-none"
-        )}
-        style={{backgroundImage: event.imageUrl && !imageLoading ? `url(${event.imageUrl})` : 'none'}}
+        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden"
       >
         {event.imageUrl ? (
           <Image 
             src={event.imageUrl} 
             alt={event.title}
             fill
-            className="object-cover"
+            className={cn(
+              "object-cover transition-opacity duration-300",
+              imageLoading ? "opacity-0" : "opacity-100"
+            )}
             sizes="(max-width: 400px) 100vw, 400px"
             onLoadingComplete={() => setImageLoading(false)}
-            priority={false}
+            priority={priority}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkLzYvLy82NDg0PUA4Nj9BOTs/QTY/QUhCRk1KSlVWVkBNXl9nYWf/2wBDARUXFx4aHh8fHmhANUA2YGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGf/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
           />
         ) : (
           <div className="flex-center flex-col text-grey-500">
             <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
             <p className="p-medium-14 mt-2">No image available</p>
           </div>
+        )}
+        {imageLoading && event.imageUrl && (
+          <div className="absolute inset-0 bg-gray-100 animate-pulse" />
         )}
       </Link>
 
