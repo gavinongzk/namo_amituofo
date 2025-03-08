@@ -36,37 +36,7 @@ const convertAddressesToLinks = (text: string) => {
   
   return text.replace(addressRegex, (match) => {
     const links = convertToGoogleMapsLink(match);
-    return `
-      <span class="inline-flex flex-wrap gap-2 items-center">
-        <span class="text-gray-700">${match}</span>
-        <span class="inline-flex gap-2">
-          <a href="${links.webUrl}" 
-             target="_blank" 
-             rel="noopener noreferrer" 
-             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
-              <circle cx="12" cy="9" r="2.5"/>
-            </svg>
-            Open in Maps
-          </a>
-          <a href="${links.mobileUrl}" 
-             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
-            </svg>
-            Google Maps App
-          </a>
-          <a href="${links.appleMapsUrl}" 
-             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
-            </svg>
-            Apple Maps
-          </a>
-        </span>
-      </span>
-    `;
+    return `<a href="${links.webUrl}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 transition-colors">${match}</a>`;
   });
 };
 
@@ -407,25 +377,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       </div>
 
       <div id="order-details">
-        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-6 rounded-t-2xl">
-          <h3 className="text-2xl font-bold text-center text-primary-500">
+        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-3 md:py-6 rounded-t-2xl">
+          <h3 className="text-xl md:text-2xl font-bold text-center text-primary-500">
             注册成功 Registration Successful
           </h3>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
-          <div className="p-6 space-y-6">
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <h4 className="text-lg font-bold mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
-              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
-              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
-              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
-              </p>
-              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+          <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+            <div className="bg-gray-50 p-3 md:p-4 rounded-xl">
+              <h4 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
+              <div key={group.groupId} className={`mt-4 md:mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
                     <QRCodeDisplay 
@@ -436,17 +401,30 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
                 
-                <div className="bg-primary-100 p-4">
-                  <div className="flex justify-between items-center">
-                    <h5 className="text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
+                <div className="bg-primary-100 p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <h5 className="text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
                     {group.queueNumber && (
-                      <div className="bg-blue-100 p-3 rounded-xl text-center mb-2 sm:mb-0 w-full sm:w-auto">
-                        <p className="text-sm text-blue-600">队列号 Queue Number</p>
-                        <p className="text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                      <div className="bg-blue-100 p-2 md:p-3 rounded-xl text-center w-full sm:w-auto">
+                        <p className="text-xs md:text-sm text-blue-600">队列号 Queue Number</p>
+                        <p className="text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                       </div>
                     )}
                   </div>
                 </div>
+              </div>
+            ))}
+
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
+              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
+              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
+              </p>
+              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+            </div>
+
+            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
+              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 <div className="p-4">
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {group.fields.map((field: CustomField) => (

@@ -17,6 +17,7 @@ import DatePicker from "react-datepicker";
 import { useUploadThing } from '@/lib/uploadthing'
 import { useFieldArray } from "react-hook-form";
 import { CustomField } from "@/types";
+import { formatBilingualDateTime } from '@/lib/utils';
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox"
@@ -36,6 +37,19 @@ type EventFormProps = {
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
+
+  const formatDateForPicker = (date: Date) => {
+    const bilingualDate = formatBilingualDateTime(date);
+    const chineseWeekday = date.toLocaleString('zh-CN', { weekday: 'long' });
+    const englishWeekday = date.toLocaleString('en-US', { weekday: 'short' });
+    const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()} (${chineseWeekday} ${englishWeekday})`;
+    const hour = date.getHours();
+    const minute = date.getMinutes().toString().padStart(2, '0');
+    const period = hour < 12 ? '上午' : '下午';
+    const hour12 = hour % 12 || 12;
+    const formattedTime = `${period}${hour12}.${minute}`;
+    return `${formattedDate} ${formattedTime}`;
+  };
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -326,7 +340,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat="MM/dd/yyyy h:mm aa"
+                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
                         wrapperClassName="datePicker"
                       />
                     </div>
@@ -363,7 +377,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat="MM/dd/yyyy h:mm aa"
+                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
                         wrapperClassName="datePicker"
                       />
                     </div>
