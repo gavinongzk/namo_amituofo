@@ -1,3 +1,5 @@
+'use client'
+
 import { IEvent } from '@/lib/database/models/event.model'
 import { formatBilingualDateTime } from '@/lib/utils'
 import { auth } from '@clerk/nextjs'
