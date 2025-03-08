@@ -11,7 +11,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { format } from 'date-fns';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { IRegistration } from '@/types';
 
@@ -30,7 +30,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
   // Process data for monthly attendance
   const monthlyAttendance = registrations.reduce((acc, reg) => {
     if (!reg.event.startDateTime) return acc;
-    const month = format(new Date(String(reg.event.startDateTime)), 'MMM yyyy');
+    const month = formatBilingualDateTime(new Date(String(reg.event.startDateTime))).combined.monthYear;
     acc[month] = (acc[month] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -91,7 +91,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
           <h5 className="text-sm font-medium text-gray-500">首次参与 First Event</h5>
           <p className="mt-1 text-sm font-medium">
             {sortedRegistrations.length > 0 && sortedRegistrations[sortedRegistrations.length - 1].event.startDateTime
-              ? format(new Date(String(sortedRegistrations[sortedRegistrations.length - 1].event.startDateTime)), 'MMM d, yyyy')
+              ? formatBilingualDateTime(new Date(String(sortedRegistrations[sortedRegistrations.length - 1].event.startDateTime))).combined.dateOnly
               : 'N/A'}
           </p>
         </Card>
@@ -99,7 +99,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
           <h5 className="text-sm font-medium text-gray-500">最近参与 Latest Event</h5>
           <p className="mt-1 text-sm font-medium">
             {sortedRegistrations.length > 0 && sortedRegistrations[0].event.startDateTime
-              ? format(new Date(String(sortedRegistrations[0].event.startDateTime)), 'MMM d, yyyy')
+              ? formatBilingualDateTime(new Date(String(sortedRegistrations[0].event.startDateTime))).combined.dateOnly
               : 'N/A'}
           </p>
         </Card>

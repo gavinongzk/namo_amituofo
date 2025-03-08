@@ -48,7 +48,7 @@ export const formatDateTime = (dateString: Date) => {
   let formattedDate: string
   let formattedTime: string
 
-  // Helper function to format date in DD-MM-YYYY format
+  // Helper function to format date in YYYY-MM-DD format
   const formatDatePart = (date: Date) => {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -72,8 +72,8 @@ export const formatDateTime = (dateString: Date) => {
   const formattedDatePart = formatDatePart(date);
   const formattedTimePart = formatTime(date);
   
-  formattedDateTime = `${formattedDatePart} (${weekdayCN} ${weekdayEN})`;
-  formattedDate = `${formattedDatePart} (${weekdayCN} ${weekdayEN})`;
+  formattedDateTime = `${formattedDatePart} ${formattedTimePart}`;
+  formattedDate = formattedDatePart;
   formattedTime = formattedTimePart;
 
   return {
