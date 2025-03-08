@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
@@ -13,36 +13,90 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
+  const eventsCache = useRef<Record<string, Event[]>>({});
+  const abortController = useRef<AbortController>();
+
+  // Memoize fetch function to prevent unnecessary re-renders
+  const fetchEventCounts = useCallback(async (eventId: string) => {
+    try {
+      const response = await fetch(`/api/events/${eventId}/counts`, {
+        signal: abortController.current?.signal
+      });
+      return await response.json();
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') return null;
+      console.error('Error fetching event counts:', error);
+      return null;
+    }
+  }, []);
+
+  // Batch fetch event counts to reduce API calls
+  const batchFetchEventCounts = useCallback(async (events: Event[]) => {
+    const batchSize = 5;
+    const results = [];
+    
+    for (let i = 0; i < events.length; i += batchSize) {
+      const batch = events.slice(i, i + batchSize);
+      const promises = batch.map(event => fetchEventCounts(event._id));
+      const batchResults = await Promise.all(promises);
+      results.push(...batchResults);
+    }
+    
+    return results;
+  }, [fetchEventCounts]);
 
   useEffect(() => {
     const fetchEvents = async () => {
+      if (abortController.current) {
+        abortController.current.abort();
+      }
+      abortController.current = new AbortController();
+      
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
+        const cacheKey = country || 'default';
+        
+        // Check cache first
+        if (eventsCache.current[cacheKey]) {
+          setEvents(eventsCache.current[cacheKey]);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `/api/events${country ? `?country=${country}` : ''}`,
+          { signal: abortController.current.signal }
+        );
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
-          const recentAndUpcomingEvents = await Promise.all(result.data
-            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
-            .map(async (event: Event) => {
-              const countsResponse = await fetch(`/api/events/${event._id}/counts`);
-              const countsData = await countsResponse.json();
-              return {
-                ...event,
-                totalRegistrations: countsData.totalRegistrations,
-                attendedUsers: countsData.attendedUsers,
-                cannotReciteAndWalk: countsData.cannotReciteAndWalk
-              };
-            }));
-          setEvents(recentAndUpcomingEvents);
+          const sortedEvents = result.data.sort((a: Event, b: Event) => 
+            new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
+          );
+
+          // Batch fetch counts for all events
+          const countsData = await batchFetchEventCounts(sortedEvents);
+          
+          const eventsWithCounts = sortedEvents.map((event: Event, index: number) => ({
+            ...event,
+            totalRegistrations: countsData[index]?.totalRegistrations ?? 0,
+            attendedUsers: countsData[index]?.attendedUsers ?? 0,
+            cannotReciteAndWalk: countsData[index]?.cannotReciteAndWalk ?? 0
+          }));
+
+          // Update cache
+          eventsCache.current[cacheKey] = eventsWithCounts;
+          setEvents(eventsWithCounts);
         } else {
           console.error('Fetched data is not an array:', result);
           setEvents([]);
         }
-      } catch (error) {
-        console.error('Error fetching events:', error);
-        setEvents([]);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching events:', error);
+          setEvents([]);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -51,7 +105,11 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
     if (user) {
       fetchEvents();
     }
-  }, [user]);
+
+    return () => {
+      abortController.current?.abort();
+    };
+  }, [user, batchFetchEventCounts]);
 
   const groupedEvents = useMemo(() => {
     return events.reduce((acc, event) => {

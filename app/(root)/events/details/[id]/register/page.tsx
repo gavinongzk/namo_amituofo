@@ -5,6 +5,7 @@ import { getEventById } from '@/lib/actions/event.actions'
 import { unstable_cache } from 'next/cache'
 import { headers } from 'next/headers'
 import dynamic from 'next/dynamic'
+import { Metadata } from 'next'
 
 // Dynamically import heavy components
 const RegisterFormWrapper = dynamic(() => 
@@ -15,23 +16,41 @@ const RegisterFormWrapper = dynamic(() =>
   }
 )
 
-// Cache event data
+// Optimize caching strategy
 const getCachedEvent = unstable_cache(
   async (id: string) => getEventById(id),
   ['event-registration'],
   { 
-    revalidate: 300,
-    tags: ['event-details']
+    revalidate: 60, // Reduce revalidation time for more frequent updates
+    tags: ['event-details', 'registration'],
   }
 )
 
-// Separate loading component for better UX
+// Prefetch data for linked events
+const prefetchLinkedEvents = async (eventId: string) => {
+  try {
+    const event = await getCachedEvent(eventId)
+    if (event?.relatedEvents) {
+      event.relatedEvents.forEach((id: string) => {
+        getCachedEvent(id) // Prefetch related events
+      })
+    }
+  } catch (error) {
+    console.error('Error prefetching events:', error)
+  }
+}
+
+// Improved loading skeleton with more realistic appearance
 const RegisterPageSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="h-24 md:h-32 bg-gray-200 rounded-md mb-2 md:mb-4" />
-    <div className="space-y-2 md:space-y-3">
-      <div className="h-3 md:h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 md:h-4 bg-gray-200 rounded w-1/2" />
+  <div className="animate-pulse space-y-4">
+    <div className="h-24 md:h-32 bg-gray-200 rounded-md" />
+    <div className="space-y-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-4 bg-gray-200 rounded w-1/2" />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="h-12 bg-gray-200 rounded" />
+        <div className="h-12 bg-gray-200 rounded" />
+      </div>
     </div>
   </div>
 )
@@ -41,8 +60,9 @@ export default async function RegisterPage({
 }: { 
   params: { id: string } 
 }) {
-  // Start data fetch immediately
+  // Start data fetch and prefetching immediately
   const eventPromise = getCachedEvent(id)
+  prefetchLinkedEvents(id) // Prefetch in parallel
 
   return (
     <>
@@ -85,16 +105,21 @@ async function AsyncRegisterForm({
   return <RegisterFormWrapper event={event} />
 }
 
-
+// Optimize metadata generation
 export async function generateMetadata({ 
   params: { id } 
 }: { 
   params: { id: string } 
-}) {
+}): Promise<Metadata> {
   const event = await getCachedEvent(id)
   
   return {
     title: `Register for ${event?.title || 'Event'}`,
     description: `Register for ${event?.title}. ${event?.description?.slice(0, 100)}...`,
+    openGraph: {
+      title: `Register for ${event?.title || 'Event'}`,
+      description: `Register for ${event?.title}. ${event?.description?.slice(0, 100)}...`,
+      type: 'website',
+    },
   }
 }
