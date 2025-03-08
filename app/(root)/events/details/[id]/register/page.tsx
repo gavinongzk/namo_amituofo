@@ -46,13 +46,13 @@ export default async function RegisterPage({
 
   return (
     <>
-      <section className="bg-primary-50 bg-dotted-pattern md:bg-dotted-pattern bg-cover bg-center py-1 md:py-6">
+      <section className="bg-primary-50 bg-dotted-pattern md:bg-dotted-pattern bg-cover bg-center py-1 md:py-4">
         <h3 className="wrapper h3-bold text-center sm:text-left text-lg md:text-2xl px-2 md:px-4">
           活动报名 / Register for Event
         </h3>
       </section>
 
-      <div className="wrapper my-2 md:my-6">
+      <div className="wrapper my-1 md:my-4">
         <Suspense fallback={<RegisterPageSkeleton />}>
           <AsyncRegisterForm eventPromise={eventPromise} />
         </Suspense>

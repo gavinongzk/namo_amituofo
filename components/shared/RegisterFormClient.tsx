@@ -503,15 +503,15 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <div 
                     key={field.id}
                     id={`person-${personIndex}`}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden scroll-mt-6"
+                    className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
                   >
-                    <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-6 py-4 border-b border-gray-200">
-                      <h3 className="text-xl font-semibold text-primary-700">
+                    <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                      <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
                         参加者 {personIndex + 1} / Person {personIndex + 1}
                       </h3>
                     </div>
 
-                    <div className="p-6 space-y-8">
+                    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
                       {customFields.map((customField, fieldIndex) => (
                         <FormField
                           key={customField.id}
@@ -715,7 +715,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 md:pt-6">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <Button
                     type="button"
                     onClick={handleAddPerson}

@@ -25,19 +25,21 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           <h2 className="h3-bold line-clamp-2 text-black group-hover:text-primary-500 transition-colors duration-200">
             {event.title}
           </h2>
-          {event.startDateTime && formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
-            <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}>
-              {line}
-            </p>
-          ))}
+          {event.startDateTime && (
+            <div className="space-y-1">
+              <p className="text-gray-600 text-sm md:text-base">
+                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}
+              </p>
+              <p className="text-gray-500 text-xs md:text-sm">
+                {formatBilingualDateTime(new Date(event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(event.endDateTime as Date)).cn.timeOnly}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 flex-grow">
           {registrations.slice(0, initialDisplayCount).map((registration, index) => (
             <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
-              <p className="p-medium-16 md:p-medium-18 text-black">
-                排队号码 Queue Number: {registration.queueNumber || 'N/A'}
-              </p>
               <p className="p-medium-14 md:p-medium-16 text-grey-600">
                 姓名 Name: {registration.name || 'N/A'}
               </p>
@@ -67,9 +69,6 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                     key={index + initialDisplayCount} 
                     className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
                   >
-                    <p className="p-medium-16 md:p-medium-18 text-black">
-                      排队号码 Queue Number: {registration.queueNumber || 'N/A'}
-                    </p>
                     <p className="p-medium-14 md:p-medium-16 text-grey-600">
                       姓名 Name: {registration.name || 'N/A'}
                     </p>

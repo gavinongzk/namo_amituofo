@@ -49,35 +49,7 @@ const convertLinksInText = (text: string) => {
   processedText = processedText.replace(
     /(?:Google Maps[：:]?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+|maps\.google\.com\/[^\s\n]+))/gi,
     (match, url) => {
-      const links = convertToGoogleMapsLink(url);
-      return `
-        <span class="inline-flex flex-wrap gap-2">
-          <a href="${url}" 
-             target="_blank" 
-             rel="noopener noreferrer" 
-             class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>
-              <circle cx="12" cy="9" r="2.5"/>
-            </svg>
-            Open in Browser
-          </a>
-          <a href="${links.mobileUrl}" 
-             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 11.5A2.5 2.5 0 0 1 9.5 9 2.5 2.5 0 0 1 12 6.5 2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
-            </svg>
-            Google Maps App
-          </a>
-          <a href="${links.appleMapsUrl}" 
-             class="md:hidden inline-flex items-center gap-1 px-2 py-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.14 2 5 5.14 5 9c0 4.17 4.42 9.92 6.24 12.11.4.48 1.13.48 1.53 0C14.58 18.92 19 13.17 19 9c0-3.86-3.14-7-7-7zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
-            </svg>
-            Apple Maps
-          </a>
-        </span>
-      `;
+      return `Google Maps：<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 transition-colors">${url}</a>`;
     }
   );
   return processedText;
@@ -366,31 +338,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     : [order.customFieldValues];
 
   return (
-    <div className="wrapper my-8 max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 gap-4 mb-4 relative">
-        {isPolling && (
-          <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">正在检查更新... Checking for updates...</span>
-          </div>
-        )}
+    <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
       </div>
 
       <div id="order-details">
-        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-3 md:py-6 rounded-t-2xl">
-          <h3 className="text-xl md:text-2xl font-bold text-center text-primary-500">
+        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
             注册成功 Registration Successful
           </h3>
         </section>
 
-        <div className="bg-white shadow-lg rounded-b-2xl overflow-hidden">
-          <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-            <div className="bg-gray-50 p-3 md:p-4 rounded-xl">
-              <h4 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
+        <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
+          <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
+              <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-4 md:mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
+              <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
                   <div className="qr-code-container">
                     <QRCodeDisplay 
@@ -401,13 +367,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
                 
-                <div className="bg-primary-100 p-3 md:p-4">
+                <div className="bg-primary-100 p-2 sm:p-3 md:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <h5 className="text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
+                    <h5 className="text-sm sm:text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
                     {group.queueNumber && (
-                      <div className="bg-blue-100 p-2 md:p-3 rounded-xl text-center w-full sm:w-auto">
+                      <div className="bg-blue-100 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
                         <p className="text-xs md:text-sm text-blue-600">队列号 Queue Number</p>
-                        <p className="text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
                       </div>
                     )}
                   </div>
@@ -415,21 +381,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               </div>
             ))}
 
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p><span className="font-semibold">日期 Date:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).combined.dateOnly}</p>
-              <p><span className="font-semibold">时间 Time:</span> {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly} / 
-              {formatBilingualDateTime(new Date(order.event.startDateTime)).en.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).en.timeOnly}
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
+              <p>
+                <span className="font-semibold">日期时间 Date & Time:</span> 
+                {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
+                <span className="ml-1">
+                  {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly.replace(/^[上下]午/, '')}
+                </span>
               </p>
               {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-6 bg-white shadow-md rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                <div className="p-4">
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div key={group.groupId} className={`mt-4 sm:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
+                <div className="p-2 sm:p-3 md:p-4">
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     {group.fields.map((field: CustomField) => (
                       <div key={field.id} className="flex flex-col">
-                        <dt className="font-medium text-gray-600 mb-1">{field.label}</dt>
+                        <dt className="font-medium text-gray-600 mb-1 text-sm sm:text-base">{field.label}</dt>
                         <dd className="flex items-center gap-2">
                           {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
                             <div className="flex items-center gap-2">
@@ -454,7 +423,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             </div>
                           ) : (
                             <>
-                              <span className="text-gray-900 font-semibold">
+                              <span className="text-gray-900 font-semibold text-sm sm:text-base">
                                 {field.type === 'radio' 
                                   ? (field.value === 'yes' ? '是 Yes' : '否 No')
                                   : (field.value || 'N/A')}
@@ -467,10 +436,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                 field.label.toLowerCase().includes('邮政编码')) && !group.cancelled && (
                                 <button
                                   onClick={() => handleEdit(group.groupId, field.id, field.value?.toString() ?? '')}
-                                  className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600"
+                                  className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600 text-sm"
                                 >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="text-sm">编辑 Edit</span>
+                                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">编辑 Edit</span>
                                 </button>
                               )}
                             </>
@@ -481,7 +450,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </dl>
                 </div>
                 {!group.cancelled && (
-                  <div className="p-4 bg-gray-50">
+                  <div className="p-2 sm:p-3 md:p-4 bg-gray-50">
                     <CancelButton 
                       groupId={group.groupId} 
                       orderId={id} 
@@ -491,8 +460,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 )}
                 
                 {group.cancelled && (
-                  <div className="p-4 bg-red-50">
-                    <p className="text-red-600 text-center font-semibold">
+                  <div className="p-2 sm:p-3 md:p-4 bg-red-50">
+                    <p className="text-red-600 text-center font-semibold text-sm sm:text-base">
                       注册已取消 Registration Cancelled
                     </p>
                   </div>
@@ -500,10 +469,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               </div>
             ))}
 
-            <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-              <h4 className="text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
+            <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
+              <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
               <div 
-                className="whitespace-pre-wrap text-green-800 break-words"
+                className="whitespace-pre-wrap text-green-800 break-words text-sm sm:text-base"
                 dangerouslySetInnerHTML={{ 
                   __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
                 }}

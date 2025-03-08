@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatDateTime } from '@/lib/utils';
+import { formatBilingualDateTime } from '@/lib/utils';
 import { Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -60,12 +60,12 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-gray-600">Date 日期</p>
-            <p className="font-semibold">{formatDateTime(new Date(event.startDateTime)).dateOnly}</p>
+            <p className="font-semibold">{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Time 时间</p>
             <p className="font-semibold">
-              {formatDateTime(new Date(event.startDateTime)).timeOnly} - {formatDateTime(new Date(event.endDateTime)).timeOnly}
+              {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly} - {formatBilingualDateTime(new Date(event.endDateTime)).combined.timeOnly}
             </p>
           </div>
           <div>

@@ -37,8 +37,15 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
       <Link 
         href={isMyTicket ? `/orders/${event.orderId}` : `/events/details/${event._id}`}
         className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500"
-        style={{backgroundImage: `url(${event.imageUrl})`}}
-      />
+        style={{backgroundImage: event.imageUrl ? `url(${event.imageUrl})` : 'none'}}
+      >
+        {!event.imageUrl && (
+          <div className="flex-center flex-col text-grey-500">
+            <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
+            <p className="p-medium-14 mt-2">No image available</p>
+          </div>
+        )}
+      </Link>
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white p-3 shadow-sm transition-all">
@@ -56,11 +63,9 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           <p className="text-sm text-gray-600">{event.category.name}</p>
         </div>
         
-        {formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
-          <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
-            {line}
-          </p>
-        ))}
+        <p className="text-base text-gray-600">
+          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
+        </p>
 
         <Link href={`/events/details/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
