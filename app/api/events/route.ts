@@ -3,6 +3,7 @@ import { getAllEvents, getAllEventsForSuperAdmin } from '@/lib/actions/event.act
 import { unstable_cache } from 'next/cache';
 import { IEvent } from '@/lib/database/models/event.model';
 import { auth } from '@clerk/nextjs';
+import { revalidateTag } from 'next/cache';
 
 // Define the session claims type
 type SessionClaims = {
@@ -34,7 +35,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 3600,
+    revalidate: 60, // Reduce cache time to 1 minute
     tags: ['events']
   }
 );
@@ -62,7 +63,7 @@ const getCachedSuperAdminEvents = unstable_cache(
   },
   ['superadmin-events-list'],
   {
-    revalidate: 3600,
+    revalidate: 60, // Reduce cache time to 1 minute
     tags: ['events']
   }
 );
@@ -74,12 +75,19 @@ const preloadEvents = () => {
   });
 };
 
+// Preload events on startup
 preloadEvents();
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const country = searchParams.get('country') || 'Singapore';
+    const bustCache = searchParams.get('bustCache') === 'true';
+    
+    // If cache busting is requested, revalidate the cache
+    if (bustCache) {
+      revalidateTag('events');
+    }
     
     const { sessionClaims } = auth() as { sessionClaims: SessionClaims };
     const isSuperAdmin = sessionClaims?.metadata?.role === 'superadmin';
@@ -88,11 +96,11 @@ export async function GET(request: NextRequest) {
       ? await getCachedSuperAdminEvents(country)
       : await getCachedEvents(country);
     
-    // Implement stale-while-revalidate caching
+    // Use a shorter cache duration in the response headers
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30', // Reduce to 1 minute with 30s stale
       },
     });
   } catch (error) {

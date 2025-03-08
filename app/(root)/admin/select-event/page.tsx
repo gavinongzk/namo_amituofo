@@ -43,12 +43,24 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
+        const timestamp = new Date().getTime(); // Add timestamp for cache busting
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}&bustCache=true&_=${timestamp}`);
+        
+        if (!response.ok) {
+          console.error('Failed to fetch events:', response.status, response.statusText);
+          const text = await response.text();
+          console.error('Response text:', text);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
+        console.log('Fetched events:', result); // Add logging
 
         if (Array.isArray(result.data)) {
           const currentDate = new Date();
           const expirationDate = EVENT_CONFIG.getExpirationDate();
+          console.log('Filtering events. Current date:', currentDate, 'Expiration date:', expirationDate);
+          
           const recentAndUpcomingEvents = await Promise.all(result.data
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
@@ -61,6 +73,7 @@ const SelectEventPage = () => {
                 cannotReciteAndWalk: countsData.cannotReciteAndWalk
               };
             }));
+          console.log('Processed events:', recentAndUpcomingEvents); // Add logging
           setEvents(recentAndUpcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
