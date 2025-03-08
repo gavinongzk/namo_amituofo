@@ -19,6 +19,8 @@ import { useUploadThing } from '@/lib/uploadthing'
 import { useFieldArray } from "react-hook-form";
 import { CustomField } from "@/types";
 import { formatBilingualDateTime } from '@/lib/utils';
+import { getAllCategories } from "@/lib/actions/category.actions"
+import { ICategory } from "@/lib/database/models/category.model"
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox"
@@ -46,6 +48,15 @@ type EventFormProps = {
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
+  const [categories, setCategories] = useState<ICategory[]>([]);
+
+  useEffect(() => {
+    const getCategories = async () => {
+      const categoryList = await getAllCategories();
+      categoryList && setCategories(categoryList as ICategory[]);
+    }
+    getCategories();
+  }, []);
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -445,12 +456,11 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   <h4 className="font-medium mb-2">Category-Specific Questions:</h4>
                   <ul className="list-disc pl-5 space-y-2">
                     {(() => {
-                      const selectedCategory = form.watch('categoryId');
-                      const categoryName = Object.entries(categoryCustomFields).find(([_, fields]) => 
-                        fields.some(field => field.id === selectedCategory)
-                      )?.[0];
+                      const selectedCategoryId = form.watch('categoryId');
+                      // Get the category name from the event's category if it exists
+                      const categoryName = event?.category?.name || categories?.find((cat: ICategory) => cat._id === selectedCategoryId)?.name;
                       
-                      if (!categoryName || categoryName === 'default') return null;
+                      if (!categoryName || !categoryCustomFields[categoryName as CategoryName]) return null;
                       
                       const fields = categoryCustomFields[categoryName as CategoryName] as CustomField[];
                       const uniqueFields = fields.filter(field => 
