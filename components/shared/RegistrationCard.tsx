@@ -40,9 +40,6 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         <div className="flex flex-col gap-2 flex-grow">
           {registrations.slice(0, initialDisplayCount).map((registration, index) => (
             <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
-              <p className="p-medium-16 md:p-medium-18 text-black">
-                排队号码 Queue Number: {registration.queueNumber || 'N/A'}
-              </p>
               <p className="p-medium-14 md:p-medium-16 text-grey-600">
                 姓名 Name: {registration.name || 'N/A'}
               </p>
@@ -72,9 +69,6 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                     key={index + initialDisplayCount} 
                     className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
                   >
-                    <p className="p-medium-16 md:p-medium-18 text-black">
-                      排队号码 Queue Number: {registration.queueNumber || 'N/A'}
-                    </p>
                     <p className="p-medium-14 md:p-medium-16 text-grey-600">
                       姓名 Name: {registration.name || 'N/A'}
                     </p>
