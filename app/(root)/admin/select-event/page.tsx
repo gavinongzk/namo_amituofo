@@ -54,7 +54,9 @@ const SelectEventPage = () => {
         }
         
         const result = await response.json();
-        console.log('Fetched events:', result);
+        console.log('Raw API response:', result);
+        console.log('User role:', user?.publicMetadata?.role);
+        console.log('User country:', country);
 
         if (Array.isArray(result.data)) {
           const recentAndUpcomingEvents = await Promise.all(result.data
@@ -69,7 +71,8 @@ const SelectEventPage = () => {
                 cannotReciteAndWalk: countsData.cannotReciteAndWalk
               };
             }));
-          console.log('Processed events:', recentAndUpcomingEvents); // Add logging
+          console.log('Total events after processing:', recentAndUpcomingEvents.length);
+          console.log('Events by category:', groupEventsByCategory(recentAndUpcomingEvents));
           setEvents(recentAndUpcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);

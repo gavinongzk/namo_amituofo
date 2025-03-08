@@ -92,9 +92,15 @@ export async function GET(request: NextRequest) {
     const { sessionClaims } = auth() as { sessionClaims: SessionClaims };
     const isSuperAdmin = sessionClaims?.metadata?.role === 'superadmin';
     
+    console.log('User role:', sessionClaims?.metadata?.role);
+    console.log('Is superadmin:', isSuperAdmin);
+    console.log('Fetching events for country:', country);
+    
     const events = isSuperAdmin 
       ? await getCachedSuperAdminEvents(country)
       : await getCachedEvents(country);
+    
+    console.log('Number of events fetched:', events.data?.length || 0);
     
     // Use a shorter cache duration in the response headers
     return new NextResponse(JSON.stringify(events), {

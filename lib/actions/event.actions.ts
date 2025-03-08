@@ -263,6 +263,8 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
           ]
         }
 
+        console.log('getAllEventsForSuperAdmin - Query Conditions:', JSON.stringify(conditions, null, 2));
+        
         const skipAmount = (Number(page) - 1) * limit
         
         // Parallel queries without field projection to get all fields
@@ -285,6 +287,9 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
             .exec(),
           Event.countDocuments(conditions)
         ]);
+
+        console.log(`getAllEventsForSuperAdmin - Total events found: ${eventsCount}`);
+        console.log(`getAllEventsForSuperAdmin - Events fetched: ${events.length}`);
 
         // Batch fetch registration counts
         const eventIds = events.map(event => event._id);
