@@ -64,7 +64,7 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
         </div>
         
         <p className="text-base text-gray-600">
-          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).combined.timeOnly} - {formatBilingualDateTime(event.endDateTime).combined.timeOnly}
+          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
         </p>
 
         <Link href={`/events/details/${event._id}`}>

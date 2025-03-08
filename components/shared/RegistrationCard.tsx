@@ -28,7 +28,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           {event.startDateTime && (
             <div>
               <p className="text-gray-600 text-sm md:text-base">
-                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly} - {formatBilingualDateTime(new Date(event.endDateTime as Date)).combined.timeOnly}
+                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} {formatBilingualDateTime(new Date(event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(event.endDateTime as Date)).cn.timeOnly}
               </p>
             </div>
           )}
