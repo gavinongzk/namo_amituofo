@@ -340,12 +340,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
-        {isPolling && (
-          <div className="absolute right-0 -bottom-6 flex items-center gap-2 text-gray-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">正在检查更新... Checking for updates...</span>
-          </div>
-        )}
       </div>
 
       <div id="order-details">
