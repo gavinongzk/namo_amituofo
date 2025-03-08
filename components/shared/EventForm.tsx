@@ -26,6 +26,14 @@ import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+// Helper function to get next Sunday at a specific time
+const getNextSunday = (hour: number, minute: number = 0) => {
+  const today = new Date();
+  const nextSunday = new Date(today);
+  nextSunday.setDate(today.getDate() + ((7 - today.getDay()) % 7));
+  nextSunday.setHours(hour, minute, 0, 0);
+  return nextSunday;
+};
 
 type EventFormProps = {
   userId: string
@@ -37,19 +45,6 @@ type EventFormProps = {
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
-
-  const formatDateForPicker = (date: Date) => {
-    const bilingualDate = formatBilingualDateTime(date);
-    const chineseWeekday = date.toLocaleString('zh-CN', { weekday: 'long' });
-    const englishWeekday = date.toLocaleString('en-US', { weekday: 'short' });
-    const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()} (${chineseWeekday} ${englishWeekday})`;
-    const hour = date.getHours();
-    const minute = date.getMinutes().toString().padStart(2, '0');
-    const period = hour < 12 ? '上午' : '下午';
-    const hour12 = hour % 12 || 12;
-    const formattedTime = `${period}${hour12}.${minute}`;
-    return `${formattedDate} ${formattedTime}`;
-  };
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -70,7 +65,11 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             )
           })) || [],
         }
-      : { ...eventDefaultValues }
+      : { 
+          ...eventDefaultValues,
+          startDateTime: getNextSunday(13), // 1 PM
+          endDateTime: getNextSunday(16), // 4 PM
+        }
   })
 
   useEffect(() => {
@@ -344,7 +343,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
+                        dateFormat="dd-MM-yyyy (EEEE) h:mm aa"
                         wrapperClassName="datePicker"
                       />
                     </div>
@@ -381,7 +380,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         }} 
                         showTimeSelect
                         timeInputLabel="Time:"
-                        dateFormat="dd-MM-yyyy (EEEE eee) aa h.mm"
+                        dateFormat="dd-MM-yyyy (EEEE) h:mm aa"
                         wrapperClassName="datePicker"
                       />
                     </div>
