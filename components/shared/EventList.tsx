@@ -3,6 +3,7 @@ import { preloadEvents, preloadEventsByCategory } from '@/lib/actions/preload';
 import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
+import { currentUser } from '@clerk/nextjs';
 
 interface EventListProps {
   page: number;
@@ -18,6 +19,9 @@ interface EventsResponse {
 
 async function EventList({ page, searchText, category, country }: EventListProps) {
   console.log('🎬 EventList starting with params:', { page, searchText, category, country });
+  
+  const user = await currentUser();
+  const userId = user?.publicMetadata?.userId as string;
   
   let events: EventsResponse;
   
@@ -67,6 +71,7 @@ async function EventList({ page, searchText, category, country }: EventListProps
         page={page}
         totalPages={events.totalPages}
         urlParamName="page"
+        userId={userId}
       />
     );
   } catch (error) {

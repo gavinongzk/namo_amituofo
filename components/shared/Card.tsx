@@ -27,11 +27,10 @@ type CardProps = {
   },
   hasOrderLink?: boolean,
   isMyTicket?: boolean,
+  userId?: string,
 }
 
-const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
-  const { sessionClaims } = auth();
-  const userId = sessionClaims?.dbUserId as string;
+const Card = ({ event, hasOrderLink, isMyTicket, userId }: CardProps) => {
   const isEventCreator = userId === event.organizer._id.toString();
   const [imageLoading, setImageLoading] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';

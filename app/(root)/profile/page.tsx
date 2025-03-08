@@ -65,6 +65,7 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
                 page={eventsPage}
                 urlParamName="eventsPage"
                 totalPages={organizedEventsData.totalPages}
+                userId={userId}
               />
             </div>
           </div>
