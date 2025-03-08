@@ -20,6 +20,8 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingPath, setLoadingPath] = useState<string | null>(null);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   useEffect(() => {
     setIsLoading(false);
@@ -34,18 +36,35 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     if (onClose) onClose();
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 150) {
+      // Swipe left
+      if (onClose) onClose();
+    }
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
   const navItemClass = (href: string) => 
-    `flex flex-col items-start justify-center px-4 py-2 text-sm rounded-md transition-all duration-300 relative ${
-      (pathname === href || (href === '/' && pathname === '/'))
-        ? 'bg-primary-50 text-primary-600 font-semibold border-b-2 border-primary-600 shadow-sm'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-primary-500'
+    `group flex flex-col items-start justify-center p-3 md:px-4 md:py-2 text-sm rounded-lg md:rounded-md transition-all duration-300 relative w-full md:w-auto
+    ${pathname === href || (href === '/' && pathname === '/')
+      ? 'bg-primary-50 text-primary-600 font-medium shadow-sm'
+      : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100 hover:text-primary-500'
     }`;
 
   const renderLoadingSpinner = (href: string) => {
     if (isLoading && loadingPath === href) {
       return (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
         </div>
       );
     }
@@ -53,63 +72,68 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
   };
 
   return (
-    <ul className={`flex flex-col md:flex-row md:items-center gap-4 md:gap-6 ${className}`}>
-      <li>
+    <ul 
+      className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto ${className}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <li className="w-full md:w-auto">
         <Link href="/" className={navItemClass('/')} onClick={() => handleClick('/')}>
-          <span className="font-medium">净土宗活动</span>
-          <span className="text-xs mt-1">Events</span>
+          <span className="font-medium group-hover:text-primary-600 transition-colors">净土宗活动</span>
+          <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Events</span>
           {renderLoadingSpinner('/')}
         </Link>
       </li>
       {!isSuperAdmin && !isNormalAdmin && (
-        <li>
+        <li className="w-full md:w-auto">
           <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={() => handleClick('/event-lookup')}>
-            <span className="font-medium">活动查询</span>
-            <span className="text-xs mt-1">Event Lookup</span>
+            <span className="font-medium group-hover:text-primary-600 transition-colors">活动查询</span>
+            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Event Lookup</span>
             {renderLoadingSpinner('/event-lookup')}
           </Link>
         </li>
       )}
       {isSignedIn ? (
         <>
-          <li>
+          <li className="w-full md:w-auto">
             <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
-              <span className="font-medium">我的活动</span>
-              <span className="text-xs mt-1">My Events</span>
+              <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
+              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
               {renderLoadingSpinner('/profile')}
             </Link>
           </li>
           {isSuperAdmin && (
-            <li>
+            <li className="w-full md:w-auto">
               <Link href="/events/create" className={navItemClass('/events/create')} onClick={() => handleClick('/events/create')}>
-                <span className="font-medium">创建活动</span>
-                <span className="text-xs mt-1">Create Event</span>
+                <span className="font-medium group-hover:text-primary-600 transition-colors">创建活动</span>
+                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Create Event</span>
                 {renderLoadingSpinner('/events/create')}
               </Link>
             </li>
           )}
-          <li>
+          <li className="w-full md:w-auto">
             <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-              <span className="font-medium">常见问题</span>
-              <span className="text-xs mt-1">FAQ</span>
+              <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
+              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
               {renderLoadingSpinner('/faq')}
             </Link>
           </li>
           {(isSuperAdmin || isNormalAdmin) && (
-            <li>
+            <li className="w-full md:w-auto">
               <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={() => handleClick('/admin/dashboard')}>
-                <span className="font-medium">管理员系统</span>
-                <span className="text-xs mt-1">Admin Dashboard</span>
+                <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
+                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
                 {renderLoadingSpinner('/admin/dashboard')}
               </Link>
             </li>
           )}
         </>
       ) : (
-        <li>
+        <li className="w-full md:w-auto">
           <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-            <span className="font-medium">常见问题</span>
-            <span className="text-xs mt-1">FAQ</span>
+            <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
+            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
             {renderLoadingSpinner('/faq')}
           </Link>
         </li>

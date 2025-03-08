@@ -44,7 +44,7 @@ const Header = () => {
 
   return (
     <header className="w-full border-b bg-white shadow-sm">
-      <nav className="wrapper flex items-center justify-between py-4 px-4 md:px-6 lg:px-8">
+      <nav className="wrapper flex items-center justify-between py-2 sm:py-3 md:py-4">
         <button 
           onClick={() => handleNavigation('/')}
           className="transition-transform hover:scale-105 relative"
@@ -56,28 +56,28 @@ const Header = () => {
             height={54}
             alt="Logo"
             priority
-            className={`h-12 md:h-16 lg:h-20 w-auto transition-opacity duration-300 ${isLoading ? 'opacity-60' : ''}`}
+            className={`h-8 sm:h-10 md:h-12 lg:h-16 w-auto transition-opacity duration-300 ${isLoading ? 'opacity-60' : ''}`}
           />
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-primary-500" />
             </div>
           )}
         </button>
 
-        <nav className="md:flex-between hidden w-full max-w-xl mx-8 lg:mx-12">
+        <nav className="md:flex-between hidden w-full max-w-xl mx-4 lg:mx-8">
           <NavWrapper />
         </nav>
 
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
           <SignedIn>
-            <div className="flex items-center gap-4 md:gap-6">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
               <CountrySelector />
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "h-9 w-9 md:h-10 md:w-10"
+                    avatarBox: "h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
                   }
                 }}
               />
