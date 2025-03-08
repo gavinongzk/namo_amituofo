@@ -56,11 +56,9 @@ const Card = ({ event, hasOrderLink, isMyTicket }: CardProps) => {
           <p className="text-sm text-gray-600">{event.category.name}</p>
         </div>
         
-        {formatBilingualDateTime(event.startDateTime).combined.dateTime.split('\n').map((line, index) => (
-          <p key={index} className={`${index === 0 ? 'text-gray-600' : 'text-gray-500'} ${index === 0 ? 'text-base' : 'text-sm'}`}>
-            {line}
-          </p>
-        ))}
+        <p className="text-base text-gray-600">
+          {formatBilingualDateTime(event.startDateTime).combined.dateOnly} {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
+        </p>
 
         <Link href={`/events/details/${event._id}`}>
           <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
