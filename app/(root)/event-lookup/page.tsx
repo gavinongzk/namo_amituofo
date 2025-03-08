@@ -6,14 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import RegistrationCollection from '@/components/shared/RegistrationCollection';
-import EventLookupAnalytics from '@/components/shared/EventLookupAnalytics';
-import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+import dynamic from 'next/dynamic';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
 import { IOrderItem } from '@/lib/database/models/order.model';
 import { formatBilingualDateTime } from '@/lib/utils';
+import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+
+// Dynamic imports for heavy components
+const RegistrationCollection = dynamic(() => import('@/components/shared/RegistrationCollection'), {
+    loading: () => <div className="flex-center min-h-[200px]"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>
+});
+
+const EventLookupAnalytics = dynamic(() => import('@/components/shared/EventLookupAnalytics'), {
+    loading: () => <div className="flex-center min-h-[200px]"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>,
+    ssr: false
+});
 
 const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -25,9 +34,18 @@ const EventLookupPage = () => {
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     useEffect(() => {
         setIsReady(true);
+        // Clean up function to reset states
+        return () => {
+            setRegistrations([]);
+            setAllRegistrations([]);
+            setError('');
+            setHasSearched(false);
+            setShowAnalytics(false);
+        };
     }, []);
 
     const handleLookup = async () => {
@@ -35,6 +53,7 @@ const EventLookupPage = () => {
         setIsLoadingStats(true);
         setError('');
         setHasSearched(true);
+        setShowAnalytics(false);
         
         const maxRetries = 2;
         let retryCount = 0;
@@ -74,35 +93,39 @@ const EventLookupPage = () => {
                 setRegistrations(transformedRegistrations);
                 setIsLoading(false);
 
-                // Add delay between requests to prevent race conditions
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Only fetch all registrations if there are recent ones
+                if (transformedRegistrations.length > 0) {
+                    // Add delay between requests to prevent race conditions
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Then get all registrations for statistics with cache-busting query param
-                const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
-                
-                // Transform all orders for statistics
-                const transformedAllRegistrations: IRegistration[] = allOrders
-                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                    .map((order: any) => ({
-                        event: {
-                            _id: order.event._id,
-                            title: order.event.title,
-                            imageUrl: order.event.imageUrl,
-                            startDateTime: order.event.startDateTime,
-                            endDateTime: order.event.endDateTime,
-                            orderId: order._id.toString(),
-                            organizer: { _id: order.event.organizer?.toString() || '' },
-                            customFieldValues: order.customFieldValues,
-                            category: order.event.category,
-                        },
-                        registrations: order.customFieldValues.map((group: any) => ({
-                            queueNumber: group.queueNumber,
-                            name: group.fields?.find((field: any) => 
-                                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                        })),
-                    }));
+                    // Then get all registrations for statistics with cache-busting query param
+                    const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
+                    
+                    // Transform all orders for statistics
+                    const transformedAllRegistrations: IRegistration[] = allOrders
+                        .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                        .map((order: any) => ({
+                            event: {
+                                _id: order.event._id,
+                                title: order.event.title,
+                                imageUrl: order.event.imageUrl,
+                                startDateTime: order.event.startDateTime,
+                                endDateTime: order.event.endDateTime,
+                                orderId: order._id.toString(),
+                                organizer: { _id: order.event.organizer?.toString() || '' },
+                                customFieldValues: order.customFieldValues,
+                                category: order.event.category,
+                            },
+                            registrations: order.customFieldValues.map((group: any) => ({
+                                queueNumber: group.queueNumber,
+                                name: group.fields?.find((field: any) => 
+                                    field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                            })),
+                        }));
 
-                setAllRegistrations(transformedAllRegistrations);
+                    setAllRegistrations(transformedAllRegistrations);
+                    setShowAnalytics(true);
+                }
                 setIsLoadingStats(false);
                 break; // Exit the retry loop if successful
             } catch (err) {
@@ -246,7 +269,7 @@ const EventLookupPage = () => {
                 </motion.div>
             )}
 
-            {/* Attendance Statistics Section */}
+            {/* Analytics Charts */}
             {hasSearched && !error && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -262,7 +285,7 @@ const EventLookupPage = () => {
                                 <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
                             </div>
                         </div>
-                    ) : allRegistrations.length > 0 && (
+                    ) : showAnalytics && allRegistrations.length > 0 && (
                         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                             <h3 className="text-2xl font-bold mb-6 text-center text-primary-500">
                                 参与统计 Attendance Statistics
@@ -335,7 +358,7 @@ const EventLookupPage = () => {
                                 transition={{ delay: 0.4 }}
                                 className="mt-8"
                             >
-                                <EventLookupAnalytics registrations={allRegistrations} />
+                                {showAnalytics && <EventLookupAnalytics registrations={allRegistrations} />}
                             </motion.div>
                         </div>
                     )}
