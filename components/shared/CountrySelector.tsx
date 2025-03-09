@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { setCookie, getCookie } from 'cookies-next';
@@ -11,6 +12,7 @@ const countryFlags: { [key: string]: string } = {
 };
 
 const CountrySelector = () => {
+  const router = useRouter();
   const { user, isLoaded } = useUser();
   const [country, setCountry] = useState<string>('Singapore'); // Default to Singapore
 
@@ -121,13 +123,19 @@ const CountrySelector = () => {
     detectCountry();
   }, [isLoaded, user]);
 
-  const changeCountry = (newCountry: string) => {
+  const changeCountry = async (newCountry: string) => {
     setCountry(newCountry);
     try {
+      // Update local storage and cookie
       localStorage.setItem('userCountry', newCountry);
       setCookie('userCountry', newCountry);
-      // Refresh the page
-      window.location.reload();
+
+      // Invalidate cache by making a request to the API with cache busting
+      await fetch(`/api/events?country=${newCountry}&bustCache=true&_=${Date.now()}`);
+
+      // Use router.refresh() instead of window.location.reload()
+      // This will trigger a soft refresh of the page's dynamic content
+      router.refresh();
     } catch (error) {
       console.error('Error setting country preference:', error);
     }

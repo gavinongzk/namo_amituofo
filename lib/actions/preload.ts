@@ -49,7 +49,7 @@ export const preloadEventsByCategory = unstable_cache(
   },
   ['events-by-category'],
   {
-    revalidate: 300, // Shorter cache time for filtered results
+    revalidate: 60,
     tags: ['events']
   }
 );
@@ -137,7 +137,7 @@ export const preloadEvents = unstable_cache(
   },
   ['events-preload'],
   {
-    revalidate: 3600,
+    revalidate: 60,
     tags: ['events']
   }
 ); 
