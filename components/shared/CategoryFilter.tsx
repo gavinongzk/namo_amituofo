@@ -24,8 +24,8 @@ const CategoryFilter = () => {
   // Define category colors
   const categoryColors: { [key: string]: string } = {
     'All': 'bg-gray-200',
+    '念佛超荐法会': 'bg-blue-200',
     '念佛共修': 'bg-orange-200',
-    '念佛｜闻法｜祈福｜超荐': 'bg-blue-200',
     '外出结缘法会': 'bg-green-200',
   };
 
