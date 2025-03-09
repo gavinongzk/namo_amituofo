@@ -40,24 +40,30 @@ const CategoryFilter = () => {
       try {
         setIsLoading(true);
         const categoryList = await getAllCategories(isSuperAdmin);
-        if (categoryList) {
+
+        if (categoryList && categoryList.length > 0) {
           // Sort categories according to the defined order
           const sortedCategories = [...categoryList].sort((a, b) => {
             const indexA = categoryOrder.indexOf(a.name);
             const indexB = categoryOrder.indexOf(b.name);
+            // If category is not in order list, put it at the end
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
             return indexA - indexB;
           });
           setCategories(sortedCategories as ICategory[]);
+        } else {
+          setCategories([]);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
     }
 
     getCategories();
-  }, [isSuperAdmin])
+  }, [isSuperAdmin, categoryOrder])
 
   const onSelectCategory = (category: string) => {
     setIsFiltering(true);

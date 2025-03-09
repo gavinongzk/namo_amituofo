@@ -25,7 +25,15 @@ export const getAllCategories = async (includeHidden: boolean = false) => {
   try {
     await connectToDatabase();
 
-    const query = includeHidden ? {} : { isHidden: false };
+    const query = includeHidden 
+      ? {} 
+      : { 
+          $or: [
+            { isHidden: false },
+            { isHidden: { $exists: false } },
+            { isHidden: null }
+          ] 
+        };
     const categories = await Category.find(query);
 
     return JSON.parse(JSON.stringify(categories));
@@ -56,7 +64,6 @@ export const categoryHasEvents = async (categoryId: string): Promise<boolean> =>
     const events = await Event.find({ category: categoryId });
     return events.length > 0;
   } catch (error) {
-    console.error('Error checking if category has events:', error);
     throw error;
   }
 }
