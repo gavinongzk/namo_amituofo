@@ -32,12 +32,23 @@ const CategoryFilter = () => {
     '外出结缘法会': 'bg-green-200',
   };
 
+  // Define the desired category order
+  const categoryOrder = ['念佛超荐法会', '念佛共修', '外出结缘法会'];
+
   useEffect(() => {
     const getCategories = async () => {
       try {
         setIsLoading(true);
         const categoryList = await getAllCategories(isSuperAdmin);
-        categoryList && setCategories(categoryList as ICategory[]);
+        if (categoryList) {
+          // Sort categories according to the defined order
+          const sortedCategories = [...categoryList].sort((a, b) => {
+            const indexA = categoryOrder.indexOf(a.name);
+            const indexB = categoryOrder.indexOf(b.name);
+            return indexA - indexB;
+          });
+          setCategories(sortedCategories as ICategory[]);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       } finally {
