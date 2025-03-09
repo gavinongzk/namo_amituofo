@@ -365,6 +365,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
             注册成功 Registration Successful
           </h3>
+          <p className="text-center text-primary-600 mt-2">
+            当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.
+          </p>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
