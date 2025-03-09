@@ -245,14 +245,14 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         if (phoneOverrides[i]) {
           // For overridden numbers, just check if it starts with + and contains only numbers after that
           if (!/^\+\d+$/.test(phoneNumber)) {
-            phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Person ${i + 1}. Must start with + followed by numbers`);
+            phoneValidationErrors.push(`第${i + 1}位参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Person ${i + 1}. Must start with + followed by numbers`);
           }
           continue;
         }
         
         // Regular phone validation for SG/MY numbers
         if (!isValidPhoneNumber(phoneNumber)) {
-          phoneValidationErrors.push(`参加者 ${i + 1} 的电话号码无效 / Invalid phone number for Person ${i + 1}`);
+          phoneValidationErrors.push(`第${i + 1}位参加者的电话号码无效 / Invalid phone number for Person ${i + 1}`);
         }
       }
       
@@ -280,7 +280,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         // Skip detailed validation if override is active
         if (postalOverrides[i]) {
           if (!/^\d+$/.test(postalCode)) {
-            postalValidationErrors.push(`参加者 ${i + 1} 的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
+            postalValidationErrors.push(`第${i + 1}位参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
           }
           continue;
         }
@@ -289,7 +289,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
           if (!isValidCountryPostal) {
             postalValidationErrors.push(
-              `参加者 ${i + 1}: ${
+              `第${i + 1}位参加者: ${
                 userCountry === 'Singapore'
                   ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
                   : userCountry === 'Malaysia'
@@ -511,7 +511,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   >
                     <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                       <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                        参加者 {personIndex + 1} / Person {personIndex + 1}
+                        第{personIndex + 1}位参加者 / Person {personIndex + 1}
                       </h3>
                     </div>
 
@@ -679,7 +679,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            使用与参加者1相同 Use same as Person 1
+                                            使用与第一位参加者相同 Use same as Person 1
                                           </label>
                                         </div>
                                       )}
@@ -712,7 +712,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           onClick={() => remove(personIndex)}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          删除参加者 {personIndex + 1} Remove Person {personIndex + 1}
+                          删除第{personIndex + 1}位参加者 Remove Person {personIndex + 1}
                         </Button>
                       </div>
                     )}
