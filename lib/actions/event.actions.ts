@@ -236,7 +236,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
     },
     ['events-list'],
     {
-      revalidate: 3600,
+      revalidate: 60,
       tags: ['events']
     }
   )();
@@ -321,7 +321,7 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
     },
     ['superadmin-events-list'],
     {
-      revalidate: 3600,
+      revalidate: 60,
       tags: ['events']
     }
   )();
