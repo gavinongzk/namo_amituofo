@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useUser } from "@clerk/nextjs"
 
 // Helper function to get next Sunday at a specific time
 const getNextSunday = (hour: number, minute: number = 0) => {
@@ -49,6 +50,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
   const [categories, setCategories] = useState<ICategory[]>([]);
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
   useEffect(() => {
     const getCategories = async () => {
@@ -228,7 +231,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <Dropdown onChangeHandler={field.onChange} value={field.value} />
+                  <Dropdown 
+                    onChangeHandler={field.onChange} 
+                    value={field.value} 
+                    isSuperAdmin={isSuperAdmin}
+                    showHidden={isSuperAdmin}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

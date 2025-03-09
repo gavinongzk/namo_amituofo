@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils'
 // Shared category colors - matching with actual categories
 export const categoryColors: { [key: string]: string } = {
   'All': 'bg-gray-200 text-gray-700',
+  '念佛超荐法会': 'bg-blue-200 text-blue-700',
   '念佛共修': 'bg-orange-200 text-orange-700',
-  '念佛｜闻法｜祈福｜超荐': 'bg-blue-200 text-blue-700',
   '外出结缘法会': 'bg-green-200 text-green-700',
 };
 

@@ -13,6 +13,7 @@ import { formUrlQuery, removeKeysFromQuery } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 const CategoryFilter = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -20,30 +21,49 @@ const CategoryFilter = () => {
   const [isFiltering, setIsFiltering] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
   // Define category colors
   const categoryColors: { [key: string]: string } = {
     'All': 'bg-gray-200',
+    '念佛超荐法会': 'bg-blue-200',
     '念佛共修': 'bg-orange-200',
-    '念佛｜闻法｜祈福｜超荐': 'bg-blue-200',
     '外出结缘法会': 'bg-green-200',
   };
+
+  // Define the desired category order
+  const categoryOrder = ['念佛超荐法会', '念佛共修', '外出结缘法会'];
 
   useEffect(() => {
     const getCategories = async () => {
       try {
         setIsLoading(true);
-        const categoryList = await getAllCategories();
-        categoryList && setCategories(categoryList as ICategory[]);
+        const categoryList = await getAllCategories(isSuperAdmin);
+
+        if (categoryList && categoryList.length > 0) {
+          // Sort categories according to the defined order
+          const sortedCategories = [...categoryList].sort((a, b) => {
+            const indexA = categoryOrder.indexOf(a.name);
+            const indexB = categoryOrder.indexOf(b.name);
+            // If category is not in order list, put it at the end
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+          setCategories(sortedCategories as ICategory[]);
+        } else {
+          setCategories([]);
+        }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
     }
 
     getCategories();
-  }, [])
+  }, [isSuperAdmin, categoryOrder])
 
   const onSelectCategory = (category: string) => {
     setIsFiltering(true);
@@ -104,11 +124,14 @@ const CategoryFilter = () => {
             <SelectItem 
               value={category.name} 
               key={category._id} 
-              className="select-item p-regular-14 hover:bg-gray-50"
+              className={`select-item p-regular-14 hover:bg-gray-50 ${category.isHidden ? 'text-gray-400' : ''}`}
             >
               <div className="flex items-center gap-2 w-full">
                 <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors[category.name] || 'bg-gray-200'}`} />
                 <span>{category.name}</span>
+                {category.isHidden && isSuperAdmin && (
+                  <span className="text-xs text-gray-400 ml-2">(Hidden)</span>
+                )}
               </div>
             </SelectItem>
           ))}

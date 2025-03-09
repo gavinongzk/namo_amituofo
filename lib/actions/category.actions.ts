@@ -10,7 +10,10 @@ export const createCategory = async ({ categoryName }: CreateCategoryParams) => 
   try {
     await connectToDatabase();
 
-    const newCategory = await Category.create({ name: categoryName });
+    const newCategory = await Category.create({ 
+      name: categoryName,
+      isHidden: false 
+    });
 
     return JSON.parse(JSON.stringify(newCategory));
   } catch (error) {
@@ -18,11 +21,20 @@ export const createCategory = async ({ categoryName }: CreateCategoryParams) => 
   }
 }
 
-export const getAllCategories = async () => {
+export const getAllCategories = async (includeHidden: boolean = false) => {
   try {
     await connectToDatabase();
 
-    const categories = await Category.find();
+    const query = includeHidden 
+      ? {} 
+      : { 
+          $or: [
+            { isHidden: false },
+            { isHidden: { $exists: false } },
+            { isHidden: null }
+          ] 
+        };
+    const categories = await Category.find(query);
 
     return JSON.parse(JSON.stringify(categories));
   } catch (error) {
@@ -52,7 +64,24 @@ export const categoryHasEvents = async (categoryId: string): Promise<boolean> =>
     const events = await Event.find({ category: categoryId });
     return events.length > 0;
   } catch (error) {
-    console.error('Error checking if category has events:', error);
     throw error;
+  }
+}
+
+export const toggleCategoryVisibility = async (categoryId: string) => {
+  try {
+    await connectToDatabase();
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    category.isHidden = !category.isHidden;
+    await category.save();
+
+    return JSON.parse(JSON.stringify(category));
+  } catch (error) {
+    handleError(error)
   }
 }
