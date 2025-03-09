@@ -175,6 +175,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
+  const [showImportantInfo, setShowImportantInfo] = useState(true);
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
 
@@ -339,6 +340,23 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
+      {/* Important Info Popup */}
+      <AlertDialog open={showImportantInfo} onOpenChange={setShowImportantInfo}>
+        <AlertDialogContent className="max-w-[600px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-green-700">重要信息 Important Information</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-wrap text-green-800 break-words text-sm sm:text-base" dangerouslySetInnerHTML={{ 
+              __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
+            }} />
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowImportantInfo(false)} className="bg-primary-500 text-white hover:bg-primary-600">
+              我已阅读并理解 I have read and understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
       </div>
 

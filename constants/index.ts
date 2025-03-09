@@ -15,6 +15,7 @@ export const eventDefaultValues = {
 
     注：/ Note:
     无法参与绕佛的大众，可以坐在不绕佛区。/ Those who are unable to participate in the circumambulation session can sit in the non-circumambulation area.
+    请着装庄重, 以示对阿弥陀佛的恭敬。/ Please dress appropriately to show respect for Amitabha Buddha.
 
     ▫▫▫▫▫▫▫▫
     ⧉ 净土宗弥陀寺（新加坡）/ Namo Amituofo Organization Ltd⧉
