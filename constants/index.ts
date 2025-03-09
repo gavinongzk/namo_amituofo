@@ -15,6 +15,7 @@ export const eventDefaultValues = {
 
     注：/ Note:
     无法参与绕佛的大众，可以坐在不绕佛区。/ Those who are unable to participate in the circumambulation session can sit in the non-circumambulation area.
+    请着装庄重, 以示对阿弥陀佛的恭敬。/ Please dress appropriately to show respect for Amitabha Buddha.
 
     ▫▫▫▫▫▫▫▫
     ⧉ 净土宗弥陀寺（新加坡）/ Namo Amituofo Organization Ltd⧉
@@ -27,40 +28,22 @@ export const eventDefaultValues = {
 
 export const categoryCustomFields = {
   default: [
-    { id: '1', label: '参加者名字 / Participant\'s Name', type: 'text' },
+    { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
   ],
   '念佛共修': [
-    { id: '1', label: '参加者名字 / Participant\'s Name', type: 'text' },
+    { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact number', type: 'phone' },
-    {
-      id: '3',
-      label: '请问要参加绕佛吗？/ Does the participant want to participate in walking and reciting section?',
-      type: 'radio',
-      options: [
-        { value: 'yes', label: '是 / Yes' },
-        { value: 'no', label: '否 / No' }
-      ]
-    },
-    { id: '4', label: '邮区编号 / Postal Code', type: 'postal' },
+    { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
   ],
-  '念佛｜闻法｜祈福｜超荐': [
-    { id: '1', label: '参加者名字 / Participant\'s Name', type: 'text' },
+  '念佛超荐法会': [
+    { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact number', type: 'phone' },
-    {
-      id: '3',
-      label: '请问要参加绕佛吗？/ Does the participant want to participate in walking and reciting section?',
-      type: 'radio',
-      options: [
-        { value: 'yes', label: '是 / Yes' },
-        { value: 'no', label: '否 / No' }
-      ]
-    },
-    { id: '4', label: '邮区编号 / Postal Code', type: 'postal' },
+    { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
   ],
   '外出结缘法会': [
-    { id: '1', label: '义工名字 / Volunteer\'s Name', type: 'text' },
+    { id: '1', label: '义工姓名 / Volunteer\'s Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
   ],

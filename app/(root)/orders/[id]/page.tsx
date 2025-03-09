@@ -43,8 +43,6 @@ const convertAddressesToLinks = (text: string) => {
 const convertLinksInText = (text: string) => {
   // First convert phone numbers
   let processedText = convertPhoneNumbersToLinks(text);
-  // Then convert addresses
-  processedText = convertAddressesToLinks(processedText);
   // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
     /(?:Google Maps[：:]?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+|maps\.google\.com\/[^\s\n]+))/gi,
@@ -175,6 +173,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
+  const [showImportantInfo, setShowImportantInfo] = useState(true);
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
 
@@ -339,6 +338,23 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
+      {/* Important Info Popup */}
+      <AlertDialog open={showImportantInfo} onOpenChange={setShowImportantInfo}>
+        <AlertDialogContent className="max-w-[600px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-green-700">重要信息 Important Information</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-wrap text-green-800 break-words text-sm sm:text-base" dangerouslySetInnerHTML={{ 
+              __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
+            }} />
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowImportantInfo(false)} className="bg-primary-500 text-white hover:bg-primary-600">
+              我已阅读并理解 I have read and understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
       </div>
 
@@ -347,6 +363,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
             注册成功 Registration Successful
           </h3>
+          <p className="text-center text-primary-600 mt-2">
+            当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.
+          </p>
         </section>
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
@@ -367,13 +386,21 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
                 
-                <div className="bg-primary-100 p-2 sm:p-3 md:p-4">
+                <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <h5 className="text-sm sm:text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Person {index + 1}</span>
+                        {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
+                      </h5>
+                      <div className="text-white/90 text-sm sm:text-base">
+                        {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                      </div>
+                    </div>
                     {group.queueNumber && (
-                      <div className="bg-blue-100 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
-                        <p className="text-xs md:text-sm text-blue-600">队列号 Queue Number</p>
-                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                      <div className="bg-white/90 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
+                        <p className="text-xs md:text-sm text-primary-600">队列号 Queue Number</p>
+                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-700">{group.queueNumber}</p>
                       </div>
                     )}
                   </div>

@@ -55,11 +55,11 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       try {
         const categoryCustomFields: CategoryCustomFields = {
             default: [
-                { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+                { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
                 { id: '2', label: '联系号码 Contact number', type: 'phone' },
               ],
             '念佛共修': [
-                { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+                { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
                 { id: '2', label: '联系号码 Contact number', type: 'phone' },
                 {
                   id: '3',
@@ -72,7 +72,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
                 },
               ],
               '念佛｜闻法｜祈福｜超荐': [
-                { id: '1', label: '参加者名字 Participant\'s Name', type: 'text' },
+                { id: '1', label: '参加者姓名 / Participant\'s Name', type: 'text' },
                 { id: '2', label: '联系号码 Contact number', type: 'phone' },
               ],
               '外出结缘法会': [
@@ -141,7 +141,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>
           <tr>
-            <th className="border border-gray-300 p-2">参加者名字 Participant's Name</th>
+            <th className="border border-gray-300 p-2">参加者姓名 / Participant's Name</th>
             <th className="border border-gray-300 p-2">联系号码 Contact number</th>
             {eventCategory === '念佛共修' && (
               <th className="border border-gray-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</th>
