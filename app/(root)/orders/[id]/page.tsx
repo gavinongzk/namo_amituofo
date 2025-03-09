@@ -43,8 +43,6 @@ const convertAddressesToLinks = (text: string) => {
 const convertLinksInText = (text: string) => {
   // First convert phone numbers
   let processedText = convertPhoneNumbersToLinks(text);
-  // Then convert addresses
-  processedText = convertAddressesToLinks(processedText);
   // Convert Google Maps links - handle both with and without newlines, and both full-width and half-width colons
   processedText = processedText.replace(
     /(?:Google Maps[：:]?\s*)(https?:\/\/(?:goo\.gl\/maps\/[^\s\n]+|maps\.google\.com\/[^\s\n]+))/gi,
