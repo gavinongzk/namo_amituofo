@@ -10,11 +10,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { CreateOrderParams } from "@/types"
+import { CreateOrderParams, CustomField } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
-import { CustomField } from "@/types"
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -132,7 +131,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     detectCountry();
   }, [isLoaded, user]);
 
-  const customFields = categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default;
+  const customFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
 
   const formSchema = z.object({
     groups: z.array(
@@ -516,7 +515,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     </div>
 
                     <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-                      {customFields.map((customField, fieldIndex) => (
+                      {customFields.map((customField: CustomField, fieldIndex) => (
                         <FormField
                           key={customField.id}
                           control={form.control}
@@ -597,7 +596,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                     </div>
                                   ) : customField.type === 'radio' ? (
                                     <div className="flex gap-6">
-                                      {('options' in customField) && customField.options?.map((option) => (
+                                      {customField.options && customField.options.map((option) => (
                                         <label key={option.value} className="flex items-center gap-2 cursor-pointer">
                                           <input
                                             type="radio"

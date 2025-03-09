@@ -385,13 +385,21 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
                 
-                <div className="bg-primary-100 p-2 sm:p-3 md:p-4">
+                <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <h5 className="text-sm sm:text-base md:text-lg font-semibold text-primary-700">人员 Person {index + 1}</h5>
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Person {index + 1}</span>
+                        {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
+                      </h5>
+                      <div className="text-white/90 text-sm sm:text-base">
+                        {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                      </div>
+                    </div>
                     {group.queueNumber && (
-                      <div className="bg-blue-100 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
-                        <p className="text-xs md:text-sm text-blue-600">队列号 Queue Number</p>
-                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-700">{group.queueNumber}</p>
+                      <div className="bg-white/90 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
+                        <p className="text-xs md:text-sm text-primary-600">队列号 Queue Number</p>
+                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-700">{group.queueNumber}</p>
                       </div>
                     )}
                   </div>
