@@ -13,6 +13,7 @@ import { formUrlQuery, removeKeysFromQuery } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 const CategoryFilter = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -20,6 +21,8 @@ const CategoryFilter = () => {
   const [isFiltering, setIsFiltering] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
   // Define category colors
   const categoryColors: { [key: string]: string } = {
@@ -33,7 +36,7 @@ const CategoryFilter = () => {
     const getCategories = async () => {
       try {
         setIsLoading(true);
-        const categoryList = await getAllCategories();
+        const categoryList = await getAllCategories(isSuperAdmin);
         categoryList && setCategories(categoryList as ICategory[]);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -43,7 +46,7 @@ const CategoryFilter = () => {
     }
 
     getCategories();
-  }, [])
+  }, [isSuperAdmin])
 
   const onSelectCategory = (category: string) => {
     setIsFiltering(true);
@@ -104,11 +107,14 @@ const CategoryFilter = () => {
             <SelectItem 
               value={category.name} 
               key={category._id} 
-              className="select-item p-regular-14 hover:bg-gray-50"
+              className={`select-item p-regular-14 hover:bg-gray-50 ${category.isHidden ? 'text-gray-400' : ''}`}
             >
               <div className="flex items-center gap-2 w-full">
                 <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors[category.name] || 'bg-gray-200'}`} />
                 <span>{category.name}</span>
+                {category.isHidden && isSuperAdmin && (
+                  <span className="text-xs text-gray-400 ml-2">(Hidden)</span>
+                )}
               </div>
             </SelectItem>
           ))}
