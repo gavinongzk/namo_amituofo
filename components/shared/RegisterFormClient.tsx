@@ -147,7 +147,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     .min(1, { message: "此栏位为必填 / This field is required" })
                 : field.type === 'postal'
                   ? z.string()
-                      .min(1, { message: "此栏位为必填 / This field is required" })
                   : field.label.toLowerCase().includes('name')
                     ? z.string()
                         .min(1, { message: "此栏位为必填 / This field is required" })
@@ -272,6 +271,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         // Ensure we're working with a string value
         const rawValue = values.groups[i][postalField];
         const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+        
+        // Skip validation if postal code is empty (since it's optional)
+        if (!postalCode.trim()) {
+          continue;
+        }
         
         // Skip detailed validation if override is active
         if (postalOverrides[i]) {
@@ -614,10 +618,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         value={String(formField.value)}
                                         placeholder={
                                           postalOverrides[personIndex]
-                                            ? "Enter any numeric postal code"
+                                            ? "Enter any numeric postal code (optional)"
                                             : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                              ? "e.g. 12345"
-                                              : "e.g. 123456"
+                                              ? "e.g. 12345 (optional)"
+                                              : "e.g. 123456 (optional)"
                                         }
                                         onChange={(e) => {
                                           // Only allow numbers when in override mode
