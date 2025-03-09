@@ -617,10 +617,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                         value={String(formField.value)}
                                         placeholder={
                                           postalOverrides[personIndex]
-                                            ? "Enter any numeric postal code (optional)"
+                                            ? "输入邮区编号 Enter postal code"
                                             : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                              ? "e.g. 12345 (optional)"
-                                              : "e.g. 123456 (optional)"
+                                              ? "e.g. 12345"
+                                              : "e.g. 123456"
                                         }
                                         onChange={(e) => {
                                           // Only allow numbers when in override mode
