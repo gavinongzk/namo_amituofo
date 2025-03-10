@@ -3,7 +3,6 @@ import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
-import '@/app/utils/console'; // Import console utility to manage logs in production
 
 import './globals.css'
 
