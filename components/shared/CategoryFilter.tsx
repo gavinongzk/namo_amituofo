@@ -25,7 +25,7 @@ const CategoryFilter = () => {
   const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
   // Define category colors using useMemo to prevent recreation on each render
-  const categoryColors = useMemo(() => ({
+  const categoryColors: Record<string, string> = useMemo(() => ({
     'All': 'bg-gray-200',
     '念佛超荐法会': 'bg-blue-200',
     '念佛共修': 'bg-orange-200',
