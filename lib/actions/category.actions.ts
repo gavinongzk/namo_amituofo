@@ -5,6 +5,7 @@ import { handleError } from "../utils"
 import { connectToDatabase } from "../database"
 import Category from "../database/models/category.model"
 import Event from "../database/models/event.model"
+import { unstable_cache } from "next/cache"
 
 export const createCategory = async ({ categoryName }: CreateCategoryParams) => {
   try {
@@ -22,24 +23,41 @@ export const createCategory = async ({ categoryName }: CreateCategoryParams) => 
 }
 
 export const getAllCategories = async (includeHidden: boolean = false) => {
-  try {
-    await connectToDatabase();
+  const cacheKey = `categories-${includeHidden}`;
+  
+  return unstable_cache(
+    async () => {
+      try {
+        await connectToDatabase();
 
-    const query = includeHidden 
-      ? {} 
-      : { 
-          $or: [
-            { isHidden: false },
-            { isHidden: { $exists: false } },
-            { isHidden: null }
-          ] 
-        };
-    const categories = await Category.find(query);
+        const query = includeHidden 
+          ? {} 
+          : { 
+              $or: [
+                { isHidden: false },
+                { isHidden: { $exists: false } },
+                { isHidden: null }
+              ] 
+            };
 
-    return JSON.parse(JSON.stringify(categories));
-  } catch (error) {
-    handleError(error)
-  }
+        // Use lean() for better performance and only select needed fields
+        const categories = await Category.find(query)
+          .select('_id name isHidden')
+          .lean()
+          .exec();
+
+        return JSON.parse(JSON.stringify(categories));
+      } catch (error) {
+        handleError(error);
+        return [];
+      }
+    },
+    ['categories'],
+    {
+      revalidate: 60, // Cache for 1 minute
+      tags: ['categories']
+    }
+  )();
 }
 
 export const deleteCategory = async (categoryId: string) => {

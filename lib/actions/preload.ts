@@ -54,19 +54,23 @@ export const preloadEventsByCategory = unstable_cache(
   }
 );
 
-// Preload all categories
+// Preload categories with optimized caching
 export const preloadCategories = unstable_cache(
-  async () => {
+  async (includeHidden: boolean = false) => {
+    console.log('🔍 Starting preloadCategories');
+    
     try {
-      return await getAllCategories();
+      const categories = await getAllCategories(includeHidden);
+      console.log('✅ Categories preloaded successfully');
+      return categories || [];
     } catch (error) {
       console.error('❌ Error in preloadCategories:', error);
       return [];
     }
   },
-  ['categories'],
+  ['categories-preload'],
   {
-    revalidate: 3600,
+    revalidate: 60, // Cache for 1 minute
     tags: ['categories']
   }
 );
