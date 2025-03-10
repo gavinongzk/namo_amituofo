@@ -43,7 +43,7 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const timestamp = new Date().getTime(); // Add timestamp for cache busting
+        const timestamp = new Date().getTime();
         const response = await fetch(`/api/events${country ? `?country=${country}` : ''}&bustCache=true&_=${timestamp}`);
         
         if (!response.ok) {

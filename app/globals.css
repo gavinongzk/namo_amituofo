@@ -157,7 +157,7 @@ body {
   }
 
   .input-field {
-    @apply bg-gray-50 h-[44px] sm:h-[48px] md:h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 !important;
+    @apply bg-gray-50 h-[44px] sm:h-[48px] md:h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 text-base !important;
   }
 
   .textarea {
@@ -411,4 +411,21 @@ input[type=checkbox] {
 .phone-input-container .PhoneInputCountry {
   margin-right: 0.5rem;
   padding: 0.25rem;
+}
+
+/* Prevent auto-zoom on iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .phone-input-container input {
+    font-size: 16px !important;
+  }
 }
