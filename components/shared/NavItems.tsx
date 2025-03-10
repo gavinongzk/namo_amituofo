@@ -85,15 +85,13 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           {renderLoadingSpinner('/')}
         </Link>
       </li>
-      {!isSuperAdmin && !isNormalAdmin && (
-        <li className="w-full md:w-auto">
-          <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={() => handleClick('/event-lookup')}>
-            <span className="font-medium group-hover:text-primary-600 transition-colors">活动查询</span>
-            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Event Lookup</span>
-            {renderLoadingSpinner('/event-lookup')}
-          </Link>
-        </li>
-      )}
+      <li className="w-full md:w-auto">
+        <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={() => handleClick('/event-lookup')}>
+          <span className="font-medium group-hover:text-primary-600 transition-colors">活动查询</span>
+          <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Event Lookup</span>
+          {renderLoadingSpinner('/event-lookup')}
+        </Link>
+      </li>
       {isSignedIn ? (
         <>
           <li className="w-full md:w-auto">
