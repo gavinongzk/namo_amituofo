@@ -120,13 +120,29 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
             </Link>
           </li>
           {(isSuperAdmin || isNormalAdmin) && (
-            <li className="w-full md:w-auto">
-              <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={() => handleClick('/admin/dashboard')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
-                {renderLoadingSpinner('/admin/dashboard')}
-              </Link>
-            </li>
+            <>
+              <li className="w-full md:w-auto">
+                <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={() => handleClick('/admin/dashboard')}>
+                  <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
+                  <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
+                  {renderLoadingSpinner('/admin/dashboard')}
+                </Link>
+              </li>
+              <li className="w-full md:w-auto">
+                <Link href="/admin/event-lookup" className={navItemClass('/admin/event-lookup')} onClick={() => handleClick('/admin/event-lookup')}>
+                  <span className="font-medium group-hover:text-primary-600 transition-colors">活动查询</span>
+                  <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Event Lookup</span>
+                  {renderLoadingSpinner('/admin/event-lookup')}
+                </Link>
+              </li>
+              <li className="w-full md:w-auto">
+                <Link href="/admin/my-events" className={navItemClass('/admin/my-events')} onClick={() => handleClick('/admin/my-events')}>
+                  <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
+                  <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
+                  {renderLoadingSpinner('/admin/my-events')}
+                </Link>
+              </li>
+            </>
           )}
         </>
       ) : (

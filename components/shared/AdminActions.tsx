@@ -23,6 +23,33 @@ const AdminActions = () => {
   return (
     <div className="flex flex-col gap-4 p-6 bg-gray-100 rounded-lg shadow-lg">
       <h4 className="text-2xl font-bold text-center text-gray-800">管理员操作 / Admin Actions</h4>
+      
+      <Link href="/admin/event-lookup" onClick={() => handleClick('/admin/event-lookup')}>
+        <Button className={`${buttonClass} bg-green-600 hover:bg-green-700 text-white`} disabled={loadingPath === '/admin/event-lookup'}>
+          {loadingPath === '/admin/event-lookup' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '活动查询 / Event Lookup'
+          )}
+        </Button>
+      </Link>
+
+      <Link href="/admin/my-events" onClick={() => handleClick('/admin/my-events')}>
+        <Button className={`${buttonClass} bg-indigo-600 hover:bg-indigo-700 text-white`} disabled={loadingPath === '/admin/my-events'}>
+          {loadingPath === '/admin/my-events' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '我的活动 / My Events'
+          )}
+        </Button>
+      </Link>
+
       <Link href="/admin/select-event" onClick={() => handleClick('/admin/select-event')}>
         <Button className={`${buttonClass} bg-blue-600 hover:bg-blue-700 text-white`} disabled={loadingPath === '/admin/select-event'}>
           {loadingPath === '/admin/select-event' ? (
@@ -35,6 +62,7 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
+
       <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
         <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
           {loadingPath === '/admin/upload_orders' ? (
@@ -47,6 +75,7 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
+
       <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
         <Button className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white`} disabled={loadingPath === '/admin/users'}>
           {loadingPath === '/admin/users' ? (
@@ -59,6 +88,7 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
+
       <Link href="/admin/analytics" onClick={() => handleClick('/admin/analytics')}>
         <Button className={`${buttonClass} bg-purple-600 hover:bg-purple-700 text-white`} disabled={loadingPath === '/admin/analytics'}>
           {loadingPath === '/admin/analytics' ? (
