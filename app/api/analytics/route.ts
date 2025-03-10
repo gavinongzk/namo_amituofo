@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '../../../lib/database';
-import Order, { IOrder } from '../../../lib/database/models/order.model';
-import Event, { IEvent } from '../../../lib/database/models/event.model';
-import { CustomFieldGroup, CustomField } from '../../../types';
-import { getSingaporePostalInfo } from '../../../lib/utils';
+import { connectToDatabase } from '@/lib/database';
+import Order, { IOrder } from '@/lib/database/models/order.model';
+import Event, { IEvent } from '@/lib/database/models/event.model';
+import { CustomFieldGroup, CustomField } from '@/types';
+import { getSingaporePostalInfo } from '@/lib/utils';
 import mongoose from 'mongoose';
 
 interface AttendeeEvent {
