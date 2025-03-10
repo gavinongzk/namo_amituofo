@@ -369,7 +369,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       const data = await response.json();
       
       toast.success("注册成功！/ Registration successful!", { id: toastId });
-      router.push(`/orders/${data.order._id}`);
+      router.push(`/reg/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
       

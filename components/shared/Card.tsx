@@ -43,7 +43,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       aria-labelledby={`event-title-${event._id}`}
     >
       <Link 
-        href={isMyTicket ? `/orders/${event.orderId}` : `/events/details/${event._id}`}
+        href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden"
       >
         {event.imageUrl ? (
@@ -135,7 +135,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               <span className="font-semibold">注册人数 Registrations:</span> {event.registrationCount || 0}
             </p>
             <Link 
-              href={`/orders?eventId=${event._id}`} 
+              href={`/reg?eventId=${event._id}`} 
               className="text-primary-600 hover:text-primary-700 underline flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-sm"
             >
               注册详情 Registration Details
