@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database';
-import Order from '@/lib/database/models/order.model';
+import { connectToDatabase } from '../../../lib/database';
+import Order, { IOrder } from '../../../lib/database/models/order.model';
+import mongoose from 'mongoose';
 
 export async function POST(req: NextRequest) {
   try {
