@@ -46,14 +46,19 @@ const getCachedSuperAdminEvents = unstable_cache(
       query: '',
       category: '',
       page: 1,
-      limit: 1000,
+      limit: 1000, // Explicitly set high limit
       country: country
     });
+
+    if (!events || !events.data) {
+      console.error('No events returned from getAllEventsForSuperAdmin');
+      return { data: [], totalPages: 0 };
+    }
 
     // Ensure all fields are present in the response
     const eventsWithAllFields = {
       ...events,
-      data: events.data?.map((event: IEvent) => ({
+      data: events.data.map((event: IEvent) => ({
         ...event,
         location: event.location || '',  // Explicitly include location
       }))
@@ -61,7 +66,7 @@ const getCachedSuperAdminEvents = unstable_cache(
 
     return eventsWithAllFields;
   },
-  ['superadmin-events-list'],
+  ['superadmin-events-list', 'country'],  // Include country in cache key
   {
     revalidate: 60, // Reduce cache time to 1 minute
     tags: ['events']
