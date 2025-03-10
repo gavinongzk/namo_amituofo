@@ -112,7 +112,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
         console.log('Orders to upload:', orders); // Log the orders before sending
 
-        const response = await fetch('/api/orders/upload', {
+        const response = await fetch('/api/reg/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
