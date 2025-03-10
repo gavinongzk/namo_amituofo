@@ -173,9 +173,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
-  const [showImportantInfo, setShowImportantInfo] = useState(true);
+  const [showImportantInfo, setShowImportantInfo] = useState(false);
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
+
+  // Check localStorage on component mount
+  useEffect(() => {
+    const hasAcknowledged = localStorage.getItem(`acknowledged-info-${id}`);
+    setShowImportantInfo(!hasAcknowledged);
+  }, [id]);
+
+  const handleAcknowledge = () => {
+    localStorage.setItem(`acknowledged-info-${id}`, 'true');
+    setShowImportantInfo(false);
+  };
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -348,7 +359,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             }} />
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowImportantInfo(false)} className="bg-primary-500 text-white hover:bg-primary-600">
+            <AlertDialogAction onClick={handleAcknowledge} className="bg-primary-500 text-white hover:bg-primary-600">
               我已阅读并理解 I have read and understood
             </AlertDialogAction>
           </AlertDialogFooter>
