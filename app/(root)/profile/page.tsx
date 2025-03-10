@@ -1,12 +1,9 @@
 import Collection from '@/components/shared/Collection'
 import { Button } from '@/components/ui/button'
 import { getEventsByUser } from '@/lib/actions/event.actions'
-import { auth, currentUser } from '@clerk/nextjs'
+import { currentUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React from 'react'
-import RegistrationLookup from '@/components/shared/RegistrationLookup'
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 
 const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
   try {
@@ -24,26 +21,6 @@ const ProfilePage = async ({ searchParams }: { searchParams: any }) => {
 
     return (
       <div className="flex flex-col gap-10">
-        {/* My Registrations Section */}
-        <section className="bg-primary-50">
-          <div className="wrapper py-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className='h2-bold text-primary-500'>我的注册 My Registrations</h2>
-              <Button asChild size="lg" className="button hidden sm:flex">
-                <Link href="/#events">
-                  探索更多活动 Explore More Events
-                </Link>
-              </Button>
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <RegistrationLookup showManualInput={true} />
-            </div>
-          </div>
-        </section>
-
-        {/* Visual Separator */}
-        <div className="border-t-2 border-gray-200 mx-auto w-1/2"></div>
-
         {/* Events Organized Section */}
         <section className="bg-secondary-50">
           <div className="wrapper py-8">
