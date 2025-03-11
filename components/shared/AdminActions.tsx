@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 const AdminActions = () => {
   const [loadingPath, setLoadingPath] = useState<string | null>(null);
   const pathname = usePathname();
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
   useEffect(() => {
     setLoadingPath(null);
@@ -35,42 +38,58 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
-      <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
-        <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
-          {loadingPath === '/admin/upload_orders' ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              加载中... / Loading...
-            </>
-          ) : (
-            '上传订单 / Upload Orders'
-          )}
-        </Button>
-      </Link>
-      <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
-        <Button className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white`} disabled={loadingPath === '/admin/users'}>
-          {loadingPath === '/admin/users' ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              加载中... / Loading...
-            </>
-          ) : (
-            '管理用户 / Manage Users'
-          )}
-        </Button>
-      </Link>
-      <Link href="/admin/analytics" onClick={() => handleClick('/admin/analytics')}>
-        <Button className={`${buttonClass} bg-purple-600 hover:bg-purple-700 text-white`} disabled={loadingPath === '/admin/analytics'}>
-          {loadingPath === '/admin/analytics' ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              加载中... / Loading...
-            </>
-          ) : (
-            '数据分析 / Analytics'
-          )}
-        </Button>
-      </Link>
+      {isSuperAdmin ? (
+        <>
+          <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
+            <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
+              {loadingPath === '/admin/upload_orders' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '上传订单 / Upload Orders'
+              )}
+            </Button>
+          </Link>
+          <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
+            <Button className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white`} disabled={loadingPath === '/admin/users'}>
+              {loadingPath === '/admin/users' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '管理用户 / Manage Users'
+              )}
+            </Button>
+          </Link>
+          <Link href="/admin/analytics" onClick={() => handleClick('/admin/analytics')}>
+            <Button className={`${buttonClass} bg-purple-600 hover:bg-purple-700 text-white`} disabled={loadingPath === '/admin/analytics'}>
+              {loadingPath === '/admin/analytics' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '数据分析 / Analytics'
+              )}
+            </Button>
+          </Link>
+        </>
+      ) : (
+        <>
+          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
+            上传订单 / Upload Orders
+          </Button>
+          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
+            管理用户 / Manage Users
+          </Button>
+          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
+            数据分析 / Analytics
+          </Button>
+        </>
+      )}
     </div>
   );
 };
