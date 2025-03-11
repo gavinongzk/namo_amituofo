@@ -38,7 +38,7 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
-      {isSuperAdmin ? (
+      {isSuperAdmin && (
         <>
           <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
             <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
@@ -76,18 +76,6 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
-        </>
-      ) : (
-        <>
-          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
-            上传订单 / Upload Orders
-          </Button>
-          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
-            管理用户 / Manage Users
-          </Button>
-          <Button className={`${buttonClass} bg-gray-400 cursor-not-allowed`} disabled>
-            数据分析 / Analytics
-          </Button>
         </>
       )}
     </div>
