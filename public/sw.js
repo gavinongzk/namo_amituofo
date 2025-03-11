@@ -1,5 +1,5 @@
-const CACHE_NAME = 'namo-amituofo-v1';
-const API_CACHE_NAME = 'namo-amituofo-api-v1';
+const CACHE_NAME = 'namo-amituofo-v2';
+const API_CACHE_NAME = 'namo-amituofo-api-v2';
 
 // Assets to cache immediately on SW install
 const STATIC_ASSETS = [
@@ -13,6 +13,13 @@ const STATIC_ASSETS = [
 const API_ROUTES = [
   '/api/events',
   '/api/categories',
+];
+
+// Pages that should never be cached
+const NEVER_CACHE_ROUTES = [
+  '/event-lookup',
+  '/profile',
+  '/'
 ];
 
 self.addEventListener('install', (event) => {
@@ -43,6 +50,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  
+  // Skip caching for navigation pages
+  if (NEVER_CACHE_ROUTES.some(route => url.pathname === route)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   
   // Handle API requests
   if (API_ROUTES.some(route => url.pathname.startsWith(route))) {

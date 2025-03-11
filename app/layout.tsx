@@ -60,6 +60,19 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Add version parameter to force cache refresh
+  const APP_VERSION = '1.1.0'; // Increment this when deploying major changes
+  
+  // Add meta tag for cache control
+  const metaTags = (
+    <>
+      <meta name="app-version" content={APP_VERSION} />
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+      <meta http-equiv="Pragma" content="no-cache" />
+      <meta http-equiv="Expires" content="0" />
+    </>
+  );
+
   // Add preload hints for critical resources
   const preloadResources = (
     <>
@@ -92,8 +105,22 @@ export default function RootLayout({
   const swRegistration = `
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
+        navigator.serviceWorker.register('/sw.js?v=2').then(registration => {
           console.log('SW registered:', registration.scope);
+          
+          // Check for updates and refresh the page if needed
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'activated') {
+                // Force refresh the page to ensure latest content is shown
+                window.location.reload();
+              }
+            });
+          });
+          
+          // Check if there's an update immediately
+          registration.update();
         }).catch(error => {
           console.log('SW registration failed:', error);
         });
@@ -109,6 +136,7 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
+          {metaTags}
           {preloadResources}
           <script dangerouslySetInnerHTML={{ __html: swRegistration }} />
         </head>
