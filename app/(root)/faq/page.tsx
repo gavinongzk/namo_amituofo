@@ -14,7 +14,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 在首页选择想要参加的活动
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"Register"按钮
+                <span className="font-medium text-gray-900">2.</span> 点击"报名Register"按钮
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 填写所需信息（姓名、电话等）
@@ -307,6 +307,90 @@ export default function FAQPage() {
                 >
                   +65 8818 4848
                 </a>
+              </li>
+            </ol>
+          </div>
+        </div>
+      )
+    },
+    {
+      question: "8. 我不是来自新加坡或马来西亚，如何报名？ How to register if I'm not from Singapore or Malaysia?",
+      answer: (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <p className="font-semibold text-gray-900">报名步骤：</p>
+            <ol className="list-none space-y-1.5 text-gray-600">
+              <li>
+                <span className="font-medium text-gray-900">1.</span> 在报名表格中选择您所在的国家
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">2.</span> 输入您的国际电话号码（包含国家代码）
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">3.</span> 如果您没有当地邮区编号，可以输入000000
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">4.</span> 填写其他必要信息后提交
+              </li>
+            </ol>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-semibold text-gray-900">Registration steps:</p>
+            <ol className="list-none space-y-1.5 text-gray-600">
+              <li>
+                <span className="font-medium text-gray-900">1.</span> Select your country in the registration form
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">2.</span> Enter your international phone number (including country code)
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">3.</span> If you don't have a local postal code, you can enter 000000
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">4.</span> Fill in other required information and submit
+              </li>
+            </ol>
+          </div>
+        </div>
+      )
+    },
+    {
+      question: "9. 我的手机无法显示二维码，该怎么办？ What if my phone cannot display the QR code?",
+      answer: (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <p className="font-semibold text-gray-900">解决方案：</p>
+            <ol className="list-none space-y-1.5 text-gray-600">
+              <li>
+                <span className="font-medium text-gray-900">1.</span> 您可以将二维码截图保存
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">2.</span> 可以将二维码转发到其他设备上显示
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">3.</span> 到达活动现场时，可以提供您的电话号码给义工查询
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">4.</span> 义工可以通过您的电话号码在系统中找到您的报名记录
+              </li>
+            </ol>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-semibold text-gray-900">Solutions:</p>
+            <ol className="list-none space-y-1.5 text-gray-600">
+              <li>
+                <span className="font-medium text-gray-900">1.</span> You can take a screenshot of the QR code
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">2.</span> Forward the QR code to another device for display
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">3.</span> At the event, you can provide your phone number to the volunteers
+              </li>
+              <li>
+                <span className="font-medium text-gray-900">4.</span> Volunteers can look up your registration using your phone number
               </li>
             </ol>
           </div>
