@@ -308,7 +308,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       }
     }
     
-    const duplicates = await checkForDuplicatePhoneNumbers(values);
+    const duplicates: string[] = await checkForDuplicatePhoneNumbers(values);
     
     if (duplicates.length > 0) {
       toast.dismiss(toastId);
