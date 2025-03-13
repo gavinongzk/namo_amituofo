@@ -94,13 +94,15 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       </li>
       {isSignedIn ? (
         <>
-          <li className="w-full md:w-auto">
-            <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
-              <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
-              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
-              {renderLoadingSpinner('/profile')}
-            </Link>
-          </li>
+          {isSuperAdmin && (
+            <li className="w-full md:w-auto">
+              <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
+                <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
+                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
+                {renderLoadingSpinner('/profile')}
+              </Link>
+            </li>
+          )}
           {isSuperAdmin && (
             <li className="w-full md:w-auto">
               <Link href="/events/create" className={navItemClass('/events/create')} onClick={() => handleClick('/events/create')}>
