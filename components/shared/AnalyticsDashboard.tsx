@@ -139,12 +139,6 @@ const AnalyticsDashboard: React.FC = () => {
                             a.phoneNumber === row.original.phoneNumber
                         );
                         setSelectedAttendee(fullAttendee || null);
-                        setTimeout(() => {
-                            document.getElementById('attendee-details')?.scrollIntoView({ 
-                                behavior: 'smooth',
-                                block: 'start'
-                            });
-                        }, 100);
                     }}
                 >
                     View Details
@@ -343,9 +337,16 @@ const AnalyticsDashboard: React.FC = () => {
 
     const attendanceTrendOptions: ChartOptions<'line'> = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             title: {
                 display: true,
@@ -353,6 +354,10 @@ const AnalyticsDashboard: React.FC = () => {
                 font: {
                     size: 16,
                     weight: 'bold',
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
                 }
             },
         },
@@ -362,12 +367,30 @@ const AnalyticsDashboard: React.FC = () => {
                 title: {
                     display: true,
                     text: 'Number of Attendees',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             },
             x: {
                 title: {
                     display: true,
                     text: 'Month',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             }
         },
@@ -396,16 +419,27 @@ const AnalyticsDashboard: React.FC = () => {
 
     const popularEventsOptions: ChartOptions<'bar'> = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             title: {
                 display: true,
-                text: '前五大热门活动 Top 5 Popular Events',
+                text: 'Popular Events by Category',
                 font: {
                     size: 16,
                     weight: 'bold',
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
                 }
             },
         },
@@ -414,13 +448,31 @@ const AnalyticsDashboard: React.FC = () => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: '参与人数 Number of Attendees',
+                    text: 'Number of Attendees',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             },
             x: {
                 title: {
                     display: true,
-                    text: '活动类别 Category Name',
+                    text: 'Event Category',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             }
         },
@@ -466,16 +518,27 @@ const AnalyticsDashboard: React.FC = () => {
 
     const regionDistributionOptions: ChartOptions<'doughnut'> = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'right',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             title: {
                 display: true,
-                text: '地区分布 Attendee Distribution by Region',
+                text: 'Regional Distribution',
                 font: {
                     size: 16,
                     weight: 'bold',
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
                 }
             },
         },
@@ -483,35 +546,63 @@ const AnalyticsDashboard: React.FC = () => {
 
     const townDistributionOptions: ChartOptions<'bar'> = {
         responsive: true,
-        indexAxis: 'y' as const,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
-                display: false,
+                position: 'top',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
             },
             title: {
                 display: true,
-                text: '前十大城镇分布 Top 10 Towns by Attendee Count',
+                text: 'Town Distribution',
                 font: {
                     size: 16,
                     weight: 'bold',
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
                 }
             },
         },
         scales: {
-            x: {
+            y: {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: '参与人数 Number of Attendees'
+                    text: 'Number of Attendees',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             },
-            y: {
+            x: {
                 title: {
                     display: true,
-                    text: '城镇 Town'
+                    text: 'Town',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 11
+                    }
                 }
             }
-        }
+        },
     };
 
     const calculateKPIs = (attendees: Attendee[]) => {
@@ -618,13 +709,14 @@ const AnalyticsDashboard: React.FC = () => {
     }
 
     return (
-        <div className="p-6 space-y-8">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold">数据分析 Analytics Dashboard</h2>
-                <div className="flex gap-4">
+        <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">数据分析 Analytics Dashboard</h2>
+                <div className="flex gap-2 w-full md:w-auto">
                     <Button
                         variant="outline"
                         size="sm"
+                        className="flex-1 md:flex-none"
                         onClick={() => {
                             // TODO: Implement export functionality
                             console.log('Export data');
@@ -637,14 +729,14 @@ const AnalyticsDashboard: React.FC = () => {
 
             {/* KPI Section */}
             {attendees.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {Object.entries(calculateKPIs(attendees)).map(([key, value]) => (
-                        <Card key={key} className="p-4">
+                        <Card key={key} className="p-4 hover:shadow-lg transition-shadow duration-200">
                             <h5 className="text-sm font-medium text-gray-500">
                                 {key.split(/(?=[A-Z])/).join(' ').toUpperCase()}
                             </h5>
                             <div className="mt-2 flex items-baseline">
-                                <p className="text-2xl font-semibold">
+                                <p className="text-xl md:text-2xl font-semibold text-gray-900">
                                     {key === 'momGrowth' ? `${value}%` : value}
                                 </p>
                                 {key === 'momGrowth' && (
@@ -663,14 +755,14 @@ const AnalyticsDashboard: React.FC = () => {
 
             {/* Engagement Metrics Section */}
             {attendees.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.entries(calculateEngagementMetrics(attendees)).map(([key, value]) => (
-                        <Card key={key} className="p-4 bg-gray-50">
+                        <Card key={key} className="p-4 bg-gray-50 hover:shadow-lg transition-shadow duration-200">
                             <h5 className="text-sm font-medium text-gray-500">
                                 {key.split(/(?=[A-Z])/).join(' ').toUpperCase()}
                             </h5>
                             <div className="mt-2 flex items-baseline">
-                                <p className="text-2xl font-semibold">
+                                <p className="text-xl md:text-2xl font-semibold text-gray-900">
                                     {key === 'retentionRate' ? `${value}%` : 
                                      key === 'averageDaysBetweenEvents' ? `${value} days` : 
                                      value}
@@ -686,14 +778,15 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">出席趋势 Attendance Trend</h3>
-                        <div className="flex gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-900">出席趋势 Attendance Trend</h3>
+                        <div className="flex gap-2 w-full md:w-auto">
                             <Button
                                 variant="outline"
                                 size="sm"
+                                className="flex-1 md:flex-none"
                                 onClick={() => {
                                     // Toggle between monthly and yearly view
                                     // TODO: Implement view toggle
@@ -704,6 +797,7 @@ const AnalyticsDashboard: React.FC = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
+                                className="flex-1 md:flex-none"
                                 onClick={() => {
                                     // Toggle between monthly and yearly view
                                     // TODO: Implement view toggle
@@ -713,27 +807,35 @@ const AnalyticsDashboard: React.FC = () => {
                             </Button>
                         </div>
                     </div>
-                    <Line data={attendanceTrendData} options={attendanceTrendOptions} />
-                </div>
+                    <div className="h-[300px] md:h-[400px]">
+                        <Line data={attendanceTrendData} options={attendanceTrendOptions} />
+                    </div>
+                </Card>
 
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">热门活动 Popular Events</h3>
-                    <Bar data={categoryDistributionData} options={popularEventsOptions} />
-                </div>
+                <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">热门活动 Popular Events</h3>
+                    <div className="h-[300px] md:h-[400px]">
+                        <Bar data={categoryDistributionData} options={popularEventsOptions} />
+                    </div>
+                </Card>
 
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">地区分布 Region Distribution</h3>
-                    <Doughnut data={regionDistributionData} options={regionDistributionOptions} />
-                </div>
+                <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">地区分布 Region Distribution</h3>
+                    <div className="h-[300px] md:h-[400px]">
+                        <Doughnut data={regionDistributionData} options={regionDistributionOptions} />
+                    </div>
+                </Card>
 
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold mb-4">城镇分布 Town Distribution</h3>
-                    <Bar data={townDistributionData} options={townDistributionOptions} />
-                </div>
+                <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">城镇分布 Town Distribution</h3>
+                    <div className="h-[300px] md:h-[400px]">
+                        <Bar data={townDistributionData} options={townDistributionOptions} />
+                    </div>
+                </Card>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">常客分析 Frequent Attendees</h3>
+            <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">常客分析 Frequent Attendees</h3>
                 <div className="mb-4">
                     <Input
                         type="text"
@@ -743,16 +845,16 @@ const AnalyticsDashboard: React.FC = () => {
                             setSearchFilter(e.target.value);
                             table.getColumn('name')?.setFilterValue(e.target.value);
                         }}
-                        className="max-w-md"
+                        className="max-w-md w-full"
                     />
                 </div>
                 
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
+                            <TableRow key={headerGroup.id} className="bg-gray-50">
                                 {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
+                                    <TableHead key={header.id} className="font-semibold text-gray-900">
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
@@ -769,10 +871,17 @@ const AnalyticsDashboard: React.FC = () => {
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
+                                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                    onClick={() => {
+                                        const fullAttendee = attendees.find(a => 
+                                            a.name === row.original.name && 
+                                            a.phoneNumber === row.original.phoneNumber
+                                        );
+                                        setSelectedAttendee(fullAttendee || null);
+                                    }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell key={cell.id} className="text-sm">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -780,16 +889,16 @@ const AnalyticsDashboard: React.FC = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No results.
+                                <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
+                                    No attendees found.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
 
-                <div className="mt-4 flex items-center justify-between">
-                    <div className="flex-1 text-sm text-muted-foreground">
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-sm text-gray-500">
                         {table.getFilteredRowModel().rows.length} attendee(s)
                     </div>
                     <div className="flex items-center space-x-2">
@@ -798,6 +907,7 @@ const AnalyticsDashboard: React.FC = () => {
                             size="sm"
                             onClick={() => table.previousPage()}
                             disabled={!table.getCanPreviousPage()}
+                            className="min-w-[100px]"
                         >
                             Previous
                         </Button>
@@ -806,17 +916,18 @@ const AnalyticsDashboard: React.FC = () => {
                             size="sm"
                             onClick={() => table.nextPage()}
                             disabled={!table.getCanNextPage()}
+                            className="min-w-[100px]"
                         >
                             Next
                         </Button>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {selectedAttendee && (
-                <div id="attendee-details" className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-semibold">
+                <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow duration-200">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-900">
                             Individual Analytics: {selectedAttendee.name}
                         </h3>
                         <Button
@@ -834,7 +945,7 @@ const AnalyticsDashboard: React.FC = () => {
                         attendee={selectedAttendee} 
                         allEvents={attendees.flatMap(a => a.events)} 
                     />
-                </div>
+                </Card>
             )}
         </div>
     );
