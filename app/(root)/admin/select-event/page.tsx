@@ -184,13 +184,14 @@ const SelectEventPage = () => {
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
-                          <SelectItem key={event._id} value={event._id} className="py-2">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{event.title}</span>
-                              <span className="text-sm text-gray-500">
-                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} | 
-                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}
-                              </span>
+                          <SelectItem key={event._id} value={event._id} className="py-3 px-2 cursor-pointer">
+                            <div className="flex flex-col gap-1.5">
+                              <span className="font-medium text-base">{event.title}</span>
+                              <div className="flex items-center text-sm text-gray-500 gap-2">
+                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
+                                <span className="text-gray-400">|</span>
+                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
+                              </div>
                             </div>
                           </SelectItem>
                         ))}
