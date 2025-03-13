@@ -132,7 +132,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                           );
                         })}
                         <td className="py-2 px-4 border-b text-left">
-                          <a href={`/orders/${order._id}`} className="text-primary-500 underline hover:text-primary-600 transition-colors duration-200">
+                          <a href={`/reg/${order._id}`} className="text-primary-500 underline hover:text-primary-600 transition-colors duration-200">
                             View Details
                           </a>
                         </td>

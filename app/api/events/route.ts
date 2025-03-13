@@ -98,14 +98,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const country = searchParams.get('country') || 'Singapore';
     const bustCache = searchParams.get('bustCache') === 'true';
+    const role = searchParams.get('role');
     
     // If cache busting is requested, revalidate the cache
     if (bustCache) {
       revalidateTag('events');
     }
     
-    const { sessionClaims } = auth() as { sessionClaims: SessionClaims };
-    const isSuperAdmin = sessionClaims?.metadata?.role === 'superadmin';
+    const isSuperAdmin = role === 'superadmin';
     
     const events = isSuperAdmin 
       ? await getCachedSuperAdminEvents(country)

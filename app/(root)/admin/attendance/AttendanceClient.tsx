@@ -101,7 +101,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
   const [showScanner, setShowScanner] = useState(false);
-  const [recentScans, setRecentScans] = useState<string[]>([]);
+  const [recentScans, setRecentScans] = useState<{ queueNumber: string; name: string }[]>([]);
   const lastScanTime = useRef<number>(0);
   const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
@@ -575,22 +575,30 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       if (registration) {
         const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
         if (group) {
+          const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+          const name = nameField ? nameField.value : 'N/A';
           if (!group.attendance) {
             handleMarkAttendance(registration.id, group.groupId, true);
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
             showModalWithMessage(
               'Success / 成功',
-              `Marked attendance for: ${queueNumber}\n为队列号 ${queueNumber} 标记出席`,
+              `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
               'success'
             );
-            setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
+            setRecentScans(prev => {
+              const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
+              return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+            });
           } else {
             showModalWithMessage(
               'Already Marked / 已标记',
-              `Attendance already marked for: ${queueNumber}\n队列号 ${queueNumber} 的出席已经被标记`,
+              `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
               'error'
             );
-            setRecentScans(prev => [queueNumber, ...prev.slice(0, 4)]);
+            setRecentScans(prev => {
+              const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
+              return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+            });
           }
         }
       } else {
@@ -710,7 +718,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
               <ul className="list-disc pl-5">
                 {recentScans.map((scan, index) => (
-                  <li key={index}>{scan}</li>
+                  <li key={index}>{scan.name} ({scan.queueNumber})</li>
                 ))}
               </ul>
             </div>

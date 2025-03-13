@@ -43,8 +43,9 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
+        const role = user?.publicMetadata.role as string | undefined;
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}&bustCache=true&_=${timestamp}`);
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}${role ? `&role=${role}` : ''}&bustCache=true&_=${timestamp}`);
         
         if (!response.ok) {
           console.error('Failed to fetch events:', response.status, response.statusText);
@@ -102,12 +103,17 @@ const SelectEventPage = () => {
 
   const groupEventsByCategory = (events: Event[]) => {
     const currentDate = new Date();
-    const expirationDate = EVENT_CONFIG.getExpirationDate();
+    const userRole = user?.publicMetadata?.role as string;
+    const isSuperAdmin = userRole === 'superadmin';
+    const expirationDate = EVENT_CONFIG.getExpirationDate(userRole);
 
     // Separate expired and active events
     const { expired, active } = events.reduce((acc, event) => {
       const endDate = parseISO(event.endDateTime);
-      const isExpired = isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
+      // For superadmins, only check if the event has ended
+      const isExpired = isSuperAdmin 
+        ? isBefore(endDate, currentDate)
+        : isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
       
       if (isExpired) {
         acc.expired.push(event);
@@ -140,7 +146,7 @@ const SelectEventPage = () => {
     });
 
     // Then add expired events at the end if user is superadmin
-    if (user?.publicMetadata?.role === 'superadmin' && sortedExpired.length > 0) {
+    if (isSuperAdmin && sortedExpired.length > 0) {
       groupedEvents['──────────────'] = []; // Add a separator
       groupedEvents['已过期活动 / Expired Events'] = sortedExpired;
     }
@@ -178,13 +184,14 @@ const SelectEventPage = () => {
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
-                          <SelectItem key={event._id} value={event._id} className="py-2">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{event.title}</span>
-                              <span className="text-sm text-gray-500">
-                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly} | 
-                                {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}
-                              </span>
+                          <SelectItem key={event._id} value={event._id} className="py-3 px-2 cursor-pointer">
+                            <div className="flex flex-col gap-1.5">
+                              <span className="font-medium text-base">{event.title}</span>
+                              <div className="flex items-center text-sm text-gray-500 gap-2">
+                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
+                                <span className="text-gray-400">|</span>
+                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
+                              </div>
                             </div>
                           </SelectItem>
                         ))}
