@@ -153,8 +153,8 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS (Regular users - with date filtering)
-export async function getAllEvents({ query, limit = 6, page, category, country }: GetAllEventsParams) {
-  const cacheKey = `events-${query}-${limit}-${page}-${category}-${country}`;
+export async function getAllEvents({ query, limit = 6, page, category, country, role }: GetAllEventsParams & { role?: string }) {
+  const cacheKey = `events-${query}-${limit}-${page}-${category}-${country}-${role}`;
   
   return unstable_cache(
     async () => {
@@ -165,7 +165,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country }
         const categoryCondition = category ? await getCategoryByName(category) : null
         
         // Add date filtering condition
-        const expirationDate = EVENT_CONFIG.getExpirationDate();
+        const expirationDate = EVENT_CONFIG.getExpirationDate(role);
         const dateCondition = { endDateTime: { $gte: expirationDate } };
 
         const conditions = {

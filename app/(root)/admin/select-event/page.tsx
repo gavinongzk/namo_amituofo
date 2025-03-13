@@ -43,8 +43,9 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
+        const role = user?.publicMetadata.role as string | undefined;
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}&bustCache=true&_=${timestamp}`);
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}${role ? `&role=${role}` : ''}&bustCache=true&_=${timestamp}`);
         
         if (!response.ok) {
           console.error('Failed to fetch events:', response.status, response.statusText);
@@ -102,7 +103,8 @@ const SelectEventPage = () => {
 
   const groupEventsByCategory = (events: Event[]) => {
     const currentDate = new Date();
-    const expirationDate = EVENT_CONFIG.getExpirationDate();
+    const userRole = user?.publicMetadata?.role as string;
+    const expirationDate = EVENT_CONFIG.getExpirationDate(userRole);
 
     // Separate expired and active events
     const { expired, active } = events.reduce((acc, event) => {

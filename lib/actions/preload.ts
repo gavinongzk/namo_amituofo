@@ -9,8 +9,8 @@ import { ICategory } from '@/lib/database/models/category.model';
 
 // Cache events by category
 export const preloadEventsByCategory = unstable_cache(
-  async (country: string, category: string) => {
-    console.log('🔍 Starting preloadEventsByCategory with:', { country, category });
+  async (country: string, category: string, role?: string) => {
+    console.log('🔍 Starting preloadEventsByCategory with:', { country, category, role });
     
     try {
       const events = await getAllEvents({
@@ -18,7 +18,8 @@ export const preloadEventsByCategory = unstable_cache(
         category,
         page: 1,
         limit: 6,
-        country: country || 'Singapore'
+        country: country || 'Singapore',
+        role
       });
       
       if (!events || !events.data) {
@@ -28,7 +29,7 @@ export const preloadEventsByCategory = unstable_cache(
         };
       }
 
-      const expirationDate = EVENT_CONFIG.getExpirationDate();
+      const expirationDate = EVENT_CONFIG.getExpirationDate(role);
       const filteredData = events.data.filter((event: IEvent) => {
         const eventEndDate = new Date(event.endDateTime);
         return eventEndDate >= expirationDate;
@@ -77,8 +78,8 @@ export const preloadCategories = unstable_cache(
 
 // Main preload function
 export const preloadEvents = unstable_cache(
-  async (country: string) => {
-    console.log('🔍 Starting preloadEvents with country:', country);
+  async (country: string, role?: string) => {
+    console.log('🔍 Starting preloadEvents with country:', country, 'role:', role);
     
     try {
       console.log('📡 Fetching events from getAllEvents');
@@ -87,7 +88,8 @@ export const preloadEvents = unstable_cache(
         category: '',
         page: 1,
         limit: 6,
-        country: country || 'Singapore'
+        country: country || 'Singapore',
+        role
       });
       
       console.log('📦 Raw events response:', JSON.stringify(events, null, 2));
@@ -100,7 +102,7 @@ export const preloadEvents = unstable_cache(
         };
       }
 
-      const expirationDate = EVENT_CONFIG.getExpirationDate();
+      const expirationDate = EVENT_CONFIG.getExpirationDate(role);
       
       console.log('📅 Filtering events after:', expirationDate);
       
@@ -119,7 +121,7 @@ export const preloadEvents = unstable_cache(
       // Preload events for common categories
       const categories = await preloadCategories();
       categories.forEach((category: ICategory) => {
-        void preloadEventsByCategory(country, category.name);
+        void preloadEventsByCategory(country, category.name, role);
       });
 
       const result = {
