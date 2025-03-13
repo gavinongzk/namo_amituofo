@@ -157,40 +157,65 @@ const SelectEventPage = () => {
   const groupedEvents = groupEventsByCategory(events);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">选择活动记录出席 / Select an Event for Attendance</h1>
-      <div className="max-w-2xl mx-auto">
-        <Card className="mb-8">
+    <div className="wrapper my-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card className="border-2 border-primary-100">
           <CardHeader>
-            <CardTitle className="text-xl">选择活动 / Choose an Event</CardTitle>
-            <CardDescription>选择一个活动以查看详情和管理出席 / Select an event to view details and manage attendance</CardDescription>
+            <CardTitle className="text-2xl text-primary-700">选择活动 Select Event</CardTitle>
+            <CardDescription className="text-base">
+              请从下列活动中选择一个进行管理 Please select an event to manage
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>加载中... / Loading events...</span>
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary-500" />
+                <span className="text-lg text-primary-600">加载中... Loading...</span>
               </div>
             ) : (
               <Select onValueChange={handleSelectEvent} value={selectedEventId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-[54px] text-base">
                   <SelectValue placeholder="选择一个活动 / Select an event" />
                 </SelectTrigger>
                 <SelectContent>
-                  <ScrollArea className="h-[300px]">
+                  <ScrollArea className="h-[400px]">
                     {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
-                        <SelectLabel className={`px-2 py-1 rounded-md text-sm font-semibold mb-2 ${category === '──────────────' ? 'text-gray-400' : 'bg-gray-100'}`}>
+                        <SelectLabel className={`px-3 py-2 rounded-md text-base font-semibold mb-2 ${
+                          category === '──────────────' 
+                            ? 'text-gray-400 border-t border-b border-gray-200 my-2' 
+                            : 'bg-primary-50 text-primary-700'
+                        }`}>
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
-                          <SelectItem key={event._id} value={event._id} className="py-3 px-2 cursor-pointer">
-                            <div className="flex flex-col gap-1.5">
-                              <span className="font-medium text-base">{event.title}</span>
-                              <div className="flex items-center text-sm text-gray-500 gap-2">
-                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
+                          <SelectItem 
+                            key={event._id} 
+                            value={event._id} 
+                            className="py-4 px-3 cursor-pointer hover:bg-primary-50 focus:bg-primary-50 transition-colors duration-200"
+                          >
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-start justify-between">
+                                <span className="font-medium text-base text-gray-900">{event.title}</span>
+                                <Badge variant="outline" className="ml-2 whitespace-nowrap">
+                                  {event.category.name}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap items-center text-sm text-gray-600 gap-2">
+                                <div className="flex items-center gap-1">
+                                  <CalendarIcon className="h-4 w-4 text-primary-400" />
+                                  <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
+                                </div>
                                 <span className="text-gray-400">|</span>
-                                <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
+                                <div className="flex items-center gap-1">
+                                  <CalendarIcon className="h-4 w-4 text-primary-400" />
+                                  <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
+                                </div>
+                                <span className="text-gray-400">|</span>
+                                <div className="flex items-center gap-1">
+                                  <UsersIcon className="h-4 w-4 text-primary-400" />
+                                  <span>{event.totalRegistrations}/{event.maxSeats}</span>
+                                </div>
                               </div>
                             </div>
                           </SelectItem>
@@ -205,75 +230,96 @@ const SelectEventPage = () => {
         </Card>
 
         {selectedEvent ? (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-2xl">{selectedEvent.title}</CardTitle>
-              <CardDescription className="text-lg">{selectedEvent.category.name}</CardDescription>
+          <Card className="mb-8 border-2 border-primary-100">
+            <CardHeader className="bg-primary-50">
+              <CardTitle className="text-2xl text-primary-700">{selectedEvent.title}</CardTitle>
+              <CardDescription className="text-lg text-primary-600">
+                {selectedEvent.category.name}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.dateOnly}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                    <CalendarIcon className="h-5 w-5 mr-3 text-primary-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">日期 Date</p>
+                      <p className="text-base font-medium">{formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.dateOnly}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                    <CalendarIcon className="h-5 w-5 mr-3 text-primary-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">时间 Time</p>
+                      <p className="text-base font-medium">
+                        {formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.timeOnly} - 
+                        {formatBilingualDateTime(new Date(selectedEvent.endDateTime)).combined.timeOnly}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    {formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.timeOnly} - 
-                    {formatBilingualDateTime(new Date(selectedEvent.endDateTime)).combined.timeOnly}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <MapPinIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">{selectedEvent.location}</span>
-                </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    已注册 Registered: {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    已出席 Attended: {selectedEvent.attendedUsers}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <UsersIcon className="h-5 w-5 mr-2 text-gray-500" />
-                  <span className="text-lg">
-                    不能绕佛 Cannot Recite & Walk: {selectedEvent.cannotReciteAndWalk}
-                  </span>
+                <div className="space-y-4">
+                  <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                    <MapPinIcon className="h-5 w-5 mr-3 text-primary-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">地点 Location</p>
+                      <p className="text-base font-medium">{selectedEvent.location}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                    <UsersIcon className="h-5 w-5 mr-3 text-primary-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">注册人数 Registrations</p>
+                      <div className="flex items-center gap-4">
+                        <p className="text-base font-medium">
+                          已注册 Registered: {selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}
+                        </p>
+                        <p className="text-base font-medium">
+                          已出席 Attended: {selectedEvent.attendedUsers}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Badge variant="outline" className="mr-2 text-sm">
+            <CardFooter className="flex flex-wrap gap-2 bg-gray-50">
+              <Badge variant="outline" className="text-sm bg-white">
                 {selectedEvent.category.name}
               </Badge>
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className="text-sm bg-white">
                 {new Date(selectedEvent.startDateTime) > new Date() ? '即将开始 Upcoming' : '进行中 Ongoing'}
               </Badge>
+              {selectedEvent.cannotReciteAndWalk > 0 && (
+                <Badge variant="outline" className="text-sm bg-white">
+                  不能绕佛 Cannot Recite & Walk: {selectedEvent.cannotReciteAndWalk}
+                </Badge>
+              )}
             </CardFooter>
           </Card>
         ) : (
-          <Card className="mb-8 text-center p-8">
-            <CardDescription>选择一个活动以查看详情 / Select an event to view its details</CardDescription>
+          <Card className="mb-8 text-center p-8 border-2 border-primary-100">
+            <CardDescription className="text-lg text-primary-600">
+              选择一个活动以查看详情 / Select an event to view its details
+            </CardDescription>
           </Card>
         )}
 
         <Button 
           onClick={handleGoToAttendance} 
           disabled={!selectedEventId || isLoading}
-          className="w-full text-lg py-6"
+          className="w-full text-lg py-6 bg-primary-500 hover:bg-primary-600 transition-colors duration-200"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               加载中... / Loading...
             </>
           ) : (
-            '前往记录出席 / Go to Attendance'
+            <>
+              <UsersIcon className="mr-2 h-5 w-5" />
+              前往记录出席 / Go to Attendance
+            </>
           )}
         </Button>
       </div>
