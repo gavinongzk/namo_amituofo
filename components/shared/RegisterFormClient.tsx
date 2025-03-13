@@ -169,12 +169,12 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      groups: [Object.fromEntries(
+      groups: Array(initialOrderCount).fill(null).map(() => Object.fromEntries(
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : ''
         ])
-      )]
+      ))
     },
   });
 
@@ -678,7 +678,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            使用与第一位参加者相同 Use same as Person 1
+                                            与第一位参加者相同 Same as Person 1
                                           </label>
                                         </div>
                                       )}
