@@ -6,6 +6,8 @@ import { useUser } from '@clerk/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from 'lucide-react';
 
 interface NavItemsProps {
   isSuperAdmin: boolean;
@@ -71,6 +73,47 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     return null;
   };
 
+  const renderAdminDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={navItemClass('/admin/dashboard')}>
+        <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
+        <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
+        <ChevronDown className="h-4 w-4 ml-1" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem asChild>
+          <Link href="/admin/dashboard" onClick={() => handleClick('/admin/dashboard')}>
+            控制面板 / Dashboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/select-event" onClick={() => handleClick('/admin/select-event')}>
+            记录出席 / Take Attendance
+          </Link>
+        </DropdownMenuItem>
+        {isSuperAdmin && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
+                上传订单 / Upload Orders
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
+                管理用户 / Manage Users
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/analytics" onClick={() => handleClick('/admin/analytics')}>
+                数据分析 / Analytics
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <ul 
       className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto ${className}`}
@@ -92,17 +135,22 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
           {renderLoadingSpinner('/event-lookup')}
         </Link>
       </li>
-      {isSignedIn ? (
+      <li className="w-full md:w-auto">
+        <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
+          <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
+          <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
+          {renderLoadingSpinner('/faq')}
+        </Link>
+      </li>
+      {isSignedIn && (isSuperAdmin || isNormalAdmin) && (
         <>
-          {isSuperAdmin && (
-            <li className="w-full md:w-auto">
-              <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
-                {renderLoadingSpinner('/profile')}
-              </Link>
-            </li>
-          )}
+          <li className="w-full md:w-auto">
+            <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
+              <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
+              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
+              {renderLoadingSpinner('/profile')}
+            </Link>
+          </li>
           {isSuperAdmin && (
             <li className="w-full md:w-auto">
               <Link href="/events/create" className={navItemClass('/events/create')} onClick={() => handleClick('/events/create')}>
@@ -113,30 +161,9 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
             </li>
           )}
           <li className="w-full md:w-auto">
-            <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-              <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
-              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
-              {renderLoadingSpinner('/faq')}
-            </Link>
+            {renderAdminDropdown()}
           </li>
-          {(isSuperAdmin || isNormalAdmin) && (
-            <li className="w-full md:w-auto">
-              <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={() => handleClick('/admin/dashboard')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
-                {renderLoadingSpinner('/admin/dashboard')}
-              </Link>
-            </li>
-          )}
         </>
-      ) : (
-        <li className="w-full md:w-auto">
-          <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-            <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
-            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
-            {renderLoadingSpinner('/faq')}
-          </Link>
-        </li>
       )}
     </ul>
   );
