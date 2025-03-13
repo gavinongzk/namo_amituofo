@@ -104,12 +104,16 @@ const SelectEventPage = () => {
   const groupEventsByCategory = (events: Event[]) => {
     const currentDate = new Date();
     const userRole = user?.publicMetadata?.role as string;
+    const isSuperAdmin = userRole === 'superadmin';
     const expirationDate = EVENT_CONFIG.getExpirationDate(userRole);
 
     // Separate expired and active events
     const { expired, active } = events.reduce((acc, event) => {
       const endDate = parseISO(event.endDateTime);
-      const isExpired = isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
+      // For superadmins, only check if the event has ended
+      const isExpired = isSuperAdmin 
+        ? isBefore(endDate, currentDate)
+        : isBefore(endDate, expirationDate) && isBefore(endDate, currentDate);
       
       if (isExpired) {
         acc.expired.push(event);
@@ -142,7 +146,7 @@ const SelectEventPage = () => {
     });
 
     // Then add expired events at the end if user is superadmin
-    if (user?.publicMetadata?.role === 'superadmin' && sortedExpired.length > 0) {
+    if (isSuperAdmin && sortedExpired.length > 0) {
       groupedEvents['──────────────'] = []; // Add a separator
       groupedEvents['已过期活动 / Expired Events'] = sortedExpired;
     }
