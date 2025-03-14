@@ -356,6 +356,102 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event.title}</h4>
             </div>
 
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
+              <p>
+                <span className="font-semibold">日期时间 Date & Time:</span> 
+                {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
+                <span className="ml-1">
+                  {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly.replace(/^[上下]午/, '')}
+                </span>
+              </p>
+              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+            </div>
+
+            {/* How to find this page again section */}
+            <div className="mt-4 sm:mt-6 bg-blue-50 border-l-4 border-blue-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
+              <h4 className="text-base sm:text-lg font-bold mb-2 text-blue-700">
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  如何在活动当天找回此页面 How to Find This Page on Event Day
+                </span>
+              </h4>
+              <div className="space-y-2 text-blue-800 text-sm sm:text-base">
+                <p className="font-medium">请保存此页面链接或按照以下步骤在活动当天找回此页面：</p>
+                <p>Please save this page link or follow these steps to find this page again on the event day:</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
+                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
+                    <div className="bg-blue-100 p-2 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                    </div>
+                    <p className="font-medium text-blue-700">1. 访问活动查询页面</p>
+                    <p className="text-xs mt-1">点击下方链接 Click the link below</p>
+                    <a 
+                      href="https://reg.plb-sea.org/event-lookup" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs mt-2 bg-blue-100/70 px-2 py-1 rounded font-mono hover:bg-blue-200 transition-colors flex items-center gap-1"
+                    >
+                      reg.plb-sea.org/event-lookup
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
+                    <div className="bg-blue-100 p-2 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <p className="font-medium text-blue-700">2. 输入电话号码</p>
+                    <p className="text-xs mt-1">Enter your phone number</p>
+                    <button className="text-xs mt-2 bg-primary-100 text-primary-700 px-2 py-1 rounded">查询 Search</button>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
+                    <div className="bg-blue-100 p-2 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <p className="font-medium text-blue-700">3. 点击活动卡片</p>
+                    <p className="text-xs mt-1">Click on the event card</p>
+                    <div className="text-xs mt-2 bg-gray-100 px-2 py-1 rounded w-full">
+                      {order.event.title.substring(0, 15)}...
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
+                    <div className="bg-blue-100 p-2 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                    </div>
+                    <p className="font-medium text-blue-700">4. 出示二维码</p>
+                    <p className="text-xs mt-1">Show the QR code</p>
+                    <div className="text-xs mt-2 bg-green-100 text-green-700 px-2 py-1 rounded">完成签到 Check-in</div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-3 rounded-lg mt-3 flex items-center gap-3 border border-yellow-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <p>
+                    <span className="font-medium">重要提示：</span>请在活动当天出示此页面上的二维码以完成签到。没有二维码将无法确认您的出席。
+                    <br />
+                    <span className="font-medium">Important:</span> Please show the QR code on this page to complete check-in on the event day. Without the QR code, your attendance cannot be confirmed.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
               <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
                 {group.qrCode && (
