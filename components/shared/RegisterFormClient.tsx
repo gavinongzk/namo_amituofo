@@ -87,6 +87,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
+  const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -421,6 +422,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     ));
     // Increment the number of forms to show
     setNumberOfFormsToShow(prev => prev + 1);
+    // Initialize the new person's postal checkbox as unchecked
+    setPostalCheckedState(prev => ({
+      ...prev,
+      [fields.length]: false
+    }));
   };
 
   useEffect(() => {
@@ -696,8 +702,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                       {personIndex > 0 && (
                                         <div className="flex items-center gap-2 mt-2">
                                           <Checkbox
-                                            checked={formField.value === form.getValues(`groups.0.${customField.id}`)}
+                                            checked={postalCheckedState[personIndex] ?? false}
                                             onCheckedChange={(checked) => {
+                                              setPostalCheckedState(prev => ({
+                                                ...prev,
+                                                [personIndex]: !!checked
+                                              }));
+                                              
                                               if (checked) {
                                                 const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
                                                 form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
