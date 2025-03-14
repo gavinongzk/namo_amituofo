@@ -401,176 +401,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               </div>
             ))},
 
-            {/* How to find this page again section - Moved below QR codes */}
-            <div className="mt-4 sm:mt-6 bg-blue-50 border-l-4 border-blue-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
-              <h4 className="text-base sm:text-lg font-bold mb-2 text-blue-700">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  如何在活动当天找回此页面 How to Find This Page on Event Day
-                </span>
-              </h4>
-              <div className="space-y-2 text-blue-800 text-sm sm:text-base">
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
-                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
-                    <div className="bg-blue-100 p-2 rounded-full mb-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                      </svg>
-                    </div>
-                    <p className="font-medium text-blue-700">1. 访问活动查询页面</p>
-                    <p className="text-xs mt-1">点击下方链接 Click the link below</p>
-                    <a 
-                      href="https://reg.plb-sea.org/event-lookup" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-xs mt-2 bg-blue-100/70 px-2 py-1 rounded font-mono hover:bg-blue-200 transition-colors flex items-center gap-1"
-                    >
-                      reg.plb-sea.org/event-lookup
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
-                    <div className="bg-blue-100 p-2 rounded-full mb-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <p className="font-medium text-blue-700">2. 输入电话号码</p>
-                    <p className="text-xs mt-1">Enter your phone number</p>
-                    <button className="text-xs mt-2 bg-primary-100 text-primary-700 px-2 py-1 rounded">查询 Search</button>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
-                    <div className="bg-blue-100 p-2 rounded-full mb-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    </div>
-                    <p className="font-medium text-blue-700">3. 点击活动卡片</p>
-                    <p className="text-xs mt-1">Click on the event card</p>
-                    <div className="text-xs mt-2 bg-gray-100 px-2 py-1 rounded w-full">
-                      {order.event.title.substring(0, 15)}...
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
-                    <div className="bg-blue-100 p-2 rounded-full mb-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                      </svg>
-                    </div>
-                    <p className="font-medium text-blue-700">4. 出示二维码</p>
-                    <p className="text-xs mt-1">Show the QR code</p>
-                    <div className="text-xs mt-2 bg-green-100 text-green-700 px-2 py-1 rounded">完成签到 Check-in</div>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-3 rounded-lg mt-3 flex items-center gap-3 border border-yellow-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <p>
-                    <span className="font-medium">重要提示：</span>请在活动当天出示此页面上的二维码以完成签到。没有二维码将无法确认您的出席。
-                    <br />
-                    <span className="font-medium">Important:</span> Please show the QR code on this page to complete check-in on the event day. Without the QR code, your attendance cannot be confirmed.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
-              <p>
-                <span className="font-semibold">日期时间 Date & Time:</span> 
-                {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
-                <span className="ml-1">
-                  {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly.replace(/^[上下]午/, '')}
-                </span>
-              </p>
-              {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
-            </div>
-
-            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-4 sm:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                <div className="p-2 sm:p-3 md:p-4">
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                    {group.fields.map((field: CustomField) => (
-                      <div key={field.id} className="flex flex-col">
-                        <dt className="font-medium text-gray-600 mb-1 text-sm sm:text-base">{field.label}</dt>
-                        <dd className="flex items-center gap-2">
-                          {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="max-w-[200px]"
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => handleSave(group.groupId)}
-                                className="p-1 hover:bg-green-100 rounded"
-                              >
-                                <Check className="h-4 w-4 text-green-600" />
-                              </button>
-                              <button
-                                onClick={handleCancel}
-                                className="p-1 hover:bg-red-100 rounded"
-                              >
-                                <X className="h-4 w-4 text-red-600" />
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="text-gray-900 font-semibold text-sm sm:text-base">
-                                {field.type === 'radio' 
-                                  ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                                  : (field.value || 'N/A')}
-                              </span>
-                              {(field.label.toLowerCase().includes('name') || 
-                                field.label.toLowerCase().includes('contact') || 
-                                field.label.toLowerCase().includes('postal') || 
-                                field.label.toLowerCase().includes('zip') || 
-                                field.label.toLowerCase().includes('邮编') || 
-                                field.label.toLowerCase().includes('邮政编码')) && !group.cancelled && (
-                                <button
-                                  onClick={() => handleEdit(group.groupId, field.id, field.value?.toString() ?? '')}
-                                  className="p-1 hover:bg-gray-100 rounded inline-flex items-center gap-1 text-blue-600 text-sm"
-                                >
-                                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
-                                  <span className="text-xs sm:text-sm">编辑 Edit</span>
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-                {!group.cancelled && (
-                  <div className="p-2 sm:p-3 md:p-4 bg-gray-50">
-                    <CancelButton 
-                      groupId={group.groupId} 
-                      orderId={id} 
-                      onCancel={() => handleCancellation(group.groupId)} 
-                    />
-                  </div>
-                )}
-                
-                {group.cancelled && (
-                  <div className="p-2 sm:p-3 md:p-4 bg-red-50">
-                    <p className="text-red-600 text-center font-semibold text-sm sm:text-base">
-                      注册已取消 Registration Cancelled
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))},
-
             <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
               <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
               <div 
@@ -579,6 +409,91 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
                 }}
               />
+            </div>
+
+            {/* How to find this page section - Now with improved UI */}
+            <div className="mt-6 sm:mt-8 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200">
+              <h4 className="text-lg sm:text-xl font-bold mb-4 text-blue-800 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                如何在活动当天找回此页面 How to Find This Page on Event Day
+              </h4>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
+                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-blue-800 mb-2">1. 访问活动查询页面</p>
+                    <p className="text-sm text-blue-600 mb-3">点击下方链接 Click the link below</p>
+                    <a 
+                      href="https://reg.plb-sea.org/event-lookup" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-sm bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm hover:shadow group"
+                    >
+                      reg.plb-sea.org/event-lookup
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
+                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-blue-800 mb-2">2. 输入电话号码</p>
+                    <p className="text-sm text-blue-600 mb-3">Enter your phone number</p>
+                    <div className="text-sm bg-primary-100 text-primary-700 px-4 py-2 rounded-lg w-full max-w-[160px]">查询 Search</div>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
+                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-blue-800 mb-2">3. 点击活动卡片</p>
+                    <p className="text-sm text-blue-600 mb-3">Click on the event card</p>
+                    <div className="text-sm bg-gray-100 px-4 py-2 rounded-lg w-full">
+                      {order.event.title.substring(0, 15)}...
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
+                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-blue-800 mb-2">4. 出示二维码</p>
+                    <p className="text-sm text-blue-600 mb-3">Show the QR code</p>
+                    <div className="text-sm bg-green-500 text-white px-4 py-2 rounded-lg w-full">完成签到 Check-in</div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl mt-4 flex items-start gap-3 border-2 border-yellow-200 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div className="space-y-2">
+                    <p className="font-medium text-yellow-800">
+                      重要提示 Important Note:
+                    </p>
+                    <p className="text-yellow-700 text-sm leading-relaxed">
+                      请在活动当天出示此页面上的二维码以完成签到。没有二维码将无法确认您的出席。
+                      <br />
+                      Please show the QR code on this page to complete check-in on the event day. Without the QR code, your attendance cannot be confirmed.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
