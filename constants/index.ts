@@ -15,7 +15,6 @@ export const eventDefaultValues = {
 
     注：/ Note:
     ▪ 无法参与绕佛的大众，可以坐在不绕佛区。/ Those who are unable to participate in the circumambulation session can sit in the non-circumambulation area.
-    ▪ 由于人数众多，请 全程戴口罩 😷 / Please wear mask during the session.
     ▪ 衣装整齐，如穿有袖之衣服、长裤等。 / Please wear proper attire and trousers.
     ▪ 如感身体不适🤒，还请在家休养，不便参与。 / If feel uncomfortable, please stay at home and rest.
     ▪ 由于座位有限🪑，先到先坐， 无法提供保留位子。/ No booking seat in advance , first come first sit.

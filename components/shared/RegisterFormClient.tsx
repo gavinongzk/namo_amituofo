@@ -61,6 +61,18 @@ const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) =>
   return null;
 };
 
+// Function to check if a person's form is empty
+const isGroupEmpty = (group: any, customFields: CustomField[]) => {
+  const nameFieldId = customFields.find(f => f.label.toLowerCase().includes('name'))?.id;
+  const phoneFieldId = customFields.find(f => f.type === 'phone')?.id;
+
+  const nameValue = nameFieldId ? group[nameFieldId] : '';
+  const phoneValue = phoneFieldId ? group[phoneFieldId] : '';
+
+  // Consider a group empty if both name and phone are not filled
+  return !nameValue && !phoneValue;
+};
+
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -206,8 +218,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   }, [postalOverrides, customFields, form]);
 
-  const checkForDuplicatePhoneNumbers = async (values: z.infer<typeof formSchema>) => {
-    const phoneNumbers = values.groups.map(group => group[customFields.find(f => f.type === 'phone')?.id || '']);
+  const checkForDuplicatePhoneNumbers = async (payload: any) => {
+    const phoneField = customFields.find(f => f.type === 'phone')?.id || '';
+    const phoneNumbers = payload.groups.map((group: any) => group[phoneField]);
     
     try {
       const response = await fetch('/api/check-phone-numbers', {
@@ -215,7 +228,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           phoneNumbers,
-          eventId: event._id 
+          eventId: payload.eventId || event._id 
         })
       });
       
@@ -231,13 +244,23 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     
     saveFormData(values);
 
+    // Filter out empty groups before further processing
+    const filledGroups = values.groups.filter(group => !isGroupEmpty(group, customFields));
+
+    // If all groups are empty after filtering, show a message and return
+    if (filledGroups.length === 0) {
+      toast.dismiss(toastId);
+      toast.error("请至少填写一份注册表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+      return;
+    }
+
     // Validate phone numbers first
     const phoneField = customFields.find(f => f.type === 'phone')?.id;
     if (phoneField) {
       const phoneValidationErrors: string[] = [];
       
-      for (let i = 0; i < values.groups.length; i++) {
-        const rawValue = values.groups[i][phoneField];
+      for (let i = 0; i < filledGroups.length; i++) {
+        const rawValue = filledGroups[i][phoneField];
         const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
         
         // Skip validation if phone override is active
@@ -266,9 +289,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     if (postalField) {
       const postalValidationErrors: string[] = [];
       
-      for (let i = 0; i < values.groups.length; i++) {
+      for (let i = 0; i < filledGroups.length; i++) {
         // Ensure we're working with a string value
-        const rawValue = values.groups[i][postalField];
+        const rawValue = filledGroups[i][postalField];
         const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
         
         // Skip validation if postal code is empty (since it's optional)
@@ -308,17 +331,21 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       }
     }
     
-    const duplicates: string[] = await checkForDuplicatePhoneNumbers(values);
+    // Check for duplicate phone numbers using only filled groups
+    const duplicates: string[] = await checkForDuplicatePhoneNumbers({
+      groups: filledGroups,
+      eventId: event._id
+    } as any);
     
     if (duplicates.length > 0) {
       toast.dismiss(toastId);
       setDuplicatePhoneNumbers(duplicates);
-      setFormValues(values);
+      setFormValues({...values, groups: filledGroups});
       setShowConfirmation(true);
       return;
     }
     
-    await submitForm(values, toastId);
+    await submitForm({...values, groups: filledGroups}, toastId);
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
