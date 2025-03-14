@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { useUser } from '@clerk/nextjs';
 import { Event } from '@/types';
+import { formatBilingualDateTime } from '@/lib/utils';
 
 type EventSelectorProps = {
   onEventSelect: (event: Event) => void;
@@ -65,17 +66,25 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
   }, [events]);
 
   return (
-    <div className="mb-6">
-      <h2 className="text-2xl font-bold mb-4">Select an Event</h2>
+    <div className="mb-4 md:mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">
+        <span className="block md:inline">选择活动</span>
+        <span className="hidden md:inline"> / </span>
+        <span className="block md:inline">Select an Event</span>
+      </h2>
       {isLoading ? (
-        <div className="flex items-center justify-center p-4">
+        <div className="flex items-center justify-center p-4 border rounded-md bg-gray-50">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          <span>Loading events...</span>
+          <span className="text-sm md:text-base">
+            <span className="md:inline">加载中...</span>
+            <span className="hidden md:inline"> / </span>
+            <span className="md:inline">Loading events...</span>
+          </span>
         </div>
       ) : (
         <Select onValueChange={(value) => onEventSelect(events.find(e => e._id === value)!)}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an event" />
+            <SelectValue placeholder="选择一个活动 / Select an event" />
           </SelectTrigger>
           <SelectContent>
             <ScrollArea className="h-[300px]">
@@ -85,8 +94,15 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                     {category}
                   </SelectLabel>
                   {categoryEvents.map((event) => (
-                    <SelectItem key={event._id} value={event._id}>
-                      {event.title}
+                    <SelectItem key={event._id} value={event._id} className="py-3 px-2 cursor-pointer">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-medium text-base">{event.title}</span>
+                        <div className="flex items-center text-sm text-gray-500 gap-2">
+                          <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
+                          <span className="text-gray-400">|</span>
+                          <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectGroup>
