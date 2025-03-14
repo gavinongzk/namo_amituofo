@@ -86,6 +86,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
+  const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -181,7 +182,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      groups: Array(initialOrderCount).fill(null).map(() => Object.fromEntries(
+      groups: Array(1).fill(null).map(() => Object.fromEntries(
         customFields.map(field => [
           field.id, 
           field.type === 'boolean' ? false : ''
@@ -418,6 +419,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         ''
       ])
     ));
+    // Increment the number of forms to show
+    setNumberOfFormsToShow(prev => prev + 1);
   };
 
   useEffect(() => {
@@ -529,7 +532,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               </div>
             ) : (
               <>
-                {fields.map((field, personIndex) => (
+                {fields.slice(0, numberOfFormsToShow).map((field, personIndex) => (
                   <div 
                     key={field.id}
                     id={`person-${personIndex}`}
@@ -735,7 +738,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                         <Button 
                           type="button" 
-                          onClick={() => remove(personIndex)}
+                          onClick={() => {
+                            remove(personIndex);
+                            setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
+                          }}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
                           删除第{personIndex + 1}位参加者 Remove Person {personIndex + 1}
@@ -749,7 +755,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    disabled={fields.length >= event.maxSeats}
+                    disabled={numberOfFormsToShow >= event.maxSeats}
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
