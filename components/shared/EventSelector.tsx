@@ -129,9 +129,9 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                         value={event._id} 
                         className="py-3 px-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                       >
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-start">
-                            <span className="font-medium text-base">{event.title}</span>
+                        <div className="flex flex-col gap-2 w-full">
+                          <div className="flex justify-between items-start w-full">
+                            <span className="font-medium text-base pt-0">{event.title}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${status.color} bg-opacity-10`}>
                               {status.label}
                             </span>
@@ -179,9 +179,9 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                         value={event._id} 
                         className="py-3 px-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 opacity-75"
                       >
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-start">
-                            <span className="font-medium text-base text-gray-600">{event.title}</span>
+                        <div className="flex flex-col gap-2 w-full">
+                          <div className="flex justify-between items-start w-full">
+                            <span className="font-medium text-base text-gray-600 pt-0">{event.title}</span>
                             <span className="text-xs px-2 py-0.5 rounded-full text-gray-500 bg-gray-100">
                               已过期 / Expired
                             </span>
