@@ -399,7 +399,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 </div>
               </div>
-            )}
+            ))},
 
             {/* How to find this page again section - Moved below QR codes */}
             <div className="mt-4 sm:mt-6 bg-blue-50 border-l-4 border-blue-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
@@ -572,7 +572,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 )}
               </div>
-            ))}
+            ))},
 
             <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
               <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
