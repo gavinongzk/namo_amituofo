@@ -367,7 +367,41 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
-            {/* How to find this page again section */}
+            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
+              <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
+                {group.qrCode && (
+                  <div className="qr-code-container">
+                    <QRCodeDisplay 
+                      qrCode={group.qrCode} 
+                      isAttended={!!group.attendance}
+                      isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                    />
+                  </div>
+                )}
+                
+                <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Person {index + 1}</span>
+                        {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
+                      </h5>
+                      <div className="text-white/90 text-sm sm:text-base">
+                        {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                      </div>
+                    </div>
+                    {group.queueNumber && (
+                      <div className="bg-white/90 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
+                        <p className="text-xs md:text-sm text-primary-600">队列号 Queue Number</p>
+                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-700">{group.queueNumber}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* How to find this page again section - Moved below QR codes */}
             <div className="mt-4 sm:mt-6 bg-blue-50 border-l-4 border-blue-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
               <h4 className="text-base sm:text-lg font-bold mb-2 text-blue-700">
                 <span className="flex items-center gap-2">
@@ -451,40 +485,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </div>
               </div>
             </div>
-
-            {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                {group.qrCode && (
-                  <div className="qr-code-container">
-                    <QRCodeDisplay 
-                      qrCode={group.qrCode} 
-                      isAttended={!!group.attendance}
-                      isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                    />
-                  </div>
-                )}
-                
-                <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div className="flex flex-col gap-1">
-                      <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
-                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Person {index + 1}</span>
-                        {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
-                      </h5>
-                      <div className="text-white/90 text-sm sm:text-base">
-                        {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
-                      </div>
-                    </div>
-                    {group.queueNumber && (
-                      <div className="bg-white/90 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
-                        <p className="text-xs md:text-sm text-primary-600">队列号 Queue Number</p>
-                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-700">{group.queueNumber}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
 
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <p>
