@@ -150,7 +150,6 @@ const SelectEventPage = () => {
 
     // Then add expired events at the end if user is superadmin
     if (isSuperAdmin && sortedExpired.length > 0) {
-      groupedEvents['──────────────'] = []; // Add a separator
       groupedEvents['已过期活动 / Expired Events'] = sortedExpired;
     }
 

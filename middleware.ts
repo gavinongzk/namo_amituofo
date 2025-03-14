@@ -1,5 +1,6 @@
 import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from 'next/server';
+import { rateLimiterMiddleware } from './lib/middleware/rateLimiter';
 
 export default authMiddleware({
   publicRoutes: [
@@ -21,6 +22,43 @@ export default authMiddleware({
     '/api/uploadthing',
   ],
   async beforeAuth(req) {
+    // Apply rate limiting before authentication
+    const path = req.nextUrl.pathname;
+    
+    // Skip rate limiting for static assets and non-API routes
+    if (
+      path.startsWith('/_next') || 
+      path.startsWith('/static') ||
+      path.endsWith('.ico') ||
+      path.endsWith('.png') ||
+      path.endsWith('.jpg') ||
+      path.endsWith('.jpeg')
+    ) {
+      return NextResponse.next();
+    }
+
+    // Determine rate limit type based on the request
+    const isStrictLimit = path.includes('/api/') && (
+      path.includes('createOrder') ||
+      path.includes('update-registration') ||
+      path.includes('cancel-registration') ||
+      path.includes('attendance') ||
+      path.includes('users')
+    );
+
+    const isStaticContent = path.includes('/events') && !path.includes('/api/');
+
+    // Apply rate limiting
+    const rateLimitResult = await rateLimiterMiddleware(
+      req,
+      isStrictLimit,
+      isStaticContent
+    );
+
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     return NextResponse.next();
   },
   async afterAuth(auth, req) {
