@@ -412,9 +412,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </span>
               </h4>
               <div className="space-y-2 text-blue-800 text-sm sm:text-base">
-                <p className="font-medium">请保存此页面链接或按照以下步骤在活动当天找回此页面：</p>
-                <p>Please save this page link or follow these steps to find this page again on the event day:</p>
-                
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
                   <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col items-center text-center sm:col-span-1">
                     <div className="bg-blue-100 p-2 rounded-full mb-2">
