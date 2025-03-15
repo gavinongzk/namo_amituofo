@@ -141,7 +141,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
       <table className="min-w-full border-collapse border border-gray-300 mb-4">
         <thead>
           <tr>
-            <th className="border border-gray-300 p-2">参加者姓名 / Participant's Name</th>
+            <th className="border border-gray-300 p-2">姓名 / Name</th>
             <th className="border border-gray-300 p-2">联系号码 Contact number</th>
             {eventCategory === '念佛共修' && (
               <th className="border border-gray-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</th>
