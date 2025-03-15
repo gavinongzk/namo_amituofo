@@ -103,15 +103,69 @@ export default function RootLayout({
 
   // Add Service Worker registration script
   const swRegistration = `
+    // Service worker version - update this when you deploy new changes
+    const SW_VERSION = '3';
+    
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=2').then(registration => {
+        navigator.serviceWorker.register('/sw.js?v=' + SW_VERSION).then(registration => {
           console.log('SW registered:', registration.scope);
           
-          // Check for updates and refresh the page if needed
+          // Check for updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
+            console.log('New service worker installing...');
+            
             newWorker.addEventListener('statechange', () => {
+              console.log('Service worker state:', newWorker.state);
+              
+              if (newWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // New content is available, show refresh UI
+                  console.log('New version available! Refreshing...');
+                  
+                  // Create a refresh notification
+                  const refreshNotification = document.createElement('div');
+                  refreshNotification.style.position = 'fixed';
+                  refreshNotification.style.bottom = '20px';
+                  refreshNotification.style.left = '50%';
+                  refreshNotification.style.transform = 'translateX(-50%)';
+                  refreshNotification.style.backgroundColor = '#4CAF50';
+                  refreshNotification.style.color = 'white';
+                  refreshNotification.style.padding = '10px 20px';
+                  refreshNotification.style.borderRadius = '5px';
+                  refreshNotification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                  refreshNotification.style.zIndex = '9999';
+                  refreshNotification.style.display = 'flex';
+                  refreshNotification.style.alignItems = 'center';
+                  refreshNotification.style.justifyContent = 'space-between';
+                  refreshNotification.style.gap = '10px';
+                  refreshNotification.innerHTML = '<span>New version available! Click to update.</span>';
+                  
+                  // Add refresh button
+                  const refreshButton = document.createElement('button');
+                  refreshButton.textContent = 'Update Now';
+                  refreshButton.style.backgroundColor = 'white';
+                  refreshButton.style.color = '#4CAF50';
+                  refreshButton.style.border = 'none';
+                  refreshButton.style.padding = '5px 10px';
+                  refreshButton.style.borderRadius = '3px';
+                  refreshButton.style.cursor = 'pointer';
+                  
+                  refreshButton.addEventListener('click', () => {
+                    // Tell the service worker to skipWaiting
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    document.body.removeChild(refreshNotification);
+                  });
+                  
+                  refreshNotification.appendChild(refreshButton);
+                  document.body.appendChild(refreshNotification);
+                } else {
+                  // At this point, everything has been precached
+                  console.log('Content is cached for offline use.');
+                }
+              }
+              
               if (newWorker.state === 'activated') {
                 // Force refresh the page to ensure latest content is shown
                 window.location.reload();
@@ -119,13 +173,71 @@ export default function RootLayout({
             });
           });
           
-          // Check if there's an update immediately
+          // Check for updates every 5 minutes
+          setInterval(() => {
+            registration.update();
+            console.log('Checking for service worker updates...');
+          }, 5 * 60 * 1000);
+          
+          // Also check for updates immediately
           registration.update();
         }).catch(error => {
           console.log('SW registration failed:', error);
         });
       });
+      
+      // Listen for controlling service worker changes
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('New service worker activated, reloading page...');
+        window.location.reload();
+      });
     }
+  `;
+
+  // Add force refresh script for existing users
+  const forceRefreshScript = `
+    // Force refresh for existing users after deployment
+    (function() {
+      // Get the current version from version.js or use a fallback
+      const currentVersion = window.APP_VERSION || '${Date.now()}';
+      const lastForceUpdate = localStorage.getItem('lastForceUpdate');
+      
+      // Check if we need to force an update
+      if (!lastForceUpdate || lastForceUpdate !== currentVersion) {
+        console.log('New version detected. Clearing cache and refreshing...');
+        
+        // Store the current version to prevent repeated refreshes
+        localStorage.setItem('lastForceUpdate', currentVersion);
+        
+        // Clear caches if possible
+        if ('caches' in window) {
+          caches.keys().then(cacheNames => {
+            return Promise.all(
+              cacheNames.filter(cacheName => {
+                return cacheName.startsWith('namo-amituofo-');
+              }).map(cacheName => {
+                console.log('Deleting cache:', cacheName);
+                return caches.delete(cacheName);
+              })
+            );
+          }).then(() => {
+            // Reload after cache clearing with a slight delay
+            setTimeout(() => {
+              console.log('Cache cleared, reloading page...');
+              window.location.reload(true);
+            }, 1000);
+          }).catch(err => {
+            console.error('Cache clearing failed:', err);
+            // Reload anyway
+            window.location.reload(true);
+          });
+        } else {
+          // Fallback for browsers without cache API access
+          console.log('Cache API not available, performing hard reload');
+          window.location.reload(true);
+        }
+      }
+    })();
   `;
 
   return (
@@ -138,7 +250,9 @@ export default function RootLayout({
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {metaTags}
           {preloadResources}
+          <script src="/version.js" />
           <script dangerouslySetInnerHTML={{ __html: swRegistration }} />
+          <script dangerouslySetInnerHTML={{ __html: forceRefreshScript }} />
         </head>
         <body className={poppins.variable}>
           <div className="context-container">

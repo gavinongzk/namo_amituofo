@@ -5,9 +5,11 @@
   "packageManager": "pnpm@9.11.0",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/update-version.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-version": "node scripts/update-version.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.27.5",
