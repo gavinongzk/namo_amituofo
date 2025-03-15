@@ -420,61 +420,45 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 如何在活动当天找回此页面 How to Find This Page on Event Day
               </h4>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
-                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                       </svg>
                     </div>
-                    <p className="font-semibold text-blue-800 mb-2">1. 访问活动查询页面</p>
-                    <p className="text-sm text-blue-600 mb-3">点击下方链接 Click the link below</p>
-                    <a 
-                      href="https://reg.plb-sea.org/event-lookup" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-sm bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm hover:shadow group"
-                    >
-                      reg.plb-sea.org/event-lookup
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-800 mb-2">1. 点击顶部菜单中的"活动查询"</p>
+                      <p className="text-sm text-blue-600">Click on "活动查询 Event Lookup" in the top menu</p>
+                    </div>
                   </div>
-                  
-                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
-                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                     </div>
-                    <p className="font-semibold text-blue-800 mb-2">2. 输入电话号码</p>
-                    <p className="text-sm text-blue-600 mb-3">Enter your phone number</p>
-                    <div className="text-sm bg-primary-100 text-primary-700 px-4 py-2 rounded-lg w-full max-w-[160px]">查询 Search</div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-800 mb-2">2. 输入您的电话号码并查询</p>
+                      <p className="text-sm text-blue-600">Enter your phone number and search</p>
+                    </div>
                   </div>
-                  
-                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
-                    <div className="bg-blue-100 p-3 rounded-full mb-3">
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                     </div>
-                    <p className="font-semibold text-blue-800 mb-2">3. 点击活动卡片</p>
-                    <p className="text-sm text-blue-600 mb-3">Click on the event card</p>
-                    <div className="text-sm bg-gray-100 px-4 py-2 rounded-lg w-full">
-                      {order.event.title.substring(0, 15)}...
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-800 mb-2">3. 点击活动卡片查看详情</p>
+                      <p className="text-sm text-blue-600">Click on the event card to view details</p>
                     </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center text-center transform hover:-translate-y-1 transition-transform">
-                    <div className="bg-blue-100 p-3 rounded-full mb-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                      </svg>
-                    </div>
-                    <p className="font-semibold text-blue-800 mb-2">4. 出示二维码</p>
-                    <p className="text-sm text-blue-600 mb-3">Show the QR code</p>
-                    <div className="text-sm bg-green-500 text-white px-4 py-2 rounded-lg w-full">完成签到 Check-in</div>
                   </div>
                 </div>
                 
