@@ -43,9 +43,19 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         <div className="flex flex-col gap-2 flex-grow">
           {registrations.slice(0, initialDisplayCount).map((registration, index) => (
             <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
-              <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                姓名 Name: {registration.name || 'N/A'}
-              </p>
+              <div className="flex flex-col">
+                <p className="p-medium-14 md:p-medium-16 text-grey-600">
+                  姓名 Name: {registration.name || 'N/A'}
+                </p>
+                {registration.orderId && (
+                  <Link 
+                    href={`/reg/${registration.orderId}`}
+                    className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
+                  >
+                    查看二维码 View QR Code →
+                  </Link>
+                )}
+              </div>
             </div>
           ))}
 
@@ -72,9 +82,19 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                     key={index + initialDisplayCount} 
                     className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
                   >
-                    <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                      姓名 Name: {registration.name || 'N/A'}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="p-medium-14 md:p-medium-16 text-grey-600">
+                        姓名 Name: {registration.name || 'N/A'}
+                      </p>
+                      {registration.orderId && (
+                        <Link 
+                          href={`/reg/${registration.orderId}`}
+                          className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
+                        >
+                          查看二维码 View QR Code →
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -86,7 +106,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           href={`/reg/${primaryOrderId}`} 
           className="flex gap-2 mt-4 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
         >
-          <p>查看详情 View Details</p>
+          <p>查看活动详情 View Event Details</p>
         </Link>
       </div>
     </div>

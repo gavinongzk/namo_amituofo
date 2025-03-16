@@ -36,25 +36,49 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
         // Add cache-busting query param
         const orders = await getOrdersByPhoneNumber(`${phoneNumber}?t=${Date.now()}`);
 
-        const transformedRegistrations: IRegistration[] = orders
-          .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-          .map((order: any) => ({
-            event: {
-              _id: order.event._id,
-              title: order.event.title,
-              imageUrl: order.event.imageUrl,
-              startDateTime: order.event.startDateTime,
-              endDateTime: order.event.endDateTime,
-              orderId: order._id.toString(),
-              organizer: { _id: order.event.organizer?.toString() || '' },
-              customFieldValues: order.customFieldValues,
-            },
-            registrations: order.customFieldValues.map((group: any) => ({
+        // Group orders by event ID
+        const eventMap: Record<string, any> = {};
+        
+        orders.forEach((order: any) => {
+          const eventId = order.event._id;
+          
+          if (!eventMap[eventId]) {
+            eventMap[eventId] = {
+              event: {
+                _id: order.event._id,
+                title: order.event.title,
+                imageUrl: order.event.imageUrl,
+                startDateTime: order.event.startDateTime,
+                endDateTime: order.event.endDateTime,
+                organizer: { _id: order.event.organizer?.toString() || '' },
+                customFieldValues: [],
+                orderIds: [], // Store all order IDs for this event
+              },
+              registrations: [],
+            };
+          }
+          
+          // Add this order's ID to the list
+          eventMap[eventId].event.orderIds.push(order._id.toString());
+          
+          // Add all registrations from this order
+          order.customFieldValues.forEach((group: any) => {
+            const nameField = group.fields?.find((field: any) => 
+              field.label.toLowerCase().includes('name'))?.value || 'Unknown';
+              
+            eventMap[eventId].registrations.push({
               queueNumber: group.queueNumber,
-              name: group.fields?.find((field: any) => 
-                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-            })),
-          }));
+              name: nameField,
+              orderId: order._id.toString(), // Store the order ID for each registration
+            });
+          });
+        });
+        
+        // Convert map to array and sort by start date (newest first)
+        const transformedRegistrations: IRegistration[] = Object.values(eventMap)
+          .sort((a: any, b: any) => 
+            new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime()
+          );
 
         setRegistrations(transformedRegistrations);
         setIsLoading(false);

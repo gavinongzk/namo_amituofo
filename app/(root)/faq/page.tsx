@@ -170,22 +170,22 @@ export default function FAQPage() {
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">
-            <p className="font-semibold text-gray-900">可以！但请注意以下事项：</p>
+            <p className="font-semibold text-gray-900">可以！但请注意：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在报名表格页面，每个人需要填写各自的电话号码
+                <span className="font-medium text-gray-900">1.</span> 在注册表格中，您可以使用同一个电话号码为多人注册
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"Add Participant"添加更多参加者
+                <span className="font-medium text-gray-900">2.</span> 点击"添加另一位参加者"来添加更多参与者
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 每个参加者都会获得独立的二维码
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 每位参加者需要使用自己的电话号码在"活动查询"页面查看各自的二维码
+                <span className="font-medium text-gray-900">4.</span> 使用注册时的电话号码在"活动查询"页面，您将看到所有注册人员的列表
               </li>
               <li>
-                <span className="font-medium text-gray-900">5.</span> 请确保将此信息告知您帮忙报名的人员
+                <span className="font-medium text-gray-900">5.</span> 点击每个参加者旁边的"查看二维码"链接可以查看各自的二维码
               </li>
             </ol>
           </div>
@@ -194,7 +194,7 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">Yes! But please note:</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> On the registration form, each person needs their own phone number
+                <span className="font-medium text-gray-900">1.</span> On the registration form, you can use the same phone number for multiple people
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> Click "Add Another Person" to add more participants
@@ -203,10 +203,10 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> Each participant will receive their own QR code
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> Each participant must use their own phone number in the "Event Lookup" page to view their QR code
+                <span className="font-medium text-gray-900">4.</span> Use the registration phone number in the "Event Lookup" page to see a list of all registered people
               </li>
               <li>
-                <span className="font-medium text-gray-900">5.</span> Please make sure to inform the people you registered about this process
+                <span className="font-medium text-gray-900">5.</span> Click the "View QR Code" link next to each participant to see their individual QR code
               </li>
             </ol>
           </div>
