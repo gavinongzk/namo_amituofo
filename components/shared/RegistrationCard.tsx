@@ -13,9 +13,6 @@ type Props = {
 }
 
 const RegistrationCard = ({ event, registrations }: Props) => {
-  const initialDisplayCount = 3;
-  const hasMoreRegistrations = registrations.length > initialDisplayCount;
-  
   const primaryOrderId = event.orderIds?.[0] || event.orderId;
 
   return (
@@ -41,61 +38,36 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         </div>
 
         <div className="flex flex-col gap-2 flex-grow">
-          {registrations.slice(0, initialDisplayCount).map((registration, index) => (
-            <div key={index} className="bg-gray-50 p-3 rounded-lg animate-fadeIn">
-              <div className="flex flex-col">
-                <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                  姓名 Name: {registration.name || 'N/A'}
-                </p>
-                <Link 
-                  href={`/reg/${primaryOrderId}`}
-                  className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
-                >
-                  查看二维码 View QR Code →
-                </Link>
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium text-gray-700">
+              已注册参加者 Registered Participants
             </div>
-          ))}
-
-          {hasMoreRegistrations && (
-            <details className="group/details mt-2">
-              <summary className="cursor-pointer text-primary-500 hover:text-primary-600 transition-colors list-none">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    显示更多 {registrations.length - initialDisplayCount} 个 Show {registrations.length - initialDisplayCount} More
-                  </span>
-                  <svg 
-                    className="w-4 h-4 transition-transform group-open/details:rotate-180" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+            <div className="text-sm font-semibold text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
+              {registrations.length}
+            </div>
+          </div>
+          
+          <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1.5 border border-gray-100 rounded-lg p-2 bg-gray-50/50">
+            {registrations.length > 0 ? (
+              registrations.map((registration, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white p-2 rounded-md shadow-sm border border-gray-100 animate-fadeIn hover:border-primary-200 transition-colors"
+                >
+                  <p className="p-medium-14 md:p-medium-16 text-grey-700 flex items-center">
+                    <span className="inline-flex items-center justify-center bg-primary-100 text-primary-700 w-5 h-5 rounded-full text-xs font-medium mr-2">
+                      {index + 1}
+                    </span>
+                    {registration.name || 'N/A'}
+                  </p>
                 </div>
-              </summary>
-              <div className="mt-2 space-y-2">
-                {registrations.slice(initialDisplayCount).map((registration, index) => (
-                  <div 
-                    key={index + initialDisplayCount} 
-                    className="bg-gray-50 p-3 rounded-lg animate-fadeIn"
-                  >
-                    <div className="flex flex-col">
-                      <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                        姓名 Name: {registration.name || 'N/A'}
-                      </p>
-                      <Link 
-                        href={`/reg/${primaryOrderId}`}
-                        className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
-                      >
-                        查看二维码 View QR Code →
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+              ))
+            ) : (
+              <div className="text-center py-2 text-gray-500 text-sm">
+                暂无参加者 No participants yet
               </div>
-            </details>
-          )}
+            )}
+          </div>
         </div>
 
         <Link 
