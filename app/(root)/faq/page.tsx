@@ -176,7 +176,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 在报名表格页面，每个人需要填写各自的电话号码
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"Add Another Person"添加更多参加者
+                <span className="font-medium text-gray-900">2.</span> 点击"Add Participant"添加更多参加者
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 每个参加者都会获得独立的二维码
@@ -327,7 +327,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">2.</span> 输入您的国际电话号码（包含国家代码）
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 如果您没有当地邮区编号，可以输入000000
+                <span className="font-medium text-gray-900">3.</span> 输入您所在地区的实际邮区编号
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> 填写其他必要信息后提交
@@ -345,7 +345,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">2.</span> Enter your international phone number (including country code)
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> If you don't have a local postal code, you can enter 000000
+                <span className="font-medium text-gray-900">3.</span> Enter your actual postal code for your location
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> Fill in other required information and submit
@@ -396,7 +396,7 @@ export default function FAQPage() {
           </div>
         </div>
       )
-    }
+    },
   ];
 
   return (

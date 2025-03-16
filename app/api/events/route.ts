@@ -35,7 +35,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 60, // Reduce cache time to 1 minute
+    revalidate: 0, // Changed from 60 to 0 to disable caching
     tags: ['events']
   }
 );
@@ -68,7 +68,7 @@ const getCachedSuperAdminEvents = unstable_cache(
   },
   ['superadmin-events-list', 'country'],  // Include country in cache key
   {
-    revalidate: 60, // Reduce cache time to 1 minute
+    revalidate: 0, // Changed from 60 to 0 to disable caching
     tags: ['events']
   }
 );
@@ -111,11 +111,14 @@ export async function GET(request: NextRequest) {
       ? await getCachedSuperAdminEvents(country)
       : await getCachedEvents(country);
     
-    // Use a shorter cache duration in the response headers
+    // Use no-store to disable caching
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30', // Reduce to 1 minute with 30s stale
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store',
       },
     });
   } catch (error) {

@@ -87,7 +87,7 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
                   d="M5 13l4 4L19 7" 
                 />
               </svg>
-              <span className="text-lg font-semibold text-green-700">出席已记录</span>
+              <span className="text-lg font-semibold text-green-700">已出席</span>
             </div>
             <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
           </div>
@@ -398,6 +398,69 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     )}
                   </div>
                 </div>
+
+                {/* Registration Details Section */}
+                <div className="p-4 space-y-4">
+                  {group.fields.map((field: CustomField) => (
+                    <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
+                      <div className="flex-1 flex items-center gap-2">
+                        {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
+                          <div className="flex-1 flex items-center gap-2">
+                            <Input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleSave(group.groupId)}
+                              className="h-9 w-9"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={handleCancel}
+                              className="h-9 w-9"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center gap-2">
+                            <span className="flex-1">{field.value}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                if (field.id) {
+                                  const value = typeof field.value === 'string' ? field.value : '';
+                                  handleEdit(group.groupId, field.id, value);
+                                }
+                              }}
+                              className="h-9 w-9"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {!group.cancelled && !group.attendance && (
+                    <CancelButton
+                      groupId={group.groupId}
+                      orderId={id}
+                      onCancel={() => handleCancellation(group.groupId)}
+                    />
+                  )}
+                </div>
+                {/* End of Registration Details Section */}
               </div>
             ))},
 

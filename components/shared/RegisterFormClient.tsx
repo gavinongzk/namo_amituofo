@@ -546,7 +546,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   >
                     <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                       <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                        第{personIndex + 1}位参加者 / Person {personIndex + 1}
+                        第{personIndex + 1}位参加者 / Participant {personIndex + 1}
                       </h3>
                     </div>
 
@@ -719,7 +719,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            与第一位参加者相同 Same as Person 1
+                                            与第一位参加者相同 Same as Participant 1
                                           </label>
                                         </div>
                                       )}
@@ -755,7 +755,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           }}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          删除第{personIndex + 1}位参加者 Remove Person {personIndex + 1}
+                          删除第{personIndex + 1}位参加者 Remove Participant {personIndex + 1}
                         </Button>
                       </div>
                     )}
@@ -770,7 +770,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
-                    添加参加者 Add Another Person
+                    添加参加者 Add Participant
                   </Button>
                   <Button 
                     type="submit" 
@@ -783,7 +783,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         提交中... Submitting...
                       </div>
                     ) : (
-                      '呈交报名 Complete Registration'
+                      '呈交 Submit'
                     )}
                   </Button>
                 </div>
@@ -801,7 +801,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             </DialogTitle>
             <DialogDescription className="space-y-4">
               <p className="text-gray-700 text-base">
-                以下电话号码已注册：/ The following phone numbers are already registered:
+                以下电话号码已注册：/ The following phone number/s is/are already registered:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 {duplicatePhoneNumbers.map((phone) => (

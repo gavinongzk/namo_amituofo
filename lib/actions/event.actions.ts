@@ -100,8 +100,8 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: 3600, // Cache for 1 minute
-    tags: ['event']
+    revalidate: 0,
+    tags: ['events']
   }
 );
 
@@ -236,7 +236,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
     },
     ['events-list'],
     {
-      revalidate: 60,
+      revalidate: 0,
       tags: ['events']
     }
   )();
