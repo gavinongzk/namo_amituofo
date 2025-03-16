@@ -35,7 +35,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list'],
   {
-    revalidate: 0, // Changed from 60 to 0 to disable caching
+    revalidate: false, // Changed from 0 to false to disable caching
     tags: ['events']
   }
 );
@@ -68,7 +68,7 @@ const getCachedSuperAdminEvents = unstable_cache(
   },
   ['superadmin-events-list', 'country'],  // Include country in cache key
   {
-    revalidate: 0, // Changed from 60 to 0 to disable caching
+    revalidate: false, // Changed from 0 to false to disable caching
     tags: ['events']
   }
 );

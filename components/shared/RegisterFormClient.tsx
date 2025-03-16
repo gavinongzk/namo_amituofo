@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { CreateOrderParams, CustomField } from "@/types"
+import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
@@ -80,7 +80,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const { user, isLoaded } = useUser();
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([]);
+  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<DuplicateRegistrationDetail[]>([]);
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
@@ -334,7 +334,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
     
     // Check for duplicate phone numbers using only filled groups
-    const duplicates: string[] = await checkForDuplicatePhoneNumbers({
+    const duplicates = await checkForDuplicatePhoneNumbers({
       groups: filledGroups,
       eventId: event._id
     } as any);
@@ -803,11 +803,35 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               <p className="text-gray-700 text-base">
                 以下电话号码已注册：/ The following phone number/s is/are already registered:
               </p>
-              <ul className="list-disc pl-6 space-y-1">
-                {duplicatePhoneNumbers.map((phone) => (
-                  <li key={phone} className="text-red-600 font-medium">{phone}</li>
+              <div className="space-y-4">
+                {duplicatePhoneNumbers.map((duplicate, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-semibold">姓名 Name:</span>
+                        <span className="text-gray-800">{duplicate.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-semibold">队列号 Queue Number:</span>
+                        <span className="text-gray-800">{duplicate.queueNumber}</span>
+                      </div>
+                      {duplicate.qrCode && (
+                        <div className="mt-2">
+                          <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
+                          <div className="w-24 h-24 relative mx-auto">
+                            <img 
+                              src={duplicate.qrCode} 
+                              alt="QR Code" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
               <p className="text-gray-700 text-base pt-2">
                 您是否仍要继续？/ Do you still want to proceed?
               </p>

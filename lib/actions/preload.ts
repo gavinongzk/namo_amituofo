@@ -50,7 +50,7 @@ export const preloadEventsByCategory = unstable_cache(
   },
   ['events-by-category'],
   {
-    revalidate: 0,
+    revalidate: false,
     tags: ['events']
   }
 );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
-import { CustomField, CustomFieldGroup } from '@/types';
+import { CustomField, CustomFieldGroup, DuplicateRegistrationDetail } from '@/types';
 
 interface CheckPhoneNumbersRequest {
   phoneNumbers: string[];
@@ -9,7 +9,7 @@ interface CheckPhoneNumbersRequest {
 }
 
 interface CheckPhoneNumbersResponse {
-  duplicates: string[];
+  duplicates: DuplicateRegistrationDetail[];
 }
 
 interface ErrorResponse {
@@ -42,17 +42,32 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckPhoneNum
       }
     });
 
-    const duplicates = validPhoneNumbers.filter(phone => 
-      orders.some(order => 
-        order.customFieldValues.some((group: CustomFieldGroup) => 
-          group.fields.some((field: CustomField) => 
-            field.type === 'phone' && field.value === phone
-          )
-        )
-      )
-    );
+    const duplicateDetails: DuplicateRegistrationDetail[] = [];
+    
+    for (const phoneNumber of validPhoneNumbers) {
+      for (const order of orders) {
+        for (const group of order.customFieldValues) {
+          const phoneField = group.fields.find((field: CustomField) => 
+            field.type === 'phone' && field.value === phoneNumber
+          );
+          
+          if (phoneField) {
+            const nameField = group.fields.find((field: CustomField) => 
+              field.label.toLowerCase().includes('name')
+            );
+            
+            duplicateDetails.push({
+              phoneNumber: phoneNumber,
+              name: nameField ? String(nameField.value) : 'N/A',
+              queueNumber: group.queueNumber || 'N/A',
+              qrCode: group.qrCode || ''
+            });
+          }
+        }
+      }
+    }
 
-    return NextResponse.json<CheckPhoneNumbersResponse>({ duplicates });
+    return NextResponse.json<CheckPhoneNumbersResponse>({ duplicates: duplicateDetails });
   } catch (error) {
     console.error('Error checking phone numbers:', error);
     return NextResponse.json<ErrorResponse>(

@@ -100,7 +100,7 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: 0,
+    revalidate: false,
     tags: ['events']
   }
 );

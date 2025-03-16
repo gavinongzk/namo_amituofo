@@ -220,3 +220,10 @@ export interface CancellationRequest {
   groupId: string;
   cancelled: boolean;
 }
+
+export interface DuplicateRegistrationDetail {
+  phoneNumber: string;
+  name: string;
+  queueNumber: string;
+  qrCode: string;
+}
