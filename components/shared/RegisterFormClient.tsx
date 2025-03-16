@@ -297,7 +297,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
         
         // Skip validation if postal code is empty (since it's optional)
-        if (!postalCode.trim()) {
+        if (!postalCode || !postalCode.trim()) {
+          // Ensure empty string is passed instead of undefined or null
+          filledGroups[i][postalField] = '';
           continue;
         }
         
@@ -362,7 +364,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         fields: Object.entries(group).map(([key, value]) => {
           const field = customFields.find(f => f.id === key) as CustomField;
           // Save first person's postal code
-          if (index === 0 && field?.type === 'postal') {
+          if (index === 0 && field?.type === 'postal' && value) {
             const postalValue = String(value);
             localStorage.setItem('lastUsedPostal', postalValue);
             setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
@@ -371,7 +373,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             id: key,
             label: field?.label || key,
             type: field?.type,
-            value: String(value),
+            value: value === null || value === undefined ? '' : String(value),
             options: field?.options || [],
           };
         })

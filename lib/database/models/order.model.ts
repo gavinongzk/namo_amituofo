@@ -54,14 +54,14 @@ const OrderSchema = new Schema({
           id: { type: String, required: true },
           label: { type: String, required: true },
           type: { type: String, required: true },
-          value: { type: String, required: true },
+          value: { type: String },
         },
       ],
       queueNumber: { type: String, required: true },
       attendance: { type: Boolean, default: false },
       cancelled: { type: Boolean, default: false },
-      qrCode: { type: String, default: '' }, // Add qrCode field
-      __v: { type: Number, default: 0 }, // Add version control at this level
+      qrCode: { type: String, default: '' },
+      __v: { type: Number, default: 0 },
     },
   ],
 });

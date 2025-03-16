@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
           id: field.id,
           label: field.label,
           type: field.type,
-          value: field.value,
+          value: field.value === null || field.value === undefined ? '' : field.value,
         })),
         __v: group.__v,
         qrCode: group.qrCode,
