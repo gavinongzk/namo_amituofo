@@ -59,62 +59,111 @@ const EventLookupPage = () => {
                 // Get recent registrations first with cache-busting query param
                 const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
                 
-                // Transform recent orders for display
-                const transformedRegistrations: IRegistration[] = recentOrders
-                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                    .map((order: any) => ({
-                        event: {
-                            _id: order.event._id,
-                            title: order.event.title,
-                            imageUrl: order.event.imageUrl,
-                            startDateTime: order.event.startDateTime,
-                            endDateTime: order.event.endDateTime,
-                            orderId: order._id.toString(),
-                            organizer: { _id: order.event.organizer?.toString() || '' },
-                            customFieldValues: order.customFieldValues,
-                            category: order.event.category,
-                        },
-                        registrations: order.customFieldValues.map((group: any) => ({
-                            queueNumber: group.queueNumber,
-                            name: group.fields?.find((field: any) => 
-                                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                        })),
-                    }));
+                // Transform recent orders for display and group by event ID
+                const transformedRegistrationsMap: Map<string, IRegistration> = new Map();
 
-                setRegistrations(transformedRegistrations);
+                recentOrders
+                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                    .forEach((order: any) => {
+                        const eventId = order.event._id.toString();
+                        
+                        if (!transformedRegistrationsMap.has(eventId)) {
+                            transformedRegistrationsMap.set(eventId, {
+                                event: {
+                                    _id: eventId,
+                                    title: order.event.title,
+                                    imageUrl: order.event.imageUrl,
+                                    startDateTime: order.event.startDateTime,
+                                    endDateTime: order.event.endDateTime,
+                                    orderId: order._id.toString(), // Use the first order ID for the card
+                                    organizer: { _id: order.event.organizer?.toString() || '' },
+                                    customFieldValues: [], // Will be populated with all order custom fields
+                                    category: order.event.category,
+                                },
+                                registrations: [], // Array to hold all registrations for this event
+                                orderIds: [order._id.toString()], // Track all order IDs for this event
+                            });
+                        } else {
+                            // Add this order ID to the list of order IDs for this event
+                            const registration = transformedRegistrationsMap.get(eventId)!;
+                            if (!registration.orderIds) {
+                                registration.orderIds = [];
+                            }
+                            registration.orderIds.push(order._id.toString());
+                        }
+                        
+                        // Add all registrations from this order to the event
+                        const eventRegistration = transformedRegistrationsMap.get(eventId)!;
+                        order.customFieldValues.forEach((group: any) => {
+                            eventRegistration.registrations.push({
+                                queueNumber: group.queueNumber,
+                                name: group.fields?.find((field: any) => 
+                                    field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                                orderId: order._id.toString(), // Keep track of which order this registration belongs to
+                            });
+                        });
+                    });
+
+                // Convert the map to an array
+                const groupedRegistrationsArray = Array.from(transformedRegistrationsMap.values());
+                setRegistrations(groupedRegistrationsArray);
                 setIsLoading(false);
 
                 // Only fetch all registrations if there are recent ones
-                if (transformedRegistrations.length > 0) {
+                if (groupedRegistrationsArray.length > 0) {
                     // Add delay between requests to prevent race conditions
                     await new Promise(resolve => setTimeout(resolve, 500));
 
                     // Then get all registrations for statistics with cache-busting query param
                     const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
                     
-                    // Transform all orders for statistics
-                    const transformedAllRegistrations: IRegistration[] = allOrders
-                        .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                        .map((order: any) => ({
-                            event: {
-                                _id: order.event._id,
-                                title: order.event.title,
-                                imageUrl: order.event.imageUrl,
-                                startDateTime: order.event.startDateTime,
-                                endDateTime: order.event.endDateTime,
-                                orderId: order._id.toString(),
-                                organizer: { _id: order.event.organizer?.toString() || '' },
-                                customFieldValues: order.customFieldValues,
-                                category: order.event.category,
-                            },
-                            registrations: order.customFieldValues.map((group: any) => ({
-                                queueNumber: group.queueNumber,
-                                name: group.fields?.find((field: any) => 
-                                    field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                            })),
-                        }));
+                    // Transform all orders for statistics, also grouping by event
+                    const transformedAllRegistrationsMap: Map<string, IRegistration> = new Map();
 
-                    setAllRegistrations(transformedAllRegistrations);
+                    allOrders
+                        .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
+                        .forEach((order: any) => {
+                            const eventId = order.event._id.toString();
+                            
+                            if (!transformedAllRegistrationsMap.has(eventId)) {
+                                transformedAllRegistrationsMap.set(eventId, {
+                                    event: {
+                                        _id: eventId,
+                                        title: order.event.title,
+                                        imageUrl: order.event.imageUrl,
+                                        startDateTime: order.event.startDateTime,
+                                        endDateTime: order.event.endDateTime,
+                                        orderId: order._id.toString(),
+                                        organizer: { _id: order.event.organizer?.toString() || '' },
+                                        customFieldValues: [],
+                                        category: order.event.category,
+                                    },
+                                    registrations: [],
+                                    orderIds: [order._id.toString()],
+                                });
+                            } else {
+                                // Add this order ID to the list of order IDs for this event
+                                const registration = transformedAllRegistrationsMap.get(eventId)!;
+                                if (!registration.orderIds) {
+                                    registration.orderIds = [];
+                                }
+                                registration.orderIds.push(order._id.toString());
+                            }
+                            
+                            // Add all registrations from this order to the event
+                            const eventRegistration = transformedAllRegistrationsMap.get(eventId)!;
+                            order.customFieldValues.forEach((group: any) => {
+                                eventRegistration.registrations.push({
+                                    queueNumber: group.queueNumber,
+                                    name: group.fields?.find((field: any) => 
+                                        field.label.toLowerCase().includes('name'))?.value || 'Unknown',
+                                    orderId: order._id.toString(),
+                                });
+                            });
+                        });
+
+                    const groupedAllRegistrationsArray = Array.from(transformedAllRegistrationsMap.values());
+                    setAllRegistrations(groupedAllRegistrationsArray);
                     setShowAnalytics(true);
                 }
                 setIsLoadingStats(false);

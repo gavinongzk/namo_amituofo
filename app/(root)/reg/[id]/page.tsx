@@ -367,18 +367,29 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               {order.event.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
             </div>
 
+            {/* Combined QR Code Display Area */}
+            <div className="qr-code-collection bg-white p-4 rounded-lg shadow-md">
+              <h5 className="text-lg font-semibold mb-4 text-center text-primary-600">二维码 QR Codes</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {customFieldValuesArray.map((group: CustomFieldGroup) => 
+                  group.qrCode && !group.cancelled && (
+                    <div key={group.groupId} className="flex flex-col items-center">
+                      <QRCodeDisplay 
+                        qrCode={group.qrCode} 
+                        isAttended={!!group.attendance}
+                        isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                      />
+                      <p className="text-sm text-gray-600 mt-1">
+                        {group.queueNumber && <span className="font-medium">队列号 {group.queueNumber}</span>}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
               <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                {group.qrCode && (
-                  <div className="qr-code-container">
-                    <QRCodeDisplay 
-                      qrCode={group.qrCode} 
-                      isAttended={!!group.attendance}
-                      isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                    />
-                  </div>
-                )}
-                
                 <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
@@ -462,7 +473,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </div>
                 {/* End of Registration Details Section */}
               </div>
-            ))},
+            ))}
 
             <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
               <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
@@ -529,16 +540,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <div className="space-y-2">
-                    <p className="font-medium text-yellow-800">
-                      重要提示 Important Note:
-                    </p>
-                    <p className="text-yellow-700 text-sm leading-relaxed">
-                      请在活动当天出示此页面上的二维码以完成签到。没有二维码将无法确认您的出席。
-                      <br />
-                      Please show the QR code on this page to complete check-in on the event day. Without the QR code, your attendance cannot be confirmed.
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>

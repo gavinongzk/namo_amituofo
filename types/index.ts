@@ -174,7 +174,9 @@ export interface IRegistration {
   registrations: {
     queueNumber?: string;
     name?: string;
+    orderId?: string;
   }[];
+  orderIds?: string[];
 }
 
 export interface CustomFieldGroup {
