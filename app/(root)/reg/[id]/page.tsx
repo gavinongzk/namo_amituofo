@@ -134,7 +134,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
           {isLoading ? '取消中... Cancelling...' : '取消注册 Cancel Registration'}
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-opacity-100 bg-background">
+      <AlertDialogContent className="bg-white">
         <AlertDialogHeader>
           <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
