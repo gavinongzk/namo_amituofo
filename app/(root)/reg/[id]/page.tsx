@@ -403,7 +403,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
-            注册成功 Registration Successful
+            注册成功 Successful Registration
           </h3>
           <p className="text-center text-primary-600 mt-2">
             当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.

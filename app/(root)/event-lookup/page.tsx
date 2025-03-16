@@ -130,7 +130,11 @@ const EventLookupPage = () => {
             const savedHasSearched = sessionStorage.getItem('eventLookupHasSearched');
             const savedAllRegistrations = sessionStorage.getItem('eventLookupAllRegistrations');
             
-            if (savedRegistrations && savedPhoneNumber && savedHasSearched) {
+            // Check if user is coming back from an order details page
+            const referrer = document.referrer;
+            const isBackFromOrderDetails = referrer && referrer.includes('/reg/');
+            
+            if (isBackFromOrderDetails && savedRegistrations && savedPhoneNumber && savedHasSearched) {
                 setIsRestoringFromSession(true);
                 setPhoneNumber(savedPhoneNumber);
                 setRegistrations(JSON.parse(savedRegistrations));
@@ -143,6 +147,12 @@ const EventLookupPage = () => {
                 
                 setInitialSearchComplete(true);
                 return;
+            } else if (!isBackFromOrderDetails && (savedRegistrations || savedPhoneNumber || savedHasSearched || savedAllRegistrations)) {
+                // Clear session storage if user is not coming back from order details but has session data
+                sessionStorage.removeItem('eventLookupRegistrations');
+                sessionStorage.removeItem('eventLookupPhoneNumber');
+                sessionStorage.removeItem('eventLookupHasSearched');
+                sessionStorage.removeItem('eventLookupAllRegistrations');
             }
         }
         
