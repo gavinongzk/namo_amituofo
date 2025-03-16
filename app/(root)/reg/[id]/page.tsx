@@ -418,7 +418,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <p>
-                <span className="font-semibold">日期时间 Date & Time:</span> 
+                <span className="font-semibold">日期时间 Date & Time: </span> 
                 {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
                 <span className="ml-1">
                   {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly.replace(/^[上下]午/, '')}
