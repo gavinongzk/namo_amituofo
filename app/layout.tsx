@@ -51,7 +51,8 @@ export const metadata: Metadata = {
     startupImage: [
       '/assets/images/amitabha_image.png'
     ]
-  }
+  },
+  manifest: '/manifest.json'
 }
 
 
@@ -72,18 +73,6 @@ export default function RootLayout({
       <link 
         rel="preconnect" 
         href="https://fonts.googleapis.com" 
-      />
-      <link 
-        rel="preload"
-        href="/api/events?country=Singapore"
-        as="fetch"
-        crossOrigin="anonymous"
-      />
-      <link 
-        rel="preload"
-        href="/api/events?country=Malaysia"
-        as="fetch"
-        crossOrigin="anonymous"
       />
     </>
   );
@@ -187,6 +176,7 @@ export default function RootLayout({
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
           <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}
