@@ -840,7 +840,15 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button
               variant="outline"
-              onClick={() => setShowConfirmation(false)}
+              onClick={() => {
+                setShowConfirmation(false);
+                // Get the first duplicate phone number to use for redirection
+                if (duplicatePhoneNumbers.length > 0) {
+                  const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
+                  // Redirect to event-lookup with the phone number as a query parameter
+                  router.push(`/event-lookup?phone=${phoneNumber}`);
+                }
+              }}
               className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
             >
               取消 / Cancel

@@ -143,7 +143,7 @@ export const preloadEvents = unstable_cache(
   },
   ['events-preload'],
   {
-    revalidate: 0,
+    revalidate: false,
     tags: ['events']
   }
 ); 

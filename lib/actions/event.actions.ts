@@ -236,7 +236,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
     },
     ['events-list'],
     {
-      revalidate: 0,
+      revalidate: false,
       tags: ['events']
     }
   )();

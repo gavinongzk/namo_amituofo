@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import { IRegistration } from '@/types';
 import { IOrderItem } from '@/lib/database/models/order.model';
 import { formatBilingualDateTime } from '@/lib/utils';
 import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+import { useSearchParams } from 'next/navigation';
 
 // Dynamic imports for heavy components
 const RegistrationCollection = dynamic(() => import('@/components/shared/RegistrationCollection'), {
@@ -25,6 +26,7 @@ const EventLookupAnalytics = dynamic(() => import('@/components/shared/EventLook
 });
 
 const EventLookupPage = () => {
+    const searchParams = useSearchParams();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [useManualInput, setUseManualInput] = useState(false);
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
@@ -36,19 +38,8 @@ const EventLookupPage = () => {
     const [isReady, setIsReady] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
 
-    useEffect(() => {
-        setIsReady(true);
-        // Clean up function to reset states
-        return () => {
-            setRegistrations([]);
-            setAllRegistrations([]);
-            setError('');
-            setHasSearched(false);
-            setShowAnalytics(false);
-        };
-    }, []);
-
-    const handleLookup = async () => {
+    // Define handleLookup as a useCallback to prevent unnecessary re-renders
+    const handleLookup = useCallback(async () => {
         setIsLoading(true);
         setIsLoadingStats(true);
         setError('');
@@ -141,7 +132,30 @@ const EventLookupPage = () => {
                 }
             }
         }
-    };
+    }, [phoneNumber]);
+
+    useEffect(() => {
+        setIsReady(true);
+        
+        // Check if there's a phone number in the URL query parameters
+        const phoneParam = searchParams.get('phone');
+        if (phoneParam) {
+            setPhoneNumber(phoneParam);
+            // Auto-trigger the lookup after a short delay to ensure the component is fully mounted
+            setTimeout(() => {
+                handleLookup();
+            }, 500);
+        }
+        
+        // Clean up function to reset states
+        return () => {
+            setRegistrations([]);
+            setAllRegistrations([]);
+            setError('');
+            setHasSearched(false);
+            setShowAnalytics(false);
+        };
+    }, [searchParams, handleLookup]);
 
     return (
         <div className="wrapper my-8 flex flex-col gap-8 max-w-6xl mx-auto">
