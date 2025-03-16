@@ -37,9 +37,17 @@ const EventLookupPage = () => {
     const [hasSearched, setHasSearched] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [initialSearchComplete, setInitialSearchComplete] = useState(false);
+    const [isRestoringFromSession, setIsRestoringFromSession] = useState(false);
 
     // Define handleLookup as a useCallback to prevent unnecessary re-renders
     const handleLookup = useCallback(async () => {
+        // Don't perform lookup if we're restoring from session
+        if (isRestoringFromSession) {
+            setIsRestoringFromSession(false);
+            return;
+        }
+
         setIsLoading(true);
         setIsLoadingStats(true);
         setError('');
@@ -107,6 +115,14 @@ const EventLookupPage = () => {
                 // Convert the map to an array
                 const groupedRegistrationsArray = Array.from(transformedRegistrationsMap.values());
                 setRegistrations(groupedRegistrationsArray);
+                
+                // Save to session storage for back navigation
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('eventLookupRegistrations', JSON.stringify(groupedRegistrationsArray));
+                    sessionStorage.setItem('eventLookupPhoneNumber', phoneNumber);
+                    sessionStorage.setItem('eventLookupHasSearched', 'true');
+                }
+                
                 setIsLoading(false);
 
                 // Only fetch all registrations if there are recent ones
@@ -164,6 +180,12 @@ const EventLookupPage = () => {
 
                     const groupedAllRegistrationsArray = Array.from(transformedAllRegistrationsMap.values());
                     setAllRegistrations(groupedAllRegistrationsArray);
+                    
+                    // Save all registrations to session storage
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('eventLookupAllRegistrations', JSON.stringify(groupedAllRegistrationsArray));
+                    }
+                    
                     setShowAnalytics(true);
                 }
                 setIsLoadingStats(false);
@@ -181,30 +203,61 @@ const EventLookupPage = () => {
                 }
             }
         }
-    }, [phoneNumber]);
+    }, [phoneNumber, isRestoringFromSession]);
 
     useEffect(() => {
         setIsReady(true);
         
-        // Check if there's a phone number in the URL query parameters
+        // Try to restore from session storage first (for back navigation)
+        if (typeof window !== 'undefined') {
+            const savedRegistrations = sessionStorage.getItem('eventLookupRegistrations');
+            const savedPhoneNumber = sessionStorage.getItem('eventLookupPhoneNumber');
+            const savedHasSearched = sessionStorage.getItem('eventLookupHasSearched');
+            const savedAllRegistrations = sessionStorage.getItem('eventLookupAllRegistrations');
+            
+            if (savedRegistrations && savedPhoneNumber && savedHasSearched) {
+                setIsRestoringFromSession(true);
+                setPhoneNumber(savedPhoneNumber);
+                setRegistrations(JSON.parse(savedRegistrations));
+                setHasSearched(savedHasSearched === 'true');
+                
+                if (savedAllRegistrations) {
+                    setAllRegistrations(JSON.parse(savedAllRegistrations));
+                    setShowAnalytics(true);
+                }
+                
+                setInitialSearchComplete(true);
+                return;
+            }
+        }
+        
+        // If no session data, check URL params
         const phoneParam = searchParams.get('phone');
-        if (phoneParam) {
+        if (phoneParam && !initialSearchComplete) {
             setPhoneNumber(phoneParam);
             // Auto-trigger the lookup after a short delay to ensure the component is fully mounted
             setTimeout(() => {
                 handleLookup();
+                setInitialSearchComplete(true);
             }, 500);
         }
         
         // Clean up function to reset states
         return () => {
-            setRegistrations([]);
-            setAllRegistrations([]);
-            setError('');
-            setHasSearched(false);
-            setShowAnalytics(false);
+            // Don't clear session storage on unmount to preserve state for back navigation
         };
-    }, [searchParams, handleLookup]);
+    }, [searchParams, handleLookup, initialSearchComplete]);
+
+    // Clear session storage when user manually changes the phone number
+    const handlePhoneNumberChange = (value: string) => {
+        if (typeof window !== 'undefined' && value !== phoneNumber) {
+            sessionStorage.removeItem('eventLookupRegistrations');
+            sessionStorage.removeItem('eventLookupPhoneNumber');
+            sessionStorage.removeItem('eventLookupHasSearched');
+            sessionStorage.removeItem('eventLookupAllRegistrations');
+        }
+        setPhoneNumber(value || '');
+    };
 
     return (
         <div className="wrapper my-8 flex flex-col gap-8 max-w-6xl mx-auto">
@@ -228,14 +281,15 @@ const EventLookupPage = () => {
                                 type="tel"
                                 placeholder="输入电话号码 Enter phone number"
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                onChange={(e) => handlePhoneNumberChange(e.target.value)}
                                 className="p-regular-16 border-2 h-12 transition-all duration-200 focus:ring-2 focus:ring-primary-500"
                             />
                         ) : (
                             <PhoneInput
+                                key={initialSearchComplete ? "editable" : "initial"}
                                 placeholder="输入电话号码 Enter phone number"
                                 value={phoneNumber}
-                                onChange={(value) => setPhoneNumber(value || '')}
+                                onChange={(value) => handlePhoneNumberChange(value || '')}
                                 defaultCountry="SG"
                                 countries={["SG", "MY"]}
                                 international
@@ -251,6 +305,13 @@ const EventLookupPage = () => {
                             onClick={() => {
                                 setUseManualInput(!useManualInput);
                                 setPhoneNumber('');
+                                // Clear session storage when switching input modes
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.removeItem('eventLookupRegistrations');
+                                    sessionStorage.removeItem('eventLookupPhoneNumber');
+                                    sessionStorage.removeItem('eventLookupHasSearched');
+                                    sessionStorage.removeItem('eventLookupAllRegistrations');
+                                }
                             }}
                             className="text-primary-500 hover:text-primary-600 transition-colors duration-200 hover:underline"
                         >
