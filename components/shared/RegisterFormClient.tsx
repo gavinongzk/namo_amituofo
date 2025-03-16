@@ -794,7 +794,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       )}
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="bg-white sm:max-w-md">
+        <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               发现重复注册 / Duplicate Registration Found
@@ -803,7 +803,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               <p className="text-gray-700 text-base">
                 以下电话号码已注册：/ The following phone number/s is/are already registered:
               </p>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {duplicatePhoneNumbers.map((duplicate, index) => (
                   <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div className="flex flex-col gap-2">
@@ -837,7 +837,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sticky bottom-0 bg-white pt-2 pb-1">
             <Button
               variant="outline"
               onClick={() => {
