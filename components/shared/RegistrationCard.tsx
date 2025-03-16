@@ -47,14 +47,12 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                 <p className="p-medium-14 md:p-medium-16 text-grey-600">
                   姓名 Name: {registration.name || 'N/A'}
                 </p>
-                {registration.orderId && (
-                  <Link 
-                    href={`/reg/${registration.orderId}`}
-                    className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
-                  >
-                    查看二维码 View QR Code →
-                  </Link>
-                )}
+                <Link 
+                  href={`/reg/${primaryOrderId}`}
+                  className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
+                >
+                  查看二维码 View QR Code →
+                </Link>
               </div>
             </div>
           ))}
@@ -86,14 +84,12 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                       <p className="p-medium-14 md:p-medium-16 text-grey-600">
                         姓名 Name: {registration.name || 'N/A'}
                       </p>
-                      {registration.orderId && (
-                        <Link 
-                          href={`/reg/${registration.orderId}`}
-                          className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
-                        >
-                          查看二维码 View QR Code →
-                        </Link>
-                      )}
+                      <Link 
+                        href={`/reg/${primaryOrderId}`}
+                        className="text-sm text-primary-500 hover:text-primary-600 transition-colors mt-1"
+                      >
+                        查看二维码 View QR Code →
+                      </Link>
                     </div>
                   </div>
                 ))}

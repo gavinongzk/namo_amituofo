@@ -34,53 +34,14 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
     while (retryCount <= maxRetries) {
       try {
         // Add cache-busting query param
-        const orders = await getOrdersByPhoneNumber(`${phoneNumber}?t=${Date.now()}`);
-
-        // Group orders by event ID
-        const eventMap: Record<string, any> = {};
+        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${`&t=${Date.now()}`}`);
         
-        orders.forEach((order: any) => {
-          const eventId = order.event._id;
-          
-          if (!eventMap[eventId]) {
-            eventMap[eventId] = {
-              event: {
-                _id: order.event._id,
-                title: order.event.title,
-                imageUrl: order.event.imageUrl,
-                startDateTime: order.event.startDateTime,
-                endDateTime: order.event.endDateTime,
-                organizer: { _id: order.event.organizer?.toString() || '' },
-                customFieldValues: [],
-                orderIds: [], // Store all order IDs for this event
-              },
-              registrations: [],
-            };
-          }
-          
-          // Add this order's ID to the list
-          eventMap[eventId].event.orderIds.push(order._id.toString());
-          
-          // Add all registrations from this order
-          order.customFieldValues.forEach((group: any) => {
-            const nameField = group.fields?.find((field: any) => 
-              field.label.toLowerCase().includes('name'))?.value || 'Unknown';
-              
-            eventMap[eventId].registrations.push({
-              queueNumber: group.queueNumber,
-              name: nameField,
-              orderId: order._id.toString(), // Store the order ID for each registration
-            });
-          });
-        });
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
         
-        // Convert map to array and sort by start date (newest first)
-        const transformedRegistrations: IRegistration[] = Object.values(eventMap)
-          .sort((a: any, b: any) => 
-            new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime()
-          );
-
-        setRegistrations(transformedRegistrations);
+        const data = await response.json();
+        setRegistrations(data);
         setIsLoading(false);
         break; // Exit the retry loop if successful
       } catch (err) {
