@@ -7,14 +7,24 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://99a7f55e8df103a0bd7bd9fd72c7e9db@o4508551446331392.ingest.us.sentry.io/4508551448821760",
 
+  // Enable performance monitoring
   integrations: [
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
   ],
 
   // Adjust sampling rates
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   replaysSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
+
+  // Allow ad blockers to prevent monitoring disruption
+  allowUrls: [
+    /https?:\/\/[^/]*namo-amituofo\.org/,
+    /https?:\/\/localhost/,
+  ],
 
   beforeSend(event) {
     // Don't send events for ignored errors

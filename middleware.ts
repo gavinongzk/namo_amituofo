@@ -16,12 +16,12 @@ export default authMiddleware({
     '/api/reg',
     '/api/update-registration',
     '/api/cancel-registration',
-    '/api/monitoring',
+    '/monitoring',
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
     '/api/uploadthing',
-    '/api/monitoring',
+    '/monitoring',
   ],
   async beforeAuth(req) {
     // Apply rate limiting before authentication
@@ -35,7 +35,7 @@ export default authMiddleware({
       path.endsWith('.png') ||
       path.endsWith('.jpg') ||
       path.endsWith('.jpeg') ||
-      path === '/api/monitoring'
+      path === '/monitoring'
     ) {
       return NextResponse.next();
     }
