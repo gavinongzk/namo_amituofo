@@ -262,7 +262,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               name="imageUrl"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel className="text-grey-600">Event Image (Optional)</FormLabel>
+                  <FormLabel className="text-gray-600">Event Image (Optional)</FormLabel>
                   <FormControl className="h-72">
                     <FileUploader 
                       onFieldChange={field.onChange}
@@ -286,15 +286,15 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-gray-50 px-4 py-2">
                     <Image
                       src="/assets/icons/location-grey.svg"
                       alt="country"
                       width={24}
                       height={24}
-                      className="filter-grey mr-3"
+                      className="filter-gray mr-3"
                     />
-                    <p className="mr-3 whitespace-nowrap text-grey-600">Country:</p>
+                    <p className="mr-3 whitespace-nowrap text-gray-600">Country:</p>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -320,7 +320,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-gray-50 px-4 py-2">
                     <Image
                       src="/assets/icons/location-grey.svg"
                       alt="location"
@@ -343,15 +343,15 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               render={({ field }) => (
                 <FormItem className="w-full">
                   <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-gray-50 px-4 py-2">
                       <Image
                         src="/assets/icons/calendar.svg"
                         alt="calendar"
                         width={24}
                         height={24}
-                        className="filter-grey"
+                        className="filter-gray"
                       />
-                      <p className="ml-3 whitespace-nowrap text-grey-600">Start Date:</p>
+                      <p className="ml-3 whitespace-nowrap text-gray-600">Start Date:</p>
                       <DatePicker 
                         selected={field.value} 
                         onChange={(date: Date) => {
@@ -380,15 +380,15 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               render={({ field }) => (
                 <FormItem className="w-full">
                   <FormControl>
-                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-gray-50 px-4 py-2">
                       <Image
                         src="/assets/icons/calendar.svg"
                         alt="calendar"
                         width={24}
                         height={24}
-                        className="filter-grey"
+                        className="filter-gray"
                       />
-                      <p className="ml-3 whitespace-nowrap text-grey-600">End Date:</p>
+                      <p className="ml-3 whitespace-nowrap text-gray-600">End Date:</p>
                       <DatePicker 
                         selected={field.value} 
                         onChange={(date: Date) => {
@@ -419,15 +419,15 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-gray-50 px-4 py-2">
                     <Image
                       src="/assets/icons/seats.svg"
                       alt="seats"
                       width={24}
                       height={24}
-                      className="filter-grey mr-3"
+                      className="filter-gray mr-3"
                     />
-                    <p className="mr-3 whitespace-nowrap text-grey-600">Max Seats:</p>
+                    <p className="mr-3 whitespace-nowrap text-gray-600">Max Seats:</p>
                     <Input
                       placeholder="Enter number"
                       type="number"
@@ -513,7 +513,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
-                      <select {...field} className="input-field rounded-full bg-grey-50 px-4 py-2">
+                      <select {...field} className="input-field rounded-full bg-gray-50 px-4 py-2">
                         <option value="text">Text</option>
                         <option value="boolean">Boolean</option>
                         <option value="phone">Phone Number</option>
