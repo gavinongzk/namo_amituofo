@@ -31,6 +31,24 @@ const nextConfig = {
     serverComponentsExternalPackages: [],
     memoryBasedWorkersCount: true,
   },
+  serverRuntimeConfig: {
+    api: {
+      bodyParser: true,
+    },
+  },
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    if (dev) {
+      return defaultPathMap;
+    }
+    
+    const filteredPaths = {};
+    for (const [path, config] of Object.entries(defaultPathMap)) {
+      if (!path.startsWith('/api/')) {
+        filteredPaths[path] = config;
+      }
+    }
+    return filteredPaths;
+  },
   compress: true,
   webpack: (config, { dev, isServer }) => {
     // Fix for @tanstack/react-table ESM module

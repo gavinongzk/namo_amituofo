@@ -3,6 +3,9 @@ import { stringify } from 'csv-stringify/sync';
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { formatDateTime } from '@/lib/utils';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 // Add these interfaces at the top
 interface Field {
   label: string;
