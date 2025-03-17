@@ -33,6 +33,15 @@ const nextConfig = {
   },
   compress: true,
   webpack: (config, { dev, isServer }) => {
+    // Fix for @tanstack/react-table ESM module
+    config.module.rules.push({
+      test: /\.m?js$/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+    
     if (!dev) {
       config.optimization.splitChunks = {
         chunks: 'all',
