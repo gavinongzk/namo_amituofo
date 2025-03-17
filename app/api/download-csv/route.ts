@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stringify } from 'csv-stringify/sync';
 import { getOrdersByEvent } from '@/lib/actions/order.actions'
 import { formatDateTime } from '@/lib/utils';
+import { IOrder } from '@/lib/database/models/order.model';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       'Cancelled'
     ];
 
-    const data = orders.flatMap(order => 
+    const data = orders.flatMap((order: IOrder) => 
       order.customFieldValues.map((group: Group) => {
         const nameField = group.fields.find((f: Field) => f.label.toLowerCase().includes('name'));
         const phoneField = group.fields.find((f: Field) => 
