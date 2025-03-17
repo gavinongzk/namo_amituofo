@@ -5,16 +5,63 @@ import { usePathname, useRouter } from 'next/navigation';
 import { preloadEvents } from '@/lib/actions/preload';
 import dynamic from 'next/dynamic';
 
+// Define common routes to prefetch
+const COMMON_ROUTES = [
+  '/events',
+  '/profile',
+  '/register',
+];
+
+// Define critical components to preload
+const CRITICAL_COMPONENTS = {
+  EventList: () => import('@/components/shared/EventList'),
+  CategoryFilter: () => import('@/components/shared/CategoryFilter'),
+  RegisterFormWrapper: () => import('@/components/shared/RegisterFormWrapper'),
+};
+
 export function RouteWarmer() {
   const router = useRouter();
   const pathname = usePathname();
-  const preloadedRef = useRef(false);
+  const preloadedRef = useRef({
+    routes: false,
+    components: false,
+    events: false,
+  });
+
+  // Preload all common routes
+  const warmCommonRoutes = useCallback(() => {
+    if (preloadedRef.current.routes) return;
+    
+    COMMON_ROUTES.forEach(route => {
+      router.prefetch(route);
+    });
+    
+    preloadedRef.current.routes = true;
+  }, [router]);
+
+  // Preload critical components
+  const preloadCriticalComponents = useCallback(() => {
+    if (preloadedRef.current.components) return;
+    
+    // Use a staggered approach to avoid network congestion
+    Object.entries(CRITICAL_COMPONENTS).forEach(([name, importFn], index) => {
+      setTimeout(() => {
+        // Execute the import function but don't use dynamic directly
+        // This preloads the component without rendering it
+        importFn().catch(err => 
+          console.error(`Failed to preload ${name}:`, err)
+        );
+      }, index * 200); // Stagger by 200ms
+    });
+    
+    preloadedRef.current.components = true;
+  }, []);
 
   const warmHomeRoute = useCallback(async () => {
     router.prefetch('/events');
     
     // Only preload events if not already done
-    if (!preloadedRef.current) {
+    if (!preloadedRef.current.events) {
       // Use requestIdleCallback to preload events when browser is idle
       if ('requestIdleCallback' in window) {
         window.requestIdleCallback(() => {
@@ -36,12 +83,8 @@ export function RouteWarmer() {
         }, 1000);
       }
       
-      preloadedRef.current = true;
+      preloadedRef.current.events = true;
     }
-    
-    // Dynamically import main components
-    const EventList = dynamic(() => import('@/components/shared/EventList'));
-    const CategoryFilter = dynamic(() => import('@/components/shared/CategoryFilter'));
   }, [router]);
 
   const warmEventDetailsRoute = useCallback(async (eventId: string) => {
@@ -49,12 +92,24 @@ export function RouteWarmer() {
     router.prefetch(registerPath);
     
     // Preload registration form
-    const RegisterFormWrapper = dynamic(() => 
-      import('@/components/shared/RegisterFormWrapper')
-    );
+    dynamic(() => import('@/components/shared/RegisterFormWrapper'), { ssr: false });
   }, [router]);
 
   useEffect(() => {
+    // First, warm common routes regardless of current path
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(warmCommonRoutes);
+      
+      // Preload critical components after a delay
+      window.requestIdleCallback(() => {
+        setTimeout(preloadCriticalComponents, 500);
+      });
+    } else {
+      setTimeout(warmCommonRoutes, 1000);
+      setTimeout(preloadCriticalComponents, 1500);
+    }
+    
+    // Then, handle route-specific preloading
     const warmRoutes = async () => {
       try {
         // Preload data and components based on current route
@@ -78,7 +133,43 @@ export function RouteWarmer() {
     } else {
       setTimeout(warmRoutes, 1000);
     }
-  }, [pathname, warmHomeRoute, warmEventDetailsRoute]);
+  }, [pathname, warmHomeRoute, warmEventDetailsRoute, warmCommonRoutes, preloadCriticalComponents]);
+
+  // Use intersection observer to detect when user is about to reach the bottom of the page
+  useEffect(() => {
+    // Only set up the observer if we're on the events page
+    if (pathname !== '/events') return;
+    
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // User is approaching bottom of page, prefetch next page of events
+          router.prefetch('/events?page=2');
+        }
+      });
+    };
+    
+    // Create a sentinel element to observe
+    const sentinel = document.createElement('div');
+    sentinel.style.height = '1px';
+    sentinel.style.width = '100%';
+    sentinel.style.position = 'absolute';
+    sentinel.style.bottom = '1000px'; // 1000px from bottom
+    document.body.appendChild(sentinel);
+    
+    const observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: '0px 0px 1000px 0px' // Start loading when within 1000px of the sentinel
+    });
+    
+    observer.observe(sentinel);
+    
+    return () => {
+      observer.disconnect();
+      if (document.body.contains(sentinel)) {
+        document.body.removeChild(sentinel);
+      }
+    };
+  }, [pathname, router]);
 
   return null;
 }

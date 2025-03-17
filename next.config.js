@@ -8,8 +8,40 @@ const nextConfig = {
         hostname: 'utfs.io',
         port: ''
       }
-    ]
-  }
+    ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: [
+      'react-hot-toast',
+      'framer-motion',
+      'lucide-react',
+      'recharts',
+      'react-datepicker',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-select',
+      '@tanstack/react-table'
+    ],
+    serverComponentsExternalPackages: [],
+    memoryBasedWorkersCount: true,
+  },
+  compress: true,
+  webpack: (config, { dev, isServer }) => {
+    if (!dev) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        maxInitialRequests: 25,
+        minSize: 20000
+      };
+    }
+    return config;
+  },
 }
 
 module.exports = nextConfig

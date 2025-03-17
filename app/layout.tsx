@@ -6,10 +6,14 @@ import { RouteWarmer } from '@/components/shared/RouteWarmer';
 
 import './globals.css'
 
+// Optimize font loading with display swap
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-poppins',
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'sans-serif'],
 })
 
 export const metadata: Metadata = {
@@ -73,6 +77,20 @@ export default function RootLayout({
       <link 
         rel="preconnect" 
         href="https://fonts.googleapis.com" 
+        crossOrigin="anonymous"
+      />
+      <link
+        rel="dns-prefetch"
+        href="https://fonts.googleapis.com"
+      />
+      <link
+        rel="preconnect"
+        href="https://utfs.io"
+        crossOrigin="anonymous"
+      />
+      <link
+        rel="dns-prefetch"
+        href="https://utfs.io"
       />
     </>
   );
@@ -100,6 +118,44 @@ export default function RootLayout({
     }
   `;
 
+  // Script for performance optimization
+  const performanceOptimization = `
+    // Optimize resource loading
+    const observer = new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        // Log slow resources for debugging
+        if (entry.duration > 300) {
+          console.warn('Slow resource:', entry.name, 'Duration:', entry.duration);
+        }
+      });
+    });
+    
+    // Observe resource timing
+    observer.observe({ entryTypes: ['resource'] });
+    
+    // Optimize image loading
+    if ('loading' in HTMLImageElement.prototype) {
+      document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+        img.loading = 'lazy';
+      });
+    }
+    
+    // Optimize third-party scripts
+    const deferThirdPartyScripts = () => {
+      // Identify non-critical scripts and defer them
+      document.querySelectorAll('script[data-type="third-party"]').forEach(script => {
+        script.setAttribute('defer', '');
+      });
+    };
+    
+    // Execute after page load
+    if (document.readyState === 'complete') {
+      deferThirdPartyScripts();
+    } else {
+      window.addEventListener('load', deferThirdPartyScripts);
+    }
+  `;
+
   return (
     <ClerkProvider>
       <html lang="en">
@@ -111,6 +167,7 @@ export default function RootLayout({
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}
           <script dangerouslySetInnerHTML={{ __html: unregisterServiceWorker }} />
+          <script dangerouslySetInnerHTML={{ __html: performanceOptimization }} />
         </head>
         <body className={poppins.variable}>
           <div className="context-container">
