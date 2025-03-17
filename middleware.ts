@@ -16,23 +16,26 @@ export default authMiddleware({
     '/api/reg',
     '/api/update-registration',
     '/api/cancel-registration',
+    '/api/monitoring',
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
     '/api/uploadthing',
+    '/api/monitoring',
   ],
   async beforeAuth(req) {
     // Apply rate limiting before authentication
     const path = req.nextUrl.pathname;
     
-    // Skip rate limiting for static assets and non-API routes
+    // Skip rate limiting for static assets, non-API routes, and monitoring
     if (
       path.startsWith('/_next') || 
       path.startsWith('/static') ||
       path.endsWith('.ico') ||
       path.endsWith('.png') ||
       path.endsWith('.jpg') ||
-      path.endsWith('.jpeg')
+      path.endsWith('.jpeg') ||
+      path === '/api/monitoring'
     ) {
       return NextResponse.next();
     }

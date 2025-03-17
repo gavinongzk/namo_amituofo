@@ -9,6 +9,11 @@ const nextConfig = {
         port: ''
       }
     ]
+  },
+  // Add Sentry configuration
+  sentry: {
+    hideSourceMaps: true,
+    disableLogger: true,
   }
 }
 
@@ -46,7 +51,19 @@ module.exports = withSentryConfig(
     // This can increase your server load as well as your hosting bill.
     // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
     // side errors will fail.
-    tunnelRoute: "/monitoring",
+    tunnelRoute: "/api/monitoring",
+
+    // Configure error handling
+    errorHandling: {
+      enabled: true,
+      ignoreErrors: [
+        // Ignore network errors that might be caused by ad blockers or offline state
+        'Failed to fetch',
+        'NetworkError',
+        'TypeError: Failed to fetch',
+        'ChunkLoadError',
+      ],
+    },
 
     // Hides source maps from generated client bundles
     hideSourceMaps: true,
