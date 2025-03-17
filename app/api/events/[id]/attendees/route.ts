@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database';
 import { getOrdersByEvent } from '@/lib/actions/order.actions';
 import { unstable_cache } from 'next/cache';
 import { CustomFieldGroup, CustomField } from '@/types';
+import { IOrder } from '@/lib/database/models/order.model';
 
 const getCachedAttendees = unstable_cache(
   async (eventId: string) => {
@@ -24,7 +25,7 @@ const getCachedAttendees = unstable_cache(
     
     for (let i = 0; i < orders.length; i += BATCH_SIZE) {
       const batch = orders.slice(i, i + BATCH_SIZE);
-      const batchAttendees = batch.flatMap(order => 
+      const batchAttendees = batch.flatMap((order: IOrder) => 
         order.customFieldValues.map((group: CustomFieldGroup) => ({
           id: `${order._id}_${group.groupId}`,
           eventTitle: order.event.title,
