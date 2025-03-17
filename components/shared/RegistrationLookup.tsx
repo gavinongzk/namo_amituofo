@@ -34,29 +34,14 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
     while (retryCount <= maxRetries) {
       try {
         // Add cache-busting query param
-        const orders = await getOrdersByPhoneNumber(`${phoneNumber}?t=${Date.now()}`);
-
-        const transformedRegistrations: IRegistration[] = orders
-          .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-          .map((order: any) => ({
-            event: {
-              _id: order.event._id,
-              title: order.event.title,
-              imageUrl: order.event.imageUrl,
-              startDateTime: order.event.startDateTime,
-              endDateTime: order.event.endDateTime,
-              orderId: order._id.toString(),
-              organizer: { _id: order.event.organizer?.toString() || '' },
-              customFieldValues: order.customFieldValues,
-            },
-            registrations: order.customFieldValues.map((group: any) => ({
-              queueNumber: group.queueNumber,
-              name: group.fields?.find((field: any) => 
-                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-            })),
-          }));
-
-        setRegistrations(transformedRegistrations);
+        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${`&t=${Date.now()}`}`);
+        
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setRegistrations(data);
         setIsLoading(false);
         break; // Exit the retry loop if successful
       } catch (err) {

@@ -174,7 +174,9 @@ export interface IRegistration {
   registrations: {
     queueNumber?: string;
     name?: string;
+    orderId?: string;
   }[];
+  orderIds?: string[];
 }
 
 export interface CustomFieldGroup {
@@ -219,4 +221,11 @@ export interface CancellationRequest {
   orderId: string;
   groupId: string;
   cancelled: boolean;
+}
+
+export interface DuplicateRegistrationDetail {
+  phoneNumber: string;
+  name: string;
+  queueNumber: string;
+  qrCode: string;
 }

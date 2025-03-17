@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
+import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,31 +13,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Phone number is required' }, { status: 400 });
     }
 
-    const orders = await Order.find({
-      'customFieldValues': {
-        $elemMatch: {
-          'fields': {
-            $elemMatch: {
-              'type': 'phone',
-              'value': phoneNumber
-            }
-          }
-        }
-      }
-    })
-    .populate('event', 'title imageUrl startDateTime endDateTime')
-    .sort({ createdAt: -1 })
-    .exec();
-
-    const formattedOrders = orders.map(order => ({
-      _id: order._id,
-      eventTitle: order.event.title,
-      eventImageUrl: order.event.imageUrl,
-      eventStartDateTime: order.event.startDateTime,
-      eventEndDateTime: order.event.endDateTime,
-      createdAt: order.createdAt,
-      customFieldValues: order.customFieldValues
-    }));
+    const formattedOrders = await getOrdersByPhoneNumber(phoneNumber);
 
     return NextResponse.json(formattedOrders);
   } catch (error) {

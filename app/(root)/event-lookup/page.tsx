@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import { IRegistration } from '@/types';
 import { IOrderItem } from '@/lib/database/models/order.model';
 import { formatBilingualDateTime } from '@/lib/utils';
 import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+import { useSearchParams } from 'next/navigation';
 
 // Dynamic imports for heavy components
 const RegistrationCollection = dynamic(() => import('@/components/shared/RegistrationCollection'), {
@@ -25,6 +26,7 @@ const EventLookupAnalytics = dynamic(() => import('@/components/shared/EventLook
 });
 
 const EventLookupPage = () => {
+    const searchParams = useSearchParams();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [useManualInput, setUseManualInput] = useState(false);
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
@@ -35,20 +37,17 @@ const EventLookupPage = () => {
     const [hasSearched, setHasSearched] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [initialSearchComplete, setInitialSearchComplete] = useState(false);
+    const [isRestoringFromSession, setIsRestoringFromSession] = useState(false);
 
-    useEffect(() => {
-        setIsReady(true);
-        // Clean up function to reset states
-        return () => {
-            setRegistrations([]);
-            setAllRegistrations([]);
-            setError('');
-            setHasSearched(false);
-            setShowAnalytics(false);
-        };
-    }, []);
+    // Define handleLookup as a useCallback to prevent unnecessary re-renders
+    const handleLookup = useCallback(async () => {
+        // Don't perform lookup if we're restoring from session
+        if (isRestoringFromSession) {
+            setIsRestoringFromSession(false);
+            return;
+        }
 
-    const handleLookup = async () => {
         setIsLoading(true);
         setIsLoadingStats(true);
         setError('');
@@ -65,66 +64,44 @@ const EventLookupPage = () => {
                     await new Promise(resolve => setTimeout(resolve, Math.max(1000, Math.pow(2, retryCount) * 1000)));
                 }
 
-                // Get recent registrations first with cache-busting query param
-                const recentOrders = await getOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
+                // Get recent registrations with cache-busting query param
+                const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&t=${Date.now()}`);
                 
-                // Transform recent orders for display
-                const transformedRegistrations: IRegistration[] = recentOrders
-                    .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                    .map((order: any) => ({
-                        event: {
-                            _id: order.event._id,
-                            title: order.event.title,
-                            imageUrl: order.event.imageUrl,
-                            startDateTime: order.event.startDateTime,
-                            endDateTime: order.event.endDateTime,
-                            orderId: order._id.toString(),
-                            organizer: { _id: order.event.organizer?.toString() || '' },
-                            customFieldValues: order.customFieldValues,
-                            category: order.event.category,
-                        },
-                        registrations: order.customFieldValues.map((group: any) => ({
-                            queueNumber: group.queueNumber,
-                            name: group.fields?.find((field: any) => 
-                                field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                        })),
-                    }));
-
-                setRegistrations(transformedRegistrations);
+                if (!response.ok) {
+                    throw new Error(`API responded with status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                setRegistrations(data);
+                
+                // Save to session storage for back navigation
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('eventLookupRegistrations', JSON.stringify(data));
+                    sessionStorage.setItem('eventLookupPhoneNumber', phoneNumber);
+                    sessionStorage.setItem('eventLookupHasSearched', 'true');
+                }
+                
                 setIsLoading(false);
 
                 // Only fetch all registrations if there are recent ones
-                if (transformedRegistrations.length > 0) {
+                if (data.length > 0) {
                     // Add delay between requests to prevent race conditions
                     await new Promise(resolve => setTimeout(resolve, 500));
 
                     // Then get all registrations for statistics with cache-busting query param
-                    const allOrders = await getAllOrdersByPhoneNumber(phoneNumber + `?t=${Date.now()}`);
+                    const allOrdersResponse = await fetch(`/api/all-registrations?phoneNumber=${encodeURIComponent(phoneNumber)}&t=${Date.now()}`);
                     
-                    // Transform all orders for statistics
-                    const transformedAllRegistrations: IRegistration[] = allOrders
-                        .sort((a: any, b: any) => new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime())
-                        .map((order: any) => ({
-                            event: {
-                                _id: order.event._id,
-                                title: order.event.title,
-                                imageUrl: order.event.imageUrl,
-                                startDateTime: order.event.startDateTime,
-                                endDateTime: order.event.endDateTime,
-                                orderId: order._id.toString(),
-                                organizer: { _id: order.event.organizer?.toString() || '' },
-                                customFieldValues: order.customFieldValues,
-                                category: order.event.category,
-                            },
-                            registrations: order.customFieldValues.map((group: any) => ({
-                                queueNumber: group.queueNumber,
-                                name: group.fields?.find((field: any) => 
-                                    field.label.toLowerCase().includes('name'))?.value || 'Unknown',
-                            })),
-                        }));
-
-                    setAllRegistrations(transformedAllRegistrations);
-                    setShowAnalytics(true);
+                    if (allOrdersResponse.ok) {
+                        const allData = await allOrdersResponse.json();
+                        setAllRegistrations(allData);
+                        
+                        // Save all registrations to session storage
+                        if (typeof window !== 'undefined') {
+                            sessionStorage.setItem('eventLookupAllRegistrations', JSON.stringify(allData));
+                        }
+                        
+                        setShowAnalytics(true);
+                    }
                 }
                 setIsLoadingStats(false);
                 break; // Exit the retry loop if successful
@@ -141,6 +118,70 @@ const EventLookupPage = () => {
                 }
             }
         }
+    }, [phoneNumber, isRestoringFromSession]);
+
+    useEffect(() => {
+        setIsReady(true);
+        
+        // Try to restore from session storage first (for back navigation)
+        if (typeof window !== 'undefined') {
+            const savedRegistrations = sessionStorage.getItem('eventLookupRegistrations');
+            const savedPhoneNumber = sessionStorage.getItem('eventLookupPhoneNumber');
+            const savedHasSearched = sessionStorage.getItem('eventLookupHasSearched');
+            const savedAllRegistrations = sessionStorage.getItem('eventLookupAllRegistrations');
+            
+            // Check if user is coming back from an order details page
+            const referrer = document.referrer;
+            const isBackFromOrderDetails = referrer && referrer.includes('/reg/');
+            
+            if (isBackFromOrderDetails && savedRegistrations && savedPhoneNumber && savedHasSearched) {
+                setIsRestoringFromSession(true);
+                setPhoneNumber(savedPhoneNumber);
+                setRegistrations(JSON.parse(savedRegistrations));
+                setHasSearched(savedHasSearched === 'true');
+                
+                if (savedAllRegistrations) {
+                    setAllRegistrations(JSON.parse(savedAllRegistrations));
+                    setShowAnalytics(true);
+                }
+                
+                setInitialSearchComplete(true);
+                return;
+            } else if (!isBackFromOrderDetails && (savedRegistrations || savedPhoneNumber || savedHasSearched || savedAllRegistrations)) {
+                // Clear session storage if user is not coming back from order details but has session data
+                sessionStorage.removeItem('eventLookupRegistrations');
+                sessionStorage.removeItem('eventLookupPhoneNumber');
+                sessionStorage.removeItem('eventLookupHasSearched');
+                sessionStorage.removeItem('eventLookupAllRegistrations');
+            }
+        }
+        
+        // If no session data, check URL params
+        const phoneParam = searchParams.get('phone');
+        if (phoneParam && !initialSearchComplete) {
+            setPhoneNumber(phoneParam);
+            // Auto-trigger the lookup after a short delay to ensure the component is fully mounted
+            setTimeout(() => {
+                handleLookup();
+                setInitialSearchComplete(true);
+            }, 500);
+        }
+        
+        // Clean up function to reset states
+        return () => {
+            // Don't clear session storage on unmount to preserve state for back navigation
+        };
+    }, [searchParams, handleLookup, initialSearchComplete]);
+
+    // Clear session storage when user manually changes the phone number
+    const handlePhoneNumberChange = (value: string) => {
+        if (typeof window !== 'undefined' && value !== phoneNumber) {
+            sessionStorage.removeItem('eventLookupRegistrations');
+            sessionStorage.removeItem('eventLookupPhoneNumber');
+            sessionStorage.removeItem('eventLookupHasSearched');
+            sessionStorage.removeItem('eventLookupAllRegistrations');
+        }
+        setPhoneNumber(value || '');
     };
 
     return (
@@ -165,14 +206,15 @@ const EventLookupPage = () => {
                                 type="tel"
                                 placeholder="输入电话号码 Enter phone number"
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                onChange={(e) => handlePhoneNumberChange(e.target.value)}
                                 className="p-regular-16 border-2 h-12 transition-all duration-200 focus:ring-2 focus:ring-primary-500"
                             />
                         ) : (
                             <PhoneInput
+                                key={initialSearchComplete ? "editable" : "initial"}
                                 placeholder="输入电话号码 Enter phone number"
                                 value={phoneNumber}
-                                onChange={(value) => setPhoneNumber(value || '')}
+                                onChange={(value) => handlePhoneNumberChange(value || '')}
                                 defaultCountry="SG"
                                 countries={["SG", "MY"]}
                                 international
@@ -188,6 +230,13 @@ const EventLookupPage = () => {
                             onClick={() => {
                                 setUseManualInput(!useManualInput);
                                 setPhoneNumber('');
+                                // Clear session storage when switching input modes
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.removeItem('eventLookupRegistrations');
+                                    sessionStorage.removeItem('eventLookupPhoneNumber');
+                                    sessionStorage.removeItem('eventLookupHasSearched');
+                                    sessionStorage.removeItem('eventLookupAllRegistrations');
+                                }
                             }}
                             className="text-primary-500 hover:text-primary-600 transition-colors duration-200 hover:underline"
                         >

@@ -220,8 +220,48 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     
     console.log('Filtered orders:', JSON.stringify(filteredOrders, null, 2));
 
+    // Group orders by event ID
+    const eventMap: Record<string, any> = {};
+    
+    filteredOrders.forEach((order: any) => {
+      const eventId = order.event._id.toString();
+      
+      if (!eventMap[eventId]) {
+        eventMap[eventId] = {
+          event: {
+            ...order.event,
+            orderId: order._id.toString(), // Use the first order ID as the representative ID
+          },
+          orderIds: [order._id.toString()], // Array to store all order IDs
+          registrations: [],
+        };
+      } else {
+        // Add this order ID to the list
+        eventMap[eventId].orderIds.push(order._id.toString());
+      }
+      
+      // Add all registrations from this order
+      order.customFieldValues.forEach((group: any) => {
+        const nameField = group.fields?.find((field: any) => 
+          field.label.toLowerCase().includes('name'))?.value || 'Unknown';
+          
+        eventMap[eventId].registrations.push({
+          queueNumber: group.queueNumber,
+          name: nameField,
+          orderId: order._id.toString(), // Store the order ID for each registration
+          groupId: group.groupId, // Include groupId for reference
+        });
+      });
+    });
+    
+    // Convert map to array and sort by start date (newest first)
+    const groupedOrders = Object.values(eventMap)
+      .sort((a: any, b: any) => 
+        new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime()
+      );
+
     // Explicitly mark this response as uncacheable
-    return JSON.parse(JSON.stringify(filteredOrders));
+    return JSON.parse(JSON.stringify(groupedOrders));
   } catch (error) {
     console.error('Error in getOrdersByPhoneNumber:', error);
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');

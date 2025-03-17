@@ -38,6 +38,12 @@ const NEVER_CACHE_ROUTES = [
   '/register', // Add register page to never cache list
 ];
 
+// Cache expiration times (in seconds)
+const CACHE_EXPIRATION = {
+  api: 60 * 5, // 5 minutes for API responses
+  static: 60 * 60 * 24 * 7, // 7 days for static assets
+};
+
 // Listen for messages from the main thread
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
@@ -92,32 +98,50 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Handle API requests
+  // Handle API requests with a stale-while-revalidate strategy
   if (API_ROUTES.some(route => url.pathname.startsWith(route))) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then((cache) => {
-        return fetch(event.request)
-          .then((response) => {
-            // Clone the response before caching
-            const clonedResponse = response.clone();
-            
-            // Only cache successful responses
-            if (response.ok) {
-              cache.put(event.request, clonedResponse);
-            }
-            
-            return response;
-          })
-          .catch(() => {
-            // Return cached response if available
-            return cache.match(event.request);
-          });
+        return cache.match(event.request).then((cachedResponse) => {
+          // Check if we have a cached response
+          const fetchPromise = fetch(event.request)
+            .then((networkResponse) => {
+              // Clone the response before caching
+              const responseToCache = networkResponse.clone();
+              
+              // Only cache successful responses
+              if (networkResponse.ok) {
+                // Add timestamp for cache expiration
+                const headers = new Headers(responseToCache.headers);
+                const cacheData = {
+                  response: responseToCache,
+                  timestamp: Date.now()
+                };
+                
+                // Store in cache
+                cache.put(event.request, responseToCache);
+              }
+              
+              return networkResponse;
+            })
+            .catch((error) => {
+              console.error('Fetch failed:', error);
+              // If network request fails and we have a cached response, return it
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              throw error;
+            });
+          
+          // Return the cached response if we have one, otherwise wait for the fetch
+          return cachedResponse || fetchPromise;
+        });
       })
     );
     return;
   }
 
-  // Handle static assets
+  // Handle static assets with a cache-first strategy
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {

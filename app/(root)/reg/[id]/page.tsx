@@ -87,7 +87,7 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
                   d="M5 13l4 4L19 7" 
                 />
               </svg>
-              <span className="text-lg font-semibold text-green-700">出席已记录</span>
+              <span className="text-lg font-semibold text-green-700">已出席</span>
             </div>
             <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
           </div>
@@ -134,7 +134,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
           {isLoading ? '取消中... Cancelling...' : '取消注册 Cancel Registration'}
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-opacity-100 bg-background">
+      <AlertDialogContent className="bg-white">
         <AlertDialogHeader>
           <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
@@ -165,6 +165,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     };
     customFieldValues: CustomFieldGroup[];
   } | null>(null);
+  const [relatedOrders, setRelatedOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingField, setEditingField] = useState<{
     groupId: string;
@@ -190,11 +191,58 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     setIsPolling(true);
     try {
+      // Fetch the primary order first
       const fetchedOrder = await getOrderById(id);
+      
+      // Find a phone number in the order to fetch related orders
+      let phoneNumber = null;
+      for (const group of fetchedOrder.customFieldValues) {
+        const phoneField = group.fields.find(
+          (field: any) => field.type === 'phone' || field.label.toLowerCase().includes('phone')
+        );
+        if (phoneField) {
+          phoneNumber = phoneField.value;
+          break;
+        }
+      }
+      
+      // If we found a phone number, fetch all related orders for the same event
+      let allCustomFieldValues = [...fetchedOrder.customFieldValues];
+      if (phoneNumber) {
+        try {
+          // Fetch all orders for this phone number
+          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Find the event that matches our current order's event
+            const matchingEvent = data.find((item: any) => 
+              item.event._id === fetchedOrder.event._id.toString()
+            );
+            
+            if (matchingEvent && matchingEvent.orderIds) {
+              setRelatedOrders(matchingEvent.orderIds);
+              
+              // Fetch all related orders and combine their customFieldValues
+              for (const orderId of matchingEvent.orderIds) {
+                // Skip the current order as we already have it
+                if (orderId === id) continue;
+                
+                const relatedOrder = await getOrderById(orderId);
+                if (relatedOrder && relatedOrder.customFieldValues) {
+                  allCustomFieldValues = [...allCustomFieldValues, ...relatedOrder.customFieldValues];
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching related orders:', error);
+        }
+      }
       
       // Check for newly marked attendances
       if (previousOrder.current) {
-        fetchedOrder.customFieldValues.forEach((group: CustomFieldGroup) => {
+        allCustomFieldValues.forEach((group: CustomFieldGroup) => {
           const prevGroup = previousOrder.current?.customFieldValues.find(
             (g: CustomFieldGroup) => g.groupId === group.groupId
           );
@@ -213,8 +261,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         });
       }
       
-      previousOrder.current = fetchedOrder;
-      setOrder(fetchedOrder);
+      // Update the order with all combined customFieldValues
+      const combinedOrder = {
+        ...fetchedOrder,
+        customFieldValues: allCustomFieldValues
+      };
+      
+      previousOrder.current = combinedOrder;
+      setOrder(combinedOrder);
       setIsLoading(false);
       lastFetchTime.current = now;
     } catch (error) {
@@ -331,9 +385,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
   }
 
-  const customFieldValuesArray = Array.isArray(order.customFieldValues) 
-    ? order.customFieldValues 
-    : [order.customFieldValues];
+  // Sort customFieldValues by queueNumber if available
+  const customFieldValuesArray = order?.customFieldValues
+    ? [...order.customFieldValues].sort((a, b) => {
+        if (a.queueNumber && b.queueNumber) {
+          return parseInt(a.queueNumber) - parseInt(b.queueNumber);
+        }
+        return 0;
+      })
+    : [];
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
@@ -343,7 +403,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
-            注册成功 Registration Successful
+            注册成功 Successful Registration
           </h3>
           <p className="text-center text-primary-600 mt-2">
             当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.
@@ -358,7 +418,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <p>
-                <span className="font-semibold">日期时间 Date & Time:</span> 
+                <span className="font-semibold">日期时间 Date & Time: </span> 
                 {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
                 <span className="ml-1">
                   {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime)).cn.timeOnly.replace(/^[上下]午/, '')}
@@ -369,16 +429,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
               <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                {group.qrCode && (
-                  <div className="qr-code-container">
-                    <QRCodeDisplay 
-                      qrCode={group.qrCode} 
-                      isAttended={!!group.attendance}
-                      isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                    />
-                  </div>
-                )}
-                
                 <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
@@ -398,8 +448,84 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     )}
                   </div>
                 </div>
+
+                {/* QR Code for this participant */}
+                {!group.cancelled && group.qrCode && (
+                  <div className="p-4 flex justify-center">
+                    <div className="w-full max-w-[200px]">
+                      <QRCodeDisplay 
+                        qrCode={group.qrCode} 
+                        isAttended={!!group.attendance}
+                        isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Registration Details Section */}
+                <div className="p-4 space-y-4">
+                  {group.fields.map((field: CustomField) => (
+                    <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
+                      <div className="flex-1 flex items-center gap-2">
+                        {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
+                          <div className="flex-1 flex items-center gap-2">
+                            <Input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleSave(group.groupId)}
+                              className="h-9 w-9"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={handleCancel}
+                              className="h-9 w-9"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center gap-2">
+                            <span className="flex-1">{field.value}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                if (field.id) {
+                                  const value = typeof field.value === 'string' ? field.value : '';
+                                  handleEdit(group.groupId, field.id, value);
+                                }
+                              }}
+                              className="h-9 w-9"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {!group.cancelled && !group.attendance && (
+                    <CancelButton
+                      groupId={group.groupId}
+                      orderId={id}
+                      onCancel={() => handleCancellation(group.groupId)}
+                    />
+                  )}
+                </div>
+                {/* End of Registration Details Section */}
               </div>
-            ))},
+            ))}
 
             <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
               <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
@@ -462,21 +588,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </div>
                 </div>
                 
-                <div className="bg-white p-4 rounded-xl mt-4 flex items-start gap-3 border-2 border-yellow-200 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div className="space-y-2">
-                    <p className="font-medium text-yellow-800">
-                      重要提示 Important Note:
-                    </p>
-                    <p className="text-yellow-700 text-sm leading-relaxed">
-                      请在活动当天出示此页面上的二维码以完成签到。没有二维码将无法确认您的出席。
-                      <br />
-                      Please show the QR code on this page to complete check-in on the event day. Without the QR code, your attendance cannot be confirmed.
-                    </p>
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>

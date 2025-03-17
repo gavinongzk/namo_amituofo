@@ -51,7 +51,8 @@ export const metadata: Metadata = {
     startupImage: [
       '/assets/images/amitabha_image.png'
     ]
-  }
+  },
+  manifest: '/manifest.json'
 }
 
 
@@ -60,19 +61,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Add version parameter to force cache refresh
-  const APP_VERSION = '1.1.0'; // Increment this when deploying major changes
-  
-  // Add meta tag for cache control
-  const metaTags = (
-    <>
-      <meta name="app-version" content={APP_VERSION} />
-      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-      <meta http-equiv="Pragma" content="no-cache" />
-      <meta http-equiv="Expires" content="0" />
-    </>
-  );
-
   // Add preload hints for critical resources
   const preloadResources = (
     <>
@@ -85,18 +73,6 @@ export default function RootLayout({
       <link 
         rel="preconnect" 
         href="https://fonts.googleapis.com" 
-      />
-      <link 
-        rel="preload"
-        href="/api/events?country=Singapore"
-        as="fetch"
-        crossOrigin="anonymous"
-      />
-      <link 
-        rel="preload"
-        href="/api/events?country=Malaysia"
-        as="fetch"
-        crossOrigin="anonymous"
       />
     </>
   );
@@ -194,65 +170,18 @@ export default function RootLayout({
     }
   `;
 
-  // Add force refresh script for existing users
-  const forceRefreshScript = `
-    // Force refresh for existing users after deployment
-    (function() {
-      // Get the current version from version.js or use a fallback
-      const currentVersion = window.APP_VERSION || '${Date.now()}';
-      const lastForceUpdate = localStorage.getItem('lastForceUpdate');
-      
-      // Check if we need to force an update
-      if (!lastForceUpdate || lastForceUpdate !== currentVersion) {
-        console.log('New version detected. Clearing cache and refreshing...');
-        
-        // Store the current version to prevent repeated refreshes
-        localStorage.setItem('lastForceUpdate', currentVersion);
-        
-        // Clear caches if possible
-        if ('caches' in window) {
-          caches.keys().then(cacheNames => {
-            return Promise.all(
-              cacheNames.filter(cacheName => {
-                return cacheName.startsWith('namo-amituofo-');
-              }).map(cacheName => {
-                console.log('Deleting cache:', cacheName);
-                return caches.delete(cacheName);
-              })
-            );
-          }).then(() => {
-            // Reload after cache clearing with a slight delay
-            setTimeout(() => {
-              console.log('Cache cleared, reloading page...');
-              window.location.reload(true);
-            }, 1000);
-          }).catch(err => {
-            console.error('Cache clearing failed:', err);
-            // Reload anyway
-            window.location.reload(true);
-          });
-        } else {
-          // Fallback for browsers without cache API access
-          console.log('Cache API not available, performing hard reload');
-          window.location.reload(true);
-        }
-      }
-    })();
-  `;
-
   return (
     <ClerkProvider>
       <html lang="en">
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
           <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
-          {metaTags}
           {preloadResources}
           <script src="/version.js" />
           <script dangerouslySetInnerHTML={{ __html: swRegistration }} />
-          <script dangerouslySetInnerHTML={{ __html: forceRefreshScript }} />
         </head>
         <body className={poppins.variable}>
           <div className="context-container">

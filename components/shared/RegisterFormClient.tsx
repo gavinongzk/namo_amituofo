@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { CreateOrderParams, CustomField } from "@/types"
+import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
@@ -80,7 +80,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const { user, isLoaded } = useUser();
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<string[]>([]);
+  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<DuplicateRegistrationDetail[]>([]);
   const [formValues, setFormValues] = useState<any>(null);
   const [isCountryLoading, setIsCountryLoading] = useState(true);
   const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
@@ -297,7 +297,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
         
         // Skip validation if postal code is empty (since it's optional)
-        if (!postalCode.trim()) {
+        if (!postalCode || !postalCode.trim()) {
+          // Ensure empty string is passed instead of undefined or null
+          filledGroups[i][postalField] = '';
           continue;
         }
         
@@ -334,7 +336,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
     
     // Check for duplicate phone numbers using only filled groups
-    const duplicates: string[] = await checkForDuplicatePhoneNumbers({
+    const duplicates = await checkForDuplicatePhoneNumbers({
       groups: filledGroups,
       eventId: event._id
     } as any);
@@ -362,7 +364,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         fields: Object.entries(group).map(([key, value]) => {
           const field = customFields.find(f => f.id === key) as CustomField;
           // Save first person's postal code
-          if (index === 0 && field?.type === 'postal') {
+          if (index === 0 && field?.type === 'postal' && value) {
             const postalValue = String(value);
             localStorage.setItem('lastUsedPostal', postalValue);
             setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
@@ -371,7 +373,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             id: key,
             label: field?.label || key,
             type: field?.type,
-            value: String(value),
+            value: value === null || value === undefined ? '' : String(value),
             options: field?.options || [],
           };
         })
@@ -546,7 +548,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   >
                     <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                       <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                        第{personIndex + 1}位参加者 / Person {personIndex + 1}
+                        第{personIndex + 1}位参加者 / Participant {personIndex + 1}
                       </h3>
                     </div>
 
@@ -719,7 +721,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                                             className="h-4 w-4"
                                           />
                                           <label className="text-sm text-gray-600">
-                                            与第一位参加者相同 Same as Person 1
+                                            与第一位参加者相同 Same as Participant 1
                                           </label>
                                         </div>
                                       )}
@@ -755,7 +757,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           }}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          删除第{personIndex + 1}位参加者 Remove Person {personIndex + 1}
+                          删除第{personIndex + 1}位参加者 Remove Participant {personIndex + 1}
                         </Button>
                       </div>
                     )}
@@ -770,7 +772,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
-                    添加参加者 Add Another Person
+                    添加参加者 Add Participant
                   </Button>
                   <Button 
                     type="submit" 
@@ -783,7 +785,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         提交中... Submitting...
                       </div>
                     ) : (
-                      '呈交报名 Complete Registration'
+                      '呈交 Submit'
                     )}
                   </Button>
                 </div>
@@ -794,29 +796,61 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       )}
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="bg-white sm:max-w-md">
+        <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               发现重复注册 / Duplicate Registration Found
             </DialogTitle>
             <DialogDescription className="space-y-4">
               <p className="text-gray-700 text-base">
-                以下电话号码已注册：/ The following phone numbers are already registered:
+                以下电话号码已注册：/ The following phone number/s is/are already registered:
               </p>
-              <ul className="list-disc pl-6 space-y-1">
-                {duplicatePhoneNumbers.map((phone) => (
-                  <li key={phone} className="text-red-600 font-medium">{phone}</li>
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                {duplicatePhoneNumbers.map((duplicate, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-semibold">姓名 Name:</span>
+                        <span className="text-gray-800">{duplicate.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-semibold">队列号 Queue Number:</span>
+                        <span className="text-gray-800">{duplicate.queueNumber}</span>
+                      </div>
+                      {duplicate.qrCode && (
+                        <div className="mt-2">
+                          <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
+                          <div className="w-24 h-24 relative mx-auto">
+                            <img 
+                              src={duplicate.qrCode} 
+                              alt="QR Code" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
               <p className="text-gray-700 text-base pt-2">
                 您是否仍要继续？/ Do you still want to proceed?
               </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sticky bottom-0 bg-white pt-2 pb-1">
             <Button
               variant="outline"
-              onClick={() => setShowConfirmation(false)}
+              onClick={() => {
+                setShowConfirmation(false);
+                // Get the first duplicate phone number to use for redirection
+                if (duplicatePhoneNumbers.length > 0) {
+                  const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
+                  // Redirect to event-lookup with the phone number as a query parameter
+                  router.push(`/event-lookup?phone=${phoneNumber}`);
+                }
+              }}
               className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
             >
               取消 / Cancel
