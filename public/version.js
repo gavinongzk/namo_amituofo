@@ -1,7 +1,6 @@
-// Auto-generated on: 2025-03-15T12:47:42.107Z
-// Update this version number whenever you deploy changes to Vercel
-// This will force the service worker to update and refresh content for users
-window.APP_VERSION = '1742042862107';
+// Auto-generated on: 2025-03-16T15:30:32.464Z
+// Application version number for debugging purposes
+window.APP_VERSION = '1742139032464';
 
-// You can also add deployment timestamp for debugging
-window.LAST_DEPLOY_TIME = '2025-03-15T12:47:42.108Z';
+// Deployment timestamp for debugging
+window.LAST_DEPLOY_TIME = '2025-03-16T15:30:32.465Z';

@@ -9,11 +9,10 @@ const versionFilePath = path.join(__dirname, '../public/version.js');
 
 // Create version.js content
 const versionFileContent = `// Auto-generated on: ${new Date().toISOString()}
-// Update this version number whenever you deploy changes to Vercel
-// This will force the service worker to update and refresh content for users
+// Application version number for debugging purposes
 window.APP_VERSION = '${newVersion}';
 
-// You can also add deployment timestamp for debugging
+// Deployment timestamp for debugging
 window.LAST_DEPLOY_TIME = '${new Date().toISOString()}';
 `;
 
