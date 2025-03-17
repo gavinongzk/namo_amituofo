@@ -162,6 +162,7 @@ export default function RootLayout({
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
           <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
+          <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />

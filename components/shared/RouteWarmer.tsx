@@ -32,11 +32,15 @@ export function RouteWarmer() {
   const warmCommonRoutes = useCallback(() => {
     if (preloadedRef.current.routes) return;
     
-    COMMON_ROUTES.forEach(route => {
-      router.prefetch(route);
-    });
-    
-    preloadedRef.current.routes = true;
+    try {
+      COMMON_ROUTES.forEach(route => {
+        router.prefetch(route);
+      });
+      
+      preloadedRef.current.routes = true;
+    } catch (error) {
+      console.error('Error prefetching common routes:', error);
+    }
   }, [router]);
 
   // Preload critical components
@@ -58,41 +62,57 @@ export function RouteWarmer() {
   }, []);
 
   const warmHomeRoute = useCallback(async () => {
-    router.prefetch('/events');
-    
-    // Only preload events if not already done
-    if (!preloadedRef.current.events) {
-      // Use requestIdleCallback to preload events when browser is idle
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(() => {
-          void preloadEvents('Singapore');
-          
-          // Stagger the second preload to avoid overwhelming the network
-          setTimeout(() => {
-            void preloadEvents('Malaysia');
-          }, 1000);
-        });
-      } else {
-        // Fallback for browsers without requestIdleCallback
-        setTimeout(() => {
-          void preloadEvents('Singapore');
-          
-          setTimeout(() => {
-            void preloadEvents('Malaysia');
-          }, 1000);
-        }, 1000);
-      }
+    try {
+      router.prefetch('/events');
       
-      preloadedRef.current.events = true;
+      // Only preload events if not already done
+      if (!preloadedRef.current.events) {
+        // Use requestIdleCallback to preload events when browser is idle
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(() => {
+            void preloadEvents('Singapore').catch(err => 
+              console.error('Error preloading Singapore events:', err)
+            );
+            
+            // Stagger the second preload to avoid overwhelming the network
+            setTimeout(() => {
+              void preloadEvents('Malaysia').catch(err => 
+                console.error('Error preloading Malaysia events:', err)
+              );
+            }, 1000);
+          });
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          setTimeout(() => {
+            void preloadEvents('Singapore').catch(err => 
+              console.error('Error preloading Singapore events:', err)
+            );
+            
+            setTimeout(() => {
+              void preloadEvents('Malaysia').catch(err => 
+                console.error('Error preloading Malaysia events:', err)
+              );
+            }, 1000);
+          }, 1000);
+        }
+        
+        preloadedRef.current.events = true;
+      }
+    } catch (error) {
+      console.error('Error warming home route:', error);
     }
   }, [router]);
 
   const warmEventDetailsRoute = useCallback(async (eventId: string) => {
-    const registerPath = `/events/details/${eventId}/register`;
-    router.prefetch(registerPath);
-    
-    // Preload registration form
-    dynamic(() => import('@/components/shared/RegisterFormWrapper'), { ssr: false });
+    try {
+      const registerPath = `/events/details/${eventId}/register`;
+      router.prefetch(registerPath);
+      
+      // Preload registration form
+      dynamic(() => import('@/components/shared/RegisterFormWrapper'), { ssr: false });
+    } catch (error) {
+      console.error(`Error warming event details route for ${eventId}:`, error);
+    }
   }, [router]);
 
   useEffect(() => {
@@ -143,8 +163,12 @@ export function RouteWarmer() {
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          // User is approaching bottom of page, prefetch next page of events
-          router.prefetch('/events?page=2');
+          try {
+            // User is approaching bottom of page, prefetch next page of events
+            router.prefetch('/events?page=2');
+          } catch (error) {
+            console.error('Error prefetching next page:', error);
+          }
         }
       });
     };
