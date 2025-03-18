@@ -12,12 +12,12 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
 
   // Only prefetch the route
   useEffect(() => {
-    router.prefetch(`/events/details/${event._id}/register`)
-  }, [event._id, router])
+    router.prefetch(`/events/${event.slug}/register`)
+  }, [event.slug, router])
 
   const handleRegisterClick = () => {
     setIsLoading(true)
-    router.push(`/events/details/${event._id}/register`)
+    router.push(`/events/${event.slug}/register`)
   }
 
   return (

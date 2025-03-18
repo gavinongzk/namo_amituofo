@@ -444,3 +444,28 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
     return /^\d{6}$/.test(postalCode);
   }
 }
+
+export const generateEventSlug = (date: Date, title: string, eventId?: string): string => {
+  // Format the date as yyyy-mm-dd
+  const formattedDate = new Date(date).toISOString().split('T')[0];
+  
+  // Sanitize the title for URL (lowercase, replace spaces with hyphens, remove special chars)
+  const sanitizedTitle = title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/-+/g, '-')      // Remove consecutive hyphens
+    .trim();                   // Trim leading/trailing spaces
+
+  // Create the basic slug
+  let slug = `${formattedDate}-${sanitizedTitle}`;
+  
+  // If an eventId is provided, add a short unique identifier to ensure uniqueness
+  if (eventId) {
+    // Take last 6 characters of eventId to add as a suffix
+    const shortId = eventId.slice(-6);
+    slug = `${slug}-${shortId}`;
+  }
+  
+  return slug;
+};

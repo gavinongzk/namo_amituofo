@@ -7,7 +7,7 @@ import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
 import User from '@/lib/database/models/user.model'
 import Category from '@/lib/database/models/category.model'
-import { handleError } from '@/lib/utils'
+import { handleError, generateEventSlug } from '@/lib/utils'
 
 import {
   CreateEventParams,
@@ -46,18 +46,26 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     
     if (!organizer) throw new Error('Organizer not found');
 
+    // Generate a slug for the event
+    const slug = generateEventSlug(
+      new Date(event.startDateTime), 
+      event.title
+    );
+
     console.log("Creating new event with data:", { 
       ...event, 
       category: event.categoryId, 
       organizer: userId,
-      customFields: event.customFields
+      customFields: event.customFields,
+      slug
     });
 
     const newEvent = await Event.create({ 
       ...event, 
       category: event.categoryId, 
       organizer: userId,
-      customFields: event.customFields
+      customFields: event.customFields,
+      slug
     });
 
     console.log("New event created successfully:", newEvent);
@@ -105,6 +113,38 @@ export const getEventById = unstable_cache(
   }
 );
 
+// GET ONE EVENT BY SLUG
+export const getEventBySlug = unstable_cache(
+  async (slug: string) => {
+    try {
+      await connectToDatabase();
+
+      const event = await Event.findOne({ slug, isDeleted: { $ne: true } })
+        .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+        .populate({ path: 'category', model: Category, select: '_id name' });
+
+      if (!event) {
+        throw new Error('Event not found');
+      }
+
+      const attendeeCount = await Order.countDocuments({ event: event._id });
+
+      return {
+        ...JSON.parse(JSON.stringify(event)),
+        attendeeCount,
+      };
+    } catch (error) {
+      handleError(error);
+      return null;
+    }
+  },
+  ['event-by-slug'],
+  {
+    revalidate: 300, // Cache for 5 minutes
+    tags: ['events', 'event-images']
+  }
+);
+
 // UPDATE
 export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
@@ -115,12 +155,24 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       throw new Error('Unauthorized or event not found');
     }
 
+    // Generate a new slug if the title or start date has changed
+    let slug = eventToUpdate.slug;
+    if (event.title !== eventToUpdate.title || 
+        new Date(event.startDateTime).toISOString() !== new Date(eventToUpdate.startDateTime).toISOString()) {
+      slug = generateEventSlug(
+        new Date(event.startDateTime), 
+        event.title, 
+        event._id
+      );
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
       { 
         ...event, 
         category: event.categoryId,
-        customFields: event.customFields
+        customFields: event.customFields,
+        slug
       },
       { new: true }
     );

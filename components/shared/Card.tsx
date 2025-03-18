@@ -69,7 +69,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     }
     e.preventDefault();
     setIsNavigating(true);
-    const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
+    const href = isMyTicket ? `/reg/${event.orderId}` : `/events/${event.slug}`;
     router.push(href);
   };
 
@@ -83,7 +83,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       aria-labelledby={`event-title-${event._id}`}
     >
       <Link 
-        href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
+        href={isMyTicket ? `/reg/${event.orderId}` : `/events/${event.slug}`}
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
         onClick={handleCardClick}
       >
@@ -144,7 +144,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white/90 backdrop-blur-sm p-3 shadow-sm transition-all">
           <Link 
-            href={`/events/details/${event._id}/update`}
+            href={`/events/${event.slug}/update`}
             className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
             aria-label="Edit event"
           >
@@ -174,7 +174,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         </time>
 
         <Link 
-          href={`/events/details/${event._id}`}
+          href={`/events/${event.slug}`}
           className="group/title focus:outline-none"
           onClick={handleCardClick}
         >
