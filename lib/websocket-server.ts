@@ -9,8 +9,15 @@ interface WebSocketClient extends WebSocket {
 const wss = new WebSocketServer({ port: config.websocket.port });
 const mongoClient = new MongoClient(config.mongodb.url);
 
+// Define the interface for your Order document
+interface OrderDocument {
+  _id: string; // or ObjectId
+  customFieldValues: Record<string, any>;
+  // Add other fields as needed
+}
+
 // Type definition for change stream events
-interface AttendanceChangeEvent extends ChangeStreamDocument {
+interface AttendanceChangeEvent extends ChangeStreamDocument<OrderDocument> {
   documentKey: {
     _id: { toString: () => string };
   };
@@ -26,7 +33,7 @@ async function startChangeStream() {
     const collection = db.collection('orders');
 
     // Watch for changes in the orders collection
-    const changeStream = collection.watch([
+    const changeStream = collection.watch<OrderDocument>([
       {
         $match: {
           'updateDescription.updatedFields.customFieldValues.attendance': { $exists: true }
