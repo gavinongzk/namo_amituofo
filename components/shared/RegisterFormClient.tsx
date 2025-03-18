@@ -165,7 +165,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         .min(1, { message: "此栏位为必填 / This field is required" })
                         .refine(
                           (value) => isValidName(value),
-                          { message: "姓名只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                          { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
                         )
                     : z.string().min(1, { message: "此栏位为必填 / This field is required" })
           ])
@@ -811,7 +811,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     <div className="flex flex-col gap-2">
                       <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">姓名 Name:</span>
+                        <span className="text-gray-700 font-semibold">名字 Name:</span>
                         <span className="text-gray-800">{duplicate.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
