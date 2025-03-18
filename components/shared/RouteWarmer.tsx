@@ -8,55 +8,75 @@ import dynamic from 'next/dynamic';
 export function RouteWarmer() {
   const router = useRouter();
   const pathname = usePathname();
-  const preloadedRef = useRef(false);
+  const preloadedRef = useRef({
+    home: false,
+    eventDetails: new Set<string>()
+  });
 
   const warmHomeRoute = useCallback(async () => {
     router.prefetch('/events');
     
     // Only preload events if not already done
-    if (!preloadedRef.current) {
-      // Use requestIdleCallback to preload events when browser is idle
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(() => {
-          void preloadEvents('Singapore');
-          
-          // Stagger the second preload to avoid overwhelming the network
-          setTimeout(() => {
-            void preloadEvents('Malaysia');
-          }, 1000);
-        });
-      } else {
-        // Fallback for browsers without requestIdleCallback
+    if (!preloadedRef.current.home) {
+      // Use requestIdleCallback with higher priority for critical resources
+      const preloadWithPriority = () => {
+        // Start with Singapore events first (assuming most common)
+        void preloadEvents('Singapore');
+        
+        // Add a delay for the second country to reduce network contention
         setTimeout(() => {
-          void preloadEvents('Singapore');
-          
-          setTimeout(() => {
-            void preloadEvents('Malaysia');
-          }, 1000);
-        }, 1000);
-      }
+          void preloadEvents('Malaysia');
+        }, 2000);
+        
+        preloadedRef.current.home = true;
+      };
       
-      preloadedRef.current = true;
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(preloadWithPriority, { timeout: 2000 });
+      } else {
+        // Fallback with lower timeout
+        setTimeout(preloadWithPriority, 1000);
+      }
     }
     
-    // Dynamically import main components
-    const EventList = dynamic(() => import('@/components/shared/EventList'));
-    const CategoryFilter = dynamic(() => import('@/components/shared/CategoryFilter'));
+    // Dynamically import main components only when network is idle
+    if ('connection' in navigator && (navigator as any).connection.saveData === false) {
+      // Don't preload if user has save-data enabled
+      const EventList = dynamic(() => import('@/components/shared/EventList'));
+      const CategoryFilter = dynamic(() => import('@/components/shared/CategoryFilter'));
+    }
   }, [router]);
 
   const warmEventDetailsRoute = useCallback(async (eventId: string) => {
+    // Avoid duplicate preloading
+    if (preloadedRef.current.eventDetails.has(eventId)) {
+      return;
+    }
+    
     const registerPath = `/events/details/${eventId}/register`;
     router.prefetch(registerPath);
     
-    // Preload registration form
-    const RegisterFormWrapper = dynamic(() => 
-      import('@/components/shared/RegisterFormWrapper')
-    );
+    // Track that we've preloaded this event
+    preloadedRef.current.eventDetails.add(eventId);
+    
+    // Preload registration form with lower priority
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => {
+        const RegisterFormWrapper = dynamic(() => 
+          import('@/components/shared/RegisterFormWrapper')
+        );
+      }, { timeout: 4000 });
+    }
   }, [router]);
 
   useEffect(() => {
     const warmRoutes = async () => {
       try {
+        // Don't warm routes if the user has indicated they want to save data
+        if ('connection' in navigator && (navigator as any).connection.saveData) {
+          return;
+        }
+        
         // Preload data and components based on current route
         if (pathname === '/' || pathname === '/events') {
           await warmHomeRoute();
@@ -72,9 +92,9 @@ export function RouteWarmer() {
       }
     };
     
-    // Use requestIdleCallback if available, otherwise setTimeout
+    // Use requestIdleCallback with a reasonable timeout
     if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(() => warmRoutes());
+      window.requestIdleCallback(() => warmRoutes(), { timeout: 2000 });
     } else {
       setTimeout(warmRoutes, 1000);
     }

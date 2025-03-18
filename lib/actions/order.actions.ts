@@ -122,16 +122,27 @@ export async function getOrdersByEvent({ searchString, eventId, select }: GetOrd
   }
 }
 
-export const getOrderById = async (orderId: string) => {
-  try {
-    await connectToDatabase();
-    const order = await Order.findById(orderId).populate('event').populate('buyer');
-    if (!order) throw new Error('Order not found');
-    return JSON.parse(JSON.stringify(order));
-  } catch (error) {
-    handleError(error);
+export const getOrderById = unstable_cache(
+  async (orderId: string) => {
+    try {
+      await connectToDatabase();
+      const order = await Order.findById(orderId)
+        .populate('event')
+        .populate('buyer')
+        .select('-__v'); // Exclude version field to reduce payload size
+      
+      if (!order) throw new Error('Order not found');
+      return JSON.parse(JSON.stringify(order));
+    } catch (error) {
+      handleError(error);
+    }
+  },
+  ['order-details'],
+  {
+    revalidate: 60, // Cache for 60 seconds
+    tags: ['order-details', 'orders'] // Cache tags for invalidation
   }
-};
+);
 
 export async function getOrderCountByEvent(eventId: string) {
   try {

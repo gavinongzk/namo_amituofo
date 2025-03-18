@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
 import dynamic from 'next/dynamic'
+import Script from 'next/script'
 
 import './globals.css'
 
@@ -16,6 +17,9 @@ const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-poppins',
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
 })
 
 export const metadata: Metadata = {
@@ -79,9 +83,49 @@ export default function RootLayout({
       <link 
         rel="preconnect" 
         href="https://fonts.googleapis.com" 
+        crossOrigin="anonymous"
+      />
+      <link 
+        rel="preconnect" 
+        href="https://fonts.gstatic.com"
+        crossOrigin="anonymous" 
+      />
+      <link
+        rel="preconnect"
+        href="https://utfs.io"
+        crossOrigin="anonymous"
+      />
+      <link
+        rel="dns-prefetch"
+        href="https://utfs.io"
       />
     </>
   );
+
+  // Critical CSS to be inlined
+  const inlineCriticalCss = `
+    /* Critical path CSS for fast initial render */
+    .wrapper {
+      max-width: 80rem;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      width: 100%;
+    }
+    @media (min-width: 640px) {
+      .wrapper {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+    @media (min-width: 1024px) {
+      .wrapper {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+    }
+  `;
 
   // Script to unregister any existing service workers
   const unregisterServiceWorker = `
@@ -117,33 +161,51 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/assets/images/logo.svg" />
           <link rel="apple-touch-icon-precomposed" href="/assets/images/logo.svg" />
           {preloadResources}
+          <style dangerouslySetInnerHTML={{ __html: inlineCriticalCss }} />
+          <meta name="theme-color" content="#a2826c" />
           <script dangerouslySetInnerHTML={{ __html: unregisterServiceWorker }} />
         </head>
         <body className={poppins.variable}>
-          <div className="context-container">
+          <NetworkStatus />
+          <RouteWarmer />
+
+          <main className="flex min-h-screen flex-col">
             {children}
-          </div>
+          </main>
+          
           <Toaster
             position="top-center"
             reverseOrder={false}
             gutter={8}
-            containerStyle={{
-              top: '50%',
-              transform: 'translateY(-50%)',
-            }}
+            containerClassName=""
+            containerStyle={{}}
             toastOptions={{
               duration: 5000,
               style: {
-                background: '#fff',
-                color: '#363636',
-                padding: '16px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                background: '#363636',
+                color: '#fff',
               },
             }}
           />
-          <NetworkStatus />
-          <RouteWarmer />
+
+          {/* Performance analytics script with proper loading strategy */}
+          <Script
+            strategy="afterInteractive"
+            id="performance-analytics"
+            dangerouslySetInnerHTML={{
+              __html: `
+                // Basic performance tracking
+                window.addEventListener('load', function() {
+                  setTimeout(function() {
+                    const timing = performance.getEntriesByType('navigation')[0];
+                    const paint = performance.getEntriesByType('paint');
+                    console.log('Page load time:', timing.loadEventEnd - timing.startTime, 'ms');
+                    paint.forEach(p => console.log(p.name + ':', p.startTime, 'ms'));
+                  }, 0);
+                });
+              `
+            }}
+          />
         </body>
       </html>
     </ClerkProvider>

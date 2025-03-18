@@ -117,6 +117,10 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             }}
             priority={priority}
             loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
+            quality={priority ? 90 : 75}
           />
         ) : (
           <div className="flex-center flex-col text-grey-500">
