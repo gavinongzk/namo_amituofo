@@ -34,6 +34,7 @@ interface CardProps {
 const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: CardProps) => {
   const isEventCreator = userId === event.organizer._id.toString();
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
 
@@ -51,6 +52,12 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     }
   }, [])
 
+  // Reset image error state when imageUrl changes
+  useEffect(() => {
+    setImageError(false);
+    setImageLoading(true);
+  }, [event.imageUrl]);
+
   return (
     <div 
       className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-card transition-all duration-300 ease-in-out hover:shadow-card-hover focus-within:ring-2 focus-within:ring-primary-500 md:min-h-[438px]"
@@ -67,7 +74,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
           }
         }}
       >
-        {event.imageUrl ? (
+        {event.imageUrl && !imageError ? (
           <Image 
             src={event.imageUrl} 
             alt={event.title}
@@ -77,10 +84,23 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               imageLoading ? "opacity-0" : "opacity-100"
             )}
             sizes="(max-width: 400px) 100vw, 400px"
-            onLoadingComplete={() => setImageLoading(false)}
+            onLoadingComplete={() => {
+              setImageLoading(false);
+              setImageError(false);
+            }}
             onError={() => {
               console.error(`Failed to load image: ${event.imageUrl}`);
               setImageLoading(false);
+              setImageError(true);
+              // Attempt to reload the image if it's a network error
+              if (!navigator.onLine && event.imageUrl) {
+                const img = new window.Image();
+                img.src = event.imageUrl;
+                img.onload = () => {
+                  setImageError(false);
+                  setImageLoading(false);
+                };
+              }
             }}
             priority={priority}
             placeholder="blur"
@@ -89,10 +109,22 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         ) : (
           <div className="flex-center flex-col text-grey-500">
             <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
-            <p className="p-medium-14 mt-2">No image available</p>
+            <p className="p-medium-14 mt-2">{imageError ? "Failed to load image" : "No image available"}</p>
+            {imageError && isOnline && (
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setImageError(false);
+                  setImageLoading(true);
+                }}
+                className="mt-2 text-sm text-primary-500 hover:underline"
+              >
+                Retry loading
+              </button>
+            )}
           </div>
         )}
-        {imageLoading && event.imageUrl && (
+        {imageLoading && event.imageUrl && !imageError && (
           <div className="absolute inset-0 bg-gray-100 animate-pulse" />
         )}
       </Link>
