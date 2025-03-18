@@ -10,6 +10,7 @@ interface EventListProps {
   searchText: string;
   category: string;
   country: string;
+  role?: string;
 }
 
 interface EventsResponse {
@@ -17,8 +18,8 @@ interface EventsResponse {
   totalPages: number;
 }
 
-async function EventList({ page, searchText, category, country }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country });
+async function EventList({ page, searchText, category, country, role }: EventListProps) {
+  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role });
   
   const user = await currentUser();
   const userId = user?.publicMetadata?.userId as string;
@@ -28,11 +29,11 @@ async function EventList({ page, searchText, category, country }: EventListProps
   try {
     if (!searchText && !category) {
       console.log('📥 Using preloadEvents cache');
-      events = await preloadEvents(country) as EventsResponse;
+      events = await preloadEvents(country, role) as EventsResponse;
       console.log('📦 Preloaded events:', JSON.stringify(events, null, 2));
     } else if (!searchText && category) {
       console.log('📥 Using preloadEventsByCategory cache');
-      events = await preloadEventsByCategory(country, category) as EventsResponse;
+      events = await preloadEventsByCategory(country, category, role) as EventsResponse;
       console.log('📦 Preloaded category events:', JSON.stringify(events, null, 2));
     } else {
       console.log('🔍 Fetching events directly');
@@ -41,7 +42,8 @@ async function EventList({ page, searchText, category, country }: EventListProps
         category,
         page,
         limit: 6,
-        country
+        country,
+        role
       }) as EventsResponse;
       console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
     }
@@ -75,10 +77,11 @@ async function EventList({ page, searchText, category, country }: EventListProps
       />
     );
   } catch (error) {
-    console.error('Error in EventList:', error);
+    console.error('❌ Error in EventList:', error);
     return (
-      <div className="text-center py-10">
-        <p className="text-gray-500">Error loading events. Please try again later.</p>
+      <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28 text-center">
+        <h3 className="p-bold-20 md:h5-bold">出错了 / Something went wrong</h3>
+        <p className="p-regular-14">请稍后再试。/ Please try again later.</p>
       </div>
     );
   }

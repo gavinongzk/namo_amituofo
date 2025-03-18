@@ -3,6 +3,7 @@ import { preloadEvents } from '@/lib/actions/preload';
 import dynamic from 'next/dynamic';
 import { cookies } from 'next/headers';
 import { SearchParamProps } from '@/types';
+import { currentUser } from '@clerk/nextjs';
 
 // Dynamically import components
 const CategoryFilter = dynamic(() => 
@@ -33,6 +34,8 @@ const EventSkeleton = () => (
 export default async function Home({ searchParams }: SearchParamProps) {
   const cookieStore = cookies();
   const country = cookieStore.get('userCountry')?.value || 'Singapore';
+  const user = await currentUser();
+  const role = user?.publicMetadata?.role as string;
 
   // Start data fetch early
   const eventsPromise = preloadEvents(country);
@@ -51,6 +54,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
           searchText={searchParams.query?.toString() || ''}
           category={searchParams.category?.toString() || ''}
           country={country}
+          role={role}
         />
       </Suspense>
     </section>

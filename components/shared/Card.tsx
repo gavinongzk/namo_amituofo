@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types'
 import { cn } from '@/lib/utils'
@@ -37,9 +37,36 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
   const isEventCreator = userId === event.organizer._id.toString();
   const [imageLoading, setImageLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
 
+  useEffect(() => {
+    setIsOnline(navigator.onLine)
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Reset image error state when imageUrl changes
+  useEffect(() => {
+    setImageError(false);
+    setImageLoading(true);
+  }, [event.imageUrl]);
+
   const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!isOnline) {
+      e.preventDefault();
+      alert('This action requires an internet connection. Please check your connection and try again.');
+      return;
+    }
     e.preventDefault();
     setIsNavigating(true);
     const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
@@ -60,25 +87,56 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
         onClick={handleCardClick}
       >
-        {event.imageUrl ? (
-          <Image
-            src={event.imageUrl}
+        {event.imageUrl && !imageError ? (
+          <Image 
+            src={event.imageUrl} 
             alt={event.title}
-            width={2000}
-            height={2000}
-            className="w-full h-full object-cover"
-            onLoadingComplete={() => setImageLoading(false)}
-            priority={priority}
+            fill
+            className={cn(
+              "object-cover transition-opacity duration-300",
+              imageLoading ? "opacity-0" : "opacity-100"
+            )}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onLoadingComplete={() => {
+              setImageLoading(false);
+              setImageError(false);
+            }}
+            onError={() => {
+              console.error(`Failed to load image: ${event.imageUrl}`);
+              setImageLoading(false);
+              setImageError(true);
+              // Attempt to reload the image if it's a network error
+              if (!navigator.onLine && event.imageUrl) {
+                const img = new window.Image();
+                img.src = event.imageUrl;
+                img.onload = () => {
+                  setImageError(false);
+                  setImageLoading(false);
+                };
+              }
+            }}
+            priority={priority}
             loading={priority ? 'eager' : 'lazy'}
           />
         ) : (
           <div className="flex-center flex-col text-grey-500">
             <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
-            <p className="p-medium-14 mt-2">No image available</p>
+            <p className="p-medium-14 mt-2">{imageError ? "Failed to load image" : "No image available"}</p>
+            {imageError && isOnline && (
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setImageError(false);
+                  setImageLoading(true);
+                }}
+                className="mt-2 text-sm text-primary-500 hover:underline"
+              >
+                Retry loading
+              </button>
+            )}
           </div>
         )}
-        {(imageLoading && event.imageUrl || isNavigating) && (
+        {imageLoading && event.imageUrl && !imageError && (
           <div className="absolute inset-0 bg-gray-100 animate-pulse" />
         )}
       </Link>

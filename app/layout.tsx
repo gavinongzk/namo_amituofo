@@ -3,8 +3,14 @@ import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
+import dynamic from 'next/dynamic'
 
 import './globals.css'
+
+// Dynamically import NetworkStatus with no SSR
+const NetworkStatus = dynamic(() => import('@/components/shared/NetworkStatus'), {
+  ssr: false
+})
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -136,6 +142,7 @@ export default function RootLayout({
               },
             }}
           />
+          <NetworkStatus />
           <RouteWarmer />
         </body>
       </html>
