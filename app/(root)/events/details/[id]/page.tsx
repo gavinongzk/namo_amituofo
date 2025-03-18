@@ -101,31 +101,33 @@ type EventDetailsProps = {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const event = await getEventById(params.id);
   
+  const title = event.title || 'Event Details';
+  const description = event.description?.slice(0, 160) || 'Event details';
+  const imageUrl = event.imageUrl || '';
+
   return {
-    title: event.title || 'Event Details',
-    description: event.description?.slice(0, 160) || 'Event details',
+    title,
+    description,
     openGraph: {
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
+      title,
+      description,
       images: [
         {
-          url: event.imageUrl || '',
+          url: imageUrl,
           width: 1200,
           height: 630,
-          alt: event.title,
+          alt: title,
         }
       ],
       type: 'website',
+      siteName: 'Namo Amituofo Organization',
     },
     twitter: {
       card: 'summary_large_image',
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
-      images: [event.imageUrl || ''],
+      title,
+      description,
+      images: [imageUrl],
     },
-    other: {
-      'whatsapp-preview': 'true',
-    }
   };
 }
 
