@@ -191,8 +191,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   const fetchOrder = async () => {
     const now = Date.now();
-    // Debounce: Skip if last fetch was less than 1 second ago
-    if (now - lastFetchTime.current < 1000) {
+    // Debounce: Skip if last fetch was less than 500ms ago
+    if (now - lastFetchTime.current < 500) {
       return;
     }
     
@@ -292,8 +292,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   // Set up polling for real-time updates
   useEffect(() => {
-    // Poll every 2 seconds for updates
-    const pollInterval = setInterval(fetchOrder, 2000);
+    // Poll every 1 second for updates
+    const pollInterval = setInterval(fetchOrder, 1000);
 
     // Cleanup interval on unmount
     return () => clearInterval(pollInterval);
@@ -405,6 +405,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
+        {isPolling && (
+          <div className="absolute top-0 right-0 flex items-center gap-2 text-primary-500 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Updating...</span>
+          </div>
+        )}
       </div>
 
       <div id="order-details">
