@@ -19,9 +19,13 @@ const RegistrationCard = ({ event, registrations }: Props) => {
     <div className="group relative flex min-h-[320px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[380px]">
       <Link 
         href={`/reg/${primaryOrderId}`}
-        className="flex-center aspect-square w-full bg-gray-50 bg-cover bg-center text-grey-500 transition-transform duration-300 group-hover:scale-105"
-        style={{backgroundImage: `url(${event.imageUrl})`}}
-      />
+        className="relative flex-center aspect-square w-full overflow-hidden"
+      >
+        <div 
+          className="absolute inset-0 bg-center bg-cover transition-transform duration-300 group-hover:scale-105"
+          style={{backgroundImage: `url(${event.imageUrl})`}}
+        />
+      </Link>
 
       <div className="flex flex-col flex-grow p-3 md:p-5">
         <div className="flex flex-col gap-1 md:gap-2 mb-3 md:mb-4">

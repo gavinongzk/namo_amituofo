@@ -57,7 +57,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     >
       <Link 
         href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
-        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden"
+        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
         onClick={handleCardClick}
       >
         {event.imageUrl ? (
@@ -65,8 +65,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             src={event.imageUrl}
             alt={event.title}
             width={2000}
-            height={1000}
-            className="h-[200px] w-full rounded-[10px] object-cover"
+            height={2000}
+            className="w-full h-full object-cover"
             onLoadingComplete={() => setImageLoading(false)}
             priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
