@@ -142,10 +142,11 @@ export default async function EventDetails({ params: { id }, searchParams }: Eve
           <Image 
             src={event.imageUrl}
             alt={event.title}
-            width={500}
-            height={500}
+            width={1000}
+            height={1000}
             className="rounded-2xl object-contain w-full h-auto shadow-lg"
             priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
         
