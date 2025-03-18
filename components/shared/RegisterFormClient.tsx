@@ -88,6 +88,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
+  const [timeRemaining, setTimeRemaining] = useState<number>(5);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -521,6 +522,26 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
 
+  // Add useEffect for timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showConfirmation && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [showConfirmation, timeRemaining]);
+
+  // Reset timer when dialog is closed
+  useEffect(() => {
+    if (!showConfirmation) {
+      setTimeRemaining(5);
+    }
+  }, [showConfirmation]);
+
   return (
     <div className="max-w-3xl mx-auto">
       {isCountryLoading ? (
@@ -863,8 +884,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                 }
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={timeRemaining > 0}
             >
-              继续 / Continue
+              {timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
             </Button>
           </DialogFooter>
         </DialogContent>
