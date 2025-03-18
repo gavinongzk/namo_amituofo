@@ -2,13 +2,14 @@
   "name": "namo-amituofo-register",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@9.11.0",
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "update-version": "node scripts/update-version.js",
     "websocket": "tsx scripts/start-websocket.ts"
   },

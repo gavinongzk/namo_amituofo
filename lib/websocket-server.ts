@@ -17,14 +17,14 @@ interface OrderDocument {
 }
 
 // Type definition for change stream events
-interface AttendanceChangeEvent extends ChangeStreamDocument<OrderDocument> {
+type AttendanceChangeEvent = ChangeStreamDocument<OrderDocument> & {
   documentKey: {
     _id: { toString: () => string };
   };
   updateDescription: {
     updatedFields: Record<string, any>;
   };
-}
+};
 
 async function startChangeStream() {
   try {
