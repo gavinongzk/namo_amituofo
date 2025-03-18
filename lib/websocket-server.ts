@@ -59,7 +59,8 @@ async function startChangeStream() {
           const attendance = updatedFields[groupId];
           
           // Broadcast the update to all connected clients
-          wss.clients.forEach((client: WebSocketClient) => {
+          wss.clients.forEach((ws: WebSocket) => {
+            const client = ws as WebSocketClient;
             if (client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({
                 type: 'attendance_update',
@@ -85,11 +86,12 @@ async function startChangeStream() {
 
 // Set up ping-pong to detect dead connections
 const interval = setInterval(() => {
-  wss.clients.forEach((ws: WebSocketClient) => {
-    if (ws.isAlive === false) return ws.terminate();
+  wss.clients.forEach((ws: WebSocket) => {
+    const client = ws as WebSocketClient;
+    if (client.isAlive === false) return client.terminate();
     
-    ws.isAlive = false;
-    ws.ping();
+    client.isAlive = false;
+    client.ping();
   });
 }, 30000);
 
