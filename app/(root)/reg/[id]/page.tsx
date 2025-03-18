@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getOrderById } from '@/lib/actions/order.actions';
 import { formatBilingualDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
@@ -53,7 +53,7 @@ const convertLinksInText = (text: string) => {
   return processedText;
 };
 
-const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
+const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
   qrCode: string, 
   isAttended: boolean,
   isNewlyMarked?: boolean,
@@ -105,9 +105,9 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked, queueNumber }: {
       </div>
     )}
   </div>
-);
+));
 
-const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel }) => {
+const CancelButton = React.memo(({ groupId, orderId, onCancel }: CancelButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = async (): Promise<void> => {
@@ -159,7 +159,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, orderId, onCancel 
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+});
 
 const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) => {
   const [order, setOrder] = useState<{
@@ -189,7 +189,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     const now = Date.now();
     // Debounce: Skip if last fetch was less than 500ms ago
     if (now - lastFetchTime.current < 500) {
@@ -230,15 +230,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             if (matchingEvent && matchingEvent.orderIds) {
               setRelatedOrders(matchingEvent.orderIds);
               
-              // Fetch all related orders and combine their customFieldValues
-              for (const orderId of matchingEvent.orderIds) {
-                // Skip the current order as we already have it
-                if (orderId === id) continue;
+              // Fetch all related orders in parallel
+              const relatedOrderIds = matchingEvent.orderIds.filter((orderId: string) => orderId !== id);
+              if (relatedOrderIds.length > 0) {
+                const relatedOrderPromises = relatedOrderIds.map((orderId: string) => getOrderById(orderId));
+                const relatedOrderResults = await Promise.all(relatedOrderPromises);
                 
-                const relatedOrder = await getOrderById(orderId);
-                if (relatedOrder && relatedOrder.customFieldValues) {
-                  allCustomFieldValues = [...allCustomFieldValues, ...relatedOrder.customFieldValues];
-                }
+                // Combine customFieldValues from all related orders
+                relatedOrderResults.forEach((relatedOrder) => {
+                  if (relatedOrder && relatedOrder.customFieldValues) {
+                    allCustomFieldValues = [...allCustomFieldValues, ...relatedOrder.customFieldValues];
+                  }
+                });
               }
             }
           }
@@ -283,21 +286,21 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     } finally {
       setIsPolling(false);
     }
-  };
+  }, [id]);
 
   // Initial fetch
   useEffect(() => {
     fetchOrder();
-  }, [id]);
+  }, [fetchOrder]);
 
   // Set up polling for real-time updates
   useEffect(() => {
-    // Poll every 1 second for updates
-    const pollInterval = setInterval(fetchOrder, 1000);
+    // Poll every 5 seconds for updates (changed from 1 second)
+    const pollInterval = setInterval(fetchOrder, 5000);
 
     // Cleanup interval on unmount
     return () => clearInterval(pollInterval);
-  }, [id]);
+  }, [fetchOrder]);
 
   const handleCancellation = (groupId: string): void => {
     setOrder(prevOrder => {
@@ -601,4 +604,5 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   );
 };
 
-export default OrderDetailsPage;
+// Wrap the component with React.memo
+export default React.memo(OrderDetailsPage);
