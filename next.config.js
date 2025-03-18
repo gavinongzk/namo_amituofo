@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+import { withSentryConfig } from "@sentry/nextjs";
+
 const nextConfig = {
   images: {
     domains: ['utfs.io'],
@@ -28,64 +30,56 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+const sentryWebpackPluginOptions = {
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
 
+  org: "namo-amituofo",
+  project: "javascript-nextjs",
 
-// Injected content via Sentry wizard below
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
 
-const { withSentryConfig } = require("@sentry/nextjs");
+  // For all available options, see:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-module.exports = withSentryConfig(
-  module.exports,
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: true,
 
-    org: "namo-amituofo",
-    project: "javascript-nextjs",
+  // Automatically annotate React components to show their full name in breadcrumbs and session replay
+  reactComponentAnnotation: {
+    enabled: true,
+  },
 
-    // Only print logs for uploading source maps in CI
-    silent: !process.env.CI,
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+  // This can increase your server load as well as your hosting bill.
+  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+  // side errors will fail.
+  tunnelRoute: "/monitoring",
 
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+  // Configure error handling
+  errorHandling: {
+    enabled: true,
+    ignoreErrors: [
+      // Ignore network errors that might be caused by ad blockers or offline state
+      'Failed to fetch',
+      'NetworkError',
+      'TypeError: Failed to fetch',
+      'ChunkLoadError',
+    ],
+  },
 
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+  // Hides source maps from generated client bundles
+  hideSourceMaps: true,
 
-    // Automatically annotate React components to show their full name in breadcrumbs and session replay
-    reactComponentAnnotation: {
-      enabled: true,
-    },
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
 
-    // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-    // This can increase your server load as well as your hosting bill.
-    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-    // side errors will fail.
-    tunnelRoute: "/monitoring",
+  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+  // See the following for more information:
+  // https://docs.sentry.io/product/crons/
+  // https://vercel.com/docs/cron-jobs
+  automaticVercelMonitors: true,
+}
 
-    // Configure error handling
-    errorHandling: {
-      enabled: true,
-      ignoreErrors: [
-        // Ignore network errors that might be caused by ad blockers or offline state
-        'Failed to fetch',
-        'NetworkError',
-        'TypeError: Failed to fetch',
-        'ChunkLoadError',
-      ],
-    },
-
-    // Hides source maps from generated client bundles
-    hideSourceMaps: true,
-
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    disableLogger: true,
-
-    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: true,
-  }
-);
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
