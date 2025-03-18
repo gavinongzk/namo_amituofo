@@ -3,6 +3,10 @@ export const routeCacheConfig = {
     revalidate: 60,
     prefetch: true
   },
+  '/events': {
+    revalidate: 60,
+    prefetch: true
+  },
   '/events/*': {
     revalidate: 60,
     prefetch: true
