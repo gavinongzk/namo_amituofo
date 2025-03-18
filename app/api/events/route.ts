@@ -33,9 +33,9 @@ const getCachedEvents = unstable_cache(
 
     return eventsWithAllFields;
   },
-  ['api-events-list'],
+  ['api-events-list', 'country'],  // Include country in cache key
   {
-    revalidate: false, // Changed from 0 to false to disable caching
+    revalidate: 300, // Cache for 5 minutes
     tags: ['events']
   }
 );
@@ -68,8 +68,8 @@ const getCachedSuperAdminEvents = unstable_cache(
   },
   ['superadmin-events-list', 'country'],  // Include country in cache key
   {
-    revalidate: false, // Changed from 0 to false to disable caching
-    tags: ['events']
+    revalidate: 300, // Cache for 5 minutes
+    tags: ['events', 'admin-events']
   }
 );
 
@@ -111,14 +111,14 @@ export async function GET(request: NextRequest) {
       ? await getCachedSuperAdminEvents(country)
       : await getCachedEvents(country);
     
-    // Use no-store to disable caching
+    // Improved caching strategy
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Surrogate-Control': 'no-store',
+        'Cache-Control': isSuperAdmin 
+          ? 'private, max-age=60, s-maxage=300, stale-while-revalidate=600' 
+          : 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        'Surrogate-Control': 'max-age=300',
       },
     });
   } catch (error) {
