@@ -179,124 +179,93 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     field: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
-  const previousOrder = useRef<typeof order>(null);
-  const lastFetchTime = useRef<number>(0);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
-  const fetchOrder = async () => {
-    const now = Date.now();
-    // Debounce: Skip if last fetch was less than 500ms ago
-    if (now - lastFetchTime.current < 500) {
-      return;
-    }
-    
-    setIsPolling(true);
+  // Initial data fetch
+  const fetchInitialData = async () => {
     try {
-      // Fetch the primary order first
       const fetchedOrder = await getOrderById(id);
-      
-      // Find a phone number in the order to fetch related orders
-      let phoneNumber = null;
-      for (const group of fetchedOrder.customFieldValues) {
-        const phoneField = group.fields.find(
-          (field: any) => field.type === 'phone' || field.label.toLowerCase().includes('phone')
-        );
-        if (phoneField) {
-          phoneNumber = phoneField.value;
-          break;
-        }
-      }
-      
-      // If we found a phone number, fetch all related orders for the same event
-      let allCustomFieldValues = [...fetchedOrder.customFieldValues];
-      if (phoneNumber) {
-        try {
-          // Fetch all orders for this phone number
-          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Find the event that matches our current order's event
-            const matchingEvent = data.find((item: any) => 
-              item.event._id === fetchedOrder.event._id.toString()
-            );
-            
-            if (matchingEvent && matchingEvent.orderIds) {
-              setRelatedOrders(matchingEvent.orderIds);
-              
-              // Fetch all related orders and combine their customFieldValues
-              for (const orderId of matchingEvent.orderIds) {
-                // Skip the current order as we already have it
-                if (orderId === id) continue;
-                
-                const relatedOrder = await getOrderById(orderId);
-                if (relatedOrder && relatedOrder.customFieldValues) {
-                  allCustomFieldValues = [...allCustomFieldValues, ...relatedOrder.customFieldValues];
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching related orders:', error);
-        }
-      }
-      
-      // Check for newly marked attendances
-      if (previousOrder.current) {
-        allCustomFieldValues.forEach((group: CustomFieldGroup) => {
-          const prevGroup = previousOrder.current?.customFieldValues.find(
-            (g: CustomFieldGroup) => g.groupId === group.groupId
-          );
-          if (group.attendance && !prevGroup?.attendance) {
-            setNewlyMarkedGroups(prev => new Set(prev).add(group.groupId));
+      setOrder(fetchedOrder);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching initial order data:', error);
+      setIsLoading(false);
+    }
+  };
+
+  // Handle real-time attendance updates
+  const handleAttendanceUpdate = (event: MessageEvent) => {
+    const data = JSON.parse(event.data);
+    
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+
+      const updatedCustomFieldValues = prevOrder.customFieldValues.map(group => {
+        if (group.groupId === data.groupId) {
+          // Mark as newly attended and play sound
+          if (!group.attendance && data.attendance) {
+            setNewlyMarkedGroups(prev => new Set(prev).add(data.groupId));
             playSuccessSound();
             // Clear the newly marked status after animation
             setTimeout(() => {
               setNewlyMarkedGroups(prev => {
                 const next = new Set(prev);
-                next.delete(group.groupId);
+                next.delete(data.groupId);
                 return next;
               });
             }, 2000);
           }
-        });
-      }
-      
-      // Update the order with all combined customFieldValues
-      const combinedOrder = {
-        ...fetchedOrder,
-        customFieldValues: allCustomFieldValues
+          
+          return {
+            ...group,
+            attendance: data.attendance
+          };
+        }
+        return group;
+      });
+
+      return {
+        ...prevOrder,
+        customFieldValues: updatedCustomFieldValues
       };
-      
-      previousOrder.current = combinedOrder;
-      setOrder(combinedOrder);
-      setIsLoading(false);
-      lastFetchTime.current = now;
-    } catch (error) {
-      console.error('Error fetching order:', error);
-    } finally {
-      setIsPolling(false);
-    }
+    });
   };
 
-  // Initial fetch
+  // Set up SSE connection for real-time updates
   useEffect(() => {
-    fetchOrder();
-  }, [id]);
+    // First fetch initial data
+    fetchInitialData();
 
-  // Set up polling for real-time updates
-  useEffect(() => {
-    // Poll every 1 second for updates
-    const pollInterval = setInterval(fetchOrder, 1000);
+    // Then set up SSE connection for real-time updates
+    const eventSource = new EventSource(`/api/attendance-updates/${id}`);
+    eventSourceRef.current = eventSource;
 
-    // Cleanup interval on unmount
-    return () => clearInterval(pollInterval);
+    eventSource.onmessage = handleAttendanceUpdate;
+    eventSource.onerror = (error) => {
+      console.error('SSE Error:', error);
+      // Attempt to reconnect after 5 seconds on error
+      setTimeout(() => {
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          const newEventSource = new EventSource(`/api/attendance-updates/${id}`);
+          eventSourceRef.current = newEventSource;
+          newEventSource.onmessage = handleAttendanceUpdate;
+        }
+      }, 5000);
+    };
+
+    // Cleanup on unmount
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
   }, [id]);
 
   const handleCancellation = (groupId: string): void => {
@@ -405,12 +374,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
-        {isPolling && (
-          <div className="absolute top-0 right-0 flex items-center gap-2 text-primary-500 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Updating...</span>
-          </div>
-        )}
+        {/* No polling or SSE updates needed here */}
       </div>
 
       <div id="order-details">
