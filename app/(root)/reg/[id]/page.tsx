@@ -53,10 +53,11 @@ const convertLinksInText = (text: string) => {
   return processedText;
 };
 
-const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: { 
+const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
   qrCode: string, 
   isAttended: boolean,
-  isNewlyMarked?: boolean 
+  isNewlyMarked?: boolean,
+  queueNumber?: string
 }) => (
   <div className="w-full max-w-sm mx-auto mb-6">
     <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
@@ -97,6 +98,12 @@ const QRCodeDisplay = ({ qrCode, isAttended, isNewlyMarked }: {
         </div>
       )}
     </div>
+    {queueNumber && (
+      <div className="mt-3 text-center">
+        <p className="text-xs text-gray-500">队列号 Queue Number</p>
+        <p className="text-sm text-gray-600">{queueNumber}</p>
+      </div>
+    )}
   </div>
 );
 
@@ -440,12 +447,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
                       </div>
                     </div>
-                    {group.queueNumber && (
-                      <div className="bg-white/90 p-2 md:p-3 rounded-lg sm:rounded-xl text-center w-full sm:w-auto">
-                        <p className="text-xs md:text-sm text-primary-600">队列号 Queue Number</p>
-                        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-700">{group.queueNumber}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -457,6 +458,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         qrCode={group.qrCode} 
                         isAttended={!!group.attendance}
                         isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                        queueNumber={group.queueNumber}
                       />
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { formatBilingualDateTime } from '@/lib/utils'
 import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React, { useState, useEffect } from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types'
@@ -32,8 +33,10 @@ interface CardProps {
 }
 
 const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: CardProps) => {
+  const router = useRouter();
   const isEventCreator = userId === event.organizer._id.toString();
   const [imageLoading, setImageLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
@@ -58,21 +61,31 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     setImageLoading(true);
   }, [event.imageUrl]);
 
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!isOnline) {
+      e.preventDefault();
+      alert('This action requires an internet connection. Please check your connection and try again.');
+      return;
+    }
+    e.preventDefault();
+    setIsNavigating(true);
+    const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
+    router.push(href);
+  };
+
   return (
     <div 
-      className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-card transition-all duration-300 ease-in-out hover:shadow-card-hover focus-within:ring-2 focus-within:ring-primary-500 md:min-h-[438px]"
+      className={cn(
+        "group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-card transition-all duration-300 ease-in-out hover:shadow-card-hover focus-within:ring-2 focus-within:ring-primary-500 md:min-h-[438px]",
+        isNavigating && "pointer-events-none opacity-70"
+      )}
       role="article"
       aria-labelledby={`event-title-${event._id}`}
     >
       <Link 
         href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
-        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden"
-        onClick={(e) => {
-          if (!isOnline) {
-            e.preventDefault();
-            alert('This action requires an internet connection. Please check your connection and try again.');
-          }
-        }}
+        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
+        onClick={handleCardClick}
       >
         {event.imageUrl && !imageError ? (
           <Image 
@@ -83,7 +96,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               "object-cover transition-opacity duration-300",
               imageLoading ? "opacity-0" : "opacity-100"
             )}
-            sizes="(max-width: 400px) 100vw, 400px"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onLoadingComplete={() => {
               setImageLoading(false);
               setImageError(false);
@@ -103,8 +116,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               }
             }}
             priority={priority}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkLzYvLy82NDg0PUA4Nj9BOTs/QTY/QUhCRk1KSlVWVkBNXl9nYWf/2wBDARUXFx4aHh8fHmhANUA2YGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGf/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            loading={priority ? 'eager' : 'lazy'}
           />
         ) : (
           <div className="flex-center flex-col text-grey-500">
@@ -164,6 +176,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         <Link 
           href={`/events/details/${event._id}`}
           className="group/title focus:outline-none"
+          onClick={handleCardClick}
         >
           <h2 
             id={`event-title-${event._id}`}
@@ -207,6 +220,12 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
           </div>
         )}
       </div>
+
+      {isNavigating && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   )
 }

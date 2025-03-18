@@ -100,8 +100,8 @@ export const getEventById = unstable_cache(
   },
   ['event-by-id'],
   {
-    revalidate: false,
-    tags: ['events']
+    revalidate: 300, // Cache for 5 minutes
+    tags: ['events', 'event-images']
   }
 );
 
@@ -124,9 +124,12 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       },
       { new: true }
     );
+    
+    // Revalidate all relevant caches
     revalidatePath(path);
     revalidatePath('/');
     revalidateTag('events');
+    revalidateTag('event-images');
 
     return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
@@ -144,9 +147,14 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
       { isDeleted: true },
       { new: true }
     )
-    if (deletedEvent) revalidatePath(path)
-    revalidatePath('/');
-    revalidateTag('events');
+    
+    // Revalidate all relevant caches
+    if (deletedEvent) {
+      revalidatePath(path);
+      revalidatePath('/');
+      revalidateTag('events');
+      revalidateTag('event-images');
+    }
   } catch (error) {
     handleError(error)
   }
@@ -234,10 +242,10 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
         return { data: [], totalPages: 0 }
       }
     },
-    ['events-list'],
+    ['events-list', cacheKey],
     {
-      revalidate: false,
-      tags: ['events']
+      revalidate: 300, // Cache for 5 minutes
+      tags: ['events', 'event-images']
     }
   )();
 }

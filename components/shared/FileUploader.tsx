@@ -35,7 +35,7 @@ export function FileUploader({ imageUrl, onFieldChange, setFiles }: FileUploader
           <img
             src={imageUrl}
             alt="image"
-            className="max-h-full max-w-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
       ) : (

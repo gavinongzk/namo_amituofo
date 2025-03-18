@@ -103,7 +103,7 @@ const AnalyticsDashboard: React.FC = () => {
     const columns: ColumnDef<FrequentAttendee>[] = [
         {
             accessorKey: 'name',
-            header: '姓名 Name',
+            header: '名字 Name',
             filterFn: (row, id, value) => {
                 const name = row.getValue(id) as string;
                 const phone = row.getValue('phoneNumber') as string;

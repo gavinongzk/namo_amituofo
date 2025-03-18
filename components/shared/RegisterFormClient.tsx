@@ -88,6 +88,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
+  const [timeRemaining, setTimeRemaining] = useState<number>(5);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -165,7 +166,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         .min(1, { message: "此栏位为必填 / This field is required" })
                         .refine(
                           (value) => isValidName(value),
-                          { message: "姓名只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+                          { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
                         )
                     : z.string().min(1, { message: "此栏位为必填 / This field is required" })
           ])
@@ -521,6 +522,26 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
 
+  // Add useEffect for timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showConfirmation && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [showConfirmation, timeRemaining]);
+
+  // Reset timer when dialog is closed
+  useEffect(() => {
+    if (!showConfirmation) {
+      setTimeRemaining(5);
+    }
+  }, [showConfirmation]);
+
   return (
     <div className="max-w-3xl mx-auto">
       {isCountryLoading ? (
@@ -811,7 +832,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     <div className="flex flex-col gap-2">
                       <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">姓名 Name:</span>
+                        <span className="text-gray-700 font-semibold">名字 Name:</span>
                         <span className="text-gray-800">{duplicate.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -863,8 +884,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                 }
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={timeRemaining > 0}
             >
-              继续 / Continue
+              {timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
             </Button>
           </DialogFooter>
         </DialogContent>

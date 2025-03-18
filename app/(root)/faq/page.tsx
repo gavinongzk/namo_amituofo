@@ -17,7 +17,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">2.</span> 点击"报名Register"按钮
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 填写所需信息（姓名、电话等）
+                <span className="font-medium text-gray-900">3.</span> 填写所需信息（名字、电话等）
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> 提交表格后，您将收到专属二维码
@@ -98,7 +98,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> 点击"View Details"查看详情
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 在详情页面可以更改姓名或电话号码
+                <span className="font-medium text-gray-900">4.</span> 在详情页面可以更改名字或电话号码
               </li>
             </ol>
           </div>

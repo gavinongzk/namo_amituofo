@@ -101,31 +101,33 @@ type EventDetailsProps = {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const event = await getEventById(params.id);
   
+  const title = event.title || 'Event Details';
+  const description = event.description?.slice(0, 160) || 'Event details';
+  const imageUrl = event.imageUrl || '';
+
   return {
-    title: event.title || 'Event Details',
-    description: event.description?.slice(0, 160) || 'Event details',
+    title,
+    description,
     openGraph: {
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
+      title,
+      description,
       images: [
         {
-          url: event.imageUrl || '',
+          url: imageUrl,
           width: 1200,
           height: 630,
-          alt: event.title,
+          alt: title,
         }
       ],
       type: 'website',
+      siteName: 'Namo Amituofo Organization',
     },
     twitter: {
       card: 'summary_large_image',
-      title: event.title || 'Event Details',
-      description: event.description?.slice(0, 160) || 'Event details',
-      images: [event.imageUrl || ''],
+      title,
+      description,
+      images: [imageUrl],
     },
-    other: {
-      'whatsapp-preview': 'true',
-    }
   };
 }
 
@@ -137,14 +139,17 @@ export default async function EventDetails({ params: { id }, searchParams }: Eve
     <section className="w-full bg-gray-50 min-h-screen py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
         <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-5">
-          <Image 
-            src={event.imageUrl}
-            alt={event.title}
-            width={500}
-            height={500}
-            className="rounded-2xl object-contain w-full h-auto shadow-lg"
-            priority
-          />
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg">
+            <Image 
+              src={event.imageUrl}
+              alt={event.title}
+              width={1000}
+              height={1000}
+              className="w-full h-full object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
         </div>
         
         <Suspense fallback={<Loading />}>

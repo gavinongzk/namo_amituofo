@@ -730,7 +730,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         {/* Search input */}
         <div className="mb-4">
           <Input
-            placeholder="Search by name or phone number 按姓名或电话号码搜索"
+            placeholder="Search by name or phone number 按名字或电话号码搜索"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full text-lg p-3"
@@ -747,7 +747,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <thead>
                 <tr>
                   {renderHeader('Queue 排队号', 'queueNumber')}
-                  {renderHeader('Name 姓名', 'name')}
+                  {renderHeader('Name 名字', 'name')}
                   {isSuperAdmin && renderHeader('Phone 电话', 'phoneNumber')}
                   {isSuperAdmin && renderHeader('Postal Code 邮区编号', 'postalCode')}
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
