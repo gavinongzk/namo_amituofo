@@ -8,6 +8,17 @@ const nextConfig = {
         hostname: 'utfs.io',
         port: ''
       }
+    ],
+    path: '/img/_next',
+    loader: 'default',
+    unoptimized: false
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/img/_next/:path*',
+        destination: '/_next/image/:path*'
+      }
     ]
   },
   // Add Sentry configuration
