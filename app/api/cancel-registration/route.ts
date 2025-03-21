@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import Event from '@/lib/database/models/event.model';
 import { auth } from '@clerk/nextjs';
+import { revalidateTag } from 'next/cache';
 
 export async function POST(req: NextRequest) {
   console.log('Cancel/Uncancel registration request received');
@@ -41,6 +42,10 @@ export async function POST(req: NextRequest) {
       }
 
       console.log(`Updated event maxSeats. New value: ${event.maxSeats}`);
+      
+      // Revalidate cached data to ensure UI updates correctly
+      revalidateTag('order-details');
+      revalidateTag('events');
     }
 
     return NextResponse.json({ 

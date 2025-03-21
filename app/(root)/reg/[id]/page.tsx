@@ -217,8 +217,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       let allCustomFieldValues = [...fetchedOrder.customFieldValues];
       if (phoneNumber) {
         try {
-          // Fetch all orders for this phone number
-          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+          // We need to use a direct API call here rather than the client-side action to bypass the cancelled filter
+          // so we can get ALL registrations including cancelled ones for this page
+          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
           if (response.ok) {
             const data = await response.json();
             
@@ -303,6 +304,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   }, [fetchOrder]);
 
   const handleCancellation = (groupId: string): void => {
+    // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
       return {
@@ -311,6 +313,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           group.groupId === groupId ? { ...group, cancelled: true } : group
         )
       };
+    });
+    
+    // Update session storage to refresh Event Lookup page if user navigates back
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('eventLookupRegistrations');
+      sessionStorage.removeItem('eventLookupAllRegistrations');
+    }
+    
+    // Show success toast
+    toast.success('已成功取消报名 Registration cancelled successfully', {
+      duration: 3000,
+      position: 'bottom-center',
     });
   };
 
@@ -500,10 +514,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex-1 flex items-center gap-2">
+                          <div className="flex-1 flex items-center gap-1">
                             <span className="flex-1">{field.value}</span>
                             <Button
-                              size="icon"
+                              size="sm"
                               variant="ghost"
                               onClick={() => {
                                 if (field.id) {
@@ -511,9 +525,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   handleEdit(group.groupId, field.id, value);
                                 }
                               }}
-                              className="h-9 w-9"
+                              className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
                             >
                               <Pencil className="h-4 w-4" />
+                              <span className="text-xs">修改 Edit</span>
                             </Button>
                           </div>
                         )}

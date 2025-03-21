@@ -209,8 +209,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
             { label: { $regex: /phone/i }, value: cleanPhoneNumber }
           ]
         }
-      },
-      'customFieldValues.cancelled': { $ne: true }
+      }
     })
     .populate({
       path: 'event',
@@ -251,8 +250,11 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
         eventMap[eventId].orderIds.push(order._id.toString());
       }
       
-      // Add all registrations from this order
+      // Add only non-cancelled registrations from this order
       order.customFieldValues.forEach((group: any) => {
+        // Skip cancelled registrations
+        if (group.cancelled) return;
+        
         const nameField = group.fields?.find((field: any) => 
           field.label.toLowerCase().includes('name'))?.value || 'Unknown';
           
@@ -298,8 +300,7 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
             { label: { $regex: /phone/i }, value: cleanPhoneNumber }
           ]
         }
-      },
-      'customFieldValues.cancelled': { $ne: true }
+      }
     })
     .populate({
       path: 'event',
@@ -312,12 +313,107 @@ export const getAllOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .lean();
 
-    return JSON.parse(JSON.stringify(orders));
+    // Filter out cancelled registrations from the results
+    const ordersWithoutCancelled = orders.map(order => ({
+      ...order,
+      customFieldValues: order.customFieldValues.filter((group: any) => !group.cancelled)
+    }));
+
+    return JSON.parse(JSON.stringify(ordersWithoutCancelled));
   } catch (error) {
     console.error(error);
     throw error;
   }
-}
+};
+
+export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: string) => {
+  try {
+    await connectToDatabase();
+    
+    console.log('Searching for phone number (including cancelled):', phoneNumber);
+
+    // Remove any cache-busting query params from the phone number
+    const cleanPhoneNumber = phoneNumber.split('?')[0];
+
+    // Get current date for filtering events that haven't ended yet
+    const currentDate = new Date();
+
+    // Ensure Category model is registered before using it
+    require('../database/models/category.model');
+
+    const orders = await Order.find({
+      'customFieldValues.fields': {
+        $elemMatch: {
+          $or: [
+            { type: 'phone', value: cleanPhoneNumber },
+            { label: { $regex: /phone/i }, value: cleanPhoneNumber }
+          ]
+        }
+      }
+    })
+    .populate({
+      path: 'event',
+      match: { endDateTime: { $gte: currentDate } }, // Only include events that haven't ended yet
+      select: '_id title imageUrl startDateTime endDateTime organizer',
+      populate: {
+        path: 'category',
+        model: 'Category',
+        select: '_id name'
+      }
+    })
+    .lean();
+    
+    // Filter out any null events (those that didn't match the date criteria)
+    const filteredOrders = orders.filter(order => order.event);
+    
+    // Group orders by event ID
+    const eventMap: Record<string, any> = {};
+    
+    filteredOrders.forEach((order: any) => {
+      const eventId = order.event._id.toString();
+      
+      if (!eventMap[eventId]) {
+        eventMap[eventId] = {
+          event: {
+            ...order.event,
+            orderId: order._id.toString(), // Use the first order ID as the representative ID
+          },
+          orderIds: [order._id.toString()], // Array to store all order IDs
+          registrations: [],
+        };
+      } else {
+        // Add this order ID to the list
+        eventMap[eventId].orderIds.push(order._id.toString());
+      }
+      
+      // Add all registrations from this order, including cancelled ones
+      order.customFieldValues.forEach((group: any) => {
+        const nameField = group.fields?.find((field: any) => 
+          field.label.toLowerCase().includes('name'))?.value || 'Unknown';
+          
+        eventMap[eventId].registrations.push({
+          queueNumber: group.queueNumber,
+          name: nameField,
+          orderId: order._id.toString(), // Store the order ID for each registration
+          groupId: group.groupId, // Include groupId for reference
+          cancelled: !!group.cancelled // Include cancelled status
+        });
+      });
+    });
+    
+    // Convert map to array and sort by start date (newest first)
+    const groupedOrders = Object.values(eventMap)
+      .sort((a: any, b: any) => 
+        new Date(b.event.startDateTime).getTime() - new Date(a.event.startDateTime).getTime()
+      );
+
+    return JSON.parse(JSON.stringify(groupedOrders));
+  } catch (error) {
+    console.error('Error in getAllOrdersByPhoneNumberIncludingCancelled:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
+};
 
 export const getGroupIdsByEventId = async (eventId: string): Promise<string[]> => {
   try {

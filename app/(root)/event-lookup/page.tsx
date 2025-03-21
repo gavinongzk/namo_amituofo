@@ -146,6 +146,13 @@ const EventLookupPage = () => {
                 }
                 
                 setInitialSearchComplete(true);
+                
+                // Refresh data when coming back from order details page to ensure we have the latest data
+                // (especially important after cancellations)
+                setTimeout(() => {
+                    handleLookup();
+                }, 300);
+                
                 return;
             } else if (!isBackFromOrderDetails && (savedRegistrations || savedPhoneNumber || savedHasSearched || savedAllRegistrations)) {
                 // Clear session storage if user is not coming back from order details but has session data
