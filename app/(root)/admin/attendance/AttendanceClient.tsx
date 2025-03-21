@@ -340,7 +340,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log(`Attempting to ${cancelled ? 'cancel' : 'uncancel'} registration:`, {
         orderId,
         groupId,
-        queueNumber
+        queueNumber,
+        cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       });
 
       const res = await fetch('/api/cancel-registration', {
@@ -352,7 +353,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           orderId, 
           groupId,
           queueNumber, // Always include queueNumber for better identification
-          cancelled 
+          cancelled: Boolean(cancelled) // Ensure it's a proper boolean
         }),
       });
 
@@ -366,10 +367,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
         }
         
+        // Verify the cancelled status was properly set as a boolean
+        if (typeof data.cancelled !== 'boolean') {
+          console.warn(`API returned non-boolean cancelled status: ${data.cancelled} (${typeof data.cancelled})`);
+        }
+        
         setMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for ${registrationId}, group ${groupId}`);
         setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for queue number ${queueNumber}`);
 
-        // Update registrations state
+        // Update registrations state with correct boolean value
         const updatedRegistrations = registrations.map(r => {
           if (r.id === registrationId) {
             return {
@@ -379,7 +385,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 customFieldValues: r.order.customFieldValues.map(g => 
                   // Match precisely by queue number if provided, else fall back to groupId
                   (queueNumber && g.queueNumber === queueNumber) || g.groupId === groupId
-                    ? { ...g, cancelled }
+                    ? { ...g, cancelled: Boolean(cancelled) }
                     : g
                 )
               }

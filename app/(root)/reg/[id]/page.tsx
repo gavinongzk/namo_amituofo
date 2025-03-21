@@ -360,7 +360,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       console.log('Updated order state:', updatedOrder.customFieldValues.map(g => ({
         groupId: g.groupId,
         queueNumber: g.queueNumber,
-        cancelled: g.cancelled
+        cancelled: g.cancelled,
+        cancelledType: typeof g.cancelled
       })));
       
       return updatedOrder;
@@ -373,7 +374,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         orderId: id, 
         groupId, 
         eventId: order?.event?._id, // Explicitly pass eventId
-        cancelled: true 
+        cancelled: true // Explicitly pass true as a boolean
       };
       
       // Only include queueNumber in request if it's provided and not empty
@@ -397,6 +398,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       }
       
       console.log('API response:', data);
+      
+      // Verify response data
+      if (typeof data.cancelled !== 'boolean') {
+        console.warn(`API returned non-boolean cancelled status: ${data.cancelled} (${typeof data.cancelled})`);
+      }
       
       // Verify the response matches what we expected
       if (queueNumber && data.queueNumber !== queueNumber) {
