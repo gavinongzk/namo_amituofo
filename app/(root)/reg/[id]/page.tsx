@@ -305,12 +305,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const handleCancellation = (groupId: string, queueNumber?: string): void => {
     // Log which participant is being cancelled
     console.log(`Cancelling participant with groupId: ${groupId}${queueNumber ? `, queueNumber: ${queueNumber}` : ''}`);
-    console.log(`Current participants:`, order?.customFieldValues.map(g => ({
-      groupId: g.groupId,
-      queueNumber: g.queueNumber,
-      name: g.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A',
-      cancelled: g.cancelled
-    })));
+
     
     // Update the local state
     setOrder(prevOrder => {
@@ -496,11 +491,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         return 0;
       })
     : [];
-
-  // Log the mapping between participant index and groupId for debugging
-  console.log('Participant mapping:', customFieldValuesArray.map((group, index) => 
-    `Participant ${index + 1} (${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}) -> groupId: ${group.groupId}, queueNumber: ${group.queueNumber}`
-  ));
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
