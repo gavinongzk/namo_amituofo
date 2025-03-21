@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
       }
 
       console.log(`Updated event maxSeats. New value: ${event.maxSeats}`);
+      console.log(`Updating registration with queueNumber: ${queueNumber || group.queueNumber}, groupId: ${group.groupId}`);
       
       // CRITICAL: Ensure cache is properly invalidated to prevent stale data
       // Invalidate all relevant cache tags to ensure fresh data on page refresh
@@ -74,11 +75,13 @@ export async function POST(req: NextRequest) {
       revalidateTag('registrations'); // Add registrations tag
     }
 
+    // Important: Use the original queueNumber parameter from the request if it was provided
+    // This ensures we return the exact queue number that was requested to be cancelled
     return NextResponse.json({ 
       message: cancelled ? 'Registration cancelled successfully' : 'Registration uncancelled successfully',
       cancelled: group.cancelled,
       groupId: group.groupId, // Return the groupId for reference
-      queueNumber: group.queueNumber, // Return the queueNumber for reference
+      queueNumber: queueNumber || group.queueNumber, // Return the original requested queueNumber if it was provided
       eventId: order.event.toString() // Return the eventId for reference
     });
   } catch (error) {

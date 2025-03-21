@@ -337,6 +337,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         throw new Error('Invalid registration ID');
       }
 
+      console.log(`Attempting to ${cancelled ? 'cancel' : 'uncancel'} registration:`, {
+        orderId,
+        groupId,
+        queueNumber
+      });
+
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
@@ -350,7 +356,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         }),
       });
 
+      const data = await res.json();
+      
       if (res.ok) {
+        console.log(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully:`, data);
+        
+        // Check if returned queue number matches requested queue number
+        if (queueNumber && data.queueNumber !== queueNumber) {
+          console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
+        }
+        
         setMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for ${registrationId}, group ${groupId}`);
         setModalMessage(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully for queue number ${queueNumber}`);
 
@@ -362,8 +377,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               order: {
                 ...r.order,
                 customFieldValues: r.order.customFieldValues.map(g => 
-                  // Match by queue number first, then fall back to groupId
-                  (g.queueNumber === queueNumber || g.groupId === groupId)
+                  // Match precisely by queue number if provided, else fall back to groupId
+                  (queueNumber && g.queueNumber === queueNumber) || g.groupId === groupId
                     ? { ...g, cancelled }
                     : g
                 )
@@ -381,6 +396,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           setShowModal(false);
         }, 2000);
       } else {
+        console.error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration:`, data);
         throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
       }
     } catch (error) {

@@ -369,18 +369,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     // Call the API to update the backend
     try {
       console.log('Sending cancel request to API...');
+      const cancelRequest = { 
+        orderId: id, 
+        groupId, 
+        eventId: order?.event?._id, // Explicitly pass eventId
+        cancelled: true 
+      };
+      
+      // Only include queueNumber in request if it's provided and not empty
+      if (queueNumber) {
+        console.log(`Including queueNumber ${queueNumber} in request`);
+        Object.assign(cancelRequest, { queueNumber });
+      }
+      
       const response = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          orderId: id, 
-          groupId, 
-          queueNumber, // Pass queueNumber to API
-          eventId: order?.event?._id, // Explicitly pass eventId
-          cancelled: true 
-        }),
+        body: JSON.stringify(cancelRequest),
       });
       
       const data = await response.json();
@@ -390,6 +397,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       }
       
       console.log('API response:', data);
+      
+      // Verify the response matches what we expected
+      if (queueNumber && data.queueNumber !== queueNumber) {
+        console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
+      }
       
       // Update session storage to refresh Event Lookup page if user navigates back
       if (typeof window !== 'undefined') {
