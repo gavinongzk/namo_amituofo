@@ -107,24 +107,17 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   </div>
 ));
 
-const CancelButton = React.memo(({ groupId, orderId, onCancel }: CancelButtonProps) => {
+const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo }: CancelButtonProps & { participantInfo?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId, groupId, cancelled: true }),
-      });
-
-      if (!response.ok) throw new Error('Failed to cancel registration');
+      // The actual cancellation is now handled in the parent component's handleCancellation function
+      // This is just for UI feedback
       onCancel();
     } catch (error) {
-      console.error('Error cancelling registration:', error);
+      console.error('Error in CancelButton handleCancel:', error);
     } finally {
       setIsLoading(false);
     }
@@ -145,9 +138,13 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel }: CancelButtonPro
         <AlertDialogHeader>
           <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            您确定要取消此报名吗？此操作无法撤消。
+            您确定要取消{participantInfo ? `${participantInfo}的` : '此'}报名吗？此操作无法撤消。
             <br />
-            Are you sure you want to cancel this registration? This action cannot be undone.
+            Are you sure you want to cancel {participantInfo ? `${participantInfo}'s` : 'this'} registration? This action cannot be undone.
+            <br />
+            <span className="text-xs text-gray-500 mt-2">
+              Technical ID: {groupId.substring(0, 8)}...
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -219,7 +216,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         try {
           // We need to use a direct API call here rather than the client-side action to bypass the cancelled filter
           // so we can get ALL registrations including cancelled ones for this page
-          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
+          // Add a timestamp to the URL to prevent caching
+          const cacheBuster = `_t=${Date.now()}`;
+          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true&${cacheBuster}`);
           if (response.ok) {
             const data = await response.json();
             
@@ -304,15 +303,64 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   }, [fetchOrder]);
 
   const handleCancellation = (groupId: string): void => {
+    // Log which participant is being cancelled
+    console.log(`Cancelling participant with groupId: ${groupId}`);
+    console.log(`Current participants:`, order?.customFieldValues.map(g => ({
+      groupId: g.groupId,
+      queueNumber: g.queueNumber,
+      name: g.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A',
+      cancelled: g.cancelled
+    })));
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
-      return {
+      
+      const updatedOrder = {
         ...prevOrder,
         customFieldValues: prevOrder.customFieldValues.map(group =>
           group.groupId === groupId ? { ...group, cancelled: true } : group
         )
       };
+      
+      // Log the updated state to verify
+      console.log('Updated order state:', updatedOrder.customFieldValues.map(g => ({
+        groupId: g.groupId,
+        queueNumber: g.queueNumber,
+        cancelled: g.cancelled
+      })));
+      
+      return updatedOrder;
+    });
+    
+    // Call the API to update the backend
+    fetch('/api/cancel-registration', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        orderId: id, 
+        groupId, 
+        cancelled: true 
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to cancel registration on the server');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Server response:', data);
+      // Success - continue with UI updates
+    })
+    .catch(error => {
+      console.error('Error cancelling registration:', error);
+      toast.error('取消报名失败，请重试 Failed to cancel registration, please try again', {
+        duration: 3000,
+        position: 'bottom-center',
+      });
     });
     
     // Update session storage to refresh Event Lookup page if user navigates back
@@ -326,6 +374,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       duration: 3000,
       position: 'bottom-center',
     });
+
+    // Immediate data refresh after a short delay to allow backend to update
+    setTimeout(() => {
+      // Reset lastFetchTime to force immediate fetch regardless of debounce
+      lastFetchTime.current = 0;
+      fetchOrder();
+    }, 1000); // Increased delay to 1000ms to ensure backend has time to process
   };
 
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
@@ -337,31 +392,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     if (!editingField) return;
     
     try {
-      const response = await fetch('/api/update-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: id,
-          groupId,
-          field: editingField.field,
-          value: editValue,
-          isFromOrderDetails: true
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data.message || 'Failed to update field', {
-          duration: 4000,
-          position: 'bottom-center',
-        });
-        return;
-      }
-
-      // Update local state
+      // Store the current value locally before making the API call
+      const fieldToUpdate = editingField.field;
+      const newValue = editValue;
+      
+      // Update local state immediately before API call for instant UI feedback
       setOrder(prevOrder => {
         if (!prevOrder) return null;
         return {
@@ -371,8 +406,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               ? {
                   ...group,
                   fields: group.fields.map(field =>
-                    field.id === editingField.field
-                      ? { ...field, value: editValue }
+                    field.id === fieldToUpdate
+                      ? { ...field, value: newValue }
                       : field
                   ),
                 }
@@ -381,8 +416,39 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         };
       });
       
+      // Clear editing state immediately
       setEditingField(null);
       setEditValue('');
+      
+      // Make API call
+      const response = await fetch('/api/update-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: id,
+          groupId,
+          field: fieldToUpdate,
+          value: newValue,
+          isFromOrderDetails: true
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Revert to original value if API call fails
+        toast.error(data.message || 'Failed to update field', {
+          duration: 4000,
+          position: 'bottom-center',
+        });
+        
+        // Re-fetch the order to ensure data consistency
+        fetchOrder();
+        return;
+      }
+
       toast.success('成功更新 Successfully updated', {
         duration: 3000,
         position: 'bottom-center',
@@ -393,6 +459,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 4000,
         position: 'bottom-center',
       });
+      // Re-fetch the order to ensure data consistency
+      fetchOrder();
     }
   };
 
@@ -418,6 +486,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         return 0;
       })
     : [];
+
+  // Log the mapping between participant index and groupId for debugging
+  console.log('Participant mapping:', customFieldValuesArray.map((group, index) => 
+    `Participant ${index + 1} (${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}) -> groupId: ${group.groupId}, queueNumber: ${group.queueNumber}`
+  ));
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
@@ -458,8 +531,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
                       <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
-                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Person {index + 1}</span>
+                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Participant {index + 1}</span>
                         {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
+                        <span className="text-xs opacity-50">#{group.queueNumber}</span>
                       </h5>
                       <div className="text-white/90 text-sm sm:text-base">
                         {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
@@ -541,9 +615,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       groupId={group.groupId}
                       orderId={id}
                       onCancel={() => handleCancellation(group.groupId)}
+                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                     />
                   )}
                 </div>
+                {/* Add a debug message that's only visible in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="p-2 text-xs text-gray-400">
+                    groupId: {group.groupId} | queueNumber: {group.queueNumber} | Index: {index}
+                  </div>
+                )}
                 {/* End of Registration Details Section */}
               </div>
             ))}

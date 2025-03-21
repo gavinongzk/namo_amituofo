@@ -17,11 +17,23 @@ export async function GET(req: NextRequest) {
     // If viewing details page, include cancelled registrations
     if (includeAllRegistrations) {
       const formattedOrders = await getAllOrdersByPhoneNumberIncludingCancelled(phoneNumber);
-      return NextResponse.json(formattedOrders);
+      
+      // Set cache control headers to prevent caching
+      const response = NextResponse.json(formattedOrders);
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      return response;
     } else {
       // For normal lookup, filter out cancelled registrations
       const formattedOrders = await getOrdersByPhoneNumber(phoneNumber);
-      return NextResponse.json(formattedOrders);
+      
+      // Set cache control headers to prevent caching
+      const response = NextResponse.json(formattedOrders);
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      return response;
     }
   } catch (error) {
     console.error('Error fetching orders:', error);

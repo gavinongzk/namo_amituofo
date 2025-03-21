@@ -43,9 +43,14 @@ export async function POST(req: NextRequest) {
 
       console.log(`Updated event maxSeats. New value: ${event.maxSeats}`);
       
-      // Revalidate cached data to ensure UI updates correctly
+      // CRITICAL: Ensure cache is properly invalidated to prevent stale data
+      // Invalidate all relevant cache tags to ensure fresh data on page refresh
       revalidateTag('order-details');
+      revalidateTag('orders');
       revalidateTag('events');
+      revalidateTag(`order-${orderId}`); // Add specific order tag
+      revalidateTag(`event-${order.event}`); // Add specific event tag
+      revalidateTag('registrations'); // Add registrations tag
     }
 
     return NextResponse.json({ 

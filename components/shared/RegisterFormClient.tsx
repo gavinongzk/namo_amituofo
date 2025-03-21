@@ -270,14 +270,14 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         if (phoneOverrides[i]) {
           // For overridden numbers, just check if it starts with + and contains only numbers after that
           if (!/^\+\d+$/.test(phoneNumber)) {
-            phoneValidationErrors.push(`第${i + 1}位参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Person ${i + 1}. Must start with + followed by numbers`);
+            phoneValidationErrors.push(`第${i + 1}位参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Participant ${i + 1}. Must start with + followed by numbers`);
           }
           continue;
         }
         
         // Regular phone validation for SG/MY numbers
         if (!isValidPhoneNumber(phoneNumber)) {
-          phoneValidationErrors.push(`第${i + 1}位参加者的电话号码无效 / Invalid phone number for Person ${i + 1}`);
+          phoneValidationErrors.push(`第${i + 1}位参加者的电话号码无效 / Invalid phone number for Participant ${i + 1}`);
         }
       }
       
