@@ -142,9 +142,19 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
             <br />
             Are you sure you want to cancel {participantInfo ? `${participantInfo}'s` : 'this'} registration? This action cannot be undone.
             <br />
-            <span className="text-xs text-gray-500 mt-2">
-              {queueNumber && `Queue #: ${queueNumber} | `}Technical ID: {groupId.substring(0, 8)}...
-            </span>
+            <div className="mt-3 text-gray-500 text-xs">
+              {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
+              <p>
+                {process.env.NODE_ENV === 'development' 
+                  ? `Group ID: ${groupId}` 
+                  : `Technical ID: ${groupId.substring(0, 8)}...`}
+              </p>
+              <p className="mt-2 text-amber-600">
+                取消后，此座位将重新分配给其他参加者。
+                <br />
+                After cancellation, this seat will be reallocated to other participants.
+              </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -166,6 +176,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       endDateTime: string;
       location?: string;
       registrationSuccessMessage?: string;
+      _id?: string;
     };
     customFieldValues: CustomFieldGroup[];
   } | null>(null);
@@ -302,28 +313,46 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return () => clearInterval(pollInterval);
   }, [fetchOrder]);
 
-  const handleCancellation = (groupId: string, queueNumber?: string): void => {
-    // Log which participant is being cancelled
-    console.log(`Cancelling participant with groupId: ${groupId}${queueNumber ? `, queueNumber: ${queueNumber}` : ''}`);
-
+  const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
+    // Log which participant is being cancelled with more detail
+    console.log(`Cancelling participant: ${new Date().toISOString()}`);
+    console.log(`  - groupId: ${groupId}`);
+    console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
+    console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
+    console.log(`  - orderId: ${id}`);
     
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
       
-      // If queueNumber is provided, find the matching group
-      let targetGroupId = groupId;
+      // First, identify the relevant group based on queueNumber if available, then groupId
+      let targetGroup;
+      
       if (queueNumber) {
-        const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
+        targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
         if (targetGroup) {
-          targetGroupId = targetGroup.groupId;
+          console.log(`  - Found matching group with queueNumber ${queueNumber}. GroupId: ${targetGroup.groupId}`);
+        } else {
+          console.warn(`  - WARNING: Could not find group with queueNumber ${queueNumber}`);
+        }
+      }
+      
+      // If we couldn't find by queueNumber or it wasn't provided, use groupId
+      if (!targetGroup) {
+        targetGroup = prevOrder.customFieldValues.find(group => group.groupId === groupId);
+        if (targetGroup) {
+          console.log(`  - Found matching group with groupId ${groupId}`);
+        } else {
+          console.warn(`  - WARNING: Could not find group with groupId ${groupId}`);
+          // If we can't find either by queueNumber or groupId, return the order unchanged
+          return prevOrder;
         }
       }
       
       const updatedOrder = {
         ...prevOrder,
         customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.groupId === targetGroupId ? { ...group, cancelled: true } : group
+          group.groupId === targetGroup.groupId ? { ...group, cancelled: true } : group
         )
       };
       
@@ -338,54 +367,55 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     });
     
     // Call the API to update the backend
-    fetch('/api/cancel-registration', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        orderId: id, 
-        groupId, 
-        queueNumber, // Pass queueNumber to API
-        cancelled: true 
-      }),
-    })
-    .then(response => {
+    try {
+      console.log('Sending cancel request to API...');
+      const response = await fetch('/api/cancel-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          orderId: id, 
+          groupId, 
+          queueNumber, // Pass queueNumber to API
+          eventId: order?.event?._id, // Explicitly pass eventId
+          cancelled: true 
+        }),
+      });
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to cancel registration on the server');
+        throw new Error(`Failed to cancel registration: ${data.error || response.statusText}`);
       }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Server response:', data);
-      // Success - continue with UI updates
-    })
-    .catch(error => {
-      console.error('Error cancelling registration:', error);
-      toast.error('取消报名失败，请重试 Failed to cancel registration, please try again', {
+      
+      console.log('API response:', data);
+      
+      // Update session storage to refresh Event Lookup page if user navigates back
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('eventLookupRegistrations');
+        sessionStorage.removeItem('eventLookupAllRegistrations');
+      }
+      
+      // Show success toast
+      toast.success('已成功取消报名 Registration cancelled successfully', {
         duration: 3000,
         position: 'bottom-center',
       });
-    });
-    
-    // Update session storage to refresh Event Lookup page if user navigates back
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('eventLookupRegistrations');
-      sessionStorage.removeItem('eventLookupAllRegistrations');
-    }
-    
-    // Show success toast
-    toast.success('已成功取消报名 Registration cancelled successfully', {
-      duration: 3000,
-      position: 'bottom-center',
-    });
 
-    // Immediate data refresh after a short delay to allow backend to update
-    setTimeout(() => {
-      // Reset lastFetchTime to force immediate fetch regardless of debounce
-      lastFetchTime.current = 0;
-      fetchOrder();
-    }, 1000); // Increased delay to 1000ms to ensure backend has time to process
+      // Immediate data refresh after a short delay to allow backend to update
+      setTimeout(() => {
+        // Reset lastFetchTime to force immediate fetch regardless of debounce
+        lastFetchTime.current = 0;
+        fetchOrder();
+      }, 1000); // Increased delay to 1000ms to ensure backend has time to process
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+      toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        duration: 5000,
+        position: 'bottom-center',
+      });
+    }
   };
 
   const handleEdit = (groupId: string, field: string, currentValue: string) => {

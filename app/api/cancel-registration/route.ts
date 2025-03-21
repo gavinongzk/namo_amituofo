@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    // Modified to accept either groupId or queueNumber
-    const { orderId, groupId, queueNumber, cancelled } = await req.json();
+    // Modified to accept eventId as well
+    const { orderId, groupId, queueNumber, eventId, cancelled } = await req.json();
     
     if (!groupId && !queueNumber) {
       return NextResponse.json({ error: 'Either groupId or queueNumber must be provided' }, { status: 400 });
@@ -24,10 +24,20 @@ export async function POST(req: NextRequest) {
 
     // Find the group either by groupId or queueNumber
     let group;
-    if (groupId) {
-      group = order.customFieldValues.find((g: any) => g.groupId === groupId);
-    } else if (queueNumber) {
+    if (queueNumber) {
+      // If eventId is provided, ensure it matches the order's event (extra validation)
+      if (eventId && order.event.toString() !== eventId.toString()) {
+        return NextResponse.json({ error: 'Event ID mismatch' }, { status: 400 });
+      }
       group = order.customFieldValues.find((g: any) => g.queueNumber === queueNumber);
+      
+      if (!group && groupId) {
+        // Fallback to groupId if queueNumber doesn't match
+        console.log(`No group found with queueNumber ${queueNumber}, falling back to groupId ${groupId}`);
+        group = order.customFieldValues.find((g: any) => g.groupId === groupId);
+      }
+    } else if (groupId) {
+      group = order.customFieldValues.find((g: any) => g.groupId === groupId);
     }
 
     if (!group) {
@@ -68,7 +78,8 @@ export async function POST(req: NextRequest) {
       message: cancelled ? 'Registration cancelled successfully' : 'Registration uncancelled successfully',
       cancelled: group.cancelled,
       groupId: group.groupId, // Return the groupId for reference
-      queueNumber: group.queueNumber // Return the queueNumber for reference
+      queueNumber: group.queueNumber, // Return the queueNumber for reference
+      eventId: order.event.toString() // Return the eventId for reference
     });
   } catch (error) {
     console.error('Error updating registration:', error);
