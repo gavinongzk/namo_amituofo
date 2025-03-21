@@ -12,21 +12,34 @@ export async function POST(req: NextRequest) {
     }
 
     await connectToDatabase();
-    const { orderId, groupId } = await req.json();
+    const { orderId, groupId, queueNumber } = await req.json();
+
+    if (!groupId && !queueNumber) {
+      return NextResponse.json({ error: 'Either groupId or queueNumber must be provided' }, { status: 400 });
+    }
 
     const order = await Order.findById(orderId);
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Find the group that's being deleted
-    const groupToDelete = order.customFieldValues.find((g: any) => g.groupId === groupId);
-    if (!groupToDelete) {
-      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    // Find the group to delete based on groupId or queueNumber
+    let groupToDelete;
+    if (groupId) {
+      groupToDelete = order.customFieldValues.find((g: any) => g.groupId === groupId);
+    } else if (queueNumber) {
+      groupToDelete = order.customFieldValues.find((g: any) => g.queueNumber === queueNumber);
     }
 
+    if (!groupToDelete) {
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
+    }
+
+    // Save the groupId for filtering
+    const targetGroupId = groupToDelete.groupId;
+
     // Remove the specific group from customFieldValues
-    order.customFieldValues = order.customFieldValues.filter((g: any) => g.groupId !== groupId);
+    order.customFieldValues = order.customFieldValues.filter((g: any) => g.groupId !== targetGroupId);
 
     // If there are no more groups, delete the entire order
     if (order.customFieldValues.length === 0) {
@@ -45,7 +58,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: 'Registration deleted successfully' });
+    return NextResponse.json({ 
+      message: 'Registration deleted successfully',
+      queueNumber: groupToDelete.queueNumber,
+      groupId: targetGroupId
+    });
   } catch (error) {
     console.error('Error deleting registration:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

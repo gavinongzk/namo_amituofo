@@ -107,7 +107,7 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   </div>
 ));
 
-const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo }: CancelButtonProps & { participantInfo?: string }) => {
+const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = async (): Promise<void> => {
@@ -143,7 +143,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo }
             Are you sure you want to cancel {participantInfo ? `${participantInfo}'s` : 'this'} registration? This action cannot be undone.
             <br />
             <span className="text-xs text-gray-500 mt-2">
-              Technical ID: {groupId.substring(0, 8)}...
+              {queueNumber && `Queue #: ${queueNumber} | `}Technical ID: {groupId.substring(0, 8)}...
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -302,9 +302,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return () => clearInterval(pollInterval);
   }, [fetchOrder]);
 
-  const handleCancellation = (groupId: string): void => {
+  const handleCancellation = (groupId: string, queueNumber?: string): void => {
     // Log which participant is being cancelled
-    console.log(`Cancelling participant with groupId: ${groupId}`);
+    console.log(`Cancelling participant with groupId: ${groupId}${queueNumber ? `, queueNumber: ${queueNumber}` : ''}`);
     console.log(`Current participants:`, order?.customFieldValues.map(g => ({
       groupId: g.groupId,
       queueNumber: g.queueNumber,
@@ -316,10 +316,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setOrder(prevOrder => {
       if (!prevOrder) return null;
       
+      // If queueNumber is provided, find the matching group
+      let targetGroupId = groupId;
+      if (queueNumber) {
+        const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
+        if (targetGroup) {
+          targetGroupId = targetGroup.groupId;
+        }
+      }
+      
       const updatedOrder = {
         ...prevOrder,
         customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.groupId === groupId ? { ...group, cancelled: true } : group
+          group.groupId === targetGroupId ? { ...group, cancelled: true } : group
         )
       };
       
@@ -342,6 +351,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       body: JSON.stringify({ 
         orderId: id, 
         groupId, 
+        queueNumber, // Pass queueNumber to API
         cancelled: true 
       }),
     })
@@ -614,8 +624,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <CancelButton
                       groupId={group.groupId}
                       orderId={id}
-                      onCancel={() => handleCancellation(group.groupId)}
+                      queueNumber={group.queueNumber}
                       participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                      onCancel={() => handleCancellation(group.groupId, group.queueNumber)}
                     />
                   )}
                 </div>

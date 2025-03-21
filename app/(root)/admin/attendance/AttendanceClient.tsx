@@ -342,7 +342,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId, groupId, cancelled }),
+        body: JSON.stringify({ 
+          orderId, 
+          groupId,
+          queueNumber, // Always include queueNumber for better identification
+          cancelled 
+        }),
       });
 
       if (res.ok) {
@@ -357,7 +362,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               order: {
                 ...r.order,
                 customFieldValues: r.order.customFieldValues.map(g => 
-                  g.groupId === groupId 
+                  // Match by queue number first, then fall back to groupId
+                  (g.queueNumber === queueNumber || g.groupId === groupId)
                     ? { ...g, cancelled }
                     : g
                 )

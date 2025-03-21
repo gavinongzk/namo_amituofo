@@ -8,19 +8,30 @@ import { revalidateTag } from 'next/cache';
 export async function POST(req: NextRequest) {
   console.log('Cancel/Uncancel registration request received');
   try {
-
     await connectToDatabase();
 
-    const { orderId, groupId, cancelled } = await req.json();
+    // Modified to accept either groupId or queueNumber
+    const { orderId, groupId, queueNumber, cancelled } = await req.json();
+    
+    if (!groupId && !queueNumber) {
+      return NextResponse.json({ error: 'Either groupId or queueNumber must be provided' }, { status: 400 });
+    }
 
     const order = await Order.findById(orderId);
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const group = order.customFieldValues.find((g: any) => g.groupId === groupId);
+    // Find the group either by groupId or queueNumber
+    let group;
+    if (groupId) {
+      group = order.customFieldValues.find((g: any) => g.groupId === groupId);
+    } else if (queueNumber) {
+      group = order.customFieldValues.find((g: any) => g.queueNumber === queueNumber);
+    }
+
     if (!group) {
-      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
     // Check if the cancelled status is actually changing
@@ -55,7 +66,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ 
       message: cancelled ? 'Registration cancelled successfully' : 'Registration uncancelled successfully',
-      cancelled: group.cancelled
+      cancelled: group.cancelled,
+      groupId: group.groupId, // Return the groupId for reference
+      queueNumber: group.queueNumber // Return the queueNumber for reference
     });
   } catch (error) {
     console.error('Error updating registration:', error);
