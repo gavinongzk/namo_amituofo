@@ -274,7 +274,7 @@ const SelectEventPage = () => {
                   <div className="flex items-center w-full md:w-auto">
                     <UsersIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">
-                      <span className="inline-block mr-1">已注册</span>
+                      <span className="inline-block mr-1">已报名</span>
                       <span className="inline-block">Registered:</span>
                       <span className="font-medium ml-1">{selectedEvent.totalRegistrations} / {selectedEvent.maxSeats}</span>
                     </span>

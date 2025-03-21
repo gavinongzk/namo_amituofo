@@ -138,14 +138,14 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel }: CancelButtonPro
           className="w-full sm:w-auto mt-4"
           disabled={isLoading}
         >
-          {isLoading ? '取消中... Cancelling...' : '取消注册 Cancel Registration'}
+          {isLoading ? '取消中... Cancelling...' : '取消报名 Cancel Registration'}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-white">
         <AlertDialogHeader>
           <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            您确定要取消此注册吗？此操作无法撤消。
+            您确定要取消此报名吗？此操作无法撤消。
             <br />
             Are you sure you want to cancel this registration? This action cannot be undone.
           </AlertDialogDescription>
@@ -414,10 +414,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       <div id="order-details">
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
-            注册成功 Successful Registration
+            报名成功 Successful Registration
           </h3>
           <p className="text-center text-primary-600 mt-2">
-            当天请在报到处以此二维码登记。/ Please use this QR code to check in at the registration counter on the event day.
+            当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
           </p>
         </section>
 
@@ -555,13 +555,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
+                      <div className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <span className="text-sm font-medium text-blue-600">目录</span>
+                      </div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">1. 点击顶部菜单中的"活动查询"</p>
-                      <p className="text-sm text-blue-600">Click on "活动查询 Event Lookup" in the top menu</p>
+                      <p className="font-semibold text-blue-800 mb-2">1. 点击顶部菜单"目录"按钮</p>
+                      <p className="text-sm text-blue-600">Click on the "目录" menu button at the top</p>
                     </div>
                   </div>
                 </div>
@@ -574,8 +577,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">2. 输入您的电话号码并查询</p>
-                      <p className="text-sm text-blue-600">Enter your phone number and search</p>
+                      <p className="font-semibold text-blue-800 mb-2">2. 在目录中选择"活动查询 Event Lookup"</p>
+                      <p className="text-sm text-blue-600">Select "活动查询 Event Lookup" from the menu</p>
                     </div>
                   </div>
                 </div>
@@ -588,13 +591,26 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">3. 点击活动卡片查看详情</p>
-                      <p className="text-sm text-blue-600">Click on the event card to view details</p>
+                      <p className="font-semibold text-blue-800 mb-2">3. 输入您的电话号码并查询</p>
+                      <p className="text-sm text-blue-600">Enter your phone number and search</p>
                     </div>
                   </div>
                 </div>
                 
-
+                <div className="bg-white p-4 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-800 mb-2">4. 点击活动照片查看详情</p>
+                      <p className="text-sm text-blue-600">Click on the event photo to view details</p>
+                    </div>
+                  </div>
+                </div>
+                
               </div>
             </div>
           </div>

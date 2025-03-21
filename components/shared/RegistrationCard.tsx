@@ -44,7 +44,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
         <div className="flex flex-col gap-2 flex-grow">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium text-gray-700">
-              已注册参加者 Registered Participants
+              已报名参加者 Registered Participants
             </div>
             <div className="text-sm font-semibold text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
               {registrations.length}
@@ -78,7 +78,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
           href={`/reg/${primaryOrderId}`} 
           className="flex gap-2 mt-4 text-primary-500 hover:text-primary-600 transition-colors duration-200 group-hover:translate-x-2"
         >
-          <p>查看活动详情 View Event Details</p>
+          <p>查看报名记录 View Registration Details</p>
         </Link>
       </div>
     </div>

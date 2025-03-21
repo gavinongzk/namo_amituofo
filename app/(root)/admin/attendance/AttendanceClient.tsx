@@ -173,11 +173,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       } else {
         setRegistrations([]);
         setAttendedUsersCount(0);
-        setMessage('No registrations found for this event. 未找到此活动的注册。');
+        setMessage('No registrations found for this event. 未找到此活动的报名。');
       }
     } catch (error) {
       console.error('Error fetching registrations:', error);
-      setMessage('Failed to fetch registrations. 获取注册失败。');
+      setMessage('Failed to fetch registrations. 获取报名失败。');
       setRegistrations([]);
       setAttendedUsersCount(0);
     } finally {
@@ -314,7 +314,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setShowConfirmation(true);
       }
     } else {
-      setMessage('Registration not found with this queue number. 未找到此排队号码的注册。');
+      setMessage('Registration not found with this queue number. 未找到此排队号码的报名。');
       console.log('Registration not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registrations]);
@@ -329,7 +329,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleCancelRegistration = useCallback(async (registrationId: string, groupId: string, queueNumber: string, cancelled: boolean) => {
     setShowModal(true);
-    setModalMessage(cancelled ? 'Cancelling registration... 取消注册中...' : 'Uncancelling registration... 恢复注册中...');
+    setModalMessage(cancelled ? 'Cancelling registration... 取消报名中...' : 'Uncancelling registration... 恢复报名中...');
 
     try {
       const [orderId] = registrationId.split('_');
@@ -397,7 +397,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     const { registrationId, groupId, queueNumber } = deleteConfirmationData;
     setShowDeleteConfirmation(false);
     setShowModal(true);
-    setModalMessage('Deleting registration... 删除注册中...');
+    setModalMessage('Deleting registration... 删除报名中...');
 
     try {
       const res = await fetch('/api/delete-registration', {
@@ -424,12 +424,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         // Update counts based on updated registrations
         calculateCounts(updatedRegistrations);
       } else {
-        throw new Error('Failed to delete registration 删除注册失败');
+        throw new Error('Failed to delete registration 删除报名失败');
       }
     } catch (error) {
       console.error('Error deleting registration:', error);
-      setMessage('Failed to delete registration. 删除注册失败。');
-      setModalMessage('Failed to delete registration. 删除注册失败。');
+      setMessage('Failed to delete registration. 删除报名失败。');
+      setModalMessage('Failed to delete registration. 删除报名失败。');
     }
 
     setTimeout(() => {
@@ -604,7 +604,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       } else {
         showModalWithMessage(
           'Error / 错误',
-          `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
+          `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
           'error'
         );
       }
@@ -725,7 +725,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           </div>
         )}
 
-        <h4 className="text-xl font-bold mb-4">Registered Users 注册用户</h4>
+        <h4 className="text-xl font-bold mb-4">Registered Users 报名用户</h4>
         
         {/* Search input */}
         <div className="mb-4">
@@ -918,7 +918,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <p className="p-2 bg-green-100 text-sm">
                 Rows highlighted in light green indicate registrations with the same phone number.
                 <br />
-                浅绿色突出显示的行表示具有相同电话号码的注册。
+                浅绿色突出显示的行表示具有相同电话号码的报名。
               </p>
               <p className="p-2 bg-blue-100 text-sm">
                 Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
@@ -969,7 +969,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
               <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
-              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的注册吗？</p>
+              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的报名吗？</p>
               <div className="flex justify-end space-x-4">
                 <Button onClick={() => setShowDeleteConfirmation(false)} variant="outline">
                   Cancel / 取消

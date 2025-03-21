@@ -243,7 +243,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("检查注册详情中... / Checking registration details...");
+    const toastId = toast.loading("检查报名详情中... / Checking registration details...");
     
     saveFormData(values);
 
@@ -253,7 +253,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     // If all groups are empty after filtering, show a message and return
     if (filledGroups.length === 0) {
       toast.dismiss(toastId);
-      toast.error("请至少填写一份注册表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+      toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
       return;
     }
 
@@ -357,7 +357,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     setIsSubmitting(true);
     setMessage('');
     
-    toast.loading("处理注册中... / Processing registration...", { id: toastId });
+    toast.loading("处理报名中... / Processing registration...", { id: toastId });
     
     try {
       const customFieldValues = values.groups.map((group, index) => ({
@@ -400,13 +400,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
       const data = await response.json();
       
-      toast.success("注册成功！/ Registration successful!", { id: toastId });
+      toast.success("报名成功！/ Registration successful!", { id: toastId });
       router.push(`/reg/${data.order._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
       
-      toast.error("注册失败，请重试。/ Registration failed. Please try again.", { id: toastId });
-      setMessage('注册失败，请重试。/ Failed to submit registration. Please try again.');
+      toast.error("报名失败，请重试。/ Registration failed. Please try again.", { id: toastId });
+      setMessage('报名失败，请重试。/ Failed to submit registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -820,11 +820,11 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
-              发现重复注册 / Duplicate Registration Found
+              发现重复报名 / Duplicate Registration Found
             </DialogTitle>
             <DialogDescription className="space-y-4">
               <p className="text-gray-700 text-base">
-                以下电话号码已注册：/ The following phone number/s is/are already registered:
+                以下电话号码已报名：/ The following phone number/s is/are already registered:
               </p>
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {duplicatePhoneNumbers.map((duplicate, index) => (
@@ -880,7 +880,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               onClick={() => {
                 setShowConfirmation(false);
                 if (formValues) {
-                  submitForm(formValues, toast.loading("处理注册中... / Processing registration..."));
+                  submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
                 }
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"

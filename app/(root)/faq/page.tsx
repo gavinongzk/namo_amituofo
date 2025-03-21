@@ -14,13 +14,13 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 在首页选择想要参加的活动
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"报名Register"按钮
+                <span className="font-medium text-gray-900">2.</span> 点击"报名Register"
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 填写所需信息（名字、电话等）
+                <span className="font-medium text-gray-900">3.</span> 填写所需资料（名字、电话等）
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 提交表格后，您将收到专属二维码
+                <span className="font-medium text-gray-900">4.</span> 提交表格后，您将收到二维码
               </li>
             </ol>
           </div>
@@ -38,7 +38,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> Fill in required information (name, phone number, etc.)
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> After submitting, you will receive a unique QR code
+                <span className="font-medium text-gray-900">4.</span> After submitting, you will receive a QR code
               </li>
             </ol>
           </div>
@@ -46,7 +46,7 @@ export default function FAQPage() {
       )
     },
     {
-      question: "2. 如何确定自己已经报名成功？ How to confirm successful registration?",
+      question: "2. 如何确定报名成功？ How to confirm successful registration?",
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">
@@ -56,7 +56,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 报名成功后会显示专属二维码
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 您可以在"活动查询"页面输入电话号码查询所有报名记录
+                <span className="font-medium text-gray-900">2.</span> 您可以在"活动查询"页面，输入电话号码查询所有报名记录
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 查看您的报名详情和二维码
@@ -89,13 +89,13 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">更改步骤：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面输入您的电话号码
+                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面，输入您的电话号码
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> 找到需要更改的报名记录
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 点击"View Details"查看详情
+                <span className="font-medium text-gray-900">3.</span> 点击"View Registration Details"查看报名记录
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> 在详情页面可以更改名字或电话号码
@@ -113,7 +113,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">2.</span> Find the registration you want to modify
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> Click "View Details"
+                <span className="font-medium text-gray-900">3.</span> Click "View Registration Details"
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> You can edit your name or phone number on the details page
@@ -131,7 +131,7 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">取消步骤：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面输入您的电话号码
+                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面，输入您的电话号码
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> 找到需要取消的报名记录
@@ -173,19 +173,13 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">可以！但请注意：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在注册表格中，您可以使用同一个电话号码为多人注册
+                <span className="font-medium text-gray-900">1.</span> 在报名表格中，您可以使用同一个电话号码为多人报名
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"添加另一位参加者"来添加更多参与者
+                <span className="font-medium text-gray-900">2.</span> 点击"添加参加者"来添加更多参与者
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 每个参加者都会获得独立的二维码
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">4.</span> 使用注册时的电话号码在"活动查询"页面，您将看到所有注册人员的列表
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">5.</span> 点击每个参加者旁边的"查看二维码"链接可以查看各自的二维码
               </li>
             </ol>
           </div>
@@ -197,7 +191,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> On the registration form, you can use the same phone number for multiple people
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> Click "Add Another Person" to add more participants
+                <span className="font-medium text-gray-900">2.</span> Click "Add Participant" to add more participants
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> Each participant will receive their own QR code
@@ -214,7 +208,7 @@ export default function FAQPage() {
       )
     },
     {
-      question: "6. 当天如何报到？ How to check in on the event day?",
+      question: "6. 活动当天如何报到？ How to take attendance on the event day?",
       answer: (
         <div className="space-y-6">
           <div className="space-y-2">
@@ -230,19 +224,19 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> 在扫码区出示您的二维码
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 义工们会为您完成扫码确认
+                <span className="font-medium text-gray-900">4.</span> 义工们会为您完成报到扫描
               </li>
             </ol>
           </div>
 
           <div className="space-y-2">
-            <p className="font-semibold text-gray-900">Check-in steps:</p>
+            <p className="font-semibold text-gray-900">Steps to take attendance:</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
                 <span className="font-medium text-gray-900">1.</span> Have your QR code ready (can be viewed in Event Lookup page)
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> Upon arrival, proceed to the check-in counter
+                <span className="font-medium text-gray-900">2.</span> Upon arrival, proceed to the counter
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> Present your QR code at the scanning station
@@ -266,13 +260,13 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 检查网络连接是否正常
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 确保所有必填信息都已填写完整
+                <span className="font-medium text-gray-900">2.</span> 确保所有必填资料都已填写完整
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 刷新页面重试
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 如果问题持续，请通过WhatsApp联系寺院义工获取帮助：{' '}
+                <span className="font-medium text-gray-900">4.</span> 如果问题持续，请通过WhatsApp联系道场：{' '}
                 <a 
                   href="https://wa.me/6588184848" 
                   target="_blank" 
@@ -330,7 +324,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> 输入您所在地区的实际邮区编号
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 填写其他必要信息后提交
+                <span className="font-medium text-gray-900">4.</span> 填写其他必要资料后提交
               </li>
             </ol>
           </div>
@@ -349,48 +343,6 @@ export default function FAQPage() {
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> Fill in other required information and submit
-              </li>
-            </ol>
-          </div>
-        </div>
-      )
-    },
-    {
-      question: "9. 我的手机无法显示二维码，该怎么办？ What if my phone cannot display the QR code?",
-      answer: (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="font-semibold text-gray-900">解决方案：</p>
-            <ol className="list-none space-y-1.5 text-gray-600">
-              <li>
-                <span className="font-medium text-gray-900">1.</span> 您可以将二维码截图保存
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">2.</span> 可以将二维码转发到其他设备上显示
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">3.</span> 到达活动现场时，可以提供您的电话号码给义工查询
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">4.</span> 义工可以通过您的电话号码在系统中找到您的报名记录
-              </li>
-            </ol>
-          </div>
-
-          <div className="space-y-2">
-            <p className="font-semibold text-gray-900">Solutions:</p>
-            <ol className="list-none space-y-1.5 text-gray-600">
-              <li>
-                <span className="font-medium text-gray-900">1.</span> You can take a screenshot of the QR code
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">2.</span> Forward the QR code to another device for display
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">3.</span> At the event, you can provide your phone number to the volunteers
-              </li>
-              <li>
-                <span className="font-medium text-gray-900">4.</span> Volunteers can look up your registration using your phone number
               </li>
             </ol>
           </div>
@@ -443,7 +395,7 @@ export default function FAQPage() {
         {/* Contact Section */}
         <div className="mt-12 text-center">
           <p className="text-gray-600 space-y-2">
-            <div>还有其他问题？请通过WhatsApp联系我们：</div>
+            <div>其他问题？请通过WhatsApp联系我们：</div>
             <div>Still have questions? Contact us via WhatsApp at{' '}
               <a 
                 href="https://wa.me/6588184848" 

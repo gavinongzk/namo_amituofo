@@ -48,7 +48,7 @@ const MobileNav = () => {
     <nav className="md:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger className="align-middle focus:outline-none">
-          <div className="p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation">
+          <div className="flex items-center gap-2 p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation">
             <Image 
               src="/assets/icons/menu.svg"
               alt="menu"
@@ -56,6 +56,7 @@ const MobileNav = () => {
               height={24}
               className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
             />
+            <span className="mr-1 text-sm font-medium text-primary-600">目录</span>
           </div>
         </SheetTrigger>
         <SheetContent 

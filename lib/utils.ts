@@ -405,7 +405,7 @@ export const MODAL_MESSAGES = {
   }),
   ERROR_NOT_FOUND: (queueNumber: string) => ({
     title: 'Error 错误',
-    message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
+    message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
     type: 'error' as const
   }),
   ERROR_INVALID_QR: {
