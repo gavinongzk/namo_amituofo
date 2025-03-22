@@ -182,7 +182,13 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
   );
 });
 
-const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string, onUncancel: () => void }) => {
+const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: { 
+  groupId: string;
+  orderId: string;
+  onUncancel: () => void;
+  participantInfo?: string;
+  queueNumber?: string;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
