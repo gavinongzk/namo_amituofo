@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       
       // 3. Also update the in-memory model and save
       group.cancelled = cancelledBoolean;
-      console.log(`Order customFieldValues before save:`, JSON.stringify(order.customFieldValues.map(g => ({
+      console.log(`Order customFieldValues before save:`, JSON.stringify(order.customFieldValues.map((g: any) => ({
         groupId: g.groupId,
         queueNumber: g.queueNumber,
         cancelled: g.cancelled,
