@@ -114,11 +114,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     groupId: string;
     queueNumber: string;
     currentAttendance: boolean;
-    name: string; // Add name to confirmation data
+    name: string;
   } | null>(null);
-  const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [cancelledUsersCount, setCancelledUsersCount] = useState(0);
-
+  const [beepHistory] = useState(new Set<string>()); // Track which queue numbers have already beeped
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -680,7 +680,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           const name = nameField ? nameField.value : 'N/A';
           if (!group.attendance) {
             handleMarkAttendance(registration.id, group.groupId, true);
-            new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+            // Only play beep if we haven't beeped for this queue number before
+            if (!beepHistory.has(queueNumber)) {
+              new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+              beepHistory.add(queueNumber); // Add to beep history
+            }
             showModalWithMessage(
               'Success / 成功',
               `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
@@ -716,7 +720,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         'error'
       );
     }
-  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage]);
+  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId
