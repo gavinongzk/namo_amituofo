@@ -16,6 +16,13 @@ import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 
+// Define inline styles for custom UI elements
+const styles = `
+  .rotate-20 {
+    transform: rotate(-20deg);
+  }
+`;
+
 const convertToGoogleMapsLink = (location: string) => {
   const encodedLocation = encodeURIComponent(location);
   // Create URLs for both web and mobile deep links
@@ -109,27 +116,31 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
 
 const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleCancel = async (): Promise<void> => {
     setIsLoading(true);
     try {
+      // Close the dialog immediately after the user confirms
+      setDialogOpen(false);
       // The actual cancellation is now handled in the parent component's handleCancellation function
-      // This is just for UI feedback
       onCancel();
     } catch (error) {
       console.error('Error in CancelButton handleCancel:', error);
     } finally {
-      setIsLoading(false);
+      // We don't need to reset isLoading here as the dialog is already closed
+      // The loading state will be reset when the component re-renders due to parent state changes
     }
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <AlertDialogTrigger asChild>
         <Button 
           variant="destructive" 
           className="w-full sm:w-auto mt-4"
           disabled={isLoading}
+          onClick={() => setDialogOpen(true)}
         >
           {isLoading ? '取消中... Cancelling...' : '取消报名 Cancel Registration'}
         </Button>
@@ -159,8 +170,15 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancel}>
-            确认 Confirm
+          <AlertDialogAction onClick={handleCancel} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                处理中...
+              </>
+            ) : (
+              '确认 Confirm'
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -421,12 +439,33 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         position: 'bottom-center',
       });
 
-      // Immediate data refresh after a short delay to allow backend to update
+      // Immediately update the UI based on API response data
+      setOrder(prevOrder => {
+        if (!prevOrder) return null;
+        
+        // Find the exact group using the data returned from API
+        const targetGroupId = data.groupId || groupId;
+        const targetQueueNumber = data.queueNumber || queueNumber;
+        
+        return {
+          ...prevOrder,
+          customFieldValues: prevOrder.customFieldValues.map(group => {
+            // Match by groupId first, then by queueNumber if available
+            if (group.groupId === targetGroupId || 
+                (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
+              return { ...group, cancelled: true };
+            }
+            return group;
+          })
+        };
+      });
+
+      // Still fetch from server after a short delay to ensure complete synchronization
       setTimeout(() => {
         // Reset lastFetchTime to force immediate fetch regardless of debounce
         lastFetchTime.current = 0;
         fetchOrder();
-      }, 1000); // Increased delay to 1000ms to ensure backend has time to process
+      }, 1000); // Keep the delay to ensure backend has time to process
     } catch (error) {
       console.error('Error cancelling registration:', error);
       toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
@@ -542,6 +581,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
+      <style jsx global>{styles}</style>
       <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
         {/* Removed the updating state display */}
       </div>
@@ -574,13 +614,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             </div>
 
             {customFieldValuesArray.map((group: CustomFieldGroup, index: number) => (
-              <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-50' : ''}`}>
-                <div className="bg-primary-500 p-2 sm:p-3 md:p-4">
+              <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-75 relative' : ''}`}>
+                {group.cancelled && (
+                  <div className="absolute inset-0 z-10 bg-gray-200/30 pointer-events-none flex items-center justify-center overflow-hidden">
+                    <div className="rotate-20 bg-red-100 text-red-800 px-8 py-2 text-xl font-bold shadow-lg opacity-90 absolute">
+                      已取消 CANCELLED
+                    </div>
+                  </div>
+                )}
+                <div className={`${group.cancelled ? 'bg-gray-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
                       <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
                         <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Participant {index + 1}</span>
-                        {group.cancelled && <span className="text-red-200">(已取消 Cancelled)</span>}
+                        {group.cancelled && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            已取消 Cancelled
+                          </span>
+                        )}
                         <span className="text-xs opacity-50">#{group.queueNumber}</span>
                       </h5>
                       <div className="text-white/90 text-sm sm:text-base">
@@ -637,7 +688,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                           </div>
                         ) : (
                           <div className="flex-1 flex items-center gap-1">
-                            <span className="flex-1">{field.value}</span>
+                            <span>{field.value}</span>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -647,10 +698,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   handleEdit(group.groupId, field.id, value);
                                 }
                               }}
-                              className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
                             >
-                              <Pencil className="h-4 w-4" />
-                              <span className="text-xs">修改 Edit</span>
+                              <Pencil className="h-3 w-3" />
+                              <span className="text-xs ml-1">编辑 Edit</span>
                             </Button>
                           </div>
                         )}
