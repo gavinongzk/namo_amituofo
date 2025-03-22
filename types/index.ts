@@ -189,6 +189,13 @@ export interface CustomFieldGroup {
   qrCode?: string;
 }
 
+export interface EditingField {
+  groupId: string; // Keep for UI state management only
+  field: string;
+  label?: string;
+  queueNumber?: string;
+}
+
 // Add this type definition
 export type UniquePhoneNumber = {
   phoneNumber: string;

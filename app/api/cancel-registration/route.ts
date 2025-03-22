@@ -2,66 +2,117 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import Event from '@/lib/database/models/event.model';
-import { auth } from '@clerk/nextjs';
 import { revalidateTag } from 'next/cache';
 import { CustomFieldGroup, CustomField } from '@/types';
 
+// Add OPTIONS handler for CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   console.log('Cancel/Uncancel registration request received');
+  console.log('Request URL:', req.url);
+  console.log('Request method:', req.method);
+  
   try {
+    // Add CORS headers to all responses
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+    
     await connectToDatabase();
 
-    // Modified to accept eventId as well
-    const { orderId, groupId, queueNumber, eventId, cancelled } = await req.json();
+    const { eventId, queueNumber, cancelled } = await req.json();
     
     // Ensure cancelled is a boolean
     const cancelledBoolean = !!cancelled;
     
-    console.log(`Cancel request params: orderId=${orderId}, groupId=${groupId}, queueNumber=${queueNumber || 'N/A'}, eventId=${eventId || 'N/A'}, cancelled=${cancelledBoolean} (${typeof cancelledBoolean})`);
+    console.log(`Cancel request params: eventId=${eventId || 'N/A'}, queueNumber=${queueNumber || 'N/A'}, cancelled=${cancelledBoolean} (${typeof cancelledBoolean})`);
     
     // Require queueNumber for cancellation operations
     if (!queueNumber) {
       console.error(`Cancel request denied: queueNumber is required`);
       return NextResponse.json({ 
         error: 'queueNumber is required for cancellation operations' 
-      }, { status: 400 });
+      }, { 
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    // Require eventId
+    if (!eventId) {
+      console.error(`Cancel request denied: eventId is required`);
+      return NextResponse.json({ 
+        error: 'eventId is required for cancellation operations' 
+      }, { 
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
-    console.log(`Found order: ${order._id}`);
-    console.log(`Order customFieldValues before update:`, JSON.stringify(order.customFieldValues, null, 2));
-
-    // Additional validation if eventId is provided
-    if (eventId && order.event.toString() !== eventId.toString()) {
-      console.error(`Event ID mismatch: provided=${eventId}, order=${order.event}`);
-      return NextResponse.json({ error: 'Event ID mismatch' }, { status: 400 });
+    // First verify the event exists
+    const event = await Event.findById(eventId);
+    if (!event) {
+      console.error(`Event not found with ID: ${eventId}`);
+      return NextResponse.json({ error: 'Event not found' }, { 
+        status: 404,
+        headers: corsHeaders
+      });
     }
-
-    // Find the group by queueNumber only (no groupId fallback)
-    // Convert both queueNumbers to strings and trim any leading zeros for comparison
-    const normalizedQueueNumber = String(queueNumber).replace(/^0+/, '');
     
-    const group = order.customFieldValues.find(
-      (g: CustomFieldGroup) => {
-        const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
-        return normalizedGroupQueueNumber === normalizedQueueNumber;
+    // Find all orders for this event
+    const orders = await Order.find({ event: eventId });
+    if (orders.length === 0) {
+      console.error(`No orders found for event: ${eventId}`);
+      return NextResponse.json({ error: 'No registrations found for this event' }, { 
+        status: 404,
+        headers: corsHeaders
+      });
+    }
+    
+    console.log(`Found ${orders.length} orders for event ${eventId}, searching for queueNumber ${queueNumber}`);
+    
+    // Search through all orders to find the one with matching queueNumber
+    let foundOrder = null;
+    let foundGroup = null;
+    
+    for (const orderItem of orders) {
+      const group = orderItem.customFieldValues.find((g: any) => {
+        // Compare queue numbers exactly as strings to preserve leading zeros
+        return String(g.queueNumber) === String(queueNumber);
+      });
+      
+      if (group) {
+        foundOrder = orderItem;
+        foundGroup = group;
+        break;
       }
-    );
+    }
     
-    if (group) {
-      console.log(`Found group by queueNumber ${queueNumber}. GroupId: ${group.groupId}, Current cancelled status: ${group.cancelled}`);
-    } else {
-      console.error(`No group found with queueNumber ${queueNumber}. Available queueNumbers:`, 
-        order.customFieldValues.map((g: CustomFieldGroup) => g.queueNumber));
-      return NextResponse.json({ error: 'Registration not found with provided queueNumber' }, { status: 404 });
+    if (!foundOrder || !foundGroup) {
+      console.error(`No registration found with queueNumber ${queueNumber} for event ${eventId}`);
+      return NextResponse.json({ 
+        error: 'Registration not found with provided queueNumber for this event' 
+      }, { 
+        status: 404,
+        headers: corsHeaders
+      });
     }
 
     // Make sure current value is boolean
-    const currentCancelled = !!group.cancelled;
+    const currentCancelled = !!foundGroup.cancelled;
     
     // Check if the cancelled status is actually changing
     console.log(`Current group.cancelled: ${currentCancelled} (${typeof currentCancelled}), requested cancelled: ${cancelledBoolean} (${typeof cancelledBoolean})`);
@@ -70,12 +121,11 @@ export async function POST(req: NextRequest) {
       console.log(`Updating cancelled status from ${currentCancelled} to ${cancelledBoolean}`);
       
       // Update using queueNumber (most reliable)
-      // Use the same normalization approach for MongoDB query
       console.log(`Using updateOne with queueNumber=${queueNumber}`);
       
       // First try exact match (more reliable if formats match)
       let updateResult = await Order.updateOne(
-        { _id: orderId, "customFieldValues.queueNumber": queueNumber },
+        { _id: foundOrder._id, "customFieldValues.queueNumber": queueNumber },
         { $set: { "customFieldValues.$.cancelled": cancelledBoolean } }
       );
       
@@ -84,10 +134,9 @@ export async function POST(req: NextRequest) {
         console.log(`No documents updated with exact queueNumber match. Trying with $or query.`);
         
         // Try to update with different possible formats of the same queueNumber
-        // This handles cases where queueNumber might be stored as string or number
         updateResult = await Order.updateOne(
           { 
-            _id: orderId, 
+            _id: foundOrder._id, 
             $or: [
               { "customFieldValues.queueNumber": queueNumber },
               { "customFieldValues.queueNumber": String(queueNumber) },
@@ -102,39 +151,26 @@ export async function POST(req: NextRequest) {
       console.log(`Direct updateOne result:`, updateResult);
       
       // Also update the in-memory model and save
-      group.cancelled = cancelledBoolean;
-      console.log(`Order customFieldValues before save:`, JSON.stringify(order.customFieldValues.map((g: CustomFieldGroup) => ({
-        groupId: g.groupId,
-        queueNumber: g.queueNumber,
-        cancelled: g.cancelled,
-        cancelledType: typeof g.cancelled
-      })), null, 2));
-      
-      const saveResult = await order.save();
+      foundGroup.cancelled = cancelledBoolean;
+      const saveResult = await foundOrder.save();
       console.log(`Save result success:`, !!saveResult);
 
       // Update event's max seats
       const seatChange = cancelledBoolean ? 1 : -1;
-      const event = await Event.findByIdAndUpdate(
-        order.event,
-        { $inc: { maxSeats: seatChange } },
-        { new: true }
-      );
-
-      if (!event) {
-        throw new Error('Event not found');
-      }
+      event.maxSeats += seatChange;
+      await event.save();
 
       console.log(`Updated event maxSeats. New value: ${event.maxSeats}`);
       console.log(`Updating registration with queueNumber: ${queueNumber}`);
       
       // Verify the update took effect
-      const updatedOrder = await Order.findById(orderId);
+      const updatedOrder = await Order.findById(foundOrder._id);
       if (updatedOrder) {
         const updatedGroup = updatedOrder.customFieldValues.find(
           (g: CustomFieldGroup) => {
             const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
-            return normalizedGroupQueueNumber === normalizedQueueNumber;
+            const normalizedSearchQueueNumber = String(queueNumber).replace(/^0+/, '');
+            return normalizedGroupQueueNumber === normalizedSearchQueueNumber;
           }
         );
         console.log(`After save - group.cancelled: ${updatedGroup?.cancelled} (${typeof updatedGroup?.cancelled})`);
@@ -145,9 +181,9 @@ export async function POST(req: NextRequest) {
       revalidateTag('order-details');
       revalidateTag('orders');
       revalidateTag('events');
-      revalidateTag(`order-${orderId}`); // Add specific order tag
-      revalidateTag(`event-${order.event}`); // Add specific event tag
-      revalidateTag('registrations'); // Add registrations tag
+      revalidateTag(`order-${foundOrder._id}`);
+      revalidateTag(`event-${event._id}`);
+      revalidateTag('registrations');
     } else {
       console.log(`No change needed: current cancelled status (${currentCancelled}) matches requested status (${cancelledBoolean})`);
     }
@@ -155,12 +191,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       message: cancelledBoolean ? 'Registration cancelled successfully' : 'Registration uncancelled successfully',
       cancelled: cancelledBoolean,
-      groupId: group.groupId, // Return the groupId for reference
-      queueNumber: queueNumber, // Return the queueNumber used for identification
-      eventId: order.event.toString() // Return the eventId for reference
+      queueNumber: queueNumber,
+      eventId: event._id.toString()
+    }, {
+      headers: corsHeaders
     });
   } catch (error) {
     console.error('Error updating registration:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    });
   }
 }

@@ -93,7 +93,6 @@ function getAllowedRoles(pathname: string): string[] {
   const routeRoles: { [key: string]: string[] } = {
     '/api/users/update-role': ['superadmin'],
     '/api/attendance': ['superadmin', 'admin'],
-    '/api/cancel-registration': ['superadmin', 'admin', 'user'],
     '/api/delete-registration': ['superadmin'],
     '/api/events/:id/attendees': ['superadmin'],
     '/api/download-users-csv': ['superadmin'],

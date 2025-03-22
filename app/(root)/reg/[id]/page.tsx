@@ -9,11 +9,11 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
+import { OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
-import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers } from '@/lib/utils';
+import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 
 // Define inline styles for custom UI elements
@@ -22,6 +22,14 @@ const styles = `
     transform: rotate(-20deg);
   }
 `;
+
+interface CancelButtonProps {
+  groupId: string;
+  orderId: string;
+  onCancel: (groupId: string) => void;
+  participantInfo?: string;
+  queueNumber?: string;
+}
 
 const convertToGoogleMapsLink = (location: string) => {
   const encodedLocation = encodeURIComponent(location);
@@ -65,56 +73,114 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   isAttended: boolean,
   isNewlyMarked?: boolean,
   queueNumber?: string
-}) => (
-  <div className="w-full max-w-sm mx-auto mb-6">
-    <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
-    <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
-      ${isNewlyMarked ? 'animate-flash' : ''}`}>
-      <Image 
-        src={qrCode} 
-        alt="QR Code" 
-        fill
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        className="object-contain"
-      />
-      {isAttended && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
-          ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
-          <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <svg 
-                className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M5 13l4 4L19 7" 
-                />
-              </svg>
-              <span className="text-lg font-semibold text-green-700">已出席</span>
+}) => {
+  // If attendance is already marked, we don't need to keep updating the QR code
+  const [shouldUpdate, setShouldUpdate] = React.useState(!isAttended);
+
+  React.useEffect(() => {
+    // Only allow updates if attendance is not marked
+    setShouldUpdate(!isAttended);
+  }, [isAttended]);
+
+  // If we shouldn't update, return the last rendered state
+  if (!shouldUpdate && !isNewlyMarked) {
+    return (
+      <div className="w-full max-w-sm mx-auto mb-6">
+        <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
+        <div className="relative aspect-square w-full opacity-40 grayscale transition-all duration-300">
+          <Image 
+            src={qrCode} 
+            alt="QR Code" 
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain"
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <svg 
+                  className="w-6 h-6 text-green-600"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 13l4 4L19 7" 
+                  />
+                </svg>
+                <span className="text-lg font-semibold text-green-700">已出席</span>
+              </div>
+              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
             </div>
-            <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
+            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+            </div>
           </div>
-          <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-            <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+        </div>
+        {queueNumber && (
+          <div className="mt-3 text-center">
+            <p className="text-xs text-gray-500">队列号 Queue Number</p>
+            <p className="text-sm text-gray-600">{queueNumber}</p>
           </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-sm mx-auto mb-6">
+      <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
+      <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
+        ${isNewlyMarked ? 'animate-flash' : ''}`}>
+        <Image 
+          src={qrCode} 
+          alt="QR Code" 
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-contain"
+        />
+        {isAttended && (
+          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
+            ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
+            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <svg 
+                  className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 13l4 4L19 7" 
+                  />
+                </svg>
+                <span className="text-lg font-semibold text-green-700">已出席</span>
+              </div>
+              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
+            </div>
+            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+            </div>
+          </div>
+        )}
+      </div>
+      {queueNumber && (
+        <div className="mt-3 text-center">
+          <p className="text-xs text-gray-500">队列号 Queue Number</p>
+          <p className="text-sm text-gray-600">{queueNumber}</p>
         </div>
       )}
     </div>
-    {queueNumber && (
-      <div className="mt-3 text-center">
-        <p className="text-xs text-gray-500">队列号 Queue Number</p>
-        <p className="text-sm text-gray-600">{queueNumber}</p>
-      </div>
-    )}
-  </div>
-));
+  );
+});
 
-const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string }) => {
+const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -124,7 +190,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
       // Close the dialog immediately after the user confirms
       setDialogOpen(false);
       // The actual cancellation is now handled in the parent component's handleCancellation function
-      onCancel();
+      onCancel(groupId);
     } catch (error) {
       console.error('Error in CancelButton handleCancel:', error);
     } finally {
@@ -185,7 +251,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
 const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: { 
   groupId: string;
   orderId: string;
-  onUncancel: () => void;
+  onUncancel: (groupId: string, queueNumber?: string) => void;
   participantInfo?: string;
   queueNumber?: string;
 }) => {
@@ -198,7 +264,7 @@ const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantIn
       // Close the dialog immediately after the user confirms
       setDialogOpen(false);
       // The actual uncancellation is now handled in the parent component's handleUncancellation function
-      onUncancel();
+      onUncancel(groupId, queueNumber);
     } catch (error) {
       console.error('Error in UncancelButton handleUncancel:', error);
     } finally {
@@ -278,12 +344,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     groupId: string;
     field: string;
     label?: string;
+    queueNumber?: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
+  const processedAttendances = useRef<Set<string>>(new Set());
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -367,7 +435,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           const prevGroup = previousOrder.current?.customFieldValues.find(
             (g: CustomFieldGroup) => g.groupId === group.groupId
           );
-          if (group.attendance && !prevGroup?.attendance) {
+          
+          // Only process if attendance is marked and we haven't processed it before
+          if (group.attendance && !prevGroup?.attendance && !processedAttendances.current.has(group.groupId)) {
+            processedAttendances.current.add(group.groupId);
             setNewlyMarkedGroups(prev => new Set(prev).add(group.groupId));
             playSuccessSound();
             // Clear the newly marked status after animation
@@ -431,6 +502,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       return;
     }
     
+    // Require event ID
+    if (!order?.event?._id) {
+      console.error('Cannot cancel registration: eventId is required');
+      toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
@@ -467,16 +548,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     try {
       console.log('Sending cancel request to API...');
       
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
-      
-      // Add the operation-specific parameter
-      Object.assign(requestData, { cancelled: true });
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback or for record-keeping
+      const requestData = {
+        eventId: order.event._id,
+        queueNumber: queueNumber,
+        orderId: id,  // Include as optional parameter
+        groupId: groupId,  // Include as optional parameter
+        cancelled: true
+      };
       
       // Log what we're sending to help with debugging
       console.log('Sending request to API with data:', requestData);
@@ -628,6 +708,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       return;
     }
     
+    // Require event ID
+    if (!order?.event?._id) {
+      console.error('Cannot restore registration: eventId is required');
+      toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
@@ -664,32 +754,65 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     try {
       console.log('Sending uncancel request to API...');
       
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback or for record-keeping
+      const requestData = {
+        eventId: order.event._id,
+        queueNumber: queueNumber,
+        orderId: id,  // Include as optional parameter
+        groupId: groupId,  // Include as optional parameter
+        cancelled: false
+      };
       
-      // Add the operation-specific parameter
-      Object.assign(requestData, { cancelled: false });
-      
-      const response = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
+      try {
+        // Try the main endpoint first
+        const response = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+        
+        // If the main endpoint returns a 404, try the alternative endpoint
+        if (response.status === 404) {
+          console.log('Main endpoint returned 404, trying alternative endpoint');
+          
+          const altResponse = await fetch('/api/cancel-registration-alt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+          });
+          
+          if (!altResponse.ok) {
+            throw new Error(`Failed to restore registration: ${altResponse.statusText}`);
+          }
+          
+          const data = await altResponse.json();
+          console.log('Alternative API response:', data);
+          
+          // Update the UI based on alternative endpoint response
+          updateUIWithResponseData(data, groupId, queueNumber);
+          return; // Return early since we've handled everything
+        }
+        
+        // Handle regular responses
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('API response:', data);
+        
+        // Update the UI based on main endpoint response
+        updateUIWithResponseData(data, groupId, queueNumber);
+      } catch (error) {
+        console.error('Error in uncancellation:', error);
+        throw error; // Rethrow to be handled by the calling function
       }
-      
-      console.log('API response:', data);
       
       // Update session storage to refresh Event Lookup page if user navigates back
       if (typeof window !== 'undefined') {
@@ -702,34 +825,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 3000,
         position: 'bottom-center',
       });
-
-      // Immediately update the UI based on API response data
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        
-        // Find the exact group using the data returned from API
-        const targetGroupId = data.groupId || groupId;
-        const targetQueueNumber = data.queueNumber || queueNumber;
-        
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            // Match by groupId first, then by queueNumber if available
-            if (group.groupId === targetGroupId || 
-                (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
-              return { ...group, cancelled: false };
-            }
-            return group;
-          })
-        };
-      });
-
-      // Still fetch from server after a short delay to ensure complete synchronization
-      setTimeout(() => {
-        // Reset lastFetchTime to force immediate fetch regardless of debounce
-        lastFetchTime.current = 0;
-        fetchOrder();
-      }, 1000); // Keep the delay to ensure backend has time to process
     } catch (error) {
       console.error('Error restoring registration:', error);
       toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
@@ -739,154 +834,227 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     }
   };
 
-  const handleEdit = (groupId: string, field: string, currentValue: string) => {
-    // Find the field's label for better logging
-    const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
+  // Helper function to update UI based on API response
+  const updateUIWithResponseData = (data: any, fallbackGroupId: string, fallbackQueueNumber?: string) => {
+    // Immediately update the UI based on API response data
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+      
+      // Find the exact group using the data returned from API
+      const targetGroupId = data.groupId || fallbackGroupId;
+      const targetQueueNumber = data.queueNumber || fallbackQueueNumber;
+      
+      return {
+        ...prevOrder,
+        customFieldValues: prevOrder.customFieldValues.map(group => {
+          // Match by groupId first, then by queueNumber if available
+          if (group.groupId === targetGroupId || 
+              (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
+            return { ...group, cancelled: false };
+          }
+          return group;
+        })
+      };
+    });
+    
+    // Still fetch from server after a short delay to ensure complete synchronization
+    setTimeout(() => {
+      // Reset lastFetchTime to force immediate fetch regardless of debounce
+      lastFetchTime.current = 0;
+      fetchOrder();
+    }, 1000); // Keep the delay to ensure backend has time to process
+  };
+
+  const handleEdit = (queueNumber: string, field: string, currentValue: string) => {
+    // Find the group by queue number instead of groupId
+    const currentGroup = order?.customFieldValues.find(g => {
+        // Log the comparison to help debug
+        console.log('Comparing group:', {
+            queueNumber: g.queueNumber,
+            fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+        });
+        return g.queueNumber === queueNumber;
+    });
+    
+    // Add detailed logging of all groups and their queue numbers
+    console.log('All groups in order:', order?.customFieldValues.map(g => ({
+        queueNumber: g.queueNumber,
+        fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+    })));
+    
+    console.log('Attempting to edit group:', {
+        queueNumber,
+        foundGroup: currentGroup ? {
+            queueNumber: currentGroup.queueNumber,
+            fields: currentGroup.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+        } : 'not found'
+    });
+    
     const fieldData = currentGroup?.fields.find(f => f.id === field);
     const fieldLabel = fieldData?.label || '';
     
-    setEditingField({ groupId, field, label: fieldLabel });
+    if (!currentGroup) {
+        console.error('Could not find group with queue number:', queueNumber);
+        toast.error('Error: Could not find the correct registration to edit');
+        return;
+    }
+    
+    console.log('Setting editingField state:', {
+        queueNumber,
+        field,
+        label: fieldLabel,
+        fieldValue: currentValue
+    });
+    
+    setEditingField({ 
+        groupId: currentGroup.groupId, // We still need groupId for state management
+        field, 
+        label: fieldLabel,
+        queueNumber
+    });
     setEditValue(currentValue);
   };
 
-  const handleSave = async (groupId: string) => {
+  const handleSave = async (queueNumber: string) => {
     if (!editingField) return;
     
     try {
-      // Store the current value locally before making the API call
-      const fieldToUpdate = editingField.field;
-      const newValue = editValue;
-      
-      // Find the group to get its queueNumber
-      const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
-      if (!currentGroup) {
-        console.error(`Could not find group with groupId: ${groupId}`);
-        toast.error('Could not find registration group', {
-          duration: 3000,
-          position: 'bottom-center',
-        });
-        return;
-      }
-      
-      const queueNumber = currentGroup.queueNumber;
-      if (!queueNumber) {
-        console.warn(`No queueNumber found for groupId: ${groupId}`);
-      } else {
-        console.log(`Found queueNumber: ${queueNumber} for groupId: ${groupId}`);
-      }
-      
-      // Log details of what's being updated
-      console.log(`Updating field for participant: ${new Date().toISOString()}`);
-      console.log(`  - groupId: ${groupId}`);
-      console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
-      console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
-      console.log(`  - orderId: ${id}`);
-      console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
-      console.log(`  - new value: ${newValue}`);
-      
-      // Clear editing state immediately for responsive UI
-      setEditingField(null);
-      setEditValue('');
-      
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
-      
-      // Add the operation-specific parameters
-      Object.assign(requestData, {
-        field: fieldToUpdate,
-        value: newValue,
-        isFromOrderDetails: true
-      });
-      
-      // Make API call
-      const response = await fetch('/api/update-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Show error and revert if API call fails
-        toast.error(data.message || 'Failed to update field', {
-          duration: 4000,
-          position: 'bottom-center',
+        // Store the current value locally before making the API call
+        const fieldToUpdate = editingField.field;
+        const newValue = editValue;
+        
+        console.log('Save initiated with:', {
+            queueNumber,
+            editingField,
+            currentGroups: order?.customFieldValues.map(g => ({
+                queueNumber: g.queueNumber
+            }))
         });
         
+        if (!queueNumber) {
+            console.error('Cannot update: missing queue number');
+            toast.error('Cannot update: missing queue number', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            return;
+        }
+
+        if (!order?.event?._id) {
+            console.error('Cannot update: missing event ID');
+            toast.error('Cannot update: missing event ID', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            return;
+        }
+        
+        // Log details of what's being updated
+        console.log(`Updating field for participant: ${new Date().toISOString()}`);
+        console.log(`  - queueNumber: ${queueNumber}`);
+        console.log(`  - eventId: ${order.event._id}`);
+        console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
+        console.log(`  - new value: ${newValue}`);
+        
+        // Clear editing state immediately for responsive UI
+        setEditingField(null);
+        setEditValue('');
+        
+        // Prepare request data
+        const requestData = {
+            eventId: order.event._id,
+            queueNumber,
+            field: fieldToUpdate,
+            value: newValue,
+            isFromOrderDetails: true
+        };
+        
+        console.log('Sending request to API with data:', requestData);
+        
+        // Make API call with only eventId and queueNumber
+        try {
+            const response = await fetch('/api/update-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            console.log('API Response status:', response.status);
+            const data = await response.json();
+            console.log('API Response data:', data);
+
+            if (!response.ok) {
+                // Show error and revert if API call fails
+                console.error('API error:', data);
+                toast.error(data.message || 'Failed to update field', {
+                    duration: 4000,
+                    position: 'bottom-center',
+                });
+                
+                // Re-fetch the order to ensure data consistency
+                fetchOrder();
+                return;
+            }
+            
+            // Update local state with the response data to ensure consistency
+            setOrder(prevOrder => {
+                if (!prevOrder) return null;
+                
+                // Use the returned queueNumber to find the exact record that was updated
+                const targetQueueNumber = data.queueNumber;
+                
+                // Log what we're using to update the UI
+                console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
+                
+                return {
+                    ...prevOrder,
+                    customFieldValues: prevOrder.customFieldValues.map(group => {
+                        // Match by queueNumber
+                        if (group.queueNumber === targetQueueNumber) {
+                            console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
+                            return {
+                                ...group,
+                                fields: group.fields.map(field =>
+                                    field.id === fieldToUpdate
+                                        ? { ...field, value: newValue }
+                                        : field
+                                ),
+                            };
+                        }
+                        return group;
+                    }),
+                };
+            });
+
+            toast.success('成功更新 Successfully updated', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            
+            // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
+            setTimeout(() => {
+                lastFetchTime.current = 0; // Reset the fetch time to force a refresh
+                fetchOrder();
+            }, 500); // Small delay to allow cache invalidation to complete
+        } catch (error) {
+            console.error('Error updating field:', error);
+            toast.error('更新失败 Failed to update field', {
+                duration: 4000,
+                position: 'bottom-center',
+            });
+            // Re-fetch the order to ensure data consistency
+            fetchOrder();
+        }
+    } catch (error) {
+        console.error('Error updating field:', error);
+        toast.error('更新失败 Failed to update field', {
+            duration: 4000,
+            position: 'bottom-center',
+        });
         // Re-fetch the order to ensure data consistency
         fetchOrder();
-        return;
-      }
-      
-      // Update local state with the response data to ensure consistency
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        
-        // Use the returned data to find the exact record that was updated
-        const targetGroupId = data.groupId;
-        const targetQueueNumber = data.queueNumber;
-        
-        // Log what we're using to update the UI
-        console.log(`Updating UI with: groupId=${targetGroupId}, queueNumber=${targetQueueNumber}`);
-        
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            // First try to match by queueNumber if it's available
-            if (targetQueueNumber && group.queueNumber === targetQueueNumber) {
-              console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
-              return {
-                ...group,
-                fields: group.fields.map(field =>
-                  field.id === fieldToUpdate
-                    ? { ...field, value: newValue }
-                    : field
-                ),
-              };
-            }
-            // Fall back to groupId if queueNumber doesn't match
-            else if (group.groupId === targetGroupId) {
-              console.log(`Matched group by groupId: ${targetGroupId}`);
-              return {
-                ...group,
-                fields: group.fields.map(field =>
-                  field.id === fieldToUpdate
-                    ? { ...field, value: newValue }
-                    : field
-                ),
-              };
-            }
-            return group;
-          }),
-        };
-      });
-
-      toast.success('成功更新 Successfully updated', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
-      
-      // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
-      setTimeout(() => {
-        lastFetchTime.current = 0; // Reset the fetch time to force a refresh
-        fetchOrder();
-      }, 500); // Small delay to allow cache invalidation to complete
-    } catch (error) {
-      console.error('Error updating field:', error);
-      toast.error('更新失败 Failed to update field', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      // Re-fetch the order to ensure data consistency
-      fetchOrder();
     }
   };
 
@@ -960,7 +1128,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
                       <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
-                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Participant {index + 1}</span>
+                        <span>{toChineseOrdinal(index + 1)}参加者 Participant {index + 1}</span>
                         {group.cancelled && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             已取消 Cancelled
@@ -995,7 +1163,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
                       <div className="flex-1 flex items-center gap-2">
-                        {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
+                        {editingField?.queueNumber === group.queueNumber && editingField?.field === field.id ? (
                           <div className="flex-1 flex items-center gap-2">
                             <Input
                               type="text"
@@ -1006,7 +1174,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handleSave(group.groupId)}
+                              onClick={() => {
+                                const queueNumber = group.queueNumber as string;
+                                if (!queueNumber) {
+                                  console.error('Cannot save: missing queue number');
+                                  toast.error('Cannot save: missing queue number');
+                                  return;
+                                }
+                                handleSave(queueNumber);
+                              }}
                               className="h-9 w-9"
                             >
                               <Check className="h-4 w-4" />
@@ -1028,9 +1204,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => {
+                                  const queueNumber = group.queueNumber as string;
+                                  if (!queueNumber) {
+                                    console.error('Cannot edit: missing queue number');
+                                    toast.error('Cannot edit: missing queue number');
+                                    return;
+                                  }
+                                  console.log('Edit button clicked for:', {
+                                    queueNumber,
+                                    field: field.id,
+                                    currentValue: field.value
+                                  });
                                   if (field.id) {
                                     const value = typeof field.value === 'string' ? field.value : '';
-                                    handleEdit(group.groupId, field.id, value);
+                                    handleEdit(queueNumber, field.id, value);
                                   }
                                 }}
                                 className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
@@ -1049,9 +1236,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <CancelButton
                       groupId={group.groupId}
                       orderId={id}
+                      onCancel={(groupId) => handleCancellation(groupId)}
+                      participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       queueNumber={group.queueNumber}
-                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onCancel={() => handleCancellation(group.groupId, group.queueNumber)}
                     />
                   )}
                   
@@ -1059,9 +1246,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <UncancelButton
                       groupId={group.groupId}
                       orderId={id}
+                      onUncancel={(groupId, queueNumber) => handleUncancellation(groupId, queueNumber)}
+                      participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       queueNumber={group.queueNumber}
-                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onUncancel={() => handleUncancellation(group.groupId, group.queueNumber)}
                     />
                   )}
                 </div>

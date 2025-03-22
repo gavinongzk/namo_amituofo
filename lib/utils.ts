@@ -447,10 +447,10 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
 
 /**
  * Prepares consistent registration identification parameters for API calls
- * Requires queueNumber for reliable identification
+ * Requires queueNumber and either eventId or orderId for reliable identification
  */
 export const prepareRegistrationIdentifiers = (params: {
-  orderId: string;
+  orderId?: string;
   queueNumber: string;
   groupId?: string;
   eventId?: string;
@@ -461,21 +461,36 @@ export const prepareRegistrationIdentifiers = (params: {
     throw new Error('queueNumber is required for registration identification');
   }
   
+  if (!orderId && !eventId) {
+    throw new Error('Either orderId or eventId is required for registration identification');
+  }
+  
   // Start with required parameters
-  const requestData = {
-    orderId,
+  const requestData: {
+    queueNumber: string;
+    orderId?: string;
+    groupId?: string;
+    eventId?: string;
+  } = {
     queueNumber,
   };
   
+  // Include orderId if available
+  if (orderId) {
+    requestData.orderId = orderId;
+  }
+  
   // Include groupId as supplementary information if available
   if (groupId) {
-    Object.assign(requestData, { groupId });
+    requestData.groupId = groupId;
   }
   
   // Include eventId for additional validation if available
   if (eventId) {
-    Object.assign(requestData, { eventId });
+    requestData.eventId = eventId;
   }
   
   return requestData;
 };
+
+export { toChineseNumeral, toChineseOrdinal } from './utils/chineseNumerals';

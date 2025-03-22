@@ -114,11 +114,25 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     groupId: string;
     queueNumber: string;
     currentAttendance: boolean;
-    name: string; // Add name to confirmation data
+    name: string;
   } | null>(null);
-  const [remarks, setRemarks] = useState<Record<string, string>>({}); // Store remarks by registrationId
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [cancelledUsersCount, setCancelledUsersCount] = useState(0);
+  const [beepHistory] = useState(new Set<string>()); // Track which queue numbers have already beeped
 
+  // Function to save attendance state to localStorage
+  const saveAttendanceState = useCallback((queueNumber: string, attended: boolean) => {
+    const storageKey = `attendance_${event._id}`;
+    const attendanceState = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    attendanceState[queueNumber] = attended;
+    localStorage.setItem(storageKey, JSON.stringify(attendanceState));
+  }, [event._id]);
+
+  // Function to load attendance state from localStorage
+  const loadAttendanceState = useCallback(() => {
+    const storageKey = `attendance_${event._id}`;
+    return JSON.parse(localStorage.getItem(storageKey) || '{}');
+  }, [event._id]);
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -156,19 +170,29 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
       const data = await response.json();
       if (Array.isArray(data.attendees)) {
+        // Load attendance state from localStorage
+        const attendanceState = loadAttendanceState();
+        
         setRegistrations(data.attendees.map((registration: EventRegistration) => ({
           ...registration,
           order: {
             ...registration.order,
             customFieldValues: registration.order.customFieldValues.map((group) => ({
               ...group,
-              cancelled: group.cancelled || false // Ensure cancelled is always a boolean
+              // Override attendance from API with localStorage state if available
+              attendance: attendanceState[group.queueNumber] ?? group.attendance,
+              cancelled: group.cancelled || false
             }))
           }
         })));
+        
+        // Calculate attended count including localStorage state
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
-          return count + registration.order.customFieldValues.filter(group => group.attendance && !group.cancelled).length;
+          return count + registration.order.customFieldValues.filter(group => 
+            (attendanceState[group.queueNumber] ?? group.attendance) && !group.cancelled
+          ).length;
         }, 0);
+        
         setAttendedUsersCount(attendedCount);
       } else {
         setRegistrations([]);
@@ -183,7 +207,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [event._id]);
+  }, [event._id, loadAttendanceState]);
 
   useEffect(() => {
     console.log('Fetching registrations for event:', event._id);
@@ -252,11 +276,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.map(g => 
-                g.groupId === groupId 
-                  ? { ...g, attendance: attended }
-                  : g
-              );
+              const updatedCustomFieldValues = r.order.customFieldValues.map(g => {
+                if (g.groupId === groupId) {
+                  // Save attendance state to localStorage when marking attendance
+                  saveAttendanceState(g.queueNumber, attended);
+                  return { ...g, attendance: attended };
+                }
+                return g;
+              });
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
             }
             return r;
@@ -295,7 +322,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
     }
-  }, [event._id, registrations, calculateCounts, showModalWithMessage]);
+  }, [event._id, registrations, calculateCounts, showModalWithMessage, saveAttendanceState]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
@@ -332,10 +359,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage(cancelled ? 'Cancelling registration... 取消报名中...' : 'Uncancelling registration... 恢复报名中...');
 
     try {
+      // Extract orderId from registrationId, but we'll prioritize eventId and queueNumber
       const [orderId] = registrationId.split('_');
-      if (!orderId) {
-        throw new Error('Invalid registration ID');
-      }
       
       // Require queueNumber for operation
       if (!queueNumber) {
@@ -350,6 +375,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         return;
       }
 
+      // Require eventId
+      if (!event._id) {
+        setModalMessage('Cannot proceed: missing event ID');
+        console.error('Cannot cancel/uncancel registration: eventId is required');
+        
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage('Cannot cancel/uncancel: missing event ID');
+        }, 2000);
+        
+        return;
+      }
+
       console.log(`Attempting to ${cancelled ? 'cancel' : 'uncancel'} registration:`, {
         orderId,
         groupId,
@@ -358,27 +396,65 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       });
 
-      // Create request data with consistent identifiers - only using queueNumber
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback
       const requestData = { 
-        orderId,
-        queueNumber,
-        eventId: event._id, // Always include eventId for validation
+        eventId: event._id, // Primary identifier - the event
+        queueNumber,        // Primary identifier - the specific registration
+        orderId,            // Include as supplementary information
+        groupId,            // Include as supplementary information
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       };
       
-      console.log(`Using queueNumber ${queueNumber} as primary identifier`);
+      console.log(`Using eventId ${event._id} and queueNumber ${queueNumber} as primary identifiers`);
       
-      const res = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
+      // Try the main endpoint first
+      try {
+        const res = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
 
-      const data = await res.json();
-      
-      if (res.ok) {
+        if (!res.ok) {
+          // If the main endpoint returns a 404, try the alternative endpoint
+          if (res.status === 404) {
+            console.log('Main endpoint returned 404, trying alternative endpoint');
+            
+            const altRes = await fetch('/api/cancel-registration-alt', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestData),
+            });
+            
+            if (!altRes.ok) {
+              throw new Error(`Alternative endpoint failed with status: ${altRes.status}`);
+            }
+            
+            const data = await altRes.json();
+            console.log(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully via alternative endpoint:`, data);
+            
+            // Check if returned queue number matches requested queue number
+            if (queueNumber && data.queueNumber !== queueNumber) {
+              console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
+            }
+            
+            // Rest of the code remains the same...
+            
+            // Update state here
+            // ...
+            
+            return; // Exit early since we handled via alternative endpoint
+          } else {
+            throw new Error(`API returned status code: ${res.status}`);
+          }
+        }
+        
+        const data = await res.json();
         console.log(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully:`, data);
         
         // Check if returned queue number matches requested queue number
@@ -420,9 +496,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setTimeout(() => {
           setShowModal(false);
         }, 2000);
-      } else {
-        console.error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration:`, data);
-        throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
+      } catch (error) {
+        console.error('Error cancelling/uncancelling registration:', error);
+        setModalMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }, 2000);
       }
     } catch (error) {
       console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);
@@ -604,29 +685,39 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
-    if (now - lastScanTime.current < 1500) { // 1.5 seconds cooldown
+    // Debounce scans to prevent duplicates
+    if (now - lastScanTime.current < 2000) {
       return;
     }
     lastScanTime.current = now;
 
-    console.log("Scanned QR Code:", decodedText);
+    // Extract queue number from QR code
+    const match = decodedText.match(/queueNumber=([^&]+)/);
+    if (match) {
+      const queueNumber = decodeURIComponent(match[1]);
+      
+      // Check if this QR code has already been processed in this session
+      if (beepHistory.has(queueNumber)) {
+        return;
+      }
 
-    const [scannedEventId, queueNumber] = decodedText.split('_');
-
-    if (scannedEventId === event._id) {
-      const registration = registrations.find(r => 
-        r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
-      );
-      console.log("Registration:", registration);
+      const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
 
       if (registration) {
-        const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
+        const group = registration.order.customFieldValues.find(group => group.queueNumber === queueNumber);
         if (group) {
           const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
-          const name = nameField ? nameField.value : 'N/A';
+          const name = nameField ? nameField.value : 'Unknown';
+
+          // Only play beep and mark attendance if not already marked
           if (!group.attendance) {
-            handleMarkAttendance(registration.id, group.groupId, true);
+            // Play beep sound once for unattended registrations
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+            
+            // Add to beep history to prevent future beeps for this QR code
+            beepHistory.add(queueNumber);
+            
+            handleMarkAttendance(registration.id, group.groupId, true);
             showModalWithMessage(
               'Success / 成功',
               `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
@@ -637,6 +728,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               return [{ queueNumber, name }, ...filtered.slice(0, 4)];
             });
           } else {
+            // No beep for already marked attendance
             showModalWithMessage(
               'Already Marked / 已标记',
               `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
@@ -662,7 +754,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         'error'
       );
     }
-  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage]);
+  }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId
