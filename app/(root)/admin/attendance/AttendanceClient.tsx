@@ -332,10 +332,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage(cancelled ? 'Cancelling registration... 取消报名中...' : 'Uncancelling registration... 恢复报名中...');
 
     try {
+      // Extract orderId from registrationId, but we'll prioritize eventId and queueNumber
       const [orderId] = registrationId.split('_');
-      if (!orderId) {
-        throw new Error('Invalid registration ID');
-      }
       
       // Require queueNumber for operation
       if (!queueNumber) {
@@ -350,6 +348,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         return;
       }
 
+      // Require eventId
+      if (!event._id) {
+        setModalMessage('Cannot proceed: missing event ID');
+        console.error('Cannot cancel/uncancel registration: eventId is required');
+        
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage('Cannot cancel/uncancel: missing event ID');
+        }, 2000);
+        
+        return;
+      }
+
       console.log(`Attempting to ${cancelled ? 'cancel' : 'uncancel'} registration:`, {
         orderId,
         groupId,
@@ -358,15 +369,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       });
 
-      // Create request data with consistent identifiers - only using queueNumber
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback
       const requestData = { 
-        orderId,
-        queueNumber,
-        eventId: event._id, // Always include eventId for validation
+        eventId: event._id, // Primary identifier - the event
+        queueNumber,        // Primary identifier - the specific registration
+        orderId,            // Include as supplementary information
+        groupId,            // Include as supplementary information
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       };
       
-      console.log(`Using queueNumber ${queueNumber} as primary identifier`);
+      console.log(`Using eventId ${event._id} and queueNumber ${queueNumber} as primary identifiers`);
       
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',

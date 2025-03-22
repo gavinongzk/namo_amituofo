@@ -431,6 +431,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       return;
     }
     
+    // Require event ID
+    if (!order?.event?._id) {
+      console.error('Cannot cancel registration: eventId is required');
+      toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
@@ -467,16 +477,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     try {
       console.log('Sending cancel request to API...');
       
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
-      
-      // Add the operation-specific parameter
-      Object.assign(requestData, { cancelled: true });
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback or for record-keeping
+      const requestData = {
+        eventId: order.event._id,
+        queueNumber: queueNumber,
+        orderId: id,  // Include as optional parameter
+        groupId: groupId,  // Include as optional parameter
+        cancelled: true
+      };
       
       // Log what we're sending to help with debugging
       console.log('Sending request to API with data:', requestData);
@@ -628,6 +637,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       return;
     }
     
+    // Require event ID
+    if (!order?.event?._id) {
+      console.error('Cannot restore registration: eventId is required');
+      toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
@@ -664,16 +683,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     try {
       console.log('Sending uncancel request to API...');
       
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
-      
-      // Add the operation-specific parameter
-      Object.assign(requestData, { cancelled: false });
+      // Create request data prioritizing eventId and queueNumber
+      // We'll still include orderId as a fallback or for record-keeping
+      const requestData = {
+        eventId: order.event._id,
+        queueNumber: queueNumber,
+        orderId: id,  // Include as optional parameter
+        groupId: groupId,  // Include as optional parameter
+        cancelled: false
+      };
       
       const response = await fetch('/api/cancel-registration', {
         method: 'POST',
