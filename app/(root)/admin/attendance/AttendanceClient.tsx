@@ -685,33 +685,30 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
-    if (now - lastScanTime.current < 1500) { // 1.5 seconds cooldown
+    // Debounce scans to prevent duplicates
+    if (now - lastScanTime.current < 2000) {
       return;
     }
     lastScanTime.current = now;
 
-    console.log("Scanned QR Code:", decodedText);
-
-    const [scannedEventId, queueNumber] = decodedText.split('_');
-
-    if (scannedEventId === event._id) {
-      const registration = registrations.find(r => 
-        r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
-      );
-      console.log("Registration:", registration);
+    // Extract queue number from QR code
+    const match = decodedText.match(/queueNumber=([^&]+)/);
+    if (match) {
+      const queueNumber = decodeURIComponent(match[1]);
+      const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
 
       if (registration) {
-        const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
+        const group = registration.order.customFieldValues.find(group => group.queueNumber === queueNumber);
         if (group) {
           const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
-          const name = nameField ? nameField.value : 'N/A';
+          const name = nameField ? nameField.value : 'Unknown';
+
+          // Only play beep and mark attendance if not already marked
           if (!group.attendance) {
+            // Play beep sound once for unattended registrations
+            new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+            
             handleMarkAttendance(registration.id, group.groupId, true);
-            // Only play beep if we haven't beeped for this queue number before
-            if (!beepHistory.has(queueNumber)) {
-              new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
-              beepHistory.add(queueNumber); // Add to beep history
-            }
             showModalWithMessage(
               'Success / 成功',
               `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
@@ -722,6 +719,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               return [{ queueNumber, name }, ...filtered.slice(0, 4)];
             });
           } else {
+            // No beep for already marked attendance
             showModalWithMessage(
               'Already Marked / 已标记',
               `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
@@ -747,7 +745,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         'error'
       );
     }
-  }, [event._id, registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
+  }, [registrations, handleMarkAttendance, showModalWithMessage]);
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId

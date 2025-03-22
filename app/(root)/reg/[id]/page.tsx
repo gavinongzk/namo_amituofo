@@ -65,56 +65,123 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   isAttended: boolean,
   isNewlyMarked?: boolean,
   queueNumber?: string
-}) => (
-  <div className="w-full max-w-sm mx-auto mb-6">
-    <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
-    <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
-      ${isNewlyMarked ? 'animate-flash' : ''}`}>
-      <Image 
-        src={qrCode} 
-        alt="QR Code" 
-        fill
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        className="object-contain"
-      />
-      {isAttended && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
-          ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
-          <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <svg 
-                className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M5 13l4 4L19 7" 
-                />
-              </svg>
-              <span className="text-lg font-semibold text-green-700">已出席</span>
+}) => {
+  // If attendance is already marked, we don't need to keep updating the QR code
+  const [shouldUpdate, setShouldUpdate] = React.useState(!isAttended);
+
+  React.useEffect(() => {
+    // Only allow updates if attendance is not marked
+    setShouldUpdate(!isAttended);
+  }, [isAttended]);
+
+  // If we shouldn't update, return the last rendered state
+  if (!shouldUpdate && !isNewlyMarked) {
+    return (
+      <div className="w-full max-w-sm mx-auto mb-6">
+        <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
+        <div className="relative aspect-square w-full opacity-40 grayscale transition-all duration-300">
+          <Image 
+            src={qrCode} 
+            alt="QR Code" 
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain"
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <svg 
+                  className="w-6 h-6 text-green-600"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 13l4 4L19 7" 
+                  />
+                </svg>
+                <span className="text-lg font-semibold text-green-700">已出席</span>
+              </div>
+              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
             </div>
-            <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
+            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+            </div>
           </div>
-          <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-            <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+        </div>
+        {queueNumber && (
+          <div className="mt-3 text-center">
+            <p className="text-xs text-gray-500">队列号 Queue Number</p>
+            <p className="text-sm text-gray-600">{queueNumber}</p>
           </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-sm mx-auto mb-6">
+      <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
+      <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
+        ${isNewlyMarked ? 'animate-flash' : ''}`}>
+        <Image 
+          src={qrCode} 
+          alt="QR Code" 
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-contain"
+        />
+        {isAttended && (
+          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
+            ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
+            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <svg 
+                  className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 13l4 4L19 7" 
+                  />
+                </svg>
+                <span className="text-lg font-semibold text-green-700">已出席</span>
+              </div>
+              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
+            </div>
+            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+            </div>
+          </div>
+        )}
+      </div>
+      {queueNumber && (
+        <div className="mt-3 text-center">
+          <p className="text-xs text-gray-500">队列号 Queue Number</p>
+          <p className="text-sm text-gray-600">{queueNumber}</p>
         </div>
       )}
     </div>
-    {queueNumber && (
-      <div className="mt-3 text-center">
-        <p className="text-xs text-gray-500">队列号 Queue Number</p>
-        <p className="text-sm text-gray-600">{queueNumber}</p>
-      </div>
-    )}
-  </div>
-));
+  );
+});
 
-const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string }) => {
+// Remove duplicate CancelButton declaration and keep only one
+interface CancelButtonProps {
+  groupId: string;
+  orderId: string;
+  onCancel: (groupId: string) => void;
+  participantInfo?: string;
+  queueNumber?: string;
+}
+
+const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -124,7 +191,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
       // Close the dialog immediately after the user confirms
       setDialogOpen(false);
       // The actual cancellation is now handled in the parent component's handleCancellation function
-      onCancel();
+      onCancel(groupId);
     } catch (error) {
       console.error('Error in CancelButton handleCancel:', error);
     } finally {
@@ -1168,7 +1235,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       orderId={id}
                       queueNumber={group.queueNumber}
                       participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onCancel={() => handleCancellation(group.groupId, group.queueNumber)}
+                      onCancel={handleCancellation}
                     />
                   )}
                   
@@ -1178,7 +1245,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       orderId={id}
                       queueNumber={group.queueNumber}
                       participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onUncancel={() => handleUncancellation(group.groupId, group.queueNumber)}
+                      onUncancel={handleUncancellation}
                     />
                   )}
                 </div>
