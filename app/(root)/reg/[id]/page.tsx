@@ -351,6 +351,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
+  const processedAttendances = useRef<Set<string>>(new Set());
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -434,7 +435,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           const prevGroup = previousOrder.current?.customFieldValues.find(
             (g: CustomFieldGroup) => g.groupId === group.groupId
           );
-          if (group.attendance && !prevGroup?.attendance) {
+          
+          // Only process if attendance is marked and we haven't processed it before
+          if (group.attendance && !prevGroup?.attendance && !processedAttendances.current.has(group.groupId)) {
+            processedAttendances.current.add(group.groupId);
             setNewlyMarkedGroups(prev => new Set(prev).add(group.groupId));
             playSuccessSound();
             // Clear the newly marked status after animation

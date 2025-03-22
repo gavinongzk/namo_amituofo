@@ -695,6 +695,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     const match = decodedText.match(/queueNumber=([^&]+)/);
     if (match) {
       const queueNumber = decodeURIComponent(match[1]);
+      
+      // Check if this QR code has already been processed in this session
+      if (beepHistory.has(queueNumber)) {
+        return;
+      }
+
       const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
 
       if (registration) {
@@ -707,6 +713,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           if (!group.attendance) {
             // Play beep sound once for unattended registrations
             new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+            
+            // Add to beep history to prevent future beeps for this QR code
+            beepHistory.add(queueNumber);
             
             handleMarkAttendance(registration.id, group.groupId, true);
             showModalWithMessage(
@@ -745,7 +754,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         'error'
       );
     }
-  }, [registrations, handleMarkAttendance, showModalWithMessage]);
+  }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId
