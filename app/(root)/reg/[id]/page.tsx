@@ -478,21 +478,79 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Add the operation-specific parameter
       Object.assign(requestData, { cancelled: true });
       
-      const response = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
+      // Log what we're sending to help with debugging
+      console.log('Sending request to API with data:', requestData);
       
-      const data = await response.json();
+      // Try multiple potential API URLs to handle different deployment scenarios
+      // First try relative URL
+      let response;
+      let apiUrls = [];
       
-      if (!response.ok) {
-        throw new Error(`Failed to cancel registration: ${data.error || response.statusText}`);
+      // Build a list of potential API URLs to try
+      // Start with relative URL (simplest and should work for most cases)
+      apiUrls.push('/api/cancel-registration');
+      
+      // Add absolute URL based on current origin (handles custom domains)
+      if (typeof window !== 'undefined') {
+        apiUrls.push(`${window.location.origin}/api/cancel-registration`);
+      }
+
+      // Try each URL until one works
+      let lastError;
+      for (const apiUrl of apiUrls) {
+        try {
+          console.log(`Trying API URL: ${apiUrl}`);
+          response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+          });
+          
+          // If we get a response (even an error response), break the loop
+          console.log(`Got response from ${apiUrl}: ${response.status} ${response.statusText}`);
+          break;
+        } catch (fetchError) {
+          console.error(`Error fetching from ${apiUrl}:`, fetchError);
+          lastError = fetchError;
+          // Continue to the next URL
+        }
       }
       
-      console.log('API response:', data);
+      // If we didn't get a response from any URL, throw the last error
+      if (!response) {
+        throw new Error(`Failed to connect to any API endpoint: ${lastError?.message || 'Unknown error'}`);
+      }
+      
+      // Log the response status to help with debugging
+      console.log(`API response status: ${response.status} ${response.statusText}`);
+      
+      // Try to parse the response as JSON, but handle the case where it's not JSON
+      let data;
+      try {
+        data = await response.json();
+        console.log('API response data:', data);
+      } catch (jsonError) {
+        console.error('Error parsing API response as JSON:', jsonError);
+        throw new Error(`Failed to parse API response: ${response.statusText}`);
+      }
+      
+      if (!response.ok) {
+        // Check for authorization or permission issues
+        if (response.status === 403 || response.status === 401) {
+          console.error('Authorization issue when cancelling registration. You may not have the required permissions.');
+          throw new Error(`Unable to cancel registration: You don't have permission. Please contact an administrator.`);
+        } else if (response.status === 404) {
+          console.error('API endpoint not found. This could be a deployment issue or permissions problem.');
+          
+          // Try a fallback approach for regular users (direct database update not possible)
+          // Show a more helpful error message
+          throw new Error(`Unable to cancel registration via API. Please contact an administrator or use the event administrator interface.`);
+        }
+        
+        throw new Error(`Failed to cancel registration: ${data.error || response.statusText}`);
+      }
       
       // Verify response data
       if (typeof data.cancelled !== 'boolean') {
