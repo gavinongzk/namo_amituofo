@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check, Loader2 } from 'lucide-react';
+import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
@@ -155,11 +155,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
             <br />
             <div className="mt-3 text-gray-500 text-xs">
               {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
-              <p>
-                {process.env.NODE_ENV === 'development' 
-                  ? `Group ID: ${groupId}` 
-                  : `Technical ID: ${groupId.substring(0, 8)}...`}
-              </p>
+
               <p className="mt-2 text-amber-600">
                 取消后，此座位将重新分配给其他参加者。
                 <br />
@@ -178,6 +174,78 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
               </>
             ) : (
               '确认 Confirm'
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+});
+
+const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: CancelButtonProps & { participantInfo?: string, queueNumber?: string, onUncancel: () => void }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleUncancel = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // Close the dialog immediately after the user confirms
+      setDialogOpen(false);
+      // The actual uncancellation is now handled in the parent component's handleUncancellation function
+      onUncancel();
+    } catch (error) {
+      console.error('Error in UncancelButton handleUncancel:', error);
+    } finally {
+      // We don't need to reset isLoading here as the dialog is already closed
+      // The loading state will be reset when the component re-renders due to parent state changes
+    }
+  };
+
+  return (
+    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <AlertDialogTrigger asChild>
+        <Button 
+          variant="outline" 
+          className="w-full sm:w-auto mt-4 border-green-500 text-green-500 hover:bg-green-50"
+          disabled={isLoading}
+          onClick={() => setDialogOpen(true)}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              处理中... Processing...
+            </>
+          ) : (
+            <>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              恢复报名 Restore Registration
+            </>
+          )}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="bg-white">
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认恢复报名 Confirm Restoration</AlertDialogTitle>
+          <AlertDialogDescription>
+            您确定要恢复{participantInfo ? `${participantInfo}的` : '此'}报名吗？这将重新激活该报名。
+            <br />
+            Are you sure you want to restore {participantInfo ? `${participantInfo}'s` : 'this'} registration? This will reactivate the registration.
+            <br />
+            <div className="mt-3 text-gray-500 text-xs">
+              {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleUncancel} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                处理中...
+              </>
+            ) : (
+              '确认恢复 Confirm'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -475,6 +543,140 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     }
   };
 
+  const handleUncancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
+    // Log which participant is being uncancelled with more detail
+    console.log(`Uncancelling participant: ${new Date().toISOString()}`);
+    console.log(`  - groupId: ${groupId}`);
+    console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
+    console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
+    console.log(`  - orderId: ${id}`);
+    
+    // Update the local state
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+      
+      // First, identify the relevant group based on queueNumber if available, then groupId
+      let targetGroup;
+      
+      if (queueNumber) {
+        targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
+        if (targetGroup) {
+          console.log(`  - Found matching group with queueNumber ${queueNumber}. GroupId: ${targetGroup.groupId}`);
+        } else {
+          console.warn(`  - WARNING: Could not find group with queueNumber ${queueNumber}`);
+        }
+      }
+      
+      // If we couldn't find by queueNumber or it wasn't provided, use groupId
+      if (!targetGroup) {
+        targetGroup = prevOrder.customFieldValues.find(group => group.groupId === groupId);
+        if (targetGroup) {
+          console.log(`  - Found matching group with groupId ${groupId}`);
+        } else {
+          console.warn(`  - WARNING: Could not find group with groupId ${groupId}`);
+          // If we can't find either by queueNumber or groupId, return the order unchanged
+          return prevOrder;
+        }
+      }
+      
+      const updatedOrder = {
+        ...prevOrder,
+        customFieldValues: prevOrder.customFieldValues.map(group =>
+          group.groupId === targetGroup.groupId ? { ...group, cancelled: false } : group
+        )
+      };
+      
+      // Log the updated state to verify
+      console.log('Updated order state:', updatedOrder.customFieldValues.map(g => ({
+        groupId: g.groupId,
+        queueNumber: g.queueNumber,
+        cancelled: g.cancelled,
+        cancelledType: typeof g.cancelled
+      })));
+      
+      return updatedOrder;
+    });
+    
+    // Call the API to update the backend
+    try {
+      console.log('Sending uncancel request to API...');
+      const uncancelRequest = { 
+        orderId: id, 
+        groupId, 
+        eventId: order?.event?._id, // Explicitly pass eventId
+        cancelled: false // Explicitly pass false as a boolean to uncancel
+      };
+      
+      // Only include queueNumber in request if it's provided and not empty
+      if (queueNumber) {
+        console.log(`Including queueNumber ${queueNumber} in request`);
+        Object.assign(uncancelRequest, { queueNumber });
+      }
+      
+      const response = await fetch('/api/cancel-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(uncancelRequest),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
+      }
+      
+      console.log('API response:', data);
+      
+      // Update session storage to refresh Event Lookup page if user navigates back
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('eventLookupRegistrations');
+        sessionStorage.removeItem('eventLookupAllRegistrations');
+      }
+      
+      // Show success toast
+      toast.success('已成功恢复报名 Registration restored successfully', {
+        duration: 3000,
+        position: 'bottom-center',
+      });
+
+      // Immediately update the UI based on API response data
+      setOrder(prevOrder => {
+        if (!prevOrder) return null;
+        
+        // Find the exact group using the data returned from API
+        const targetGroupId = data.groupId || groupId;
+        const targetQueueNumber = data.queueNumber || queueNumber;
+        
+        return {
+          ...prevOrder,
+          customFieldValues: prevOrder.customFieldValues.map(group => {
+            // Match by groupId first, then by queueNumber if available
+            if (group.groupId === targetGroupId || 
+                (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
+              return { ...group, cancelled: false };
+            }
+            return group;
+          })
+        };
+      });
+
+      // Still fetch from server after a short delay to ensure complete synchronization
+      setTimeout(() => {
+        // Reset lastFetchTime to force immediate fetch regardless of debounce
+        lastFetchTime.current = 0;
+        fetchOrder();
+      }, 1000); // Keep the delay to ensure backend has time to process
+    } catch (error) {
+      console.error('Error restoring registration:', error);
+      toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        duration: 5000,
+        position: 'bottom-center',
+      });
+    }
+  };
+
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
     setEditingField({ groupId, field });
     setEditValue(currentValue);
@@ -689,20 +891,22 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         ) : (
                           <div className="flex-1 flex items-center gap-1">
                             <span>{field.value}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                if (field.id) {
-                                  const value = typeof field.value === 'string' ? field.value : '';
-                                  handleEdit(group.groupId, field.id, value);
-                                }
-                              }}
-                              className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
-                            >
-                              <Pencil className="h-3 w-3" />
-                              <span className="text-xs ml-1">编辑 Edit</span>
-                            </Button>
+                            {!group.cancelled && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (field.id) {
+                                    const value = typeof field.value === 'string' ? field.value : '';
+                                    handleEdit(group.groupId, field.id, value);
+                                  }
+                                }}
+                                className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                <span className="text-xs ml-1">编辑 Edit</span>
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -716,6 +920,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       queueNumber={group.queueNumber}
                       participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       onCancel={() => handleCancellation(group.groupId, group.queueNumber)}
+                    />
+                  )}
+                  
+                  {group.cancelled && (
+                    <UncancelButton
+                      groupId={group.groupId}
+                      orderId={id}
+                      queueNumber={group.queueNumber}
+                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                      onUncancel={() => handleUncancellation(group.groupId, group.queueNumber)}
                     />
                   )}
                 </div>
