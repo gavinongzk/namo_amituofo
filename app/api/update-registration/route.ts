@@ -106,8 +106,26 @@ export async function POST(req: Request) {
           );
         }
         
-        // Skip the redundant in-memory model update and save since we already have the updated document
-        order = updateResult;
+        // Don't reassign order, use updateResult directly for the response
+        const updatedGroup = updateResult.customFieldValues.find(
+          (g: CustomFieldGroup) => g.queueNumber === queueNumber
+        );
+        
+        // Invalidate relevant cache tags to prevent stale data
+        revalidateTag('order-details');
+        revalidateTag('orders');
+        revalidateTag('events');
+        revalidateTag(`order-${orderId}`); // Add specific order tag
+        revalidateTag(`event-${updateResult.event}`); // Add specific event tag
+        revalidateTag('registrations'); // Add registrations tag
+        
+        // Include groupId and queueNumber in the response for confirmation
+        return NextResponse.json({ 
+          success: true,
+          groupId: updatedGroup?.groupId || group.groupId,
+          queueNumber: queueNumber,
+          eventId: updateResult.event.toString()
+        });
       } else {
         console.error(`Field index not found for fieldId=${fieldId}`);
         return NextResponse.json(
@@ -122,25 +140,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
-    // Skip the redundant in-memory model update and save
-    // Instead, verify the update took effect directly from the updated document
-
-    // Invalidate relevant cache tags to prevent stale data
-    revalidateTag('order-details');
-    revalidateTag('orders');
-    revalidateTag('events');
-    revalidateTag(`order-${orderId}`); // Add specific order tag
-    revalidateTag(`event-${order.event}`); // Add specific event tag
-    revalidateTag('registrations'); // Add registrations tag
-    
-    // Include groupId and queueNumber in the response for confirmation
-    return NextResponse.json({ 
-      success: true,
-      groupId: group.groupId,
-      queueNumber: queueNumber,
-      eventId: order.event.toString()
-    });
   } catch (error) {
     console.error('Error updating registration:', error);
     return NextResponse.json(
