@@ -721,7 +721,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           
           const data = await altResponse.json();
           console.log('Alternative API response:', data);
-          return; // Continue with success handling
+          
+          // Update the UI based on alternative endpoint response
+          updateUIWithResponseData(data, groupId, queueNumber);
+          return; // Return early since we've handled everything
         }
         
         // Handle regular responses
@@ -732,6 +735,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         
         const data = await response.json();
         console.log('API response:', data);
+        
+        // Update the UI based on main endpoint response
+        updateUIWithResponseData(data, groupId, queueNumber);
       } catch (error) {
         console.error('Error in uncancellation:', error);
         throw error; // Rethrow to be handled by the calling function
@@ -748,34 +754,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 3000,
         position: 'bottom-center',
       });
-
-      // Immediately update the UI based on API response data
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        
-        // Find the exact group using the data returned from API
-        const targetGroupId = data.groupId || groupId;
-        const targetQueueNumber = data.queueNumber || queueNumber;
-        
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            // Match by groupId first, then by queueNumber if available
-            if (group.groupId === targetGroupId || 
-                (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
-              return { ...group, cancelled: false };
-            }
-            return group;
-          })
-        };
-      });
-
-      // Still fetch from server after a short delay to ensure complete synchronization
-      setTimeout(() => {
-        // Reset lastFetchTime to force immediate fetch regardless of debounce
-        lastFetchTime.current = 0;
-        fetchOrder();
-      }, 1000); // Keep the delay to ensure backend has time to process
     } catch (error) {
       console.error('Error restoring registration:', error);
       toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
@@ -783,6 +761,37 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         position: 'bottom-center',
       });
     }
+  };
+
+  // Helper function to update UI based on API response
+  const updateUIWithResponseData = (data: any, fallbackGroupId: string, fallbackQueueNumber?: string) => {
+    // Immediately update the UI based on API response data
+    setOrder(prevOrder => {
+      if (!prevOrder) return null;
+      
+      // Find the exact group using the data returned from API
+      const targetGroupId = data.groupId || fallbackGroupId;
+      const targetQueueNumber = data.queueNumber || fallbackQueueNumber;
+      
+      return {
+        ...prevOrder,
+        customFieldValues: prevOrder.customFieldValues.map(group => {
+          // Match by groupId first, then by queueNumber if available
+          if (group.groupId === targetGroupId || 
+              (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
+            return { ...group, cancelled: false };
+          }
+          return group;
+        })
+      };
+    });
+    
+    // Still fetch from server after a short delay to ensure complete synchronization
+    setTimeout(() => {
+      // Reset lastFetchTime to force immediate fetch regardless of debounce
+      lastFetchTime.current = 0;
+      fetchOrder();
+    }, 1000); // Keep the delay to ensure backend has time to process
   };
 
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
