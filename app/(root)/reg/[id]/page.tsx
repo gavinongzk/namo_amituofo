@@ -1093,7 +1093,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
                       <div className="flex-1 flex items-center gap-2">
-                        {editingField?.queueNumber === group.queueNumber ? (
+                        {editingField?.queueNumber === group.queueNumber && editingField?.field === field.id ? (
                           <div className="flex-1 flex items-center gap-2">
                             <Input
                               type="text"
