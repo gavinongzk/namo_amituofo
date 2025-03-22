@@ -520,7 +520,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       
       // If we didn't get a response from any URL, throw the last error
       if (!response) {
-        throw new Error(`Failed to connect to any API endpoint: ${lastError?.message || 'Unknown error'}`);
+        throw new Error(`Failed to connect to any API endpoint: ${lastError instanceof Error ? lastError.message : 'Unknown error'}`);
       }
       
       // Log the response status to help with debugging
