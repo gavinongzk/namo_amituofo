@@ -798,9 +798,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
     // Find the field's label and queueNumber for better logging
     const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
+    console.log('Edit initiated for group:', {
+      groupId,
+      queueNumber: currentGroup?.queueNumber,
+      allQueueNumbers: order?.customFieldValues.map(g => ({ 
+        groupId: g.groupId, 
+        queueNumber: g.queueNumber 
+      }))
+    });
+    
     const fieldData = currentGroup?.fields.find(f => f.id === field);
     const fieldLabel = fieldData?.label || '';
     const queueNumber = currentGroup?.queueNumber;
+    
+    console.log('Setting editingField state:', {
+      groupId,
+      field,
+      label: fieldLabel,
+      queueNumber
+    });
     
     setEditingField({ 
       groupId, // Keep for UI state management only
@@ -819,6 +835,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       const fieldToUpdate = editingField.field;
       const newValue = editValue;
       const queueNumber = editingField.queueNumber;
+      
+      console.log('Save initiated with:', {
+        groupId,
+        editingField,
+        currentGroups: order?.customFieldValues.map(g => ({
+          groupId: g.groupId,
+          queueNumber: g.queueNumber
+        }))
+      });
       
       if (!queueNumber) {
         console.error('Cannot update: missing queue number');
