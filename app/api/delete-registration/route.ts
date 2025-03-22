@@ -40,9 +40,8 @@ export async function POST(req: NextRequest) {
 
     for (const orderItem of orders) {
       const group = orderItem.customFieldValues.find((g: any) => {
-        const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
-        const normalizedSearchQueueNumber = String(queueNumber).replace(/^0+/, '');
-        return normalizedGroupQueueNumber === normalizedSearchQueueNumber;
+        // Compare queue numbers exactly as strings to preserve leading zeros
+        return String(g.queueNumber) === String(queueNumber);
       });
 
       if (group) {
