@@ -61,10 +61,10 @@ export function toChineseNumeral(num: number, options: {
     return '负' + toChineseNumeral(-num, options);
   }
   
-  // Handle zero
+  // Handle zero - skip zero for ordinal numbers
   if (num === 0) {
     const zero = useTraditional ? '零' : '零';
-    return usePositionalUnit ? `第${zero}位` : zero;
+    return usePositionalUnit ? `第一位` : zero; // Return 第一位 instead of 第零位 for ordinal numbers
   }
   
   // Convert to groups of 4 digits
