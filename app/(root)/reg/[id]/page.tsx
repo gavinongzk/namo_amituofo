@@ -278,6 +278,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     groupId: string;
     field: string;
     label?: string;
+    queueNumber?: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
@@ -795,12 +796,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
-    // Find the field's label for better logging
+    // Find the field's label and queueNumber for better logging
     const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
     const fieldData = currentGroup?.fields.find(f => f.id === field);
     const fieldLabel = fieldData?.label || '';
+    const queueNumber = currentGroup?.queueNumber;
     
-    setEditingField({ groupId, field, label: fieldLabel });
+    setEditingField({ 
+      groupId, // Keep for UI state management only
+      field, 
+      label: fieldLabel,
+      queueNumber // Store queueNumber in editing state
+    });
     setEditValue(currentValue);
   };
 
@@ -811,31 +818,30 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Store the current value locally before making the API call
       const fieldToUpdate = editingField.field;
       const newValue = editValue;
+      const queueNumber = editingField.queueNumber;
       
-      // Find the group to get its queueNumber
-      const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
-      if (!currentGroup) {
-        console.error(`Could not find group with groupId: ${groupId}`);
-        toast.error('Could not find registration group', {
+      if (!queueNumber) {
+        console.error('Cannot update: missing queue number');
+        toast.error('Cannot update: missing queue number', {
+          duration: 3000,
+          position: 'bottom-center',
+        });
+        return;
+      }
+
+      if (!order?.event?._id) {
+        console.error('Cannot update: missing event ID');
+        toast.error('Cannot update: missing event ID', {
           duration: 3000,
           position: 'bottom-center',
         });
         return;
       }
       
-      const queueNumber = currentGroup.queueNumber;
-      if (!queueNumber) {
-        console.warn(`No queueNumber found for groupId: ${groupId}`);
-      } else {
-        console.log(`Found queueNumber: ${queueNumber} for groupId: ${groupId}`);
-      }
-      
       // Log details of what's being updated
       console.log(`Updating field for participant: ${new Date().toISOString()}`);
-      console.log(`  - groupId: ${groupId}`);
-      console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
-      console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
-      console.log(`  - orderId: ${id}`);
+      console.log(`  - queueNumber: ${queueNumber}`);
+      console.log(`  - eventId: ${order.event._id}`);
       console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
       console.log(`  - new value: ${newValue}`);
       
@@ -843,28 +849,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       setEditingField(null);
       setEditValue('');
       
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
-        orderId: id,
-        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
-        groupId,
-        eventId: order?.event?._id
-      });
-      
-      // Add the operation-specific parameters
-      Object.assign(requestData, {
-        field: fieldToUpdate,
-        value: newValue,
-        isFromOrderDetails: true
-      });
-      
-      // Make API call
+      // Make API call with only eventId and queueNumber
       const response = await fetch('/api/update-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          eventId: order.event._id,
+          queueNumber,
+          field: fieldToUpdate,
+          value: newValue,
+          isFromOrderDetails: true
+        }),
       });
 
       const data = await response.json();
@@ -885,31 +882,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       setOrder(prevOrder => {
         if (!prevOrder) return null;
         
-        // Use the returned data to find the exact record that was updated
-        const targetGroupId = data.groupId;
+        // Use the returned queueNumber to find the exact record that was updated
         const targetQueueNumber = data.queueNumber;
         
         // Log what we're using to update the UI
-        console.log(`Updating UI with: groupId=${targetGroupId}, queueNumber=${targetQueueNumber}`);
+        console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
         
         return {
           ...prevOrder,
           customFieldValues: prevOrder.customFieldValues.map(group => {
-            // First try to match by queueNumber if it's available
-            if (targetQueueNumber && group.queueNumber === targetQueueNumber) {
+            // Match by queueNumber
+            if (group.queueNumber === targetQueueNumber) {
               console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
-              return {
-                ...group,
-                fields: group.fields.map(field =>
-                  field.id === fieldToUpdate
-                    ? { ...field, value: newValue }
-                    : field
-                ),
-              };
-            }
-            // Fall back to groupId if queueNumber doesn't match
-            else if (group.groupId === targetGroupId) {
-              console.log(`Matched group by groupId: ${targetGroupId}`);
               return {
                 ...group,
                 fields: group.fields.map(field =>
