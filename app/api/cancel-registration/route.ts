@@ -42,14 +42,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Find the group by queueNumber only (no groupId fallback)
+    // Convert both queueNumbers to strings and trim any leading zeros for comparison
+    const normalizedQueueNumber = String(queueNumber).replace(/^0+/, '');
+    
     const group = order.customFieldValues.find(
-      (g: CustomFieldGroup) => g.queueNumber === queueNumber
+      (g: CustomFieldGroup) => {
+        const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
+        return normalizedGroupQueueNumber === normalizedQueueNumber;
+      }
     );
     
     if (group) {
       console.log(`Found group by queueNumber ${queueNumber}. GroupId: ${group.groupId}, Current cancelled status: ${group.cancelled}`);
     } else {
-      console.error(`No group found with queueNumber ${queueNumber}`);
+      console.error(`No group found with queueNumber ${queueNumber}. Available queueNumbers:`, 
+        order.customFieldValues.map((g: CustomFieldGroup) => g.queueNumber));
       return NextResponse.json({ error: 'Registration not found with provided queueNumber' }, { status: 404 });
     }
 
@@ -63,12 +70,36 @@ export async function POST(req: NextRequest) {
       console.log(`Updating cancelled status from ${currentCancelled} to ${cancelledBoolean}`);
       
       // Update using queueNumber (most reliable)
+      // Use the same normalization approach for MongoDB query
       console.log(`Using updateOne with queueNumber=${queueNumber}`);
-      const updateResult = await Order.updateOne(
+      
+      // First try exact match (more reliable if formats match)
+      let updateResult = await Order.updateOne(
         { _id: orderId, "customFieldValues.queueNumber": queueNumber },
         { $set: { "customFieldValues.$.cancelled": cancelledBoolean } }
       );
-      console.log(`Direct updateOne by queueNumber result:`, updateResult);
+      
+      // If no documents were modified, try a more flexible approach
+      if (updateResult.modifiedCount === 0) {
+        console.log(`No documents updated with exact queueNumber match. Trying with $or query.`);
+        
+        // Try to update with different possible formats of the same queueNumber
+        // This handles cases where queueNumber might be stored as string or number
+        updateResult = await Order.updateOne(
+          { 
+            _id: orderId, 
+            $or: [
+              { "customFieldValues.queueNumber": queueNumber },
+              { "customFieldValues.queueNumber": String(queueNumber) },
+              { "customFieldValues.queueNumber": Number(queueNumber) },
+              { "customFieldValues.queueNumber": queueNumber.replace(/^0+/, '') }
+            ]
+          },
+          { $set: { "customFieldValues.$.cancelled": cancelledBoolean } }
+        );
+      }
+      
+      console.log(`Direct updateOne result:`, updateResult);
       
       // Also update the in-memory model and save
       group.cancelled = cancelledBoolean;
@@ -101,7 +132,10 @@ export async function POST(req: NextRequest) {
       const updatedOrder = await Order.findById(orderId);
       if (updatedOrder) {
         const updatedGroup = updatedOrder.customFieldValues.find(
-          (g: CustomFieldGroup) => g.queueNumber === queueNumber
+          (g: CustomFieldGroup) => {
+            const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
+            return normalizedGroupQueueNumber === normalizedQueueNumber;
+          }
         );
         console.log(`After save - group.cancelled: ${updatedGroup?.cancelled} (${typeof updatedGroup?.cancelled})`);
       }
