@@ -13,7 +13,7 @@ import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
-import { convertPhoneNumbersToLinks } from '@/lib/utils';
+import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 
 // Define inline styles for custom UI elements
@@ -277,6 +277,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [editingField, setEditingField] = useState<{
     groupId: string;
     field: string;
+    label?: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isPolling, setIsPolling] = useState(false);
@@ -469,25 +470,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     // Call the API to update the backend
     try {
       console.log('Sending cancel request to API...');
-      const cancelRequest = { 
-        orderId: id, 
-        groupId, 
-        eventId: order?.event?._id, // Explicitly pass eventId
-        cancelled: true // Explicitly pass true as a boolean
-      };
       
-      // Only include queueNumber in request if it's provided and not empty
-      if (queueNumber) {
-        console.log(`Including queueNumber ${queueNumber} in request`);
-        Object.assign(cancelRequest, { queueNumber });
-      }
+      // Create request data with consistent identifiers
+      const requestData = prepareRegistrationIdentifiers({
+        orderId: id,
+        groupId,
+        queueNumber,
+        eventId: order?.event?._id
+      });
+      
+      // Add the operation-specific parameter
+      Object.assign(requestData, { cancelled: true });
       
       const response = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(cancelRequest),
+        body: JSON.stringify(requestData),
       });
       
       const data = await response.json();
@@ -613,25 +613,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     // Call the API to update the backend
     try {
       console.log('Sending uncancel request to API...');
-      const uncancelRequest = { 
-        orderId: id, 
-        groupId, 
-        eventId: order?.event?._id, // Explicitly pass eventId
-        cancelled: false // Explicitly pass false as a boolean to uncancel
-      };
       
-      // Only include queueNumber in request if it's provided and not empty
-      if (queueNumber) {
-        console.log(`Including queueNumber ${queueNumber} in request`);
-        Object.assign(uncancelRequest, { queueNumber });
-      }
+      // Create request data with consistent identifiers
+      const requestData = prepareRegistrationIdentifiers({
+        orderId: id,
+        groupId,
+        queueNumber,
+        eventId: order?.event?._id
+      });
+      
+      // Add the operation-specific parameter
+      Object.assign(requestData, { cancelled: false });
       
       const response = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(uncancelRequest),
+        body: JSON.stringify(requestData),
       });
       
       const data = await response.json();
@@ -691,7 +690,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const handleEdit = (groupId: string, field: string, currentValue: string) => {
-    setEditingField({ groupId, field });
+    // Find the field's label for better logging
+    const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
+    const fieldData = currentGroup?.fields.find(f => f.id === field);
+    const fieldLabel = fieldData?.label || '';
+    
+    setEditingField({ groupId, field, label: fieldLabel });
     setEditValue(currentValue);
   };
 
@@ -707,9 +711,33 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
       const queueNumber = currentGroup?.queueNumber;
       
+      // Log details of what's being updated
+      console.log(`Updating field for participant: ${new Date().toISOString()}`);
+      console.log(`  - groupId: ${groupId}`);
+      console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
+      console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
+      console.log(`  - orderId: ${id}`);
+      console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
+      console.log(`  - new value: ${newValue}`);
+      
       // Clear editing state immediately for responsive UI
       setEditingField(null);
       setEditValue('');
+      
+      // Create request data with consistent identifiers
+      const requestData = prepareRegistrationIdentifiers({
+        orderId: id,
+        groupId,
+        queueNumber,
+        eventId: order?.event?._id
+      });
+      
+      // Add the operation-specific parameters
+      Object.assign(requestData, {
+        field: fieldToUpdate,
+        value: newValue,
+        isFromOrderDetails: true
+      });
       
       // Make API call
       const response = await fetch('/api/update-registration', {
@@ -717,14 +745,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          orderId: id,
-          groupId,
-          queueNumber, // Include the queueNumber if available
-          field: fieldToUpdate,
-          value: newValue,
-          isFromOrderDetails: true
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();

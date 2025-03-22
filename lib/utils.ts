@@ -444,3 +444,34 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
     return /^\d{6}$/.test(postalCode);
   }
 }
+
+/**
+ * Prepares consistent registration identification parameters for API calls
+ * Always prioritizes queueNumber over groupId for more reliable identification
+ */
+export const prepareRegistrationIdentifiers = (params: {
+  orderId: string;
+  groupId: string;
+  queueNumber?: string;
+  eventId?: string;
+}) => {
+  const { orderId, groupId, queueNumber, eventId } = params;
+  
+  // Start with required parameters
+  const requestData = {
+    orderId,
+    groupId,
+  };
+  
+  // Always include queueNumber if available (preferred primary identifier)
+  if (queueNumber) {
+    Object.assign(requestData, { queueNumber });
+  }
+  
+  // Include eventId for additional validation if available
+  if (eventId) {
+    Object.assign(requestData, { eventId });
+  }
+  
+  return requestData;
+};

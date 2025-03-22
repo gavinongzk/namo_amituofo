@@ -12,7 +12,7 @@ import { isEqual } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
-import { cn } from "@/lib/utils";
+import { cn, prepareRegistrationIdentifiers } from "@/lib/utils";
 
 type EventRegistration = {
   id: string;
@@ -341,20 +341,36 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         orderId,
         groupId,
         queueNumber,
+        eventId: event._id,
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       });
 
+      // Create request data with consistent identifiers
+      const requestData = prepareRegistrationIdentifiers({
+        orderId,
+        groupId,
+        queueNumber,
+        eventId: event._id
+      });
+      
+      // Add the operation-specific parameter
+      Object.assign(requestData, { 
+        cancelled: Boolean(cancelled) // Ensure it's a proper boolean
+      });
+      
+      // Log which identifier is being used primarily
+      if (queueNumber) {
+        console.log(`Using queueNumber ${queueNumber} as primary identifier`);
+      } else {
+        console.warn('No queueNumber available, falling back to groupId only');
+      }
+      
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          orderId, 
-          groupId,
-          queueNumber, // Always include queueNumber for better identification
-          cancelled: Boolean(cancelled) // Ensure it's a proper boolean
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const data = await res.json();
