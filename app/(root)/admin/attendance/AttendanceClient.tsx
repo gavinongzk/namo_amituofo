@@ -120,6 +120,20 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [cancelledUsersCount, setCancelledUsersCount] = useState(0);
   const [beepHistory] = useState(new Set<string>()); // Track which queue numbers have already beeped
 
+  // Function to save attendance state to localStorage
+  const saveAttendanceState = useCallback((queueNumber: string, attended: boolean) => {
+    const storageKey = `attendance_${event._id}`;
+    const attendanceState = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    attendanceState[queueNumber] = attended;
+    localStorage.setItem(storageKey, JSON.stringify(attendanceState));
+  }, [event._id]);
+
+  // Function to load attendance state from localStorage
+  const loadAttendanceState = useCallback(() => {
+    const storageKey = `attendance_${event._id}`;
+    return JSON.parse(localStorage.getItem(storageKey) || '{}');
+  }, [event._id]);
+
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
     let attended = 0;
@@ -156,19 +170,29 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
       const data = await response.json();
       if (Array.isArray(data.attendees)) {
+        // Load attendance state from localStorage
+        const attendanceState = loadAttendanceState();
+        
         setRegistrations(data.attendees.map((registration: EventRegistration) => ({
           ...registration,
           order: {
             ...registration.order,
             customFieldValues: registration.order.customFieldValues.map((group) => ({
               ...group,
-              cancelled: group.cancelled || false // Ensure cancelled is always a boolean
+              // Override attendance from API with localStorage state if available
+              attendance: attendanceState[group.queueNumber] ?? group.attendance,
+              cancelled: group.cancelled || false
             }))
           }
         })));
+        
+        // Calculate attended count including localStorage state
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
-          return count + registration.order.customFieldValues.filter(group => group.attendance && !group.cancelled).length;
+          return count + registration.order.customFieldValues.filter(group => 
+            (attendanceState[group.queueNumber] ?? group.attendance) && !group.cancelled
+          ).length;
         }, 0);
+        
         setAttendedUsersCount(attendedCount);
       } else {
         setRegistrations([]);
@@ -183,7 +207,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [event._id]);
+  }, [event._id, loadAttendanceState]);
 
   useEffect(() => {
     console.log('Fetching registrations for event:', event._id);
@@ -252,11 +276,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setRegistrations(prevRegistrations =>
           prevRegistrations.map(r => {
             if (r.id === registrationId) {
-              const updatedCustomFieldValues = r.order.customFieldValues.map(g => 
-                g.groupId === groupId 
-                  ? { ...g, attendance: attended }
-                  : g
-              );
+              const updatedCustomFieldValues = r.order.customFieldValues.map(g => {
+                if (g.groupId === groupId) {
+                  // Save attendance state to localStorage when marking attendance
+                  saveAttendanceState(g.queueNumber, attended);
+                  return { ...g, attendance: attended };
+                }
+                return g;
+              });
               return { ...r, order: { ...r.order, customFieldValues: updatedCustomFieldValues } };
             }
             return r;
@@ -295,7 +322,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
     }
-  }, [event._id, registrations, calculateCounts, showModalWithMessage]);
+  }, [event._id, registrations, calculateCounts, showModalWithMessage, saveAttendanceState]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);
