@@ -421,38 +421,34 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
     console.log(`  - orderId: ${id}`);
     
+    // Require queueNumber for operation
+    if (!queueNumber) {
+      console.error('Cannot cancel registration: queueNumber is required');
+      toast.error('取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
       
-      // First, identify the relevant group based on queueNumber if available, then groupId
-      let targetGroup;
+      // Find the target group using only queueNumber
+      const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
       
-      if (queueNumber) {
-        targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-        if (targetGroup) {
-          console.log(`  - Found matching group with queueNumber ${queueNumber}. GroupId: ${targetGroup.groupId}`);
-        } else {
-          console.warn(`  - WARNING: Could not find group with queueNumber ${queueNumber}`);
-        }
-      }
-      
-      // If we couldn't find by queueNumber or it wasn't provided, use groupId
       if (!targetGroup) {
-        targetGroup = prevOrder.customFieldValues.find(group => group.groupId === groupId);
-        if (targetGroup) {
-          console.log(`  - Found matching group with groupId ${groupId}`);
-        } else {
-          console.warn(`  - WARNING: Could not find group with groupId ${groupId}`);
-          // If we can't find either by queueNumber or groupId, return the order unchanged
-          return prevOrder;
-        }
+        console.error(`Cannot find registration with queueNumber: ${queueNumber}`);
+        return prevOrder;
       }
+      
+      console.log(`  - Found registration with queueNumber ${queueNumber}, groupId: ${targetGroup.groupId}`);
       
       const updatedOrder = {
         ...prevOrder,
         customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.groupId === targetGroup.groupId ? { ...group, cancelled: true } : group
+          group.queueNumber === queueNumber ? { ...group, cancelled: true } : group
         )
       };
       
@@ -474,8 +470,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Create request data with consistent identifiers
       const requestData = prepareRegistrationIdentifiers({
         orderId: id,
+        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
         groupId,
-        queueNumber,
         eventId: order?.event?._id
       });
       
@@ -564,38 +560,34 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
     console.log(`  - orderId: ${id}`);
     
+    // Require queueNumber for operation
+    if (!queueNumber) {
+      console.error('Cannot restore registration: queueNumber is required');
+      toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
+        duration: 4000,
+        position: 'bottom-center',
+      });
+      return;
+    }
+    
     // Update the local state
     setOrder(prevOrder => {
       if (!prevOrder) return null;
       
-      // First, identify the relevant group based on queueNumber if available, then groupId
-      let targetGroup;
+      // Find the target group using only queueNumber
+      const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
       
-      if (queueNumber) {
-        targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-        if (targetGroup) {
-          console.log(`  - Found matching group with queueNumber ${queueNumber}. GroupId: ${targetGroup.groupId}`);
-        } else {
-          console.warn(`  - WARNING: Could not find group with queueNumber ${queueNumber}`);
-        }
-      }
-      
-      // If we couldn't find by queueNumber or it wasn't provided, use groupId
       if (!targetGroup) {
-        targetGroup = prevOrder.customFieldValues.find(group => group.groupId === groupId);
-        if (targetGroup) {
-          console.log(`  - Found matching group with groupId ${groupId}`);
-        } else {
-          console.warn(`  - WARNING: Could not find group with groupId ${groupId}`);
-          // If we can't find either by queueNumber or groupId, return the order unchanged
-          return prevOrder;
-        }
+        console.error(`Cannot find registration with queueNumber: ${queueNumber}`);
+        return prevOrder;
       }
+      
+      console.log(`  - Found registration with queueNumber ${queueNumber}, groupId: ${targetGroup.groupId}`);
       
       const updatedOrder = {
         ...prevOrder,
         customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.groupId === targetGroup.groupId ? { ...group, cancelled: false } : group
+          group.queueNumber === queueNumber ? { ...group, cancelled: false } : group
         )
       };
       
@@ -617,8 +609,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Create request data with consistent identifiers
       const requestData = prepareRegistrationIdentifiers({
         orderId: id,
+        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
         groupId,
-        queueNumber,
         eventId: order?.event?._id
       });
       
@@ -709,7 +701,21 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       
       // Find the group to get its queueNumber
       const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
-      const queueNumber = currentGroup?.queueNumber;
+      if (!currentGroup) {
+        console.error(`Could not find group with groupId: ${groupId}`);
+        toast.error('Could not find registration group', {
+          duration: 3000,
+          position: 'bottom-center',
+        });
+        return;
+      }
+      
+      const queueNumber = currentGroup.queueNumber;
+      if (!queueNumber) {
+        console.warn(`No queueNumber found for groupId: ${groupId}`);
+      } else {
+        console.log(`Found queueNumber: ${queueNumber} for groupId: ${groupId}`);
+      }
       
       // Log details of what's being updated
       console.log(`Updating field for participant: ${new Date().toISOString()}`);
@@ -727,8 +733,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Create request data with consistent identifiers
       const requestData = prepareRegistrationIdentifiers({
         orderId: id,
+        queueNumber: queueNumber || '',  // Ensure string type with empty string fallback
         groupId,
-        queueNumber,
         eventId: order?.event?._id
       });
       
@@ -767,24 +773,41 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         if (!prevOrder) return null;
         
         // Use the returned data to find the exact record that was updated
-        const targetGroupId = data.groupId || groupId;
-        const targetQueueNumber = data.queueNumber || queueNumber;
+        const targetGroupId = data.groupId;
+        const targetQueueNumber = data.queueNumber;
+        
+        // Log what we're using to update the UI
+        console.log(`Updating UI with: groupId=${targetGroupId}, queueNumber=${targetQueueNumber}`);
         
         return {
           ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group =>
-            (group.groupId === targetGroupId || 
-             (targetQueueNumber && group.queueNumber === targetQueueNumber))
-              ? {
-                  ...group,
-                  fields: group.fields.map(field =>
-                    field.id === fieldToUpdate
-                      ? { ...field, value: newValue }
-                      : field
-                  ),
-                }
-              : group
-          ),
+          customFieldValues: prevOrder.customFieldValues.map(group => {
+            // First try to match by queueNumber if it's available
+            if (targetQueueNumber && group.queueNumber === targetQueueNumber) {
+              console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
+              return {
+                ...group,
+                fields: group.fields.map(field =>
+                  field.id === fieldToUpdate
+                    ? { ...field, value: newValue }
+                    : field
+                ),
+              };
+            }
+            // Fall back to groupId if queueNumber doesn't match
+            else if (group.groupId === targetGroupId) {
+              console.log(`Matched group by groupId: ${targetGroupId}`);
+              return {
+                ...group,
+                fields: group.fields.map(field =>
+                  field.id === fieldToUpdate
+                    ? { ...field, value: newValue }
+                    : field
+                ),
+              };
+            }
+            return group;
+          }),
         };
       });
 

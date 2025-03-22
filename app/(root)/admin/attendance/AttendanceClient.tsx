@@ -336,6 +336,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       if (!orderId) {
         throw new Error('Invalid registration ID');
       }
+      
+      // Require queueNumber for operation
+      if (!queueNumber) {
+        setModalMessage('Cannot proceed: missing queue number');
+        console.error('Cannot cancel/uncancel registration: queueNumber is required');
+        
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage('Cannot cancel/uncancel: missing queue number');
+        }, 2000);
+        
+        return;
+      }
 
       console.log(`Attempting to ${cancelled ? 'cancel' : 'uncancel'} registration:`, {
         orderId,
@@ -345,25 +358,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
       });
 
-      // Create request data with consistent identifiers
-      const requestData = prepareRegistrationIdentifiers({
+      // Create request data with consistent identifiers - only using queueNumber
+      const requestData = { 
         orderId,
-        groupId,
         queueNumber,
-        eventId: event._id
-      });
-      
-      // Add the operation-specific parameter
-      Object.assign(requestData, { 
+        eventId: event._id, // Always include eventId for validation
         cancelled: Boolean(cancelled) // Ensure it's a proper boolean
-      });
+      };
       
-      // Log which identifier is being used primarily
-      if (queueNumber) {
-        console.log(`Using queueNumber ${queueNumber} as primary identifier`);
-      } else {
-        console.warn('No queueNumber available, falling back to groupId only');
-      }
+      console.log(`Using queueNumber ${queueNumber} as primary identifier`);
       
       const res = await fetch('/api/cancel-registration', {
         method: 'POST',

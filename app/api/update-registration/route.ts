@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { isValidPhoneNumber, formatPhoneNumber } from '@/lib/utils';
 import { revalidateTag } from 'next/cache';
+import { CustomFieldGroup, CustomField } from '@/types';
 
 export async function POST(req: Request) {
   console.log('Update registration request received');
@@ -10,6 +11,15 @@ export async function POST(req: Request) {
     const { orderId, groupId, queueNumber, eventId, field: fieldId, value, isFromOrderDetails = false } = await req.json();
 
     console.log(`Update request params: orderId=${orderId}, groupId=${groupId}, queueNumber=${queueNumber || 'N/A'}, fieldId=${fieldId}, eventId=${eventId || 'N/A'}`);
+
+    // Require queueNumber for registration updates
+    if (!queueNumber) {
+      console.error(`Update request denied: queueNumber is required`);
+      return NextResponse.json(
+        { message: 'queueNumber is required for registration updates' },
+        { status: 400 }
+      );
+    }
 
     await connectToDatabase();
 
@@ -31,38 +41,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Find the group using both queueNumber and groupId if available
-    let group;
+    // Find the group by queueNumber only - groupId alone is not reliable
+    const group = order.customFieldValues.find(
+      (g: CustomFieldGroup) => g.queueNumber === queueNumber
+    );
     
-    if (queueNumber) {
-      // Try to find by queueNumber first, which is more reliable
-      group = order.customFieldValues.find(
-        (g: any) => g.queueNumber === queueNumber
-      );
-      
-      if (group) {
-        console.log(`Found group by queueNumber ${queueNumber}. GroupId: ${group.groupId}`);
-      } else {
-        console.warn(`No group found with queueNumber ${queueNumber}`);
-      }
-    }
-    
-    // If we couldn't find by queueNumber or it wasn't provided, use groupId as fallback
-    if (!group && groupId) {
-      console.log(`Falling back to groupId lookup: ${groupId}`);
-      group = order.customFieldValues.find(
-        (g: any) => g.groupId === groupId
-      );
-      
-      if (group) {
-        console.log(`Found group by groupId fallback. GroupId: ${group.groupId}`);
-      }
-    }
-    
-    if (!group) {
-      console.error(`Group not found for orderId=${orderId}, groupId=${groupId}, queueNumber=${queueNumber || 'N/A'}`);
+    if (group) {
+      console.log(`Found group by queueNumber ${queueNumber}. GroupId: ${group.groupId}`);
+    } else {
+      console.error(`No group found with queueNumber ${queueNumber}`);
       return NextResponse.json(
-        { message: 'Group not found' },
+        { message: 'Registration not found with provided queueNumber' },
         { status: 404 }
       );
     }
@@ -93,35 +82,56 @@ export async function POST(req: Request) {
 
     console.log(`Updating field "${fieldData.label}" with value: ${formattedValue} (original: ${fieldData.value})`);
 
-    // Try both update methods for maximum reliability, same as in cancel-registration
-
-    // 1. Update directly using updateOne with queueNumber (most precise)
-    if (queueNumber) {
-      console.log(`Using updateOne with queueNumber=${queueNumber}`);
-      const updateResult = await Order.updateOne(
-        { _id: orderId, "customFieldValues.queueNumber": queueNumber },
-        { $set: { [`customFieldValues.$.fields.$[field].value`]: formattedValue } },
-        { arrayFilters: [{ "field.id": fieldId }] }
+    // Update directly using queueNumber which is the reliable identifier
+    try {
+      // Find the specific field in the correct group identified by queueNumber
+      const fieldToUpdatePath = group.fields.findIndex((f: CustomField) => f.id === fieldId);
+      if (fieldToUpdatePath >= 0) {
+        const updatePath = `customFieldValues.$.fields.${fieldToUpdatePath}.value`;
+        const updateResult = await Order.updateOne(
+          { _id: orderId, "customFieldValues.queueNumber": queueNumber },
+          { $set: { [updatePath]: formattedValue } }
+        );
+        console.log(`Direct updateOne by queueNumber result:`, updateResult);
+      } else {
+        console.error(`Field index not found for fieldId=${fieldId}`);
+        return NextResponse.json(
+          { message: 'Field not found in registration' },
+          { status: 404 }
+        );
+      }
+    } catch (err) {
+      console.error('Error in queueNumber-based update:', err);
+      return NextResponse.json(
+        { message: 'Error updating registration field' },
+        { status: 500 }
       );
-      console.log(`Direct updateOne by queueNumber result:`, updateResult);
+    }
+
+    // Also update the in-memory model and save as a final verification
+    const groupIndex = order.customFieldValues.findIndex(
+      (g: CustomFieldGroup) => g.queueNumber === queueNumber
+    );
+    
+    if (groupIndex === -1) {
+      console.error(`Could not find group with queueNumber ${queueNumber} in memory model`);
+      return NextResponse.json(
+        { message: 'Registration not found in memory model' },
+        { status: 500 }
+      );
     }
     
-    // 2. Update using groupId as fallback
-    console.log(`Using updateOne with groupId=${group.groupId}`);
-    const updateResult = await Order.updateOne(
-      { _id: orderId, "customFieldValues.groupId": group.groupId },
-      { $set: { [`customFieldValues.$.fields.$[field].value`]: formattedValue } },
-      { arrayFilters: [{ "field.id": fieldId }] }
-    );
-    console.log(`Direct updateOne by groupId result:`, updateResult);
-
-    // 3. Also update the in-memory model and save (fallback approach)
-    const groupIndex = order.customFieldValues.findIndex(
-      (g: any) => g.groupId === group.groupId
-    );
     const fieldIndex = order.customFieldValues[groupIndex].fields.findIndex(
-      (f: any) => f.id === fieldId
+      (f: CustomField) => f.id === fieldId
     );
+    
+    if (fieldIndex === -1) {
+      console.error(`Could not find field ${fieldId} in memory model`);
+      return NextResponse.json(
+        { message: 'Field not found in memory model' },
+        { status: 500 }
+      );
+    }
 
     order.customFieldValues[groupIndex].fields[fieldIndex].value = formattedValue;
     const saveResult = await order.save();
@@ -130,8 +140,10 @@ export async function POST(req: Request) {
     // Verify the update took effect
     const updatedOrder = await Order.findById(orderId);
     if (updatedOrder) {
-      const updatedGroup = updatedOrder.customFieldValues.find((g: any) => g.groupId === group.groupId);
-      const updatedField = updatedGroup?.fields.find((f: any) => f.id === fieldId);
+      const updatedGroup = updatedOrder.customFieldValues.find(
+        (g: CustomFieldGroup) => g.queueNumber === queueNumber
+      );
+      const updatedField = updatedGroup?.fields.find((f: CustomField) => f.id === fieldId);
       console.log(`After save - field value: ${updatedField?.value}`);
     }
 
@@ -147,7 +159,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       success: true,
       groupId: group.groupId,
-      queueNumber: group.queueNumber || '',
+      queueNumber: queueNumber,
       eventId: order.event.toString()
     });
   } catch (error) {

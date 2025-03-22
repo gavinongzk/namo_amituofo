@@ -33,14 +33,30 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
     
     while (retryCount <= maxRetries) {
       try {
-        // Add cache-busting query param
-        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${`&t=${Date.now()}`}`);
+        // Add timestamp AND a random value to prevent any caching issues
+        const cacheBuster = `t=${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+        const endpoint = `/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&${cacheBuster}`;
+        
+        console.log(`Fetching registrations from: ${endpoint}`);
+        const response = await fetch(endpoint, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log(`Received ${data.length} registration(s)`);
+        
+        // Clear any cached registrations from session storage to ensure fresh data
+        sessionStorage.removeItem('eventLookupRegistrations');
+        sessionStorage.removeItem('eventLookupAllRegistrations');
+        
         setRegistrations(data);
         setIsLoading(false);
         break; // Exit the retry loop if successful
