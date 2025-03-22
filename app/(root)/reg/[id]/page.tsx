@@ -298,8 +298,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     setIsPolling(true);
     try {
-      // Fetch the primary order first
-      const fetchedOrder = await getOrderById(id);
+      // Fetch the primary order first with a timestamp to bypass cache
+      // Using object destructuring to avoid modifying the imported function
+      const fetchedOrder = await (async () => {
+        // Add a unique timestamp to bypass Next.js cache
+        const timestamp = Date.now();
+        const res = await fetch(`/api/reg/${id}?_t=${timestamp}`);
+        if (!res.ok) throw new Error('Failed to fetch order data');
+        return res.json();
+      })();
       
       // Find a phone number in the order to fetch related orders
       let phoneNumber = null;
@@ -696,27 +703,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       const fieldToUpdate = editingField.field;
       const newValue = editValue;
       
-      // Update local state immediately before API call for instant UI feedback
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group =>
-            group.groupId === groupId
-              ? {
-                  ...group,
-                  fields: group.fields.map(field =>
-                    field.id === fieldToUpdate
-                      ? { ...field, value: newValue }
-                      : field
-                  ),
-                }
-              : group
-          ),
-        };
-      });
+      // Find the group to get its queueNumber
+      const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
+      const queueNumber = currentGroup?.queueNumber;
       
-      // Clear editing state immediately
+      // Clear editing state immediately for responsive UI
       setEditingField(null);
       setEditValue('');
       
@@ -729,6 +720,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         body: JSON.stringify({
           orderId: id,
           groupId,
+          queueNumber, // Include the queueNumber if available
           field: fieldToUpdate,
           value: newValue,
           isFromOrderDetails: true
@@ -738,7 +730,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       const data = await response.json();
 
       if (!response.ok) {
-        // Revert to original value if API call fails
+        // Show error and revert if API call fails
         toast.error(data.message || 'Failed to update field', {
           duration: 4000,
           position: 'bottom-center',
@@ -748,11 +740,43 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         fetchOrder();
         return;
       }
+      
+      // Update local state with the response data to ensure consistency
+      setOrder(prevOrder => {
+        if (!prevOrder) return null;
+        
+        // Use the returned data to find the exact record that was updated
+        const targetGroupId = data.groupId || groupId;
+        const targetQueueNumber = data.queueNumber || queueNumber;
+        
+        return {
+          ...prevOrder,
+          customFieldValues: prevOrder.customFieldValues.map(group =>
+            (group.groupId === targetGroupId || 
+             (targetQueueNumber && group.queueNumber === targetQueueNumber))
+              ? {
+                  ...group,
+                  fields: group.fields.map(field =>
+                    field.id === fieldToUpdate
+                      ? { ...field, value: newValue }
+                      : field
+                  ),
+                }
+              : group
+          ),
+        };
+      });
 
       toast.success('成功更新 Successfully updated', {
         duration: 3000,
         position: 'bottom-center',
       });
+      
+      // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
+      setTimeout(() => {
+        lastFetchTime.current = 0; // Reset the fetch time to force a refresh
+        fetchOrder();
+      }, 500); // Small delay to allow cache invalidation to complete
     } catch (error) {
       console.error('Error updating field:', error);
       toast.error('更新失败 Failed to update field', {
