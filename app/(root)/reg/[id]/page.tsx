@@ -849,75 +849,93 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       setEditingField(null);
       setEditValue('');
       
+      // Prepare request data
+      const requestData = {
+        eventId: order.event._id,
+        queueNumber,
+        field: fieldToUpdate,
+        value: newValue,
+        isFromOrderDetails: true
+      };
+      
+      console.log('Sending request to API with data:', requestData);
+      
       // Make API call with only eventId and queueNumber
-      const response = await fetch('/api/update-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventId: order.event._id,
-          queueNumber,
-          field: fieldToUpdate,
-          value: newValue,
-          isFromOrderDetails: true
-        }),
-      });
+      try {
+        const response = await fetch('/api/update-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
 
-      const data = await response.json();
+        console.log('API Response status:', response.status);
+        const data = await response.json();
+        console.log('API Response data:', data);
 
-      if (!response.ok) {
-        // Show error and revert if API call fails
-        toast.error(data.message || 'Failed to update field', {
-          duration: 4000,
+        if (!response.ok) {
+          // Show error and revert if API call fails
+          console.error('API error:', data);
+          toast.error(data.message || 'Failed to update field', {
+            duration: 4000,
+            position: 'bottom-center',
+          });
+          
+          // Re-fetch the order to ensure data consistency
+          fetchOrder();
+          return;
+        }
+        
+        // Update local state with the response data to ensure consistency
+        setOrder(prevOrder => {
+          if (!prevOrder) return null;
+          
+          // Use the returned queueNumber to find the exact record that was updated
+          const targetQueueNumber = data.queueNumber;
+          
+          // Log what we're using to update the UI
+          console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
+          
+          return {
+            ...prevOrder,
+            customFieldValues: prevOrder.customFieldValues.map(group => {
+              // Match by queueNumber
+              if (group.queueNumber === targetQueueNumber) {
+                console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
+                return {
+                  ...group,
+                  fields: group.fields.map(field =>
+                    field.id === fieldToUpdate
+                      ? { ...field, value: newValue }
+                      : field
+                  ),
+                };
+              }
+              return group;
+            }),
+          };
+        });
+
+        toast.success('成功更新 Successfully updated', {
+          duration: 3000,
           position: 'bottom-center',
         });
         
+        // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
+        setTimeout(() => {
+          lastFetchTime.current = 0; // Reset the fetch time to force a refresh
+          fetchOrder();
+        }, 500); // Small delay to allow cache invalidation to complete
+      } catch (error) {
+        console.error('Error updating field:', error);
+        toast.error('更新失败 Failed to update field', {
+          duration: 4000,
+          position: 'bottom-center',
+        });
         // Re-fetch the order to ensure data consistency
         fetchOrder();
-        return;
       }
-      
-      // Update local state with the response data to ensure consistency
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        
-        // Use the returned queueNumber to find the exact record that was updated
-        const targetQueueNumber = data.queueNumber;
-        
-        // Log what we're using to update the UI
-        console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
-        
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            // Match by queueNumber
-            if (group.queueNumber === targetQueueNumber) {
-              console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
-              return {
-                ...group,
-                fields: group.fields.map(field =>
-                  field.id === fieldToUpdate
-                    ? { ...field, value: newValue }
-                    : field
-                ),
-              };
-            }
-            return group;
-          }),
-        };
-      });
-
-      toast.success('成功更新 Successfully updated', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
-      
-      // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
-      setTimeout(() => {
-        lastFetchTime.current = 0; // Reset the fetch time to force a refresh
-        fetchOrder();
-      }, 500); // Small delay to allow cache invalidation to complete
     } catch (error) {
       console.error('Error updating field:', error);
       toast.error('更新失败 Failed to update field', {
