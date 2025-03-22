@@ -88,11 +88,26 @@ export async function POST(req: Request) {
       const fieldToUpdatePath = group.fields.findIndex((f: CustomField) => f.id === fieldId);
       if (fieldToUpdatePath >= 0) {
         const updatePath = `customFieldValues.$.fields.${fieldToUpdatePath}.value`;
-        const updateResult = await Order.updateOne(
+        
+        // Use findOneAndUpdate for more reliable updates with the $ positional operator
+        const updateResult = await Order.findOneAndUpdate(
           { _id: orderId, "customFieldValues.queueNumber": queueNumber },
-          { $set: { [updatePath]: formattedValue } }
+          { $set: { [updatePath]: formattedValue } },
+          { new: true } // Return the updated document
         );
-        console.log(`Direct updateOne by queueNumber result:`, updateResult);
+        
+        console.log(`Direct findOneAndUpdate by queueNumber result:`, !!updateResult);
+        
+        if (!updateResult) {
+          console.error(`Update failed: No document matched the query criteria`);
+          return NextResponse.json(
+            { message: 'Registration update failed - no matching document found' },
+            { status: 500 }
+          );
+        }
+        
+        // Skip the redundant in-memory model update and save since we already have the updated document
+        order = updateResult;
       } else {
         console.error(`Field index not found for fieldId=${fieldId}`);
         return NextResponse.json(
@@ -108,44 +123,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Also update the in-memory model and save as a final verification
-    const groupIndex = order.customFieldValues.findIndex(
-      (g: CustomFieldGroup) => g.queueNumber === queueNumber
-    );
-    
-    if (groupIndex === -1) {
-      console.error(`Could not find group with queueNumber ${queueNumber} in memory model`);
-      return NextResponse.json(
-        { message: 'Registration not found in memory model' },
-        { status: 500 }
-      );
-    }
-    
-    const fieldIndex = order.customFieldValues[groupIndex].fields.findIndex(
-      (f: CustomField) => f.id === fieldId
-    );
-    
-    if (fieldIndex === -1) {
-      console.error(`Could not find field ${fieldId} in memory model`);
-      return NextResponse.json(
-        { message: 'Field not found in memory model' },
-        { status: 500 }
-      );
-    }
-
-    order.customFieldValues[groupIndex].fields[fieldIndex].value = formattedValue;
-    const saveResult = await order.save();
-    console.log(`Save result success:`, !!saveResult);
-
-    // Verify the update took effect
-    const updatedOrder = await Order.findById(orderId);
-    if (updatedOrder) {
-      const updatedGroup = updatedOrder.customFieldValues.find(
-        (g: CustomFieldGroup) => g.queueNumber === queueNumber
-      );
-      const updatedField = updatedGroup?.fields.find((f: CustomField) => f.id === fieldId);
-      console.log(`After save - field value: ${updatedField?.value}`);
-    }
+    // Skip the redundant in-memory model update and save
+    // Instead, verify the update took effect directly from the updated document
 
     // Invalidate relevant cache tags to prevent stale data
     revalidateTag('order-details');
