@@ -795,180 +795,196 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     }, 1000); // Keep the delay to ensure backend has time to process
   };
 
-  const handleEdit = (groupId: string, field: string, currentValue: string) => {
-    // Find the field's label and queueNumber for better logging
-    const currentGroup = order?.customFieldValues.find(g => g.groupId === groupId);
-    console.log('Edit initiated for group:', {
-      groupId,
-      queueNumber: currentGroup?.queueNumber,
-      allQueueNumbers: order?.customFieldValues.map(g => ({ 
-        groupId: g.groupId, 
-        queueNumber: g.queueNumber 
-      }))
+  const handleEdit = (queueNumber: string, field: string, currentValue: string) => {
+    // Find the group by queue number instead of groupId
+    const currentGroup = order?.customFieldValues.find(g => {
+        // Log the comparison to help debug
+        console.log('Comparing group:', {
+            queueNumber: g.queueNumber,
+            fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+        });
+        return g.queueNumber === queueNumber;
+    });
+    
+    // Add detailed logging of all groups and their queue numbers
+    console.log('All groups in order:', order?.customFieldValues.map(g => ({
+        queueNumber: g.queueNumber,
+        fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+    })));
+    
+    console.log('Attempting to edit group:', {
+        queueNumber,
+        foundGroup: currentGroup ? {
+            queueNumber: currentGroup.queueNumber,
+            fields: currentGroup.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
+        } : 'not found'
     });
     
     const fieldData = currentGroup?.fields.find(f => f.id === field);
     const fieldLabel = fieldData?.label || '';
-    const queueNumber = currentGroup?.queueNumber;
+    
+    if (!currentGroup) {
+        console.error('Could not find group with queue number:', queueNumber);
+        toast.error('Error: Could not find the correct registration to edit');
+        return;
+    }
     
     console.log('Setting editingField state:', {
-      groupId,
-      field,
-      label: fieldLabel,
-      queueNumber
+        queueNumber,
+        field,
+        label: fieldLabel,
+        fieldValue: currentValue
     });
     
     setEditingField({ 
-      groupId, // Keep for UI state management only
-      field, 
-      label: fieldLabel,
-      queueNumber // Store queueNumber in editing state
+        groupId: currentGroup.groupId, // We still need groupId for state management
+        field, 
+        label: fieldLabel,
+        queueNumber
     });
     setEditValue(currentValue);
   };
 
-  const handleSave = async (groupId: string) => {
+  const handleSave = async (queueNumber: string) => {
     if (!editingField) return;
     
     try {
-      // Store the current value locally before making the API call
-      const fieldToUpdate = editingField.field;
-      const newValue = editValue;
-      const queueNumber = editingField.queueNumber;
-      
-      console.log('Save initiated with:', {
-        groupId,
-        editingField,
-        currentGroups: order?.customFieldValues.map(g => ({
-          groupId: g.groupId,
-          queueNumber: g.queueNumber
-        }))
-      });
-      
-      if (!queueNumber) {
-        console.error('Cannot update: missing queue number');
-        toast.error('Cannot update: missing queue number', {
-          duration: 3000,
-          position: 'bottom-center',
+        // Store the current value locally before making the API call
+        const fieldToUpdate = editingField.field;
+        const newValue = editValue;
+        
+        console.log('Save initiated with:', {
+            queueNumber,
+            editingField,
+            currentGroups: order?.customFieldValues.map(g => ({
+                queueNumber: g.queueNumber
+            }))
         });
-        return;
-      }
+        
+        if (!queueNumber) {
+            console.error('Cannot update: missing queue number');
+            toast.error('Cannot update: missing queue number', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            return;
+        }
 
-      if (!order?.event?._id) {
-        console.error('Cannot update: missing event ID');
-        toast.error('Cannot update: missing event ID', {
-          duration: 3000,
-          position: 'bottom-center',
-        });
-        return;
-      }
-      
-      // Log details of what's being updated
-      console.log(`Updating field for participant: ${new Date().toISOString()}`);
-      console.log(`  - queueNumber: ${queueNumber}`);
-      console.log(`  - eventId: ${order.event._id}`);
-      console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
-      console.log(`  - new value: ${newValue}`);
-      
-      // Clear editing state immediately for responsive UI
-      setEditingField(null);
-      setEditValue('');
-      
-      // Prepare request data
-      const requestData = {
-        eventId: order.event._id,
-        queueNumber,
-        field: fieldToUpdate,
-        value: newValue,
-        isFromOrderDetails: true
-      };
-      
-      console.log('Sending request to API with data:', requestData);
-      
-      // Make API call with only eventId and queueNumber
-      try {
-        const response = await fetch('/api/update-registration', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestData),
-        });
-
-        console.log('API Response status:', response.status);
-        const data = await response.json();
-        console.log('API Response data:', data);
-
-        if (!response.ok) {
-          // Show error and revert if API call fails
-          console.error('API error:', data);
-          toast.error(data.message || 'Failed to update field', {
-            duration: 4000,
-            position: 'bottom-center',
-          });
-          
-          // Re-fetch the order to ensure data consistency
-          fetchOrder();
-          return;
+        if (!order?.event?._id) {
+            console.error('Cannot update: missing event ID');
+            toast.error('Cannot update: missing event ID', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            return;
         }
         
-        // Update local state with the response data to ensure consistency
-        setOrder(prevOrder => {
-          if (!prevOrder) return null;
-          
-          // Use the returned queueNumber to find the exact record that was updated
-          const targetQueueNumber = data.queueNumber;
-          
-          // Log what we're using to update the UI
-          console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
-          
-          return {
-            ...prevOrder,
-            customFieldValues: prevOrder.customFieldValues.map(group => {
-              // Match by queueNumber
-              if (group.queueNumber === targetQueueNumber) {
-                console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
-                return {
-                  ...group,
-                  fields: group.fields.map(field =>
-                    field.id === fieldToUpdate
-                      ? { ...field, value: newValue }
-                      : field
-                  ),
-                };
-              }
-              return group;
-            }),
-          };
-        });
-
-        toast.success('成功更新 Successfully updated', {
-          duration: 3000,
-          position: 'bottom-center',
-        });
+        // Log details of what's being updated
+        console.log(`Updating field for participant: ${new Date().toISOString()}`);
+        console.log(`  - queueNumber: ${queueNumber}`);
+        console.log(`  - eventId: ${order.event._id}`);
+        console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
+        console.log(`  - new value: ${newValue}`);
         
-        // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
-        setTimeout(() => {
-          lastFetchTime.current = 0; // Reset the fetch time to force a refresh
-          fetchOrder();
-        }, 500); // Small delay to allow cache invalidation to complete
-      } catch (error) {
+        // Clear editing state immediately for responsive UI
+        setEditingField(null);
+        setEditValue('');
+        
+        // Prepare request data
+        const requestData = {
+            eventId: order.event._id,
+            queueNumber,
+            field: fieldToUpdate,
+            value: newValue,
+            isFromOrderDetails: true
+        };
+        
+        console.log('Sending request to API with data:', requestData);
+        
+        // Make API call with only eventId and queueNumber
+        try {
+            const response = await fetch('/api/update-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            console.log('API Response status:', response.status);
+            const data = await response.json();
+            console.log('API Response data:', data);
+
+            if (!response.ok) {
+                // Show error and revert if API call fails
+                console.error('API error:', data);
+                toast.error(data.message || 'Failed to update field', {
+                    duration: 4000,
+                    position: 'bottom-center',
+                });
+                
+                // Re-fetch the order to ensure data consistency
+                fetchOrder();
+                return;
+            }
+            
+            // Update local state with the response data to ensure consistency
+            setOrder(prevOrder => {
+                if (!prevOrder) return null;
+                
+                // Use the returned queueNumber to find the exact record that was updated
+                const targetQueueNumber = data.queueNumber;
+                
+                // Log what we're using to update the UI
+                console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
+                
+                return {
+                    ...prevOrder,
+                    customFieldValues: prevOrder.customFieldValues.map(group => {
+                        // Match by queueNumber
+                        if (group.queueNumber === targetQueueNumber) {
+                            console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
+                            return {
+                                ...group,
+                                fields: group.fields.map(field =>
+                                    field.id === fieldToUpdate
+                                        ? { ...field, value: newValue }
+                                        : field
+                                ),
+                            };
+                        }
+                        return group;
+                    }),
+                };
+            });
+
+            toast.success('成功更新 Successfully updated', {
+                duration: 3000,
+                position: 'bottom-center',
+            });
+            
+            // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
+            setTimeout(() => {
+                lastFetchTime.current = 0; // Reset the fetch time to force a refresh
+                fetchOrder();
+            }, 500); // Small delay to allow cache invalidation to complete
+        } catch (error) {
+            console.error('Error updating field:', error);
+            toast.error('更新失败 Failed to update field', {
+                duration: 4000,
+                position: 'bottom-center',
+            });
+            // Re-fetch the order to ensure data consistency
+            fetchOrder();
+        }
+    } catch (error) {
         console.error('Error updating field:', error);
         toast.error('更新失败 Failed to update field', {
-          duration: 4000,
-          position: 'bottom-center',
+            duration: 4000,
+            position: 'bottom-center',
         });
         // Re-fetch the order to ensure data consistency
         fetchOrder();
-      }
-    } catch (error) {
-      console.error('Error updating field:', error);
-      toast.error('更新失败 Failed to update field', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      // Re-fetch the order to ensure data consistency
-      fetchOrder();
     }
   };
 
@@ -1077,7 +1093,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
                       <div className="flex-1 flex items-center gap-2">
-                        {editingField?.groupId === group.groupId && editingField?.field === field.id ? (
+                        {editingField?.queueNumber === group.queueNumber ? (
                           <div className="flex-1 flex items-center gap-2">
                             <Input
                               type="text"
@@ -1088,7 +1104,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handleSave(group.groupId)}
+                              onClick={() => {
+                                const queueNumber = group.queueNumber as string;
+                                if (!queueNumber) {
+                                  console.error('Cannot save: missing queue number');
+                                  toast.error('Cannot save: missing queue number');
+                                  return;
+                                }
+                                handleSave(queueNumber);
+                              }}
                               className="h-9 w-9"
                             >
                               <Check className="h-4 w-4" />
@@ -1110,9 +1134,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => {
+                                  const queueNumber = group.queueNumber as string;
+                                  if (!queueNumber) {
+                                    console.error('Cannot edit: missing queue number');
+                                    toast.error('Cannot edit: missing queue number');
+                                    return;
+                                  }
+                                  console.log('Edit button clicked for:', {
+                                    queueNumber,
+                                    field: field.id,
+                                    currentValue: field.value
+                                  });
                                   if (field.id) {
                                     const value = typeof field.value === 'string' ? field.value : '';
-                                    handleEdit(group.groupId, field.id, value);
+                                    handleEdit(queueNumber, field.id, value);
                                   }
                                 }}
                                 className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
