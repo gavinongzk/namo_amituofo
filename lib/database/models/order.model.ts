@@ -68,5 +68,9 @@ const OrderSchema = new Schema({
 
 // Add this index
 OrderSchema.index({ 'customFieldValues.fields.value': 1 });
+// Add indexes for queueNumber and groupId for better lookup performance
+OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Primary lookup key
+OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Secondary lookup key
+OrderSchema.index({ 'event': 1, 'customFieldValues.queueNumber': 1 }); // Compound index for event+queueNumber lookups
 
 export default models.Order || model<IOrder>('Order', OrderSchema);

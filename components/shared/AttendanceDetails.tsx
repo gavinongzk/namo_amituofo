@@ -124,7 +124,7 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Registrations 总注册</p>
+              <p className="text-sm text-gray-600">Total Registrations 总报名数</p>
               <p className="font-semibold">{totalRegistrations}</p>
             </div>
             <div>

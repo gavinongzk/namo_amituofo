@@ -17,7 +17,6 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
   const [error, setError] = useState<string>();
   const [isRetrying, setIsRetrying] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
-  const lastScanTime = useRef(0);
   const scannerRef = useRef<{ stop: () => void }>();
 
   useEffect(() => {
@@ -101,9 +100,6 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
         videoRef.current!,
         (result) => {
           if (result && active) {
-            const now = Date.now();
-            if (now - lastScanTime.current < 1500) return;
-            lastScanTime.current = now;
             handleSuccessfulScan(result.getText());
           }
         }
@@ -134,10 +130,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
       navigator.vibrate(200);
     }
     
-    // Play success sound
-    new Audio('/assets/sounds/success-beep.mp3').play()
-      .catch(e => console.error('Error playing audio:', e));
-      
+    // Don't play sound here as it's handled by the parent component
+    
     onScan(text);
   };
 

@@ -14,7 +14,7 @@ const Footer = () => {
           />
         </Link>
 
-        <p>{new Date().getFullYear()} 净土宗弥陀寺 (新加坡) Namo Amituofo Organization Ltd. All Rights reserved.</p>
+        <p>© {new Date().getFullYear()} 净土宗弥陀寺 (新加坡) Namo Amituofo Organization Ltd. All Rights Reserved.</p>
       </div>
     </footer>
   )

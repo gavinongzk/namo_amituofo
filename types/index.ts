@@ -204,6 +204,7 @@ export interface CancelButtonProps {
   groupId: string;
   orderId: string;
   onCancel: () => void;
+  queueNumber?: string;
 }
 
 export interface OrderDetailsPageProps {
@@ -219,7 +220,8 @@ export interface CancellationResponse {
 
 export interface CancellationRequest {
   orderId: string;
-  groupId: string;
+  groupId?: string;
+  queueNumber?: string;
   cancelled: boolean;
 }
 

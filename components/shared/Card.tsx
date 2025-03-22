@@ -206,13 +206,13 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         {isEventCreator && (
           <div className="flex flex-col gap-2 mt-auto pt-3">
             <p className="p-medium-16 text-grey-700">
-              <span className="font-semibold">注册人数 Registrations:</span> {event.registrationCount || 0}
+              <span className="font-semibold">报名人数 Registrations:</span> {event.registrationCount || 0}
             </p>
             <Link 
               href={`/reg?eventId=${event._id}`} 
               className="text-primary-600 hover:text-primary-700 underline flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-sm"
             >
-              注册详情 Registration Details
+              报名详情 Registration Details
               <Image 
                 src="/assets/icons/arrow.svg" 
                 alt="" 

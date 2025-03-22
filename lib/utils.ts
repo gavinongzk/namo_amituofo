@@ -405,7 +405,7 @@ export const MODAL_MESSAGES = {
   }),
   ERROR_NOT_FOUND: (queueNumber: string) => ({
     title: 'Error 错误',
-    message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的注册`,
+    message: `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
     type: 'error' as const
   }),
   ERROR_INVALID_QR: {
@@ -444,3 +444,38 @@ export async function validateSingaporePostalCode(postalCode: string): Promise<b
     return /^\d{6}$/.test(postalCode);
   }
 }
+
+/**
+ * Prepares consistent registration identification parameters for API calls
+ * Requires queueNumber for reliable identification
+ */
+export const prepareRegistrationIdentifiers = (params: {
+  orderId: string;
+  queueNumber: string;
+  groupId?: string;
+  eventId?: string;
+}) => {
+  const { orderId, groupId, queueNumber, eventId } = params;
+  
+  if (!queueNumber) {
+    throw new Error('queueNumber is required for registration identification');
+  }
+  
+  // Start with required parameters
+  const requestData = {
+    orderId,
+    queueNumber,
+  };
+  
+  // Include groupId as supplementary information if available
+  if (groupId) {
+    Object.assign(requestData, { groupId });
+  }
+  
+  // Include eventId for additional validation if available
+  if (eventId) {
+    Object.assign(requestData, { eventId });
+  }
+  
+  return requestData;
+};
