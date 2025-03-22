@@ -9,7 +9,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
+import { OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
@@ -22,6 +22,14 @@ const styles = `
     transform: rotate(-20deg);
   }
 `;
+
+interface CancelButtonProps {
+  groupId: string;
+  orderId: string;
+  onCancel: (groupId: string) => void;
+  participantInfo?: string;
+  queueNumber?: string;
+}
 
 const convertToGoogleMapsLink = (location: string) => {
   const encodedLocation = encodeURIComponent(location);
@@ -172,15 +180,6 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   );
 });
 
-// Remove duplicate CancelButton declaration and keep only one
-interface CancelButtonProps {
-  groupId: string;
-  orderId: string;
-  onCancel: (groupId: string) => void;
-  participantInfo?: string;
-  queueNumber?: string;
-}
-
 const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -252,7 +251,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
 const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: { 
   groupId: string;
   orderId: string;
-  onUncancel: () => void;
+  onUncancel: (groupId: string, queueNumber?: string) => void;
   participantInfo?: string;
   queueNumber?: string;
 }) => {
@@ -265,7 +264,7 @@ const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantIn
       // Close the dialog immediately after the user confirms
       setDialogOpen(false);
       // The actual uncancellation is now handled in the parent component's handleUncancellation function
-      onUncancel();
+      onUncancel(groupId, queueNumber);
     } catch (error) {
       console.error('Error in UncancelButton handleUncancel:', error);
     } finally {
@@ -1233,9 +1232,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <CancelButton
                       groupId={group.groupId}
                       orderId={id}
-                      queueNumber={group.queueNumber}
+                      onCancel={(groupId) => handleCancellation(groupId)}
                       participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onCancel={handleCancellation}
+                      queueNumber={group.queueNumber}
                     />
                   )}
                   
@@ -1243,9 +1242,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <UncancelButton
                       groupId={group.groupId}
                       orderId={id}
-                      queueNumber={group.queueNumber}
+                      onUncancel={(groupId, queueNumber) => handleUncancellation(groupId, queueNumber)}
                       participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                      onUncancel={handleUncancellation}
+                      queueNumber={group.queueNumber}
                     />
                   )}
                 </div>
