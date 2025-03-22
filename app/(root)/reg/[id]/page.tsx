@@ -13,7 +13,7 @@ import { CancelButtonProps, OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
-import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers } from '@/lib/utils';
+import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 
 // Define inline styles for custom UI elements
@@ -1058,7 +1058,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex flex-col gap-1">
                       <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
-                        <span>第{['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 Participant {index + 1}</span>
+                        <span>{toChineseOrdinal(index + 1)}参加者 Participant {index + 1}</span>
                         {group.cancelled && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             已取消 Cancelled
@@ -1167,7 +1167,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       groupId={group.groupId}
                       orderId={id}
                       queueNumber={group.queueNumber}
-                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                      participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       onCancel={() => handleCancellation(group.groupId, group.queueNumber)}
                     />
                   )}
@@ -1177,7 +1177,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                       groupId={group.groupId}
                       orderId={id}
                       queueNumber={group.queueNumber}
-                      participantInfo={`第${['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][index]}位参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                      participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       onUncancel={() => handleUncancellation(group.groupId, group.queueNumber)}
                     />
                   )}

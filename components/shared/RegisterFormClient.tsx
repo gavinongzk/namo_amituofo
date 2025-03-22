@@ -21,6 +21,7 @@ import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
 import { validateSingaporePostalCode } from '@/lib/utils';
+import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -307,7 +308,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         // Skip detailed validation if override is active
         if (postalOverrides[i]) {
           if (!/^\d+$/.test(postalCode)) {
-            postalValidationErrors.push(`第${i + 1}位参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
+            postalValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
           }
           continue;
         }
@@ -778,7 +779,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           }}
                           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
                         >
-                          删除第{personIndex + 1}位参加者 Remove Participant {personIndex + 1}
+                          删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
                         </Button>
                       </div>
                     )}

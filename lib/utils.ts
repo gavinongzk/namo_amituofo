@@ -492,3 +492,5 @@ export const prepareRegistrationIdentifiers = (params: {
   
   return requestData;
 };
+
+export { toChineseNumeral, toChineseOrdinal } from './utils/chineseNumerals';
