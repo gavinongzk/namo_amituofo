@@ -12,56 +12,71 @@ export async function POST(req: NextRequest) {
     }
 
     await connectToDatabase();
-    const { orderId, groupId, queueNumber } = await req.json();
+    const { eventId, queueNumber } = await req.json();
 
-    if (!groupId && !queueNumber) {
-      return NextResponse.json({ error: 'Either groupId or queueNumber must be provided' }, { status: 400 });
+    if (!queueNumber) {
+      return NextResponse.json({ error: 'queueNumber must be provided' }, { status: 400 });
     }
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!eventId) {
+      return NextResponse.json({ error: 'eventId must be provided' }, { status: 400 });
     }
 
-    // Find the group to delete based on groupId or queueNumber
-    let groupToDelete;
-    if (groupId) {
-      groupToDelete = order.customFieldValues.find((g: any) => g.groupId === groupId);
-    } else if (queueNumber) {
-      groupToDelete = order.customFieldValues.find((g: any) => g.queueNumber === queueNumber);
+    // First verify the event exists
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    if (!groupToDelete) {
+    // Find all orders for this event
+    const orders = await Order.find({ event: eventId });
+    if (orders.length === 0) {
+      return NextResponse.json({ error: 'No registrations found for this event' }, { status: 404 });
+    }
+
+    // Search through all orders to find the one with matching queueNumber
+    let foundOrder = null;
+    let foundGroup = null;
+
+    for (const orderItem of orders) {
+      const group = orderItem.customFieldValues.find((g: any) => {
+        const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
+        const normalizedSearchQueueNumber = String(queueNumber).replace(/^0+/, '');
+        return normalizedGroupQueueNumber === normalizedSearchQueueNumber;
+      });
+
+      if (group) {
+        foundOrder = orderItem;
+        foundGroup = group;
+        break;
+      }
+    }
+
+    if (!foundOrder || !foundGroup) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
-    // Save the groupId for filtering
-    const targetGroupId = groupToDelete.groupId;
-
     // Remove the specific group from customFieldValues
-    order.customFieldValues = order.customFieldValues.filter((g: any) => g.groupId !== targetGroupId);
+    foundOrder.customFieldValues = foundOrder.customFieldValues.filter((g: any) => g.queueNumber !== queueNumber);
 
     // If there are no more groups, delete the entire order
-    if (order.customFieldValues.length === 0) {
-      await Order.findByIdAndDelete(orderId);
+    if (foundOrder.customFieldValues.length === 0) {
+      await Order.findByIdAndDelete(foundOrder._id);
     } else {
-      await order.save();
+      await foundOrder.save();
     }
 
     // If the registration was cancelled, decrease maxSeats by 1
     // to counter the increase that happened during cancellation
-    if (groupToDelete.cancelled) {
-      const event = await Event.findById(order.event);
-      if (event) {
-        event.maxSeats -= 1;
-        await event.save();
-      }
+    if (foundGroup.cancelled) {
+      event.maxSeats -= 1;
+      await event.save();
     }
 
     return NextResponse.json({ 
       message: 'Registration deleted successfully',
-      queueNumber: groupToDelete.queueNumber,
-      groupId: targetGroupId
+      queueNumber: queueNumber,
+      eventId: event._id.toString()
     });
   } catch (error) {
     console.error('Error deleting registration:', error);

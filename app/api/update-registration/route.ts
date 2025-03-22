@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
+import Event from '@/lib/database/models/event.model';
 import { isValidPhoneNumber, formatPhoneNumber } from '@/lib/utils';
 import { revalidateTag } from 'next/cache';
 import { CustomFieldGroup, CustomField } from '@/types';
@@ -8,9 +9,9 @@ import { CustomFieldGroup, CustomField } from '@/types';
 export async function POST(req: Request) {
   console.log('Update registration request received');
   try {
-    const { orderId, groupId, queueNumber, eventId, field: fieldId, value, isFromOrderDetails = false } = await req.json();
+    const { eventId, queueNumber, field: fieldId, value, isFromOrderDetails = false } = await req.json();
 
-    console.log(`Update request params: orderId=${orderId}, groupId=${groupId}, queueNumber=${queueNumber || 'N/A'}, fieldId=${fieldId}, eventId=${eventId || 'N/A'}`);
+    console.log(`Update request params: eventId=${eventId || 'N/A'}, queueNumber=${queueNumber || 'N/A'}, fieldId=${fieldId}`);
 
     // Require queueNumber for registration updates
     if (!queueNumber) {
@@ -21,79 +22,87 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
-
-    const order = await Order.findById(orderId);
-    if (!order) {
-      console.error(`Order not found: ${orderId}`);
+    // Require eventId
+    if (!eventId) {
+      console.error(`Update request denied: eventId is required`);
       return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
-    }
-
-    // Additional validation if eventId is provided
-    if (eventId && order.event.toString() !== eventId.toString()) {
-      console.error(`Event ID mismatch: provided=${eventId}, order=${order.event}`);
-      return NextResponse.json(
-        { message: 'Event ID mismatch' },
+        { message: 'eventId is required for registration updates' },
         { status: 400 }
       );
     }
 
-    // Find the group by queueNumber only - groupId alone is not reliable
-    const group = order.customFieldValues.find(
-      (g: CustomFieldGroup) => g.queueNumber === queueNumber
-    );
-    
-    if (group) {
-      console.log(`Found group by queueNumber ${queueNumber}. GroupId: ${group.groupId}`);
-    } else {
-      console.error(`No group found with queueNumber ${queueNumber}`);
+    await connectToDatabase();
+
+    // First verify the event exists
+    const event = await Event.findById(eventId);
+    if (!event) {
+      console.error(`Event not found with ID: ${eventId}`);
       return NextResponse.json(
-        { message: 'Registration not found with provided queueNumber' },
+        { message: 'Event not found' },
         { status: 404 }
       );
     }
 
-    const fieldData = group.fields.find((f: any) => f.id === fieldId);
-    
-    if (!fieldData) {
-      console.error(`Field not found: fieldId=${fieldId}`);
+    // Find all orders for this event
+    const orders = await Order.find({ event: eventId });
+    if (orders.length === 0) {
+      console.error(`No orders found for event: ${eventId}`);
       return NextResponse.json(
-        { message: 'Field not found' },
+        { message: 'No registrations found for this event' },
         { status: 404 }
       );
     }
 
-    // Now we can safely check the field label
+    // Search through all orders to find the one with matching queueNumber
+    let foundOrder = null;
+    let foundGroup = null;
+
+    for (const orderItem of orders) {
+      const group = orderItem.customFieldValues.find((g: CustomFieldGroup) => {
+        const normalizedGroupQueueNumber = String(g.queueNumber).replace(/^0+/, '');
+        const normalizedSearchQueueNumber = String(queueNumber).replace(/^0+/, '');
+        return normalizedGroupQueueNumber === normalizedSearchQueueNumber;
+      });
+
+      if (group) {
+        foundOrder = orderItem;
+        foundGroup = group;
+        break;
+      }
+    }
+
+    if (!foundOrder || !foundGroup) {
+      console.error(`No registration found with queueNumber ${queueNumber} for event ${eventId}`);
+      return NextResponse.json(
+        { message: 'Registration not found with provided queueNumber for this event' },
+        { status: 404 }
+      );
+    }
+
+    // Format phone number if the field being updated is a phone number
     let formattedValue = value;
-    if (!isFromOrderDetails && (fieldData.label.toLowerCase().includes('phone') || 
-        fieldData.label.toLowerCase().includes('contact'))) {
-      formattedValue = formatPhoneNumber(value);
-      if (!isValidPhoneNumber(formattedValue)) {
-        console.error(`Invalid phone number: ${value}`);
+    if (fieldId.toLowerCase().includes('phone') && typeof value === 'string') {
+      if (!isValidPhoneNumber(value)) {
         return NextResponse.json(
           { message: 'Invalid phone number format' },
           { status: 400 }
         );
       }
+      formattedValue = formatPhoneNumber(value);
     }
-
-    console.log(`Updating field "${fieldData.label}" with value: ${formattedValue} (original: ${fieldData.value})`);
 
     // Update directly using queueNumber which is the reliable identifier
     try {
       // Find the specific field in the correct group identified by queueNumber
-      const fieldToUpdatePath = group.fields.findIndex((f: CustomField) => f.id === fieldId);
+      const fieldToUpdatePath = foundGroup.fields.findIndex((f: CustomField) => f.id === fieldId);
       if (fieldToUpdatePath >= 0) {
         const updatePath = `customFieldValues.$.fields.${fieldToUpdatePath}.value`;
         
         // Use findOneAndUpdate for more reliable updates with the $ positional operator
         const updateResult = await Order.findOneAndUpdate(
-          { _id: orderId, "customFieldValues.queueNumber": queueNumber },
+          { _id: foundOrder._id, "customFieldValues.queueNumber": queueNumber },
           { $set: { [updatePath]: formattedValue } },
-          { new: true } // Return the updated document
+          { new: true }
         );
         
         console.log(`Direct findOneAndUpdate by queueNumber result:`, !!updateResult);
@@ -106,44 +115,37 @@ export async function POST(req: Request) {
           );
         }
         
-        // Don't reassign order, use updateResult directly for the response
-        const updatedGroup = updateResult.customFieldValues.find(
-          (g: CustomFieldGroup) => g.queueNumber === queueNumber
-        );
-        
         // Invalidate relevant cache tags to prevent stale data
         revalidateTag('order-details');
         revalidateTag('orders');
         revalidateTag('events');
-        revalidateTag(`order-${orderId}`); // Add specific order tag
-        revalidateTag(`event-${updateResult.event}`); // Add specific event tag
-        revalidateTag('registrations'); // Add registrations tag
+        revalidateTag(`order-${foundOrder._id}`);
+        revalidateTag(`event-${event._id}`);
+        revalidateTag('registrations');
         
-        // Include groupId and queueNumber in the response for confirmation
+        // Include queueNumber in the response for confirmation
         return NextResponse.json({ 
           success: true,
-          groupId: updatedGroup?.groupId || group.groupId,
           queueNumber: queueNumber,
-          eventId: updateResult.event.toString()
+          eventId: event._id.toString()
         });
-      } else {
-        console.error(`Field index not found for fieldId=${fieldId}`);
-        return NextResponse.json(
-          { message: 'Field not found in registration' },
-          { status: 404 }
-        );
       }
-    } catch (err) {
-      console.error('Error in queueNumber-based update:', err);
+
       return NextResponse.json(
-        { message: 'Error updating registration field' },
+        { message: 'Field not found in registration' },
+        { status: 404 }
+      );
+    } catch (error) {
+      console.error('Error updating registration field:', error);
+      return NextResponse.json(
+        { message: 'Failed to update registration field' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error updating registration:', error);
+    console.error('Error in update registration:', error);
     return NextResponse.json(
-      { message: 'Error updating registration' },
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
