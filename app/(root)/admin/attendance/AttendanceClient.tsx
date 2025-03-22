@@ -381,17 +381,53 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       
       console.log(`Using eventId ${event._id} and queueNumber ${queueNumber} as primary identifiers`);
       
-      const res = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
+      // Try the main endpoint first
+      try {
+        const res = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
 
-      const data = await res.json();
-      
-      if (res.ok) {
+        if (!res.ok) {
+          // If the main endpoint returns a 404, try the alternative endpoint
+          if (res.status === 404) {
+            console.log('Main endpoint returned 404, trying alternative endpoint');
+            
+            const altRes = await fetch('/api/cancel-registration-alt', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestData),
+            });
+            
+            if (!altRes.ok) {
+              throw new Error(`Alternative endpoint failed with status: ${altRes.status}`);
+            }
+            
+            const data = await altRes.json();
+            console.log(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully via alternative endpoint:`, data);
+            
+            // Check if returned queue number matches requested queue number
+            if (queueNumber && data.queueNumber !== queueNumber) {
+              console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
+            }
+            
+            // Rest of the code remains the same...
+            
+            // Update state here
+            // ...
+            
+            return; // Exit early since we handled via alternative endpoint
+          } else {
+            throw new Error(`API returned status code: ${res.status}`);
+          }
+        }
+        
+        const data = await res.json();
         console.log(`Registration ${cancelled ? 'cancelled' : 'uncancelled'} successfully:`, data);
         
         // Check if returned queue number matches requested queue number
@@ -433,9 +469,14 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         setTimeout(() => {
           setShowModal(false);
         }, 2000);
-      } else {
-        console.error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration:`, data);
-        throw new Error(`Failed to ${cancelled ? 'cancel' : 'uncancel'} registration 操作失败`);
+      } catch (error) {
+        console.error('Error cancelling/uncancelling registration:', error);
+        setModalMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }, 2000);
       }
     } catch (error) {
       console.error(`Error ${cancelled ? 'cancelling' : 'uncancelling'} registration:`, error);

@@ -22,6 +22,10 @@ const nextConfig = {
       {
         source: '/img/_next/:path*',
         destination: '/_next/image/:path*'
+      },
+      {
+        source: '/api/cancel-registration',
+        destination: '/api/cancel-registration'
       }
     ]
   },

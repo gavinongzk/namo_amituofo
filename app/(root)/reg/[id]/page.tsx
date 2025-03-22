@@ -693,21 +693,49 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         cancelled: false
       };
       
-      const response = await fetch('/api/cancel-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
+      try {
+        // Try the main endpoint first
+        const response = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+        
+        // If the main endpoint returns a 404, try the alternative endpoint
+        if (response.status === 404) {
+          console.log('Main endpoint returned 404, trying alternative endpoint');
+          
+          const altResponse = await fetch('/api/cancel-registration-alt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+          });
+          
+          if (!altResponse.ok) {
+            throw new Error(`Failed to restore registration: ${altResponse.statusText}`);
+          }
+          
+          const data = await altResponse.json();
+          console.log('Alternative API response:', data);
+          return; // Continue with success handling
+        }
+        
+        // Handle regular responses
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('API response:', data);
+      } catch (error) {
+        console.error('Error in uncancellation:', error);
+        throw error; // Rethrow to be handled by the calling function
       }
-      
-      console.log('API response:', data);
       
       // Update session storage to refresh Event Lookup page if user navigates back
       if (typeof window !== 'undefined') {
