@@ -206,7 +206,15 @@ const EventLookupPage = () => {
                     <br />
                     Enter your registration phone number to find your event details and queue number.
                 </p>
-                <div className="flex flex-col gap-4 max-w-md mx-auto">
+                <form 
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        if (phoneNumber && isReady && !isLoading) {
+                            handleLookup();
+                        }
+                    }}
+                    className="flex flex-col gap-4 max-w-md mx-auto"
+                >
                     <div className="relative">
                         {useManualInput ? (
                             <Input
@@ -256,7 +264,7 @@ const EventLookupPage = () => {
                     </div>
 
                     <Button 
-                        onClick={handleLookup} 
+                        type="submit"
                         disabled={isLoading || !isReady || !phoneNumber} 
                         className="w-full h-12 text-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
                     >
@@ -274,7 +282,7 @@ const EventLookupPage = () => {
                             '查询 Lookup'
                         )}
                     </Button>
-                </div>
+                </form>
             </motion.div>
 
             {error && (

@@ -910,7 +910,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                 className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
                               >
                                 <Pencil className="h-3 w-3" />
-                                <span className="text-xs ml-1">编辑 Edit</span>
+                                <span className="text-xs ml-1">修改 Edit</span>
                               </Button>
                             )}
                           </div>
@@ -967,19 +967,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </svg>
                 如何在活动当天找回此页面 How to Find This Page on Event Day
               </h4>
+              <p className="text-blue-700 mb-4 font-medium">请按照以下步骤操作 Please follow these steps:</p>
               <div className="space-y-4">
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                      <div className="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        <span className="text-sm font-medium text-blue-600">目录</span>
-                      </div>
+                      <div className="text-xl font-bold text-blue-600">1</div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">1. 点击顶部菜单"目录"按钮</p>
+                      <p className="font-semibold text-blue-800 mb-2">点击顶部"目录"按钮</p>
                       <p className="text-sm text-blue-600">Click on the "目录" menu button at the top</p>
                     </div>
                   </div>
@@ -988,12 +984,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
+                      <div className="text-xl font-bold text-blue-600">2</div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">2. 在目录中选择"活动查询 Event Lookup"</p>
+                      <p className="font-semibold text-blue-800 mb-2">在目录中选择"活动查询 Event Lookup"</p>
                       <p className="text-sm text-blue-600">Select "活动查询 Event Lookup" from the menu</p>
                     </div>
                   </div>
@@ -1002,12 +996,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
+                      <div className="text-xl font-bold text-blue-600">3</div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">3. 输入您的电话号码并查询</p>
+                      <p className="font-semibold text-blue-800 mb-2">输入您的电话号码并查询</p>
                       <p className="text-sm text-blue-600">Enter your phone number and search</p>
                     </div>
                   </div>
@@ -1016,12 +1008,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+                      <div className="text-xl font-bold text-blue-600">4</div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-blue-800 mb-2">4. 点击活动照片查看详情</p>
+                      <p className="font-semibold text-blue-800 mb-2">点击活动照片查看详情</p>
                       <p className="text-sm text-blue-600">Click on the event photo to view details</p>
                     </div>
                   </div>
