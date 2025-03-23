@@ -377,6 +377,70 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
+  // Add function to check attendance status
+  const checkAttendanceStatus = useCallback(async () => {
+    if (!order?.event?._id) return;
+
+    try {
+      // Load attendance state from localStorage
+      const storageKey = `attendance_${order.event._id}`;
+      const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+      // Check if any attendance status has changed
+      let hasChanges = false;
+
+      // Update attendance state from localStorage
+      setOrder(prevOrder => {
+        if (!prevOrder) return null;
+
+        const updatedOrder = {
+          ...prevOrder,
+          customFieldValues: prevOrder.customFieldValues.map(group => {
+            const newAttendance = group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance;
+            if (newAttendance !== group.attendance) {
+              hasChanges = true;
+              // If this is a newly marked attendance, add to newly marked groups
+              if (newAttendance && !group.attendance && !processedAttendances.current.has(group.groupId)) {
+                playSuccessSound();
+                setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
+                processedAttendances.current.add(group.groupId);
+                // Remove from newly marked groups after animation
+                setTimeout(() => {
+                  setNewlyMarkedGroups(prev => {
+                    const next = new Set(prev);
+                    next.delete(group.groupId);
+                    return next;
+                  });
+                }, 2000);
+              }
+            }
+            return {
+              ...group,
+              attendance: newAttendance
+            };
+          })
+        };
+
+        return hasChanges ? updatedOrder : prevOrder;
+      });
+
+      // Update related orders if needed
+      if (hasChanges) {
+        setRelatedOrders(prevOrders => {
+          return prevOrders.map(relatedOrder => ({
+            ...relatedOrder,
+            customFieldValues: relatedOrder.customFieldValues.map(group => ({
+              ...group,
+              attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+            }))
+          }));
+        });
+      }
+    } catch (err) {
+      console.error('Error checking attendance status:', err);
+    }
+  }, [order?.event?._id]);
+
   const fetchOrderDetails = useCallback(async () => {
     // Don't fetch if we've fetched recently (debounce)
     const now = Date.now();
@@ -466,13 +530,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     fetchOrderDetails();
   }, [fetchOrderDetails]);
 
-  // Add polling effect
+  // Add polling effect for attendance status only
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
 
     const startPolling = () => {
       setIsPolling(true);
-      pollInterval = setInterval(fetchOrderDetails, 5000); // Poll every 5 seconds
+      pollInterval = setInterval(checkAttendanceStatus, 5000); // Poll every 5 seconds
     };
 
     const stopPolling = () => {
@@ -489,38 +553,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return () => {
       stopPolling();
     };
-  }, [fetchOrderDetails]);
-
-  // Add effect to check for attendance changes
-  useEffect(() => {
-    if (!order || !previousOrder.current) {
-      previousOrder.current = order;
-      return;
-    }
-
-    // Check for newly marked attendances
-    order.customFieldValues.forEach(group => {
-      const prevGroup = previousOrder.current?.customFieldValues.find(g => g.groupId === group.groupId);
-      if (group.attendance && !prevGroup?.attendance && !processedAttendances.current.has(group.groupId)) {
-        // Play success sound for newly marked attendance
-        playSuccessSound();
-        // Add to newly marked groups for animation
-        setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
-        // Add to processed attendances to prevent duplicate sounds
-        processedAttendances.current.add(group.groupId);
-        // Remove from newly marked groups after animation
-        setTimeout(() => {
-          setNewlyMarkedGroups(prev => {
-            const next = new Set(prev);
-            next.delete(group.groupId);
-            return next;
-          });
-        }, 2000);
-      }
-    });
-
-    previousOrder.current = order;
-  }, [order]);
+  }, [checkAttendanceStatus]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
     if (!queueNumber) {
