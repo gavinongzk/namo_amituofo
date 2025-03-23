@@ -42,6 +42,14 @@ const EventLookupPage = () => {
 
     // Define handleLookup as a useCallback to prevent unnecessary re-renders
     const handleLookup = useCallback(async () => {
+        // Validate phone number before proceeding
+        if (!phoneNumber || phoneNumber.trim() === '') {
+            setError('请输入电话号码 / Please enter a phone number');
+            setIsLoading(false);
+            setIsLoadingStats(false);
+            return;
+        }
+
         // Don't perform lookup if we're restoring from session
         if (isRestoringFromSession) {
             setIsRestoringFromSession(false);
@@ -147,11 +155,12 @@ const EventLookupPage = () => {
                 
                 setInitialSearchComplete(true);
                 
-                // Refresh data when coming back from order details page to ensure we have the latest data
-                // (especially important after cancellations)
-                setTimeout(() => {
-                    handleLookup();
-                }, 300);
+                // Only trigger a refresh if we have a valid phone number
+                if (savedPhoneNumber && savedPhoneNumber.trim() !== '') {
+                    setTimeout(() => {
+                        handleLookup();
+                    }, 300);
+                }
                 
                 return;
             } else if (!isBackFromOrderDetails && (savedRegistrations || savedPhoneNumber || savedHasSearched || savedAllRegistrations)) {
