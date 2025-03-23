@@ -2,7 +2,7 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { IRegistration } from '@/types'
 
 type Props = {
@@ -20,7 +20,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
   const [imageError, setImageError] = useState(false);
 
   // Reset image error state when imageUrl changes
-  React.useEffect(() => {
+  useEffect(() => {
     setImageError(false);
     setImageLoading(true);
   }, [event.imageUrl]);
