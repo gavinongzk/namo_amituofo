@@ -406,9 +406,26 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
         
         if (response.ok) {
-          const allOrders = await response.json();
-          setOrder(initialOrder); // Keep the initial order for the main display
-          setRelatedOrders(allOrders); // Set all orders including cancelled ones
+          const data = await response.json();
+          
+          // data is an array of grouped orders by event
+          // We need to find all orders for the current event
+          const currentEventId = initialOrder.event._id;
+          const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
+          
+          if (currentEventOrders) {
+            // Get all orders for this event
+            const orderIds = currentEventOrders.orderIds;
+            const allOrders = await Promise.all(
+              orderIds.map((orderId: string) => getOrderById(orderId))
+            );
+            
+            // Filter out the current order and any null results
+            const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
+            
+            setOrder(initialOrder); // Keep the initial order for the main display
+            setRelatedOrders(otherOrders); // Set all other orders for this event
+          }
         }
       }
 
