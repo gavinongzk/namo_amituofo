@@ -26,7 +26,7 @@ const styles = `
 interface CancelButtonProps {
   groupId: string;
   orderId: string;
-  onCancel: (groupId: string) => void;
+  onCancel: (groupId: string, queueNumber?: string) => void;
   participantInfo?: string;
   queueNumber?: string;
 }
@@ -190,7 +190,7 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
       // Close the dialog immediately after the user confirms
       setDialogOpen(false);
       // The actual cancellation is now handled in the parent component's handleCancellation function
-      onCancel(groupId);
+      onCancel(groupId, queueNumber);
     } catch (error) {
       console.error('Error in CancelButton handleCancel:', error);
     } finally {
@@ -221,12 +221,6 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
             <br />
             <div className="mt-3 text-gray-500 text-xs">
               {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
-
-              <p className="mt-2 text-amber-600">
-                取消后，此座位将重新分配给其他参加者。
-                <br />
-                After cancellation, this seat will be reallocated to other participants.
-              </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -1236,7 +1230,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <CancelButton
                       groupId={group.groupId}
                       orderId={id}
-                      onCancel={(groupId) => handleCancellation(groupId)}
+                      onCancel={(groupId) => handleCancellation(groupId, group.queueNumber)}
                       participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                       queueNumber={group.queueNumber}
                     />

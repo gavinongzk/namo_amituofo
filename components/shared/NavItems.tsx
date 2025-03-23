@@ -71,6 +71,46 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     return null;
   };
 
+  // Define all possible nav items
+  const navItems = [
+    {
+      href: '/',
+      title: '净土宗活动',
+      subtitle: 'Events',
+      alwaysShow: true,
+    },
+    {
+      href: '/event-lookup',
+      title: '活动查询',
+      subtitle: 'Event Lookup',
+      alwaysShow: true,
+    },
+    {
+      href: '/profile',
+      title: '我的活动',
+      subtitle: 'My Events',
+      showWhen: isSignedIn && isSuperAdmin,
+    },
+    {
+      href: '/events/create',
+      title: '创建活动',
+      subtitle: 'Create Event',
+      showWhen: isSignedIn && isSuperAdmin,
+    },
+    {
+      href: '/faq',
+      title: '常见问题',
+      subtitle: 'FAQ',
+      alwaysShow: true,
+    },
+    {
+      href: '/admin/dashboard',
+      title: '管理员系统',
+      subtitle: 'Admin Dashboard',
+      showWhen: isSignedIn && (isSuperAdmin || isNormalAdmin),
+    },
+  ];
+
   return (
     <ul 
       className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto ${className}`}
@@ -78,66 +118,22 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <li className="w-full md:w-auto">
-        <Link href="/" className={navItemClass('/')} onClick={() => handleClick('/')}>
-          <span className="font-medium group-hover:text-primary-600 transition-colors">净土宗活动</span>
-          <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Events</span>
-          {renderLoadingSpinner('/')}
-        </Link>
-      </li>
-      <li className="w-full md:w-auto">
-        <Link href="/event-lookup" className={navItemClass('/event-lookup')} onClick={() => handleClick('/event-lookup')}>
-          <span className="font-medium group-hover:text-primary-600 transition-colors">活动查询</span>
-          <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Event Lookup</span>
-          {renderLoadingSpinner('/event-lookup')}
-        </Link>
-      </li>
-      {isSignedIn ? (
-        <>
-          {isSuperAdmin && (
-            <li className="w-full md:w-auto">
-              <Link href="/profile" className={navItemClass('/profile')} onClick={() => handleClick('/profile')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">我的活动</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">My Events</span>
-                {renderLoadingSpinner('/profile')}
-              </Link>
-            </li>
-          )}
-          {isSuperAdmin && (
-            <li className="w-full md:w-auto">
-              <Link href="/events/create" className={navItemClass('/events/create')} onClick={() => handleClick('/events/create')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">创建活动</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Create Event</span>
-                {renderLoadingSpinner('/events/create')}
-              </Link>
-            </li>
-          )}
-          <li className="w-full md:w-auto">
-            <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-              <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
-              <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
-              {renderLoadingSpinner('/faq')}
-            </Link>
-          </li>
-          {(isSuperAdmin || isNormalAdmin) && (
-            <li className="w-full md:w-auto">
-              <Link href="/admin/dashboard" className={navItemClass('/admin/dashboard')} onClick={() => handleClick('/admin/dashboard')}>
-                <span className="font-medium group-hover:text-primary-600 transition-colors">管理员系统</span>
-                <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">Admin Dashboard</span>
-                {renderLoadingSpinner('/admin/dashboard')}
-              </Link>
-            </li>
-          )}
-        </>
-      ) : (
-        <li className="w-full md:w-auto">
-          <Link href="/faq" className={navItemClass('/faq')} onClick={() => handleClick('/faq')}>
-            <span className="font-medium group-hover:text-primary-600 transition-colors">常见问题</span>
-            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">FAQ</span>
-            {renderLoadingSpinner('/faq')}
+      {navItems.map((item) => (
+        <li 
+          key={item.href} 
+          className={`w-full md:w-auto ${(!item.alwaysShow && !item.showWhen) ? 'hidden' : ''}`}
+        >
+          <Link 
+            href={item.href} 
+            className={navItemClass(item.href)} 
+            onClick={() => handleClick(item.href)}
+          >
+            <span className="font-medium group-hover:text-primary-600 transition-colors">{item.title}</span>
+            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">{item.subtitle}</span>
+            {renderLoadingSpinner(item.href)}
           </Link>
         </li>
-      )}
+      ))}
     </ul>
   );
 }

@@ -14,6 +14,11 @@ const CHINESE_GROUP_UNITS = ['', '万', '亿', '兆'];
 function convertGroup(num: number): string {
   if (num === 0) return '';
   
+  // For single digit numbers, just return the digit without any units
+  if (num < 10) {
+    return CHINESE_DIGITS[num];
+  }
+  
   let result = '';
   let hasZero = false;
   let lastWasZero = true;
