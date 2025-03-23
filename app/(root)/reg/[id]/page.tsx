@@ -221,12 +221,6 @@ const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, 
             <br />
             <div className="mt-3 text-gray-500 text-xs">
               {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
-
-              <p className="mt-2 text-amber-600">
-                取消后，此座位将重新分配给其他参加者。
-                <br />
-                After cancellation, this seat will be reallocated to other participants.
-              </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
