@@ -449,7 +449,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         console.error('Cannot cancel registration: queueNumber is required');
         toast.error('取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number', {
             duration: 4000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
         return;
     }
@@ -458,7 +458,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         console.error('Cannot cancel registration: eventId is required');
         toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
             duration: 4000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
         return;
     }
@@ -522,13 +522,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         
         toast.success('已成功取消报名 Registration cancelled successfully', {
             duration: 3000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
     } catch (error) {
         console.error('Error cancelling registration:', error);
         toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-            duration: 5000,
-            position: 'bottom-center',
+            duration: 4000,
+            position: 'top-center',
         });
     }
   };
@@ -538,7 +538,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         console.error('Cannot restore registration: queueNumber is required');
         toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
             duration: 4000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
         return;
     }
@@ -547,7 +547,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         console.error('Cannot restore registration: eventId is required');
         toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
             duration: 4000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
         return;
     }
@@ -611,13 +611,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         
         toast.success('已成功恢复报名 Registration restored successfully', {
             duration: 3000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
     } catch (error) {
         console.error('Error restoring registration:', error);
         toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-            duration: 5000,
-            position: 'bottom-center',
+            duration: 4000,
+            position: 'top-center',
         });
     }
   };
@@ -628,7 +628,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     if (!currentGroup) {
         console.error('Could not find group with queue number:', queueNumber);
-        toast.error('Error: Could not find the correct registration to edit');
+        toast.error('Error: Could not find the correct registration to edit', {
+            duration: 4000,
+            position: 'top-center',
+        });
         return;
     }
 
@@ -739,13 +742,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
         toast.success('成功更新 Successfully updated', {
             duration: 3000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
     } catch (error) {
         console.error('Error updating field:', error);
         toast.error('更新失败 Failed to update field', {
             duration: 4000,
-            position: 'bottom-center',
+            position: 'top-center',
         });
     }
   };
@@ -882,7 +885,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   const queueNumber = group.queueNumber as string;
                                   if (!queueNumber) {
                                     console.error('Cannot save: missing queue number');
-                                    toast.error('Cannot save: missing queue number');
+                                    toast.error('Cannot save: missing queue number', {
+                                      duration: 4000,
+                                      position: 'top-center',
+                                    });
                                     return;
                                   }
                                   handleSave(queueNumber);
@@ -916,7 +922,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                     const queueNumber = group.queueNumber as string;
                                     if (!queueNumber) {
                                       console.error('Cannot edit: missing queue number');
-                                      toast.error('Cannot edit: missing queue number');
+                                      toast.error('Cannot edit: missing queue number', {
+                                        duration: 4000,
+                                        position: 'top-center',
+                                      });
                                       return;
                                     }
                                     console.log('Edit button clicked for:', {
