@@ -423,8 +423,30 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             // Filter out the current order and any null results
             const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
             
-            setOrder(initialOrder); // Keep the initial order for the main display
-            setRelatedOrders(otherOrders); // Set all other orders for this event
+            // Load attendance state from localStorage
+            const storageKey = `attendance_${initialOrder.event._id}`;
+            const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+            // Update attendance state from localStorage
+            const updatedInitialOrder = {
+              ...initialOrder,
+              customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
+                ...group,
+                attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+              }))
+            };
+
+            // Update attendance state for other orders
+            const updatedOtherOrders = otherOrders.map(order => ({
+              ...order,
+              customFieldValues: order.customFieldValues.map((group: CustomFieldGroup) => ({
+                ...group,
+                attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+              }))
+            }));
+            
+            setOrder(updatedInitialOrder);
+            setRelatedOrders(updatedOtherOrders);
           }
         }
       }
@@ -443,6 +465,62 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   useEffect(() => {
     fetchOrderDetails();
   }, [fetchOrderDetails]);
+
+  // Add polling effect
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    const startPolling = () => {
+      setIsPolling(true);
+      pollInterval = setInterval(fetchOrderDetails, 5000); // Poll every 5 seconds
+    };
+
+    const stopPolling = () => {
+      setIsPolling(false);
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+
+    // Start polling when the component mounts
+    startPolling();
+
+    // Stop polling when the component unmounts
+    return () => {
+      stopPolling();
+    };
+  }, [fetchOrderDetails]);
+
+  // Add effect to check for attendance changes
+  useEffect(() => {
+    if (!order || !previousOrder.current) {
+      previousOrder.current = order;
+      return;
+    }
+
+    // Check for newly marked attendances
+    order.customFieldValues.forEach(group => {
+      const prevGroup = previousOrder.current?.customFieldValues.find(g => g.groupId === group.groupId);
+      if (group.attendance && !prevGroup?.attendance && !processedAttendances.current.has(group.groupId)) {
+        // Play success sound for newly marked attendance
+        playSuccessSound();
+        // Add to newly marked groups for animation
+        setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
+        // Add to processed attendances to prevent duplicate sounds
+        processedAttendances.current.add(group.groupId);
+        // Remove from newly marked groups after animation
+        setTimeout(() => {
+          setNewlyMarkedGroups(prev => {
+            const next = new Set(prev);
+            next.delete(group.groupId);
+            return next;
+          });
+        }, 2000);
+      }
+    });
+
+    previousOrder.current = order;
+  }, [order]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
     if (!queueNumber) {
