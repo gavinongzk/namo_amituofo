@@ -1250,20 +1250,29 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                               {/* Only show edit button for editable fields */}
                               {field.type !== 'radio' && (
                                 <Button
-                                  size="icon"
+                                  size="sm"
                                   variant="ghost"
                                   onClick={() => {
-                                    setEditingField({
-                                      groupId: group.groupId,
+                                    const queueNumber = group.queueNumber as string;
+                                    if (!queueNumber) {
+                                      console.error('Cannot edit: missing queue number');
+                                      toast.error('Cannot edit: missing queue number');
+                                      return;
+                                    }
+                                    console.log('Edit button clicked for:', {
+                                      queueNumber,
                                       field: field.id,
-                                      label: field.label,
-                                      queueNumber: group.queueNumber
+                                      currentValue: field.value
                                     });
-                                    setEditValue(field.value?.toString() || '');
+                                    if (field.id) {
+                                      const value = typeof field.value === 'string' ? field.value : '';
+                                      handleEdit(queueNumber, field.id, value);
+                                    }
                                   }}
-                                  className="h-9 w-9"
+                                  className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Pencil className="h-3 w-3" />
+                                  <span className="text-xs ml-1">修改 Edit</span>
                                 </Button>
                               )}
                             </>
@@ -1271,6 +1280,26 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         </div>
                       </div>
                     ))}
+                    
+                    {!group.cancelled && !group.attendance && (
+                      <CancelButton
+                        groupId={group.groupId}
+                        orderId={id}
+                        onCancel={(groupId) => handleCancellation(groupId, group.queueNumber)}
+                        participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                        queueNumber={group.queueNumber}
+                      />
+                    )}
+                    
+                    {group.cancelled && (
+                      <UncancelButton
+                        groupId={group.groupId}
+                        orderId={id}
+                        onUncancel={(groupId, queueNumber) => handleUncancellation(groupId, queueNumber)}
+                        participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
+                        queueNumber={group.queueNumber}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -1287,6 +1316,53 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
           }}
         />
+      </div>
+
+      <div className="mt-6 sm:mt-8 bg-blue-50/50 p-6 rounded-[20px]">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h4 className="text-xl font-semibold text-blue-900">如何在活动当天找回此页面 How to Find This Page on Event Day</h4>
+        </div>
+        
+        <p className="text-blue-900 mb-6">请按照以下步骤操作 Please follow these steps:</p>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-4 flex items-start gap-4">
+            <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">1</div>
+            <div className="space-y-1">
+              <div className="text-blue-900 font-medium">点击顶部"目录"按钮</div>
+              <div className="text-blue-600">Click on the "目录" menu button at the top</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-4 flex items-start gap-4">
+            <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">2</div>
+            <div className="space-y-1">
+              <div className="text-blue-900 font-medium">在目录中选择"活动查询 Event Lookup"</div>
+              <div className="text-blue-600">Select "活动查询 Event Lookup" from the menu</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-4 flex items-start gap-4">
+            <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">3</div>
+            <div className="space-y-1">
+              <div className="text-blue-900 font-medium">输入您的电话号码并查询</div>
+              <div className="text-blue-600">Enter your phone number and search</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-4 flex items-start gap-4">
+            <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">4</div>
+            <div className="space-y-1">
+              <div className="text-blue-900 font-medium">点击活动照片查看详情</div>
+              <div className="text-blue-600">Click on the event photo to view details</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
