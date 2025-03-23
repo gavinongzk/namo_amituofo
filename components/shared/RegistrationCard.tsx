@@ -1,6 +1,8 @@
 import { IEvent } from '@/lib/database/models/event.model'
 import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
+import Image from 'next/image'
+import { useState } from 'react'
 import { IRegistration } from '@/types'
 
 type Props = {
@@ -14,17 +16,82 @@ type Props = {
 
 const RegistrationCard = ({ event, registrations }: Props) => {
   const primaryOrderId = event.orderIds?.[0] || event.orderId;
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  // Reset image error state when imageUrl changes
+  React.useEffect(() => {
+    setImageError(false);
+    setImageLoading(true);
+  }, [event.imageUrl]);
 
   return (
     <div className="group relative flex min-h-[320px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[380px]">
       <Link 
         href={`/reg/${primaryOrderId}`}
-        className="relative flex-center aspect-square w-full overflow-hidden"
+        className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
       >
-        <div 
-          className="absolute inset-0 bg-center bg-cover transition-transform duration-300 group-hover:scale-105"
-          style={{backgroundImage: `url(${event.imageUrl})`}}
-        />
+        {event.imageUrl && !imageError ? (
+          <>
+            <Image 
+              src={event.imageUrl} 
+              alt={event.title}
+              fill
+              className={`object-cover transition-opacity duration-300 ${
+                imageLoading ? "opacity-0" : "opacity-100"
+              }`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              onLoadingComplete={() => {
+                setImageLoading(false);
+                setImageError(false);
+              }}
+              onError={() => {
+                console.error(`Failed to load image: ${event.imageUrl}`);
+                setImageLoading(false);
+                setImageError(true);
+              }}
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
+              quality={75}
+            />
+            {imageLoading && (
+              <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+            )}
+          </>
+        ) : (
+          <div className="flex-center flex-col p-4 text-grey-500 bg-gray-50 w-full h-full rounded-[10px] border-2 border-dashed border-gray-200">
+            <div className="flex-center flex-col gap-2 max-w-[200px] text-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex-center">
+                <div className="w-8 h-8 border-2 border-gray-300 rounded-lg relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-4 h-4 bg-gray-300 rounded-full -translate-y-1" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-gray-300" />
+                </div>
+              </div>
+              <p className="p-medium-14 text-gray-600">
+                {imageError ? (
+                  <span className="text-red-500">Failed to load image</span>
+                ) : (
+                  "No image available"
+                )}
+              </p>
+              {imageError && (
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setImageError(false);
+                    setImageLoading(true);
+                  }}
+                  className="mt-1 text-sm text-primary-500 hover:text-primary-600 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm px-2 py-1"
+                >
+                  Retry loading
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </Link>
 
       <div className="flex flex-col flex-grow p-3 md:p-5">
