@@ -38,6 +38,30 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
+      <Link href="/admin/scan" onClick={() => handleClick('/admin/scan')}>
+        <Button className={`${buttonClass} bg-primary-600 hover:bg-primary-700 text-white`} disabled={loadingPath === '/admin/scan'}>
+          {loadingPath === '/admin/scan' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '扫描二维码 / Scan QR'
+          )}
+        </Button>
+      </Link>
+      <Link href="/admin/attendance" onClick={() => handleClick('/admin/attendance')}>
+        <Button className={`${buttonClass} bg-green-600 hover:bg-green-700 text-white`} disabled={loadingPath === '/admin/attendance'}>
+          {loadingPath === '/admin/attendance' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '活动出席 / Event Attendance'
+          )}
+        </Button>
+      </Link>
       {isSuperAdmin && (
         <>
           <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
@@ -73,6 +97,18 @@ const AdminActions = () => {
                 </>
               ) : (
                 '数据分析 / Analytics'
+              )}
+            </Button>
+          </Link>
+          <Link href="/admin/faq-management" onClick={() => handleClick('/admin/faq-management')}>
+            <Button className={`${buttonClass} bg-blue-600 hover:bg-blue-700 text-white`} disabled={loadingPath === '/admin/faq-management'}>
+              {loadingPath === '/admin/faq-management' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '管理常见问题 / Manage FAQs'
               )}
             </Button>
           </Link>
