@@ -438,3 +438,128 @@ export const getCachedOrderCount = unstable_cache(
   ['event-order-count'],
   { revalidate: 30 } // Cache for 30 seconds
 )
+
+export const aggregateOrdersByPhoneNumber = async (phoneNumber: string) => {
+  try {
+    return await unstable_cache(
+      async () => {
+        await connectToDatabase();
+        
+        // Remove any cache-busting query params from the phone number
+        const cleanPhoneNumber = phoneNumber.split('?')[0];
+        
+        // Get current date for filtering events that haven't ended yet
+        const currentDate = new Date();
+        
+        // Use MongoDB aggregation pipeline for better performance
+        const aggregatedOrders = await Order.aggregate([
+          // Match orders with the given phone number
+          {
+            $match: {
+              'customFieldValues.fields': {
+                $elemMatch: {
+                  $or: [
+                    { type: 'phone', value: cleanPhoneNumber },
+                    { label: { $regex: /phone/i }, value: cleanPhoneNumber }
+                  ]
+                }
+              }
+            }
+          },
+          // Lookup event details
+          {
+            $lookup: {
+              from: 'events',
+              localField: 'event',
+              foreignField: '_id',
+              as: 'eventDetails'
+            }
+          },
+          // Unwind the event array
+          { $unwind: '$eventDetails' },
+          // Match only events that haven't ended
+          {
+            $match: {
+              'eventDetails.endDateTime': { $gte: currentDate }
+            }
+          },
+          // Group by event
+          {
+            $group: {
+              _id: '$eventDetails._id',
+              event: { $first: '$eventDetails' },
+              orderIds: { $push: '$_id' },
+              registrations: {
+                $push: {
+                  $map: {
+                    input: '$customFieldValues',
+                    as: 'group',
+                    in: {
+                      queueNumber: '$$group.queueNumber',
+                      name: {
+                        $reduce: {
+                          input: {
+                            $filter: {
+                              input: '$$group.fields',
+                              as: 'field',
+                              cond: {
+                                $regexMatch: {
+                                  input: { $toLower: '$$field.label' },
+                                  regex: 'name'
+                                }
+                              }
+                            }
+                          },
+                          initialValue: 'Unknown',
+                          in: { $ifNull: ['$$this.value', '$$value'] }
+                        }
+                      },
+                      orderId: '$_id',
+                      groupId: '$$group.groupId',
+                      cancelled: { $ifNull: ['$$group.cancelled', false] }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          // Sort by event start date (newest first)
+          { $sort: { 'event.startDateTime': -1 } },
+          // Project the final shape
+          {
+            $project: {
+              _id: 0,
+              event: {
+                _id: '$_id',
+                title: '$event.title',
+                imageUrl: '$event.imageUrl',
+                startDateTime: '$event.startDateTime',
+                endDateTime: '$event.endDateTime',
+                organizer: '$event.organizer'
+              },
+              orderIds: 1,
+              // Flatten and filter registrations array
+              registrations: {
+                $reduce: {
+                  input: '$registrations',
+                  initialValue: [],
+                  in: { $concatArrays: ['$$value', '$$this'] }
+                }
+              }
+            }
+          }
+        ]);
+
+        return JSON.parse(JSON.stringify(aggregatedOrders));
+      },
+      ['orders-by-phone', phoneNumber],
+      {
+        revalidate: 30, // Cache for 30 seconds
+        tags: ['orders', `phone-${phoneNumber}`]
+      }
+    )();
+  } catch (error) {
+    console.error('Error in aggregateOrdersByPhoneNumber:', error);
+    throw error;
+  }
+};

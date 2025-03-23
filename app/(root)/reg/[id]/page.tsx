@@ -346,137 +346,63 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
   const processedAttendances = useRef<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
-  const fetchOrder = useCallback(async () => {
-    const now = Date.now();
-    // Debounce: Skip if last fetch was less than 500ms ago
-    if (now - lastFetchTime.current < 500) {
-      return;
-    }
-    
-    setIsPolling(true);
+  const fetchOrderDetails = useCallback(async () => {
+    setIsLoading(true);
     try {
-      // Fetch the primary order first with a timestamp to bypass cache
-      // Using object destructuring to avoid modifying the imported function
-      const fetchedOrder = await (async () => {
-        // Add a unique timestamp to bypass Next.js cache
-        const timestamp = Date.now();
-        const res = await fetch(`/api/reg/${id}?_t=${timestamp}`);
-        if (!res.ok) throw new Error('Failed to fetch order data');
-        return res.json();
-      })();
-      
-      // Find a phone number in the order to fetch related orders
-      let phoneNumber = null;
-      for (const group of fetchedOrder.customFieldValues) {
-        const phoneField = group.fields.find(
-          (field: any) => field.type === 'phone' || field.label.toLowerCase().includes('phone')
-        );
-        if (phoneField) {
-          phoneNumber = phoneField.value;
-          break;
+      const order = await getOrderById(id);
+      if (!order) {
+        setError('Order not found');
+        return;
+      }
+
+      // Extract phone numbers from the order
+      const phoneNumbers = order.customFieldValues.flatMap((group: CustomFieldGroup) => 
+        group.fields
+          .filter((field: CustomField) => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
+          .map((field: CustomField) => field.value)
+      );
+
+      // If we have phone numbers, fetch aggregated orders
+      if (phoneNumbers.length > 0) {
+        const phoneNumber = phoneNumbers[0];
+        const response = await fetch(`/api/orders/aggregate?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+        
+        if (response.ok) {
+          const aggregatedData = await response.json();
+          setRelatedOrders(aggregatedData);
         }
       }
-      
-      // If we found a phone number, fetch all related orders for the same event
-      let allCustomFieldValues = [...fetchedOrder.customFieldValues];
-      if (phoneNumber) {
-        try {
-          // We need to use a direct API call here rather than the client-side action to bypass the cancelled filter
-          // so we can get ALL registrations including cancelled ones for this page
-          // Add a timestamp to the URL to prevent caching
-          const cacheBuster = `_t=${Date.now()}`;
-          const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true&${cacheBuster}`);
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Find the event that matches our current order's event
-            const matchingEvent = data.find((item: any) => 
-              item.event._id === fetchedOrder.event._id.toString()
-            );
-            
-            if (matchingEvent && matchingEvent.orderIds) {
-              setRelatedOrders(matchingEvent.orderIds);
-              
-              // Fetch all related orders in parallel
-              const relatedOrderIds = matchingEvent.orderIds.filter((orderId: string) => orderId !== id);
-              if (relatedOrderIds.length > 0) {
-                const relatedOrderPromises = relatedOrderIds.map((orderId: string) => getOrderById(orderId));
-                const relatedOrderResults = await Promise.all(relatedOrderPromises);
-                
-                // Combine customFieldValues from all related orders
-                relatedOrderResults.forEach((relatedOrder) => {
-                  if (relatedOrder && relatedOrder.customFieldValues) {
-                    allCustomFieldValues = [...allCustomFieldValues, ...relatedOrder.customFieldValues];
-                  }
-                });
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching related orders:', error);
-        }
-      }
-      
-      // Check for newly marked attendances
-      if (previousOrder.current) {
-        allCustomFieldValues.forEach((group: CustomFieldGroup) => {
-          const prevGroup = previousOrder.current?.customFieldValues.find(
-            (g: CustomFieldGroup) => g.groupId === group.groupId
-          );
-          
-          // Only process if attendance is marked and we haven't processed it before
-          if (group.attendance && !prevGroup?.attendance && !processedAttendances.current.has(group.groupId)) {
-            processedAttendances.current.add(group.groupId);
-            setNewlyMarkedGroups(prev => new Set(prev).add(group.groupId));
-            playSuccessSound();
-            // Clear the newly marked status after animation
-            setTimeout(() => {
-              setNewlyMarkedGroups(prev => {
-                const next = new Set(prev);
-                next.delete(group.groupId);
-                return next;
-              });
-            }, 2000);
-          }
-        });
-      }
-      
-      // Update the order with all combined customFieldValues
-      const combinedOrder = {
-        ...fetchedOrder,
-        customFieldValues: allCustomFieldValues
-      };
-      
-      previousOrder.current = combinedOrder;
-      setOrder(combinedOrder);
-      setIsLoading(false);
-      lastFetchTime.current = now;
-    } catch (error) {
-      console.error('Error fetching order:', error);
+
+      setOrder(order);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching order details:', err);
+      setError('Failed to load order details');
     } finally {
-      setIsPolling(false);
+      setIsLoading(false);
     }
   }, [id]);
 
   // Initial fetch
   useEffect(() => {
-    fetchOrder();
-  }, [fetchOrder]);
+    fetchOrderDetails();
+  }, [fetchOrderDetails]);
 
   // Set up polling for real-time updates
   useEffect(() => {
     // Poll every 5 seconds for updates (changed from 1 second)
-    const pollInterval = setInterval(fetchOrder, 5000);
+    const pollInterval = setInterval(fetchOrderDetails, 5000);
 
     // Cleanup interval on unmount
     return () => clearInterval(pollInterval);
-  }, [fetchOrder]);
+  }, [fetchOrderDetails]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
     // Log which participant is being cancelled with more detail
@@ -673,7 +599,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       setTimeout(() => {
         // Reset lastFetchTime to force immediate fetch regardless of debounce
         lastFetchTime.current = 0;
-        fetchOrder();
+        fetchOrderDetails();
       }, 1000); // Keep the delay to ensure backend has time to process
     } catch (error) {
       console.error('Error cancelling registration:', error);
@@ -855,7 +781,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setTimeout(() => {
       // Reset lastFetchTime to force immediate fetch regardless of debounce
       lastFetchTime.current = 0;
-      fetchOrder();
+      fetchOrderDetails();
     }, 1000); // Keep the delay to ensure backend has time to process
   };
 
@@ -988,7 +914,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 });
                 
                 // Re-fetch the order to ensure data consistency
-                fetchOrder();
+                fetchOrderDetails();
                 return;
             }
             
@@ -1030,7 +956,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
             setTimeout(() => {
                 lastFetchTime.current = 0; // Reset the fetch time to force a refresh
-                fetchOrder();
+                fetchOrderDetails();
             }, 500); // Small delay to allow cache invalidation to complete
         } catch (error) {
             console.error('Error updating field:', error);
@@ -1039,7 +965,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 position: 'bottom-center',
             });
             // Re-fetch the order to ensure data consistency
-            fetchOrder();
+            fetchOrderDetails();
         }
     } catch (error) {
         console.error('Error updating field:', error);
@@ -1048,7 +974,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             position: 'bottom-center',
         });
         // Re-fetch the order to ensure data consistency
-        fetchOrder();
+        fetchOrderDetails();
     }
   };
 
