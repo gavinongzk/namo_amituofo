@@ -38,6 +38,30 @@ const AdminActions = () => {
           )}
         </Button>
       </Link>
+      <Link href="/profile" onClick={() => handleClick('/profile')}>
+        <Button className={`${buttonClass} bg-green-600 hover:bg-green-700 text-white`} disabled={loadingPath === '/profile'}>
+          {loadingPath === '/profile' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '我的活动 / My Events'
+          )}
+        </Button>
+      </Link>
+      <Link href="/events/create" onClick={() => handleClick('/events/create')}>
+        <Button className={`${buttonClass} bg-indigo-600 hover:bg-indigo-700 text-white`} disabled={loadingPath === '/events/create'}>
+          {loadingPath === '/events/create' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载中... / Loading...
+            </>
+          ) : (
+            '创建活动 / Create Event'
+          )}
+        </Button>
+      </Link>
       {isSuperAdmin && (
         <>
           <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
