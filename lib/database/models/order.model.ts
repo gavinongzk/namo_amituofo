@@ -73,4 +73,11 @@ OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Primary lookup key
 OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Secondary lookup key
 OrderSchema.index({ 'event': 1, 'customFieldValues.queueNumber': 1 }); // Compound index for event+queueNumber lookups
 
+// Compound index for event+phone+queueNumber lookups
+OrderSchema.index({ 
+  'event': 1, 
+  'customFieldValues.fields.value': 1, 
+  'customFieldValues.queueNumber': 1 
+});
+
 export default models.Order || model<IOrder>('Order', OrderSchema);

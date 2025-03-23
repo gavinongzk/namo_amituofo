@@ -691,66 +691,81 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
-    // Extract queue number from QR code
-    const match = decodedText.match(/queueNumber=([^&]+)/);
-    if (match) {
-      const queueNumber = decodeURIComponent(match[1]);
-      
-      // Check if this QR code has already been processed in this session
-      if (beepHistory.has(queueNumber)) {
-        return;
-      }
+    // Extract queue number and phone number from QR code
+    const [eventId, queueNumber, encodedPhone] = decodedText.split('_');
+    if (!eventId || !queueNumber || !encodedPhone) {
+      showModalWithMessage(
+        'Error / 错误',
+        'Invalid QR code format for this event\n此活动的二维码格式无效',
+        'error'
+      );
+      return;
+    }
 
-      const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
-
-      if (registration) {
-        const group = registration.order.customFieldValues.find(group => group.queueNumber === queueNumber);
-        if (group) {
-          const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
-          const name = nameField ? nameField.value : 'Unknown';
-
-          // Only play beep and mark attendance if not already marked
-          if (!group.attendance) {
-            // Play beep sound once for unattended registrations
-            new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
-            
-            // Add to beep history to prevent future beeps for this QR code
-            beepHistory.add(queueNumber);
-            
-            handleMarkAttendance(registration.id, group.groupId, true);
-            showModalWithMessage(
-              'Success / 成功',
-              `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
-              'success'
-            );
-            setRecentScans(prev => {
-              const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
-              return [{ queueNumber, name }, ...filtered.slice(0, 4)];
-            });
-          } else {
-            // No beep for already marked attendance
-            showModalWithMessage(
-              'Already Marked / 已标记',
-              `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
-              'error'
-            );
-            setRecentScans(prev => {
-              const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
-              return [{ queueNumber, name }, ...filtered.slice(0, 4)];
-            });
-          }
-        }
-      } else {
-        showModalWithMessage(
-          'Error / 错误',
-          `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
-          'error'
+    const phoneNumber = decodeURIComponent(encodedPhone);
+    
+    // Find registration by event ID, queue number, and phone number
+    const registration = registrations.find(r => 
+      r.order.customFieldValues.some(group => {
+        const hasMatchingQueue = group.queueNumber === queueNumber;
+        const phoneField = group.fields.find(field => 
+          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
+          field.value === phoneNumber
         );
+        return hasMatchingQueue && phoneField;
+      })
+    );
+
+    if (registration) {
+      const group = registration.order.customFieldValues.find(group => {
+        const hasMatchingQueue = group.queueNumber === queueNumber;
+        const phoneField = group.fields.find(field => 
+          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
+          field.value === phoneNumber
+        );
+        return hasMatchingQueue && phoneField;
+      });
+
+      if (group) {
+        const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+        const name = nameField ? nameField.value : 'Unknown';
+
+        // Only play beep and mark attendance if not already marked
+        if (!group.attendance) {
+          // Play beep sound once for unattended registrations
+          new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
+          
+          // Add to beep history to prevent future beeps for this QR code
+          beepHistory.add(queueNumber);
+          
+          handleMarkAttendance(registration.id, group.groupId, true);
+          showModalWithMessage(
+            'Success / 成功',
+            `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
+            'success'
+          );
+        
+          setRecentScans(prev => {
+            const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
+            return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+          });
+        } else {
+          // No beep for already marked attendance
+          showModalWithMessage(
+            'Already Marked / 已标记',
+            `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
+            'error'
+          );
+          setRecentScans(prev => {
+            const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
+            return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+          });
+        }
       }
     } else {
       showModalWithMessage(
         'Error / 错误',
-        'Invalid QR code for this event\n此活动的二维码无效',
+        `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
         'error'
       );
     }
