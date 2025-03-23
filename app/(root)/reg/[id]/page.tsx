@@ -82,7 +82,7 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
     setShouldUpdate(!isAttended);
   }, [isAttended]);
 
-  // If we shouldn't update, return the last rendered state
+  // If we shouldn't update and it's not newly marked, return the last rendered state
   if (!shouldUpdate && !isNewlyMarked) {
     return (
       <div className="w-full max-w-sm mx-auto mb-6">
@@ -141,6 +141,7 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-contain"
+          priority // Add priority to ensure QR code loads quickly
         />
         {isAttended && (
           <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
@@ -177,6 +178,15 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
         </div>
       )}
     </div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  // Only re-render if these specific props change
+  return (
+    prevProps.qrCode === nextProps.qrCode &&
+    prevProps.isAttended === nextProps.isAttended &&
+    prevProps.isNewlyMarked === nextProps.isNewlyMarked &&
+    prevProps.queueNumber === nextProps.queueNumber
   );
 });
 
@@ -354,6 +364,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const fetchOrderDetails = useCallback(async () => {
+    // Don't fetch if we've fetched recently (debounce)
+    const now = Date.now();
+    if (now - lastFetchTime.current < 2000) { // 2 second debounce
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const order = await getOrderById(id);
@@ -382,6 +398,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
       setOrder(order);
       setError(null);
+      lastFetchTime.current = now;
     } catch (err) {
       console.error('Error fetching order details:', err);
       setError('Failed to load order details');
@@ -393,15 +410,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   // Initial fetch
   useEffect(() => {
     fetchOrderDetails();
-  }, [fetchOrderDetails]);
-
-  // Set up polling for real-time updates
-  useEffect(() => {
-    // Poll every 5 seconds for updates (changed from 1 second)
-    const pollInterval = setInterval(fetchOrderDetails, 5000);
-
-    // Cleanup interval on unmount
-    return () => clearInterval(pollInterval);
   }, [fetchOrderDetails]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
@@ -595,12 +603,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         };
       });
 
-      // Still fetch from server after a short delay to ensure complete synchronization
-      setTimeout(() => {
-        // Reset lastFetchTime to force immediate fetch regardless of debounce
-        lastFetchTime.current = 0;
-        fetchOrderDetails();
-      }, 1000); // Keep the delay to ensure backend has time to process
+      // After successful cancellation, fetch latest data
+      await fetchOrderDetails();
     } catch (error) {
       console.error('Error cancelling registration:', error);
       toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
@@ -745,6 +749,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         duration: 3000,
         position: 'bottom-center',
       });
+
+      // After successful uncancellation, fetch latest data
+      await fetchOrderDetails();
     } catch (error) {
       console.error('Error restoring registration:', error);
       toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
@@ -953,11 +960,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 position: 'bottom-center',
             });
             
-            // Force cache reset and refetch after a short delay to ensure cache invalidation has processed
-            setTimeout(() => {
-                lastFetchTime.current = 0; // Reset the fetch time to force a refresh
-                fetchOrderDetails();
-            }, 500); // Small delay to allow cache invalidation to complete
+            // After successful save, fetch latest data
+            await fetchOrderDetails();
         } catch (error) {
             console.error('Error updating field:', error);
             toast.error('更新失败 Failed to update field', {
