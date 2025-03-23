@@ -86,18 +86,6 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       alwaysShow: true,
     },
     {
-      href: '/profile',
-      title: '我的活动',
-      subtitle: 'My Events',
-      showWhen: isSignedIn && isSuperAdmin,
-    },
-    {
-      href: '/events/create',
-      title: '创建活动',
-      subtitle: 'Create Event',
-      showWhen: isSignedIn && isSuperAdmin,
-    },
-    {
       href: '/faq',
       title: '常见问题',
       subtitle: 'FAQ',
