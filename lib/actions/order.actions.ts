@@ -453,14 +453,15 @@ export const aggregateOrdersByPhoneNumber = async (phoneNumber: string) => {
         
         // Use MongoDB aggregation pipeline for better performance
         const aggregatedOrders = await Order.aggregate([
-          // Match orders with the given phone number
+          // Match orders with the given phone number - improved matching logic
           {
             $match: {
               'customFieldValues.fields': {
                 $elemMatch: {
                   $or: [
                     { type: 'phone', value: cleanPhoneNumber },
-                    { label: { $regex: /phone/i }, value: cleanPhoneNumber }
+                    { label: { $regex: /phone/i }, value: cleanPhoneNumber },
+                    { label: { $regex: /contact.?number/i }, value: cleanPhoneNumber }
                   ]
                 }
               }
