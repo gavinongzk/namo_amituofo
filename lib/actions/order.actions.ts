@@ -129,7 +129,8 @@ export const getOrderById = unstable_cache(
       const order = await Order.findById(orderId)
         .populate('event')
         .populate('buyer')
-        .select('-__v'); // Exclude version field to reduce payload size
+        .select('-__v') // Exclude version field but keep all other fields including qrCode
+        .lean(); // Use lean() for better performance
       
       if (!order) throw new Error('Order not found');
       return JSON.parse(JSON.stringify(order));

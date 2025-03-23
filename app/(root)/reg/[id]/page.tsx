@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { OrderDetailsPageProps } from '@/types';
-import { Pencil, X, Check, Loader2, RotateCcw } from 'lucide-react';
+import { Pencil, X, Check, Loader2, RotateCcw, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
@@ -1106,222 +1106,178 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   // Combine current order and related orders with proper null checks
   const allOrders = [order, ...(relatedOrders || []).filter(relatedOrder => relatedOrder && relatedOrder._id !== order._id)];
   
-  // Sort all orders by date (most recent first)
-  const sortedOrders = allOrders.sort((a, b) => {
-    if (!a.createdAt || !b.createdAt) return 0;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  // Get all customFieldValues from all orders and sort by queue number
+  const allCustomFieldValues = allOrders.flatMap(order => 
+    order.customFieldValues.map(group => ({
+      ...group,
+      orderId: order._id, // Keep track of which order this came from
+      event: order.event // Keep the event info
+    }))
+  ).sort((a, b) => {
+    // Extract numbers from queue numbers for proper numeric sorting
+    const aNum = parseInt((a.queueNumber || '0').replace(/\D/g, ''));
+    const bNum = parseInt((b.queueNumber || '0').replace(/\D/g, ''));
+    return aNum - bNum;
   });
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
       <style jsx global>{styles}</style>
       
-      {/* Display each order */}
-      {sortedOrders.map((currentOrder, orderIndex) => {
-        if (!currentOrder) return null;
-        
-        return (
-          <div key={currentOrder._id} className={`mb-8 ${orderIndex > 0 ? 'mt-12 border-t-4 border-gray-100 pt-8' : ''}`}>
-            {orderIndex > 0 && (
-              <div className="mb-4 text-center">
-                <span className="inline-block bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm">
-                  相关报名 Related Registration #{orderIndex + 1}
-                </span>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-2 sm:mb-4 relative">
-              {/* Removed the updating state display */}
+      <div>
+        <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
+            报名成功 Successful Registration
+          </h3>
+          <p className="text-center text-primary-600 mt-2">
+            当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
+          </p>
+        </section>
+
+        <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
+          <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
+              <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event?.title || 'N/A'}</h4>
             </div>
 
-            <div id={`order-details-${currentOrder._id}`}>
-              <section className="bg-gradient-to-r from-primary-50 to-primary-100 bg-dotted-pattern bg-cover bg-center py-2 sm:py-3 md:py-6 rounded-t-xl sm:rounded-t-2xl">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-primary-500">
-                  报名成功 Successful Registration
-                </h3>
-                <p className="text-center text-primary-600 mt-2">
-                  当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
-                </p>
-              </section>
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
+              <p>
+                <span className="font-semibold">日期时间 Date & Time: </span> 
+                {order.event?.startDateTime ? (
+                  <>
+                    {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.dateOnly} 
+                    <span className="ml-1">
+                      {formatBilingualDateTime(new Date(order.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(order.event.endDateTime || '')).cn.timeOnly.replace(/^[上下]午/, '')}
+                    </span>
+                  </>
+                ) : 'N/A'}
+              </p>
+              {order.event?.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+            </div>
 
-              <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
-                <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
-                  <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
-                    <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {currentOrder.event?.title || 'N/A'}</h4>
-                  </div>
-
-                  <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
-                    <p>
-                      <span className="font-semibold">日期时间 Date & Time: </span> 
-                      {currentOrder.event?.startDateTime ? (
-                        <>
-                          {formatBilingualDateTime(new Date(currentOrder.event.startDateTime)).cn.dateOnly} 
-                          <span className="ml-1">
-                            {formatBilingualDateTime(new Date(currentOrder.event.startDateTime)).cn.timeOnly} - {formatBilingualDateTime(new Date(currentOrder.event.endDateTime || '')).cn.timeOnly.replace(/^[上下]午/, '')}
-                          </span>
-                        </>
-                      ) : 'N/A'}
-                    </p>
-                    {currentOrder.event?.location && <p><span className="font-semibold">地点 Location:</span> {currentOrder.event.location}</p>}
-                  </div>
-
-                  {/* Display participants for this order */}
-                  {(currentOrder.customFieldValues || []).map((group: CustomFieldGroup, index: number) => {
-                    if (!group) return null;
-                    
-                    return (
-                      <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-75 relative' : ''}`}>
-                        {group.cancelled && (
-                          <div className="absolute inset-0 z-10 bg-gray-200/30 pointer-events-none flex items-center justify-center overflow-hidden">
-                            <div className="rotate-20 bg-red-100 text-red-800 px-8 py-2 text-xl font-bold shadow-lg opacity-90 absolute">
-                              已取消 CANCELLED
-                            </div>
-                          </div>
-                        )}
-                        <div className={`${group.cancelled ? 'bg-gray-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                            <div className="flex flex-col gap-1">
-                              <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
-                                <span>{toChineseOrdinal(index + 1)}参加者 Participant {index + 1}</span>
-                                {group.cancelled && (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    已取消 Cancelled
-                                  </span>
-                                )}
-                                <span className="text-xs opacity-50">#{group.queueNumber}</span>
-                              </h5>
-                              <div className="text-white/90 text-sm sm:text-base">
-                                {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* QR Code for this participant */}
-                        {!group.cancelled && group.qrCode && (
-                          <div className="p-4 flex justify-center">
-                            <div className="w-full max-w-[200px]">
-                              <QRCodeDisplay 
-                                qrCode={group.qrCode} 
-                                isAttended={!!group.attendance}
-                                isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                                queueNumber={group.queueNumber}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Registration Details Section */}
-                        <div className="p-4 space-y-4">
-                          {group.fields.map((field: CustomField) => (
-                            <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
-                              <div className="flex-1 flex items-center gap-2">
-                                {editingField?.queueNumber === group.queueNumber && editingField?.field === field.id ? (
-                                  <div className="flex-1 flex items-center gap-2">
-                                    <Input
-                                      type="text"
-                                      value={editValue}
-                                      onChange={(e) => setEditValue(e.target.value)}
-                                      className="flex-1"
-                                    />
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        const queueNumber = group.queueNumber as string;
-                                        if (!queueNumber) {
-                                          console.error('Cannot save: missing queue number');
-                                          toast.error('Cannot save: missing queue number');
-                                          return;
-                                        }
-                                        handleSave(queueNumber);
-                                      }}
-                                      className="h-9 w-9"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={handleCancel}
-                                      className="h-9 w-9"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex-1 flex items-center gap-1">
-                                    <span>{field.value}</span>
-                                    {!group.cancelled && (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          const queueNumber = group.queueNumber as string;
-                                          if (!queueNumber) {
-                                            console.error('Cannot edit: missing queue number');
-                                            toast.error('Cannot edit: missing queue number');
-                                            return;
-                                          }
-                                          console.log('Edit button clicked for:', {
-                                            queueNumber,
-                                            field: field.id,
-                                            currentValue: field.value
-                                          });
-                                          if (field.id) {
-                                            const value = typeof field.value === 'string' ? field.value : '';
-                                            handleEdit(queueNumber, field.id, value);
-                                          }
-                                        }}
-                                        className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
-                                      >
-                                        <Pencil className="h-3 w-3" />
-                                        <span className="text-xs ml-1">修改 Edit</span>
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {!group.cancelled && !group.attendance && (
-                            <CancelButton
-                              groupId={group.groupId}
-                              orderId={id}
-                              onCancel={(groupId) => handleCancellation(groupId, group.queueNumber)}
-                              participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                              queueNumber={group.queueNumber}
-                            />
-                          )}
-                          
-                          {group.cancelled && (
-                            <UncancelButton
-                              groupId={group.groupId}
-                              orderId={id}
-                              onUncancel={(groupId, queueNumber) => handleUncancellation(groupId, queueNumber)}
-                              participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
-                              queueNumber={group.queueNumber}
-                            />
-                          )}
-                        </div>
-                        {/* Add a debug message that's only visible in development */}
-                        {process.env.NODE_ENV === 'development' && (
-                          <div className="p-2 text-xs text-gray-400">
-                            groupId: {group.groupId} | queueNumber: {group.queueNumber} | Index: {index}
-                          </div>
-                        )}
-                        {/* End of Registration Details Section */}
+            {/* Display all participants sorted by queue number */}
+            {allCustomFieldValues.map((group, index) => {
+              if (!group) return null;
+              
+              return (
+                <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-75 relative' : ''}`}>
+                  {group.cancelled && (
+                    <div className="absolute inset-0 z-10 bg-gray-200/30 pointer-events-none flex items-center justify-center overflow-hidden">
+                      <div className="rotate-20 bg-red-100 text-red-800 px-8 py-2 text-xl font-bold shadow-lg opacity-90 absolute">
+                        已取消 CANCELLED
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+                  <div className={`${group.cancelled ? 'bg-gray-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div className="flex flex-col gap-1">
+                        <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                          <span>{toChineseOrdinal(index + 1)}参加者 Participant {index + 1}</span>
+                          {group.cancelled && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              已取消 Cancelled
+                            </span>
+                          )}
+                          <span className="text-xs opacity-50">#{group.queueNumber}</span>
+                        </h5>
+                        <div className="text-white/90 text-sm sm:text-base">
+                          {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* QR Code for this participant */}
+                  {!group.cancelled && group.qrCode && (
+                    <div className="p-4 flex justify-center">
+                      <div className="w-full max-w-[200px]">
+                        <QRCodeDisplay 
+                          qrCode={group.qrCode} 
+                          isAttended={!!group.attendance}
+                          isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                          queueNumber={group.queueNumber}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Registration Details Section */}
+                  <div className="p-4 space-y-4">
+                    {group.fields.map((field: CustomField) => (
+                      <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
+                        <div className="flex-1 flex items-center gap-2">
+                          {editingField?.queueNumber === group.queueNumber && editingField?.field === field.id ? (
+                            <div className="flex-1 flex items-center gap-2">
+                              <Input
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  const queueNumber = group.queueNumber as string;
+                                  if (!queueNumber) {
+                                    console.error('Cannot save: missing queue number');
+                                    toast.error('Cannot save: missing queue number');
+                                    return;
+                                  }
+                                  handleSave(queueNumber);
+                                }}
+                                className="h-9 w-9"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={handleCancel}
+                                className="h-9 w-9"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="flex-1">
+                                {field.type === 'radio' 
+                                  ? (field.value === 'yes' ? '是 Yes' : '否 No')
+                                  : field.value || 'N/A'}
+                              </span>
+                              {/* Only show edit button for editable fields */}
+                              {field.type !== 'radio' && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingField({
+                                      groupId: group.groupId,
+                                      field: field.id,
+                                      label: field.label,
+                                      queueNumber: group.queueNumber
+                                    });
+                                    setEditValue(field.value?.toString() || '');
+                                  }}
+                                  className="h-9 w-9"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      </div>
 
       <div className="mt-6 sm:mt-8 bg-green-50 border-l-4 border-green-400 p-2 sm:p-3 md:p-4 rounded-r-lg sm:rounded-r-xl">
         <h4 className="text-base sm:text-lg font-bold mb-2 text-green-700">重要信息 Important Information</h4>
@@ -1331,67 +1287,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             __html: convertLinksInText(eventDefaultValues.registrationSuccessMessage) 
           }}
         />
-      </div>
-
-      {/* How to find this page section - Now with improved UI */}
-      <div className="mt-6 sm:mt-8 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200">
-        <h4 className="text-lg sm:text-xl font-bold mb-4 text-blue-800 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          如何在活动当天找回此页面 How to Find This Page on Event Day
-        </h4>
-        <p className="text-blue-700 mb-4 font-medium">请按照以下步骤操作 Please follow these steps:</p>
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                <div className="text-xl font-bold text-blue-600">1</div>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-blue-800 mb-2">点击顶部"目录"按钮</p>
-                <p className="text-sm text-blue-600">Click on the "目录" menu button at the top</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                <div className="text-xl font-bold text-blue-600">2</div>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-blue-800 mb-2">在目录中选择"活动查询 Event Lookup"</p>
-                <p className="text-sm text-blue-600">Select "活动查询 Event Lookup" from the menu</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                <div className="text-xl font-bold text-blue-600">3</div>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-blue-800 mb-2">输入您的电话号码并查询</p>
-                <p className="text-sm text-blue-600">Enter your phone number and search</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                <div className="text-xl font-bold text-blue-600">4</div>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-blue-800 mb-2">点击活动照片查看详情</p>
-                <p className="text-sm text-blue-600">Click on the event photo to view details</p>
-              </div>
-            </div>
-          </div>
-          
-        </div>
       </div>
     </div>
   );
