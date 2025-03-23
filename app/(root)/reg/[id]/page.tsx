@@ -634,10 +634,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
       setRelatedOrders(prevOrders => {
         return prevOrders.map(relatedOrder => {
-          // After successful cancellation, fetch latest data
-          await fetchOrderDetails();
+          const targetGroupId = data.groupId || groupId;
+          const targetQueueNumber = data.queueNumber || queueNumber;
+          
+          return {
+            ...relatedOrder,
+            customFieldValues: relatedOrder.customFieldValues.map(group => {
+              if (group.groupId === targetGroupId || 
+                  (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
+                return { ...group, cancelled: true };
+              }
+              return group;
+            })
+          };
         });
       });
+
+      // After successful cancellation, fetch latest data
+      await fetchOrderDetails();
     } catch (error) {
       console.error('Error cancelling registration:', error);
       toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
