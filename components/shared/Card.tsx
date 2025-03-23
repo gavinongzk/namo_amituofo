@@ -123,21 +123,36 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             quality={priority ? 90 : 75}
           />
         ) : (
-          <div className="flex-center flex-col text-grey-500">
-            <Image src="/assets/icons/image-placeholder.svg" width={40} height={40} alt="placeholder" />
-            <p className="p-medium-14 mt-2">{imageError ? "Failed to load image" : "No image available"}</p>
-            {imageError && isOnline && (
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  setImageError(false);
-                  setImageLoading(true);
-                }}
-                className="mt-2 text-sm text-primary-500 hover:underline"
-              >
-                Retry loading
-              </button>
-            )}
+          <div className="flex-center flex-col p-4 text-grey-500 bg-gray-50 w-full h-full rounded-[10px] border-2 border-dashed border-gray-200">
+            <div className="flex-center flex-col gap-2 max-w-[200px] text-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex-center">
+                <div className="w-8 h-8 border-2 border-gray-300 rounded-lg relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-4 h-4 bg-gray-300 rounded-full -translate-y-1" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-gray-300" />
+                </div>
+              </div>
+              <p className="p-medium-14 text-gray-600">
+                {imageError ? (
+                  <span className="text-red-500">Failed to load image</span>
+                ) : (
+                  "No image available"
+                )}
+              </p>
+              {imageError && isOnline && (
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setImageError(false);
+                    setImageLoading(true);
+                  }}
+                  className="mt-1 text-sm text-primary-500 hover:text-primary-600 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm px-2 py-1"
+                >
+                  Retry loading
+                </button>
+              )}
+            </div>
           </div>
         )}
         {imageLoading && event.imageUrl && !imageError && (
