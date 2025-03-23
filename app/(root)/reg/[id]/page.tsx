@@ -908,42 +908,42 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             </div>
                           ) : (
                             <>
-                              <span className="flex-1">
+                              <span className="flex-1 flex items-center gap-1">
                                 {field.type === 'radio' 
                                   ? (field.value === 'yes' ? '是 Yes' : '否 No')
                                   : field.value || 'N/A'}
-                              </span>
-                              {/* Only show edit button for editable fields */}
-                              {field.type !== 'radio' && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    const queueNumber = group.queueNumber as string;
-                                    if (!queueNumber) {
-                                      console.error('Cannot edit: missing queue number');
-                                      toast.error('Cannot edit: missing queue number', {
-                                        duration: 4000,
-                                        position: 'top-center',
+                                {/* Only show edit button for editable fields */}
+                                {field.type !== 'radio' && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const queueNumber = group.queueNumber as string;
+                                      if (!queueNumber) {
+                                        console.error('Cannot edit: missing queue number');
+                                        toast.error('Cannot edit: missing queue number', {
+                                          duration: 4000,
+                                          position: 'top-center',
+                                        });
+                                        return;
+                                      }
+                                      console.log('Edit button clicked for:', {
+                                        queueNumber,
+                                        field: field.id,
+                                        currentValue: field.value
                                       });
-                                      return;
-                                    }
-                                    console.log('Edit button clicked for:', {
-                                      queueNumber,
-                                      field: field.id,
-                                      currentValue: field.value
-                                    });
-                                    if (field.id) {
-                                      const value = typeof field.value === 'string' ? field.value : '';
-                                      handleEdit(queueNumber, field.id, value);
-                                    }
-                                  }}
-                                  className="ml-1 text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                  <span className="text-xs ml-1">修改 Edit</span>
-                                </Button>
-                              )}
+                                      if (field.id) {
+                                        const value = typeof field.value === 'string' ? field.value : '';
+                                        handleEdit(queueNumber, field.id, value);
+                                      }
+                                    }}
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                    <span className="text-xs ml-1">修改 Edit</span>
+                                  </Button>
+                                )}
+                              </span>
                             </>
                           )}
                         </div>
