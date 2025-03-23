@@ -445,474 +445,198 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   }, [fetchOrderDetails]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
-    // Log which participant is being cancelled with more detail
-    console.log(`Cancelling participant: ${new Date().toISOString()}`);
-    console.log(`  - groupId: ${groupId}`);
-    console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
-    console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
-    console.log(`  - orderId: ${id}`);
-    
-    // Require queueNumber for operation
     if (!queueNumber) {
-      console.error('Cannot cancel registration: queueNumber is required');
-      toast.error('取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      return;
+        console.error('Cannot cancel registration: queueNumber is required');
+        toast.error('取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number', {
+            duration: 4000,
+            position: 'bottom-center',
+        });
+        return;
     }
     
-    // Require event ID
     if (!order?.event?._id) {
-      console.error('Cannot cancel registration: eventId is required');
-      toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      return;
+        console.error('Cannot cancel registration: eventId is required');
+        toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
+            duration: 4000,
+            position: 'bottom-center',
+        });
+        return;
     }
-    
-    // Update both the current order and related orders
+
+    // Store the old values in case we need to revert (capture current state)
+    const oldOrder = structuredClone(order);
+    const oldRelatedOrders = structuredClone(relatedOrders);
+
+    // Optimistically update local state first
     setOrder(prevOrder => {
-      if (!prevOrder) return null;
-      
-      // Find the target group using only queueNumber
-      const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-      
-      if (!targetGroup) {
-        console.error(`Cannot find registration with queueNumber: ${queueNumber}`);
-        return prevOrder;
-      }
-      
-      console.log(`  - Found registration with queueNumber ${queueNumber}, groupId: ${targetGroup.groupId}`);
-      
-      const updatedOrder = {
-        ...prevOrder,
-        customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.queueNumber === queueNumber ? { ...group, cancelled: true } : group
-        )
-      };
-      
-      // Log the updated state to verify
-      console.log('Updated order state:', updatedOrder.customFieldValues.map(g => ({
-        groupId: g.groupId,
-        queueNumber: g.queueNumber,
-        cancelled: g.cancelled,
-        cancelledType: typeof g.cancelled
-      })));
-      
-      return updatedOrder;
+        if (!prevOrder) return null;
+        return {
+            ...prevOrder,
+            customFieldValues: prevOrder.customFieldValues.map(group =>
+                group.queueNumber === queueNumber ? { ...group, cancelled: true } : group
+            )
+        };
     });
 
     setRelatedOrders(prevOrders => {
-      return prevOrders.map(relatedOrder => {
-        const targetGroup = relatedOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-        if (!targetGroup) return relatedOrder;
-
-        return {
-          ...relatedOrder,
-          customFieldValues: relatedOrder.customFieldValues.map(group =>
-            group.queueNumber === queueNumber ? { ...group, cancelled: true } : group
-          )
-        };
-      });
+        return prevOrders.map(relatedOrder => ({
+            ...relatedOrder,
+            customFieldValues: relatedOrder.customFieldValues.map(group =>
+                group.queueNumber === queueNumber ? { ...group, cancelled: true } : group
+            )
+        }));
     });
     
-    // Call the API to update the backend
     try {
-      console.log('Sending cancel request to API...');
-      
-      // Create request data prioritizing eventId and queueNumber
-      // We'll still include orderId as a fallback or for record-keeping
-      const requestData = {
-        eventId: order.event._id,
-        queueNumber: queueNumber,
-        orderId: id,  // Include as optional parameter
-        groupId: groupId,  // Include as optional parameter
-        cancelled: true
-      };
-      
-      // Log what we're sending to help with debugging
-      console.log('Sending request to API with data:', requestData);
-      
-      // Try multiple potential API URLs to handle different deployment scenarios
-      // First try relative URL
-      let response;
-      let apiUrls = [];
-      
-      // Build a list of potential API URLs to try
-      // Start with relative URL (simplest and should work for most cases)
-      apiUrls.push('/api/cancel-registration');
-      
-      // Add absolute URL based on current origin (handles custom domains)
-      if (typeof window !== 'undefined') {
-        apiUrls.push(`${window.location.origin}/api/cancel-registration`);
-      }
-
-      // Try each URL until one works
-      let lastError;
-      for (const apiUrl of apiUrls) {
-        try {
-          console.log(`Trying API URL: ${apiUrl}`);
-          response = await fetch(apiUrl, {
+        // Create request data
+        const requestData = {
+            eventId: order.event._id,
+            queueNumber: queueNumber,
+            orderId: id,
+            groupId: groupId,
+            cancelled: true
+        };
+        
+        // Make API call in the background
+        const response = await fetch('/api/cancel-registration', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(requestData),
-          });
-          
-          // If we get a response (even an error response), break the loop
-          console.log(`Got response from ${apiUrl}: ${response.status} ${response.statusText}`);
-          break;
-        } catch (fetchError) {
-          console.error(`Error fetching from ${apiUrl}:`, fetchError);
-          lastError = fetchError;
-          // Continue to the next URL
-        }
-      }
-      
-      // If we didn't get a response from any URL, throw the last error
-      if (!response) {
-        throw new Error(`Failed to connect to any API endpoint: ${lastError instanceof Error ? lastError.message : 'Unknown error'}`);
-      }
-      
-      // Log the response status to help with debugging
-      console.log(`API response status: ${response.status} ${response.statusText}`);
-      
-      // Try to parse the response as JSON, but handle the case where it's not JSON
-      let data;
-      try {
-        data = await response.json();
-        console.log('API response data:', data);
-      } catch (jsonError) {
-        console.error('Error parsing API response as JSON:', jsonError);
-        throw new Error(`Failed to parse API response: ${response.statusText}`);
-      }
-      
-      if (!response.ok) {
-        // Check for authorization or permission issues
-        if (response.status === 403 || response.status === 401) {
-          console.error('Authorization issue when cancelling registration. You may not have the required permissions.');
-          throw new Error(`Unable to cancel registration: You don't have permission. Please contact an administrator.`);
-        } else if (response.status === 404) {
-          console.error('API endpoint not found. This could be a deployment issue or permissions problem.');
-          
-          // Try a fallback approach for regular users (direct database update not possible)
-          // Show a more helpful error message
-          throw new Error(`Unable to cancel registration via API. Please contact an administrator or use the event administrator interface.`);
-        }
-        
-        throw new Error(`Failed to cancel registration: ${data.error || response.statusText}`);
-      }
-      
-      // Verify response data
-      if (typeof data.cancelled !== 'boolean') {
-        console.warn(`API returned non-boolean cancelled status: ${data.cancelled} (${typeof data.cancelled})`);
-      }
-      
-      // Verify the response matches what we expected
-      if (queueNumber && data.queueNumber !== queueNumber) {
-        console.warn(`API returned different queueNumber than requested: requested=${queueNumber}, returned=${data.queueNumber}`);
-      }
-      
-      // Update session storage to refresh Event Lookup page if user navigates back
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('eventLookupRegistrations');
-        sessionStorage.removeItem('eventLookupAllRegistrations');
-      }
-      
-      // Show success toast
-      toast.success('已成功取消报名 Registration cancelled successfully', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
-
-      // Immediately update the UI based on API response data
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
-        
-        // Find the exact group using the data returned from API
-        const targetGroupId = data.groupId || groupId;
-        const targetQueueNumber = data.queueNumber || queueNumber;
-        
-        return {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            // Match by groupId first, then by queueNumber if available
-            if (group.groupId === targetGroupId || 
-                (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
-              return { ...group, cancelled: true };
-            }
-            return group;
-          })
-        };
-      });
-
-      setRelatedOrders(prevOrders => {
-        return prevOrders.map(relatedOrder => {
-          const targetGroupId = data.groupId || groupId;
-          const targetQueueNumber = data.queueNumber || queueNumber;
-          
-          return {
-            ...relatedOrder,
-            customFieldValues: relatedOrder.customFieldValues.map(group => {
-              if (group.groupId === targetGroupId || 
-                  (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
-                return { ...group, cancelled: true };
-              }
-              return group;
-            })
-          };
         });
-      });
 
-      // After successful cancellation, fetch latest data
-      await fetchOrderDetails();
+        if (!response.ok) {
+            // Revert local state if API call fails
+            setOrder(oldOrder);
+            setRelatedOrders(oldRelatedOrders);
+            const data = await response.json();
+            throw new Error(data.error || response.statusText);
+        }
+
+        // Update session storage in the background
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('eventLookupRegistrations');
+            sessionStorage.removeItem('eventLookupAllRegistrations');
+        }
+        
+        toast.success('已成功取消报名 Registration cancelled successfully', {
+            duration: 3000,
+            position: 'bottom-center',
+        });
     } catch (error) {
-      console.error('Error cancelling registration:', error);
-      toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-        duration: 5000,
-        position: 'bottom-center',
-      });
+        console.error('Error cancelling registration:', error);
+        toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+            duration: 5000,
+            position: 'bottom-center',
+        });
     }
   };
 
   const handleUncancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
-    // Log which participant is being uncancelled with more detail
-    console.log(`Uncancelling participant: ${new Date().toISOString()}`);
-    console.log(`  - groupId: ${groupId}`);
-    console.log(`  - queueNumber: ${queueNumber || 'N/A'}`);
-    console.log(`  - eventId: ${order?.event?._id || 'N/A'}`);
-    console.log(`  - orderId: ${id}`);
-    
-    // Require queueNumber for operation
     if (!queueNumber) {
-      console.error('Cannot restore registration: queueNumber is required');
-      toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      return;
+        console.error('Cannot restore registration: queueNumber is required');
+        toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
+            duration: 4000,
+            position: 'bottom-center',
+        });
+        return;
     }
     
-    // Require event ID
     if (!order?.event?._id) {
-      console.error('Cannot restore registration: eventId is required');
-      toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
-        duration: 4000,
-        position: 'bottom-center',
-      });
-      return;
+        console.error('Cannot restore registration: eventId is required');
+        toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
+            duration: 4000,
+            position: 'bottom-center',
+        });
+        return;
     }
-    
-    // Update both the current order and related orders
+
+    // Store old state for potential revert
+    const oldOrder = order;
+    const oldRelatedOrders = relatedOrders;
+
+    // Optimistically update local state first
     setOrder(prevOrder => {
-      if (!prevOrder) return null;
-      
-      // Find the target group using only queueNumber
-      const targetGroup = prevOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-      
-      if (!targetGroup) {
-        console.error(`Cannot find registration with queueNumber: ${queueNumber}`);
-        return prevOrder;
-      }
-      
-      console.log(`  - Found registration with queueNumber ${queueNumber}, groupId: ${targetGroup.groupId}`);
-      
-      const updatedOrder = {
-        ...prevOrder,
-        customFieldValues: prevOrder.customFieldValues.map(group =>
-          group.queueNumber === queueNumber ? { ...group, cancelled: false } : group
-        )
-      };
-      
-      // Log the updated state to verify
-      console.log('Updated order state:', updatedOrder.customFieldValues.map(g => ({
-        groupId: g.groupId,
-        queueNumber: g.queueNumber,
-        cancelled: g.cancelled,
-        cancelledType: typeof g.cancelled
-      })));
-      
-      return updatedOrder;
+        if (!prevOrder) return null;
+        return {
+            ...prevOrder,
+            customFieldValues: prevOrder.customFieldValues.map(group =>
+                group.queueNumber === queueNumber ? { ...group, cancelled: false } : group
+            )
+        };
     });
 
     setRelatedOrders(prevOrders => {
-      return prevOrders.map(relatedOrder => {
-        const targetGroup = relatedOrder.customFieldValues.find(group => group.queueNumber === queueNumber);
-        if (!targetGroup) return relatedOrder;
-
-        return {
-          ...relatedOrder,
-          customFieldValues: relatedOrder.customFieldValues.map(group =>
-            group.queueNumber === queueNumber ? { ...group, cancelled: false } : group
-          )
-        };
-      });
+        return prevOrders.map(relatedOrder => ({
+            ...relatedOrder,
+            customFieldValues: relatedOrder.customFieldValues.map(group =>
+                group.queueNumber === queueNumber ? { ...group, cancelled: false } : group
+            )
+        }));
     });
     
-    // Call the API to update the backend
     try {
-      console.log('Sending uncancel request to API...');
-      
-      // Create request data prioritizing eventId and queueNumber
-      // We'll still include orderId as a fallback or for record-keeping
-      const requestData = {
-        eventId: order.event._id,
-        queueNumber: queueNumber,
-        orderId: id,  // Include as optional parameter
-        groupId: groupId,  // Include as optional parameter
-        cancelled: false
-      };
-      
-      try {
-        // Try the main endpoint first
-        const response = await fetch('/api/cancel-registration', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestData),
-        });
+        // Create request data
+        const requestData = {
+            eventId: order.event._id,
+            queueNumber: queueNumber,
+            orderId: id,
+            groupId: groupId,
+            cancelled: false
+        };
         
-        // If the main endpoint returns a 404, try the alternative endpoint
-        if (response.status === 404) {
-          console.log('Main endpoint returned 404, trying alternative endpoint');
-          
-          const altResponse = await fetch('/api/cancel-registration-alt', {
+        // Make API call in the background
+        const response = await fetch('/api/cancel-registration', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(requestData),
-          });
-          
-          if (!altResponse.ok) {
-            throw new Error(`Failed to restore registration: ${altResponse.statusText}`);
-          }
-          
-          const data = await altResponse.json();
-          console.log('Alternative API response:', data);
-          
-          // Update the UI based on alternative endpoint response
-          updateUIWithResponseData(data, groupId, queueNumber);
-          return; // Return early since we've handled everything
-        }
-        
-        // Handle regular responses
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(`Failed to restore registration: ${data.error || response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('API response:', data);
-        
-        // Update the UI based on main endpoint response
-        updateUIWithResponseData(data, groupId, queueNumber);
-      } catch (error) {
-        console.error('Error in uncancellation:', error);
-        throw error; // Rethrow to be handled by the calling function
-      }
-      
-      // Update session storage to refresh Event Lookup page if user navigates back
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('eventLookupRegistrations');
-        sessionStorage.removeItem('eventLookupAllRegistrations');
-      }
-      
-      // Show success toast
-      toast.success('已成功恢复报名 Registration restored successfully', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
+        });
 
-      // After successful uncancellation, fetch latest data
-      await fetchOrderDetails();
+        if (!response.ok) {
+            // Revert local state if API call fails
+            setOrder(oldOrder);
+            setRelatedOrders(oldRelatedOrders);
+            const data = await response.json();
+            throw new Error(data.error || response.statusText);
+        }
+
+        // Update session storage in the background
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('eventLookupRegistrations');
+            sessionStorage.removeItem('eventLookupAllRegistrations');
+        }
+        
+        toast.success('已成功恢复报名 Registration restored successfully', {
+            duration: 3000,
+            position: 'bottom-center',
+        });
     } catch (error) {
-      console.error('Error restoring registration:', error);
-      toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-        duration: 5000,
-        position: 'bottom-center',
-      });
+        console.error('Error restoring registration:', error);
+        toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+            duration: 5000,
+            position: 'bottom-center',
+        });
     }
   };
 
-  // Helper function to update UI based on API response
-  const updateUIWithResponseData = (data: any, fallbackGroupId: string, fallbackQueueNumber?: string) => {
-    // Immediately update the UI based on API response data
-    setOrder(prevOrder => {
-      if (!prevOrder) return null;
-      
-      // Find the exact group using the data returned from API
-      const targetGroupId = data.groupId || fallbackGroupId;
-      const targetQueueNumber = data.queueNumber || fallbackQueueNumber;
-      
-      return {
-        ...prevOrder,
-        customFieldValues: prevOrder.customFieldValues.map(group => {
-          // Match by groupId first, then by queueNumber if available
-          if (group.groupId === targetGroupId || 
-              (targetQueueNumber && group.queueNumber === targetQueueNumber)) {
-            return { ...group, cancelled: false };
-          }
-          return group;
-        })
-      };
-    });
-    
-    // Still fetch from server after a short delay to ensure complete synchronization
-    setTimeout(() => {
-      // Reset lastFetchTime to force immediate fetch regardless of debounce
-      lastFetchTime.current = 0;
-      fetchOrderDetails();
-    }, 1000); // Keep the delay to ensure backend has time to process
-  };
-
   const handleEdit = (queueNumber: string, field: string, currentValue: string) => {
-    // Find the group by queue number instead of groupId
-    const currentGroup = order?.customFieldValues.find(g => {
-        // Log the comparison to help debug
-        console.log('Comparing group:', {
-            queueNumber: g.queueNumber,
-            fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
-        });
-        return g.queueNumber === queueNumber;
-    });
-    
-    // Add detailed logging of all groups and their queue numbers
-    console.log('All groups in order:', order?.customFieldValues.map(g => ({
-        queueNumber: g.queueNumber,
-        fields: g.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
-    })));
-    
-    console.log('Attempting to edit group:', {
-        queueNumber,
-        foundGroup: currentGroup ? {
-            queueNumber: currentGroup.queueNumber,
-            fields: currentGroup.fields.map(f => ({ id: f.id, label: f.label, value: f.value }))
-        } : 'not found'
-    });
-    
-    const fieldData = currentGroup?.fields.find(f => f.id === field);
-    const fieldLabel = fieldData?.label || '';
+    // Find the group by queue number
+    const currentGroup = order?.customFieldValues.find(g => g.queueNumber === queueNumber);
     
     if (!currentGroup) {
         console.error('Could not find group with queue number:', queueNumber);
         toast.error('Error: Could not find the correct registration to edit');
         return;
     }
-    
-    console.log('Setting editingField state:', {
-        queueNumber,
-        field,
-        label: fieldLabel,
-        fieldValue: currentValue
-    });
+
+    const fieldData = currentGroup.fields.find(f => f.id === field);
+    const fieldLabel = fieldData?.label || '';
     
     setEditingField({ 
-        groupId: currentGroup.groupId, // We still need groupId for state management
+        groupId: currentGroup.groupId,
         field, 
         label: fieldLabel,
         queueNumber
@@ -924,109 +648,44 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     if (!editingField) return;
     
     try {
-        // Store the current value locally before making the API call
         const fieldToUpdate = editingField.field;
         const newValue = editValue;
-        
-        console.log('Save initiated with:', {
-            queueNumber,
-            editingField,
-            currentGroups: {
-              currentOrder: order?.customFieldValues.map(g => ({
-                queueNumber: g.queueNumber
-              })),
-              relatedOrders: relatedOrders.map(o => ({
-                orderId: o._id,
-                groups: o.customFieldValues.map(g => ({
-                  queueNumber: g.queueNumber
-                }))
-              }))
-            }
-        });
-        
-        if (!queueNumber) {
-            console.error('Cannot update: missing queue number');
-            toast.error('Cannot update: missing queue number', {
-                duration: 3000,
-                position: 'bottom-center',
-            });
-            return;
-        }
-
-        if (!order?.event?._id) {
-            console.error('Cannot update: missing event ID');
-            toast.error('Cannot update: missing event ID', {
-                duration: 3000,
-                position: 'bottom-center',
-            });
-            return;
-        }
-        
-        // Log details of what's being updated
-        console.log(`Updating field for participant: ${new Date().toISOString()}`);
-        console.log(`  - queueNumber: ${queueNumber}`);
-        console.log(`  - eventId: ${order.event._id}`);
-        console.log(`  - field: ${fieldToUpdate} (${editingField.label})`);
-        console.log(`  - new value: ${newValue}`);
         
         // Clear editing state immediately for responsive UI
         setEditingField(null);
         setEditValue('');
-        
-        // Prepare request data
-        const requestData = {
-            eventId: order.event._id,
-            queueNumber,
-            field: fieldToUpdate,
-            value: newValue,
-            isFromOrderDetails: true
-        };
-        
-        console.log('Sending request to API with data:', requestData);
-        
-        // Make API call with only eventId and queueNumber
-        try {
-            const response = await fetch('/api/update-registration', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData),
-            });
 
-            console.log('API Response status:', response.status);
-            const data = await response.json();
-            console.log('API Response data:', data);
+        // Store the old values in case we need to revert (capture current state)
+        const oldOrder = structuredClone(order);
+        const oldRelatedOrders = structuredClone(relatedOrders);
 
-            if (!response.ok) {
-                // Show error and revert if API call fails
-                console.error('API error:', data);
-                toast.error(data.message || 'Failed to update field', {
-                    duration: 4000,
-                    position: 'bottom-center',
-                });
-                
-                // Re-fetch the order to ensure data consistency
-                fetchOrderDetails();
-                return;
-            }
-            
-            // Update local state with the response data to ensure consistency
-            setOrder(prevOrder => {
-                if (!prevOrder) return null;
-                
-                // Use the returned queueNumber to find the exact record that was updated
-                const targetQueueNumber = data.queueNumber;
-                
-                // Log what we're using to update the UI
-                console.log(`Updating UI with queueNumber=${targetQueueNumber}`);
-                
+        // Optimistically update local state first
+        setOrder(prevOrder => {
+            if (!prevOrder) return null;
+            return {
+                ...prevOrder,
+                customFieldValues: prevOrder.customFieldValues.map(group => {
+                    if (group.queueNumber === queueNumber) {
+                        return {
+                            ...group,
+                            fields: group.fields.map(field =>
+                                field.id === fieldToUpdate
+                                    ? { ...field, value: newValue }
+                                    : field
+                            ),
+                        };
+                    }
+                    return group;
+                }),
+            };
+        });
+
+        setRelatedOrders(prevOrders => {
+            return prevOrders.map(relatedOrder => {
                 return {
-                    ...prevOrder,
-                    customFieldValues: prevOrder.customFieldValues.map(group => {
-                        // Match by queueNumber
-                        if (group.queueNumber === targetQueueNumber) {
-                            console.log(`Matched group by queueNumber: ${targetQueueNumber}`);
+                    ...relatedOrder,
+                    customFieldValues: relatedOrder.customFieldValues.map(group => {
+                        if (group.queueNumber === queueNumber) {
                             return {
                                 ...group,
                                 fields: group.fields.map(field =>
@@ -1040,53 +699,54 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     }),
                 };
             });
-
-            setRelatedOrders(prevOrders => {
-              return prevOrders.map(relatedOrder => {
-                const targetQueueNumber = data.queueNumber;
-                return {
-                  ...relatedOrder,
-                  customFieldValues: relatedOrder.customFieldValues.map(group => {
-                    if (group.queueNumber === targetQueueNumber) {
-                      return {
-                        ...group,
-                        fields: group.fields.map(field =>
-                          field.id === fieldToUpdate
-                            ? { ...field, value: newValue }
-                            : field
-                        ),
-                      };
-                    }
-                    return group;
-                  }),
-                };
-              });
-            });
-
-            toast.success('成功更新 Successfully updated', {
-                duration: 3000,
-                position: 'bottom-center',
-            });
-            
-            // After successful save, fetch latest data
-            await fetchOrderDetails();
-        } catch (error) {
-            console.error('Error updating field:', error);
-            toast.error('更新失败 Failed to update field', {
-                duration: 4000,
-                position: 'bottom-center',
-            });
-            // Re-fetch the order to ensure data consistency
-            fetchOrderDetails();
+        });
+        
+        if (!order?.event?._id) {
+            throw new Error('Cannot update: missing event ID');
         }
+        
+        // Prepare request data
+        const requestData = {
+            eventId: order.event._id,
+            queueNumber,
+            field: fieldToUpdate,
+            value: newValue,
+            isFromOrderDetails: true
+        };
+        
+        // Make API call in the background
+        const response = await fetch('/api/update-registration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        if (!response.ok) {
+            // Revert local state if API call fails
+            setOrder(oldOrder);
+            setRelatedOrders(oldRelatedOrders);
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to update field');
+        }
+
+        // Update session storage in the background
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('eventLookupRegistrations');
+            sessionStorage.removeItem('eventLookupAllRegistrations');
+        }
+
+        toast.success('成功更新 Successfully updated', {
+            duration: 3000,
+            position: 'bottom-center',
+        });
     } catch (error) {
         console.error('Error updating field:', error);
         toast.error('更新失败 Failed to update field', {
             duration: 4000,
             position: 'bottom-center',
         });
-        // Re-fetch the order to ensure data consistency
-        fetchOrderDetails();
     }
   };
 
