@@ -3,6 +3,24 @@ import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { unstable_cache } from 'next/cache';
 import { CustomFieldGroup, CustomField } from '@/types';
+import { Types } from 'mongoose';
+
+interface LeanOrder {
+  _id: Types.ObjectId;
+  event: {
+    _id: Types.ObjectId;
+    title: string;
+    imageUrl?: string;
+    startDateTime?: Date;
+    endDateTime?: Date;
+    organizer: { _id: string };
+    category?: {
+      _id: string;
+      name: string;
+    };
+  };
+  customFieldValues: CustomFieldGroup[];
+}
 
 const getCachedAllRegistrations = unstable_cache(
   async (phoneNumber: string) => {
@@ -25,7 +43,7 @@ const getCachedAllRegistrations = unstable_cache(
         select: 'name'
       }
     })
-    .lean();
+    .lean<LeanOrder[]>();
 
     if (!orders?.length) {
       return [];
@@ -34,7 +52,7 @@ const getCachedAllRegistrations = unstable_cache(
     // Process orders into registrations
     const registrationsMap = new Map();
 
-    orders.forEach(order => {
+    orders.forEach((order: LeanOrder) => {
       const eventId = order.event._id.toString();
       
       if (!registrationsMap.has(eventId)) {
