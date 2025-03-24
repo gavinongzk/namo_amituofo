@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
+import { NavigationProgress } from '@/components/ui/navigation-progress';
 import dynamic from 'next/dynamic'
 import Script from 'next/script'
 
@@ -168,6 +169,7 @@ export default function RootLayout({
         <body className={poppins.variable}>
           <NetworkStatus />
           <RouteWarmer />
+          <NavigationProgress />
 
           <main className="flex min-h-screen flex-col">
             {children}
