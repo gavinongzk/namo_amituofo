@@ -52,9 +52,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
     orders.forEach(order => {
       order.customFieldValues.forEach(group => {
         group.fields.forEach(field => {
-          if (!field.label.toLowerCase().includes('name')) {
-            fieldSet.add(field.label);
-          }
+          fieldSet.add(field.label);
         });
       });
     });
@@ -126,7 +124,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                               {field ? (
                                 field.type === 'radio' 
                                   ? (field.value === 'yes' ? '是 Yes' : '否 No')
-                                  : (field.value || 'N/A')
+                                  : (field.type === 'boolean'
+                                    ? (field.value === 'true' ? '是 Yes' : '否 No')
+                                    : field.value || 'N/A')
                               ) : 'N/A'}
                             </td>
                           );
