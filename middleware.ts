@@ -16,6 +16,7 @@ export default authMiddleware({
     '/api/reg',
     '/api/update-registration',
     '/api/cancel-registration',
+    '/api/all-registrations',
     '/monitoring',
   ],
   ignoredRoutes: [
