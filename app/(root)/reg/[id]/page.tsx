@@ -25,7 +25,6 @@ const styles = `
 
 interface CancelButtonProps {
   groupId: string;
-  orderId: string;
   onCancel: (groupId: string, queueNumber?: string) => void;
   participantInfo?: string;
   queueNumber?: string;
@@ -190,139 +189,56 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   );
 });
 
-const CancelButton = React.memo(({ groupId, orderId, onCancel, participantInfo, queueNumber }: CancelButtonProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleCancel = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Close the dialog immediately after the user confirms
-      setDialogOpen(false);
-      // The actual cancellation is now handled in the parent component's handleCancellation function
-      onCancel(groupId, queueNumber);
-    } catch (error) {
-      console.error('Error in CancelButton handleCancel:', error);
-    } finally {
-      // We don't need to reset isLoading here as the dialog is already closed
-      // The loading state will be reset when the component re-renders due to parent state changes
-    }
-  };
-
+const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, participantInfo, queueNumber }) => {
   return (
-    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button 
-          variant="destructive" 
-          className="w-full sm:w-auto mt-4"
-          disabled={isLoading}
-          onClick={() => setDialogOpen(true)}
-        >
-          {isLoading ? '取消中... Cancelling...' : '取消报名 Cancel Registration'}
+        <Button variant="destructive" className="w-full">
+          取消报名 Cancel Registration
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-white">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>确认取消 Confirm Cancellation</AlertDialogTitle>
+          <AlertDialogTitle>确认取消报名 / Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            您确定要取消{participantInfo ? `${participantInfo}的` : '此'}报名吗？此操作无法撤消。
-            <br />
-            Are you sure you want to cancel {participantInfo ? `${participantInfo}'s` : 'this'} registration? This action cannot be undone.
-            <br />
-            <div className="mt-3 text-gray-500 text-xs">
-              {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
-            </div>
+            您确定要取消 {participantInfo} 的报名吗？/ Are you sure you want to cancel the registration for {participantInfo}?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancel} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                处理中...
-              </>
-            ) : (
-              '确认 Confirm'
-            )}
+          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => onCancel(groupId, queueNumber)}>
+            确认 / Confirm
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-});
+};
 
-const UncancelButton = React.memo(({ groupId, orderId, onUncancel, participantInfo, queueNumber }: { 
+const UncancelButton = React.memo(({ groupId, onUncancel, participantInfo, queueNumber }: { 
   groupId: string;
-  orderId: string;
-  onUncancel: (groupId: string, queueNumber?: string) => void;
+  onUncancel: (groupId: string, queueNumber: string) => void;
   participantInfo?: string;
   queueNumber?: string;
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleUncancel = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Close the dialog immediately after the user confirms
-      setDialogOpen(false);
-      // The actual uncancellation is now handled in the parent component's handleUncancellation function
-      onUncancel(groupId, queueNumber);
-    } catch (error) {
-      console.error('Error in UncancelButton handleUncancel:', error);
-    } finally {
-      // We don't need to reset isLoading here as the dialog is already closed
-      // The loading state will be reset when the component re-renders due to parent state changes
-    }
-  };
-
   return (
-    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          className="w-full sm:w-auto mt-4 border-green-500 text-green-500 hover:bg-green-50"
-          disabled={isLoading}
-          onClick={() => setDialogOpen(true)}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              处理中... Processing...
-            </>
-          ) : (
-            <>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              恢复报名 Restore Registration
-            </>
-          )}
+        <Button variant="outline" className="w-full">
+          恢复报名 Restore Registration
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-white">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>确认恢复报名 Confirm Restoration</AlertDialogTitle>
+          <AlertDialogTitle>确认恢复报名 / Confirm Restoration</AlertDialogTitle>
           <AlertDialogDescription>
-            您确定要恢复{participantInfo ? `${participantInfo}的` : '此'}报名吗？这将重新激活该报名。
-            <br />
-            Are you sure you want to restore {participantInfo ? `${participantInfo}'s` : 'this'} registration? This will reactivate the registration.
-            <br />
-            <div className="mt-3 text-gray-500 text-xs">
-              {queueNumber && <p>队列号 Queue #: {queueNumber}</p>}
-            </div>
+            您确定要恢复 {participantInfo} 的报名吗？这将重新激活该报名。/ Are you sure you want to restore the registration for {participantInfo}? This will reactivate the registration.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消 Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleUncancel} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                处理中...
-              </>
-            ) : (
-              '确认恢复 Confirm'
-            )}
+          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => queueNumber && onUncancel(groupId, queueNumber)}>
+            确认 / Confirm
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -597,19 +513,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             )
         }));
     });
-    
+
     try {
-        // Create request data
+        // Prepare request data
         const requestData = {
             eventId: order.event._id,
-            queueNumber: queueNumber,
-            orderId: id,
-            groupId: groupId,
+            queueNumber,
+            groupId,
             cancelled: true
         };
-        
-        // Make API call in the background
-        const response = await fetch('/api/cancel-registration', {
+
+        // Make API call
+        const response = await fetch('/api/update-registration', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -622,7 +537,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             setOrder(oldOrder);
             setRelatedOrders(oldRelatedOrders);
             const data = await response.json();
-            throw new Error(data.error || response.statusText);
+            throw new Error(data.message || 'Failed to cancel registration');
         }
 
         // Update session storage in the background
@@ -630,23 +545,23 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             sessionStorage.removeItem('eventLookupRegistrations');
             sessionStorage.removeItem('eventLookupAllRegistrations');
         }
-        
-        toast.success('已成功取消报名 Registration cancelled successfully', {
+
+        toast.success('成功取消报名 / Successfully cancelled registration', {
             duration: 3000,
             position: 'top-center',
         });
     } catch (error) {
         console.error('Error cancelling registration:', error);
-        toast.error(`取消报名失败，请重试 Failed to cancel registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        toast.error('取消报名失败 / Failed to cancel registration', {
             duration: 4000,
             position: 'top-center',
         });
     }
   };
 
-  const handleUncancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
+  const handleUncancellation = async (groupId: string, queueNumber: string): Promise<void> => {
     if (!queueNumber) {
-        console.error('Cannot restore registration: queueNumber is required');
+        console.error('Cannot uncancel registration: queueNumber is required');
         toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
             duration: 4000,
             position: 'top-center',
@@ -655,7 +570,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     }
     
     if (!order?.event?._id) {
-        console.error('Cannot restore registration: eventId is required');
+        console.error('Cannot uncancel registration: eventId is required');
         toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
             duration: 4000,
             position: 'top-center',
@@ -663,9 +578,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         return;
     }
 
-    // Store old state for potential revert
-    const oldOrder = order;
-    const oldRelatedOrders = relatedOrders;
+    // Store the old values in case we need to revert (capture current state)
+    const oldOrder = structuredClone(order);
+    const oldRelatedOrders = structuredClone(relatedOrders);
 
     // Optimistically update local state first
     setOrder(prevOrder => {
@@ -686,19 +601,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             )
         }));
     });
-    
+
     try {
-        // Create request data
+        // Prepare request data
         const requestData = {
             eventId: order.event._id,
-            queueNumber: queueNumber,
-            orderId: id,
-            groupId: groupId,
+            queueNumber,
+            groupId,
             cancelled: false
         };
-        
-        // Make API call in the background
-        const response = await fetch('/api/cancel-registration', {
+
+        // Make API call
+        const response = await fetch('/api/update-registration', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -711,7 +625,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             setOrder(oldOrder);
             setRelatedOrders(oldRelatedOrders);
             const data = await response.json();
-            throw new Error(data.error || response.statusText);
+            throw new Error(data.message || 'Failed to restore registration');
         }
 
         // Update session storage in the background
@@ -719,14 +633,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             sessionStorage.removeItem('eventLookupRegistrations');
             sessionStorage.removeItem('eventLookupAllRegistrations');
         }
-        
-        toast.success('已成功恢复报名 Registration restored successfully', {
+
+        toast.success('成功恢复报名 / Successfully restored registration', {
             duration: 3000,
             position: 'top-center',
         });
     } catch (error) {
         console.error('Error restoring registration:', error);
-        toast.error(`恢复报名失败，请重试 Failed to restore registration: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        toast.error('恢复报名失败 / Failed to restore registration', {
             duration: 4000,
             position: 'top-center',
         });
@@ -1064,7 +978,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     {!group.cancelled && !group.attendance && (
                       <CancelButton
                         groupId={group.groupId}
-                        orderId={id}
                         onCancel={(groupId) => handleCancellation(groupId, group.queueNumber)}
                         participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                         queueNumber={group.queueNumber}
@@ -1074,7 +987,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     {group.cancelled && (
                       <UncancelButton
                         groupId={group.groupId}
-                        orderId={id}
                         onUncancel={(groupId, queueNumber) => handleUncancellation(groupId, queueNumber)}
                         participantInfo={`${toChineseOrdinal(index + 1)}参加者 (${group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'Unknown'})`}
                         queueNumber={group.queueNumber}
