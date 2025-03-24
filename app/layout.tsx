@@ -6,6 +6,8 @@ import { RouteWarmer } from '@/components/shared/RouteWarmer';
 import dynamic from 'next/dynamic'
 import Script from 'next/script'
 import BreadcrumbsWrapper from './components/shared/BreadcrumbsWrapper';
+import Link from 'next/link'
+import Image from 'next/image'
 
 import './globals.css'
 
@@ -170,12 +172,41 @@ export default function RootLayout({
           <NetworkStatus />
           <RouteWarmer />
 
-          <main className="flex min-h-screen flex-col">
-            <div className="wrapper py-4">
-              <BreadcrumbsWrapper />
+          <div className="flex min-h-screen flex-col">
+            {/* Header with Logo */}
+            <header className="bg-white border-b border-gray-200">
+              <div className="wrapper py-4">
+                <div className="flex items-center justify-between">
+                  <Link href="/" className="flex items-center space-x-2">
+                    <Image
+                      src="/assets/images/logo.svg"
+                      alt="净土宗 | Namo Amituofo"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10"
+                      priority
+                    />
+                    <span className="text-xl font-semibold">
+                      <span className="block text-primary-600">净土宗</span>
+                      <span className="block text-sm text-gray-600">Namo Amituofo</span>
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            </header>
+
+            {/* Breadcrumbs */}
+            <div className="bg-gray-50 border-b border-gray-200">
+              <div className="wrapper py-2">
+                <BreadcrumbsWrapper />
+              </div>
             </div>
-            {children}
-          </main>
+
+            {/* Main Content */}
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
           
           <Toaster
             position="top-center"

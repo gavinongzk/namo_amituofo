@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 interface BreadcrumbItem {
-  label: string;
+  labelEn: string;
+  labelZh: string;
   href?: string;
 }
 
@@ -24,15 +25,23 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ breadcrumbs, className = '' }
                 href={item.href}
                 className="text-primary-600 hover:text-primary-700 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm"
               >
-                {item.label}
+                <span className="inline-block">
+                  <span className="font-medium">{item.labelZh}</span>
+                  <span className="mx-1 text-gray-400">/</span>
+                  <span className="font-medium text-gray-500">{item.labelEn}</span>
+                </span>
               </Link>
             ) : (
               <span className="font-semibold text-gray-700" aria-current="page">
-                {item.label}
+                <span className="inline-block">
+                  <span>{item.labelZh}</span>
+                  <span className="mx-1 text-gray-400">/</span>
+                  <span className="text-gray-500">{item.labelEn}</span>
+                </span>
               </span>
             )}
             {index < breadcrumbs.length - 1 && (
-              <span className="mx-2 text-gray-400" aria-hidden="true">/</span>
+              <span className="mx-2 text-gray-400" aria-hidden="true">›</span>
             )}
           </li>
         ))}
