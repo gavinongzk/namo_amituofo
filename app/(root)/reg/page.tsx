@@ -35,7 +35,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
     if (searchText === '') return true;
     return order.customFieldValues.some((group: Group) => 
       group.fields.some((field: Field) => 
-        field.label.toLowerCase().includes('name') && 
+        (field.label.toLowerCase().includes('name') || field.label.toLowerCase().includes('phone')) && 
         typeof field.value === 'string' && 
         field.value.toLowerCase().includes(searchText.toLowerCase())
       )
@@ -70,7 +70,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
       </section>
 
       <section className="wrapper mt-8">
-        <Search placeholder="Search by name..." />
+        <Search placeholder="Search by name or phone number..." />
       </section>
 
       <section className="wrapper overflow-x-auto content-margin my-8">
