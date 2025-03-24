@@ -9,9 +9,9 @@ import { CustomFieldGroup, CustomField } from '@/types';
 export async function POST(req: Request) {
   console.log('Update registration request received');
   try {
-    const { eventId, queueNumber, field: fieldId, value, isFromOrderDetails = false } = await req.json();
+    const { eventId, queueNumber, field: fieldId, value, groupId, cancelled, isFromOrderDetails = false } = await req.json();
 
-    console.log(`Update request params: eventId=${eventId || 'N/A'}, queueNumber=${queueNumber || 'N/A'}, fieldId=${fieldId}, value=${value}`);
+    console.log(`Update request params: eventId=${eventId || 'N/A'}, queueNumber=${queueNumber || 'N/A'}, fieldId=${fieldId}, value=${value}, cancelled=${cancelled}`);
 
     // Require queueNumber for registration updates
     if (!queueNumber) {
@@ -87,38 +87,16 @@ export async function POST(req: Request) {
       }
       console.log(`Found registration with queueNumber ${queueNumber}`);
 
-      // Format phone number if the field being updated is a phone number
-      let formattedValue = value;
-      if (fieldId.toLowerCase().includes('phone') && typeof value === 'string') {
-        if (!isValidPhoneNumber(value)) {
-          return NextResponse.json(
-            { message: 'Invalid phone number format' },
-            { status: 400 }
-          );
-        }
-        formattedValue = formatPhoneNumber(value);
-      }
-
-      // Update directly using queueNumber which is the reliable identifier
-      try {
-        // Find the specific field in the correct group identified by queueNumber
-        const fieldToUpdatePath = foundGroup.fields.findIndex((f: CustomField) => f.id === fieldId);
-        console.log(`Field to update index: ${fieldToUpdatePath}`);
-        
-        if (fieldToUpdatePath >= 0) {
-          const updatePath = `customFieldValues.$.fields.${fieldToUpdatePath}.value`;
-          console.log(`Update path: ${updatePath}`);
-          
-          // Use findOneAndUpdate for more reliable updates with the $ positional operator
-          console.log('Executing findOneAndUpdate...');
+      // Handle cancellation/uncancellation updates
+      if (typeof cancelled === 'boolean') {
+        try {
+          // Update the cancelled status using queueNumber as the identifier
           const updateResult = await Order.findOneAndUpdate(
             { _id: foundOrder._id, "customFieldValues.queueNumber": queueNumber },
-            { $set: { [updatePath]: formattedValue } },
+            { $set: { "customFieldValues.$.cancelled": cancelled } },
             { new: true }
           );
-          
-          console.log(`Update result:`, updateResult ? 'Success' : 'Failed');
-          
+
           if (!updateResult) {
             console.error(`Update failed: No document matched the query criteria`);
             return NextResponse.json(
@@ -126,37 +104,108 @@ export async function POST(req: Request) {
               { status: 500 }
             );
           }
-          
-          // Invalidate relevant cache tags to prevent stale data
-          console.log('Invalidating cache tags...');
+
+          // Invalidate relevant cache tags
           revalidateTag('order-details');
           revalidateTag('orders');
           revalidateTag('events');
           revalidateTag(`order-${foundOrder._id}`);
           revalidateTag(`event-${event._id}`);
           revalidateTag('registrations');
-          
-          // Include queueNumber in the response for confirmation
-          console.log('Sending success response');
+
           return NextResponse.json({ 
             success: true,
             queueNumber: queueNumber,
             eventId: event._id.toString()
           });
+        } catch (error) {
+          console.error('Error updating registration cancelled status:', error);
+          return NextResponse.json(
+            { message: 'Failed to update registration cancelled status', error: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+          );
+        }
+      }
+
+      // Handle field value updates
+      if (fieldId && value !== undefined) {
+        // Format phone number if the field being updated is a phone number
+        let formattedValue = value;
+        if (fieldId.toLowerCase().includes('phone') && typeof value === 'string') {
+          if (!isValidPhoneNumber(value)) {
+            return NextResponse.json(
+              { message: 'Invalid phone number format' },
+              { status: 400 }
+            );
+          }
+          formattedValue = formatPhoneNumber(value);
         }
 
-        console.error(`Field ${fieldId} not found in registration`);
-        return NextResponse.json(
-          { message: 'Field not found in registration' },
-          { status: 404 }
-        );
-      } catch (error) {
-        console.error('Error updating registration field:', error);
-        return NextResponse.json(
-          { message: 'Failed to update registration field', error: error instanceof Error ? error.message : 'Unknown error' },
-          { status: 500 }
-        );
+        // Update directly using queueNumber which is the reliable identifier
+        try {
+          // Find the specific field in the correct group identified by queueNumber
+          const fieldToUpdatePath = foundGroup.fields.findIndex((f: CustomField) => f.id === fieldId);
+          console.log(`Field to update index: ${fieldToUpdatePath}`);
+          
+          if (fieldToUpdatePath >= 0) {
+            const updatePath = `customFieldValues.$.fields.${fieldToUpdatePath}.value`;
+            console.log(`Update path: ${updatePath}`);
+            
+            // Use findOneAndUpdate for more reliable updates with the $ positional operator
+            console.log('Executing findOneAndUpdate...');
+            const updateResult = await Order.findOneAndUpdate(
+              { _id: foundOrder._id, "customFieldValues.queueNumber": queueNumber },
+              { $set: { [updatePath]: formattedValue } },
+              { new: true }
+            );
+            
+            console.log(`Update result:`, updateResult ? 'Success' : 'Failed');
+            
+            if (!updateResult) {
+              console.error(`Update failed: No document matched the query criteria`);
+              return NextResponse.json(
+                { message: 'Registration update failed - no matching document found' },
+                { status: 500 }
+              );
+            }
+            
+            // Invalidate relevant cache tags to prevent stale data
+            console.log('Invalidating cache tags...');
+            revalidateTag('order-details');
+            revalidateTag('orders');
+            revalidateTag('events');
+            revalidateTag(`order-${foundOrder._id}`);
+            revalidateTag(`event-${event._id}`);
+            revalidateTag('registrations');
+            
+            // Include queueNumber in the response for confirmation
+            console.log('Sending success response');
+            return NextResponse.json({ 
+              success: true,
+              queueNumber: queueNumber,
+              eventId: event._id.toString()
+            });
+          }
+
+          console.error(`Field ${fieldId} not found in registration`);
+          return NextResponse.json(
+            { message: 'Field not found in registration' },
+            { status: 404 }
+          );
+        } catch (error) {
+          console.error('Error updating registration field:', error);
+          return NextResponse.json(
+            { message: 'Failed to update registration field', error: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+          );
+        }
       }
+
+      // If neither cancellation nor field update was requested
+      return NextResponse.json(
+        { message: 'No valid update operation specified' },
+        { status: 400 }
+      );
     } catch (error) {
       console.error('Database operation error:', error);
       return NextResponse.json(
