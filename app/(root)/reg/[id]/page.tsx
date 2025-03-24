@@ -664,7 +664,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     if (!currentGroup) {
         console.error('Could not find group with queue number:', queueNumber);
-        toast.error('Error: Could not find the correct registration to edit', {
+        toast.error('错误：无法找到正确的报名信息 / Error: Could not find the correct registration to edit', {
             duration: 4000,
             position: 'top-center',
         });
@@ -780,13 +780,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             sessionStorage.removeItem('eventLookupAllRegistrations');
         }
 
-        toast.success('成功更新 Successfully updated', {
+        toast.success('成功更新 / Successfully updated', {
             duration: 3000,
             position: 'top-center',
         });
     } catch (error) {
         console.error('Error updating field:', error);
-        toast.error('更新失败 Failed to update field', {
+        toast.error('更新失败 / Failed to update field', {
             duration: 4000,
             position: 'top-center',
         });
@@ -925,7 +925,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   const queueNumber = group.queueNumber as string;
                                   if (!queueNumber) {
                                     console.error('Cannot save: missing queue number');
-                                    toast.error('Cannot save: missing queue number', {
+                                    toast.error('保存失败：缺少队列号 / Cannot save: missing queue number', {
                                       duration: 4000,
                                       position: 'top-center',
                                     });
@@ -961,7 +961,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                       const queueNumber = group.queueNumber as string;
                                       if (!queueNumber) {
                                         console.error('Cannot edit: missing queue number');
-                                        toast.error('Cannot edit: missing queue number', {
+                                        toast.error('编辑失败：缺少队列号 / Cannot edit: missing queue number', {
                                           duration: 4000,
                                           position: 'top-center',
                                         });
