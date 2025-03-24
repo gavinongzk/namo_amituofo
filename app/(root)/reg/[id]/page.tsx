@@ -648,8 +648,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const handleEdit = (queueNumber: string, field: string, currentValue: string) => {
-    // Find the group by queue number
-    const currentGroup = order?.customFieldValues.find(g => g.queueNumber === queueNumber);
+    // Search through all orders (main order and related orders) for the queue number
+    let currentGroup = null;
+    
+    // First check the main order
+    currentGroup = order?.customFieldValues.find(g => g.queueNumber === queueNumber);
+    
+    // If not found in main order, check related orders
+    if (!currentGroup && relatedOrders) {
+        for (const relatedOrder of relatedOrders) {
+            currentGroup = relatedOrder.customFieldValues.find(g => g.queueNumber === queueNumber);
+            if (currentGroup) break;
+        }
+    }
     
     if (!currentGroup) {
         console.error('Could not find group with queue number:', queueNumber);
@@ -687,6 +698,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         const oldOrder = structuredClone(order);
         const oldRelatedOrders = structuredClone(relatedOrders);
 
+        // Find the order that contains this queue number
+        let targetOrder = order;
+        if (!order?.customFieldValues.some(g => g.queueNumber === queueNumber)) {
+            targetOrder = relatedOrders.find(o => o.customFieldValues.some(g => g.queueNumber === queueNumber)) || order;
+        }
+
+        if (!targetOrder?.event?._id) {
+            throw new Error('Cannot update: missing event ID');
+        }
+
         // Optimistically update local state first
         setOrder(prevOrder => {
             if (!prevOrder) return null;
@@ -709,33 +730,27 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         });
 
         setRelatedOrders(prevOrders => {
-            return prevOrders.map(relatedOrder => {
-                return {
-                    ...relatedOrder,
-                    customFieldValues: relatedOrder.customFieldValues.map(group => {
-                        if (group.queueNumber === queueNumber) {
-                            return {
-                                ...group,
-                                fields: group.fields.map(field =>
-                                    field.id === fieldToUpdate
-                                        ? { ...field, value: newValue }
-                                        : field
-                                ),
-                            };
-                        }
-                        return group;
-                    }),
-                };
-            });
+            return prevOrders.map(relatedOrder => ({
+                ...relatedOrder,
+                customFieldValues: relatedOrder.customFieldValues.map(group => {
+                    if (group.queueNumber === queueNumber) {
+                        return {
+                            ...group,
+                            fields: group.fields.map(field =>
+                                field.id === fieldToUpdate
+                                    ? { ...field, value: newValue }
+                                    : field
+                            ),
+                        };
+                    }
+                    return group;
+                }),
+            }));
         });
-        
-        if (!order?.event?._id) {
-            throw new Error('Cannot update: missing event ID');
-        }
         
         // Prepare request data
         const requestData = {
-            eventId: order.event._id,
+            eventId: targetOrder.event._id,
             queueNumber,
             field: fieldToUpdate,
             value: newValue,
