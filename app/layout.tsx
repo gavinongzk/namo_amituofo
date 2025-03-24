@@ -5,8 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { RouteWarmer } from '@/components/shared/RouteWarmer';
 import dynamic from 'next/dynamic'
 import Script from 'next/script'
-import Breadcrumbs from './components/shared/Breadcrumbs';
-import { usePathname } from 'next/navigation';
+import BreadcrumbsWrapper from './components/shared/BreadcrumbsWrapper';
 
 import './globals.css'
 
@@ -152,26 +151,6 @@ export default function RootLayout({
     }
   `;
 
-  // Generate breadcrumbs based on the current path
-  const pathname = usePathname();
-  const pathSegments = pathname.split('/').filter(Boolean);
-  
-  const breadcrumbs = [
-    { label: 'Home', href: '/' },
-    ...pathSegments.map((segment, index) => {
-      const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
-      // Convert path segment to readable label (e.g., 'event-details' -> 'Event Details')
-      const label = segment
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      return {
-        label,
-        href: index === pathSegments.length - 1 ? undefined : href // Last item shouldn't be a link
-      };
-    })
-  ];
-
   return (
     <ClerkProvider>
       <html lang="en">
@@ -193,7 +172,7 @@ export default function RootLayout({
 
           <main className="flex min-h-screen flex-col">
             <div className="wrapper py-4">
-              <Breadcrumbs breadcrumbs={breadcrumbs} />
+              <BreadcrumbsWrapper />
             </div>
             {children}
           </main>
