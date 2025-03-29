@@ -494,3 +494,14 @@ export const prepareRegistrationIdentifiers = (params: {
 };
 
 export { toChineseNumeral, toChineseOrdinal } from './utils/chineseNumerals';
+
+export async function getUserIpAddress(): Promise<string | null> {
+  try {
+    const response = await fetch('https://get.geojs.io/v1/ip.json');
+    const data = await response.json();
+    return data.ip || null;
+  } catch (error) {
+    console.error('Error getting IP address:', error);
+    return null;
+  }
+}
