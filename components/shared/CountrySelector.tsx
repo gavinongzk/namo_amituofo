@@ -116,13 +116,18 @@ const CountrySelector = () => {
   return (
     <div className="country-selector">
       <Select value={country} onValueChange={changeCountry}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select country" />
+        <SelectTrigger className="w-[48px] h-[48px] p-0 border-none bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0">
+          <SelectValue>
+            <span className="text-3xl">{countryFlags[country]}</span>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {Object.entries(countryFlags).map(([countryName, flag]) => (
             <SelectItem key={countryName} value={countryName}>
-              {flag} {countryName}
+              <div className="flex items-center">
+                <span className="text-2xl mr-2">{flag}</span>
+                {countryName}
+              </div>
             </SelectItem>
           ))}
         </SelectContent>
