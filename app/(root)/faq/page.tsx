@@ -292,7 +292,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">3.</span> Refresh the page and try again
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> If the problem persists, contact volunteers via WhatsApp:{' '}
+                <span className="font-medium text-gray-900">4.</span> If the problem persists, contact us via WhatsApp:{' '}
                 <a 
                   href="https://wa.me/6588184848" 
                   target="_blank" 
