@@ -41,9 +41,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
       checkBrowserCompatibility();
 
       // First explicitly request camera permission with more specific constraints
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // Request camera permission without strict facingMode initially
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' },
+          // Removed facingMode constraint here to allow any camera
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
