@@ -36,92 +36,57 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
     }
   };
 
-  const initializeScanner = async () => {
+  // Renamed: Sets up camera list and selects the initial active camera ID
+  const setupCameraSelection = async () => {
     try {
       checkBrowserCompatibility();
 
-      // First explicitly request camera permission with more specific constraints
-      // Request camera permission without strict facingMode initially
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          // Removed facingMode constraint here to allow any camera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+      // Request permission minimally, then release immediately
+      try {
+        const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        permissionStream.getTracks().forEach(track => track.stop());
+      } catch (permError: any) {
+        // Handle permission denied specifically
+        if (permError.name === 'NotAllowedError') {
+           handleError(new Error('Camera permission denied. Please grant permission in your browser settings.'));
+           return; // Stop if permission denied
         }
-      });
-
-      // Immediately set the stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Ensure video plays
-        try {
-          await videoRef.current.play();
-        } catch (playError) {
-          console.error('Error playing video:', playError);
-          throw new Error('Failed to start video stream');
-        }
+        // Log other permission errors but attempt to continue, enumerateDevices might still work
+        console.warn('Error during initial permission request:', permError);
       }
-      
+
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
-      
+
       if (videoDevices.length === 0) {
+        // Throw specific error if no devices found after attempting permission
         throw new Error('No cameras found on this device.');
       }
-      
+
       setCameras(videoDevices);
-      
-      // Prefer back camera for mobile devices
-      const backCamera = videoDevices.find(device => 
-        device.label.toLowerCase().includes('back') || 
+
+      // Select camera (prefer back, fallback to first)
+      const backCamera = videoDevices.find(device =>
+        device.label.toLowerCase().includes('back') ||
         device.label.toLowerCase().includes('rear')
       );
-      
-      const selectedCamera = backCamera?.deviceId || videoDevices[0]?.deviceId;
-      setActiveCamera(selectedCamera);
+      // Use the current activeCamera if it exists and is valid, otherwise select default
+      const currentIsValid = activeCamera && videoDevices.some(d => d.deviceId === activeCamera);
+      const selectedCamera = currentIsValid ? activeCamera : (backCamera?.deviceId || videoDevices[0]?.deviceId);
+
 
       if (!selectedCamera) {
-        throw new Error('Failed to select a camera.');
+         throw new Error('Failed to select a camera.');
       }
 
-      const codeReader = new BrowserQRCodeReader(undefined, {
-        delayBetweenScanAttempts: 100,
-        delayBetweenScanSuccess: 1500
-      });
-
-      let active = true;
-
-      // Stop the initial stream before starting the code reader
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      // Set the active camera state, which will trigger the scanning useEffect
+      // Only update if it's different to avoid unnecessary effect runs
+      if (selectedCamera !== activeCamera) {
+        setActiveCamera(selectedCamera);
       }
 
-      const controls = await codeReader.decodeFromVideoDevice(
-        selectedCamera,
-        videoRef.current!,
-        (result) => {
-          if (result && active) {
-            handleSuccessfulScan(result.getText());
-          }
-        }
-      );
-
-      scannerRef.current = controls;
-
-      return () => {
-        active = false;
-        if (controls) {
-          controls.stop();
-        }
-        // Clean up any remaining video tracks
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
-        }
-      };
     } catch (err: any) {
       handleError(err);
-      return () => {};
     }
   };
 
@@ -170,22 +135,99 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
     }
   };
 
+  // Retry logic now calls setupCameraSelection
   const retry = async () => {
     setIsRetrying(true);
     setError(undefined);
+    // Don't reset activeCamera here, let setupCameraSelection re-evaluate
+    scannerRef.current?.stop(); // Stop any existing scanner
+    scannerRef.current = undefined;
+    if (videoRef.current?.srcObject) { // Clean up video element immediately on retry
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+    }
     try {
-      await initializeScanner();
+      await setupCameraSelection(); // Re-run the selection and initialization process
     } finally {
       setIsRetrying(false);
     }
   };
+// Effect to setup camera selection on mount
+useEffect(() => {
+  setupCameraSelection();
+  // Cleanup function for scanner is handled in the next useEffect
+}, []); // Run only once on mount
 
-  useEffect(() => {
-    const cleanup = initializeScanner();
-    return () => {
-      cleanup?.then(cleanupFn => cleanupFn?.());
-    };
-  }, [activeCamera]);
+// Effect to start/restart scanning when activeCamera changes or videoRef is ready
+useEffect(() => {
+  if (!activeCamera || !videoRef.current) {
+    return; // Wait for camera selection and video element ref
+  }
+
+  // Ensure previous scanner is stopped before starting a new one
+  scannerRef.current?.stop();
+
+  const codeReader = new BrowserQRCodeReader(undefined, {
+    delayBetweenScanAttempts: 100,
+    delayBetweenScanSuccess: 1500
+  });
+
+  let active = true;
+  let controls: { stop: () => void } | null = null;
+
+  console.log(`Attempting to use camera: ${activeCamera}`); // Debug log
+
+  const startScan = async () => {
+      try {
+          // Let the library handle getting the stream via deviceId
+          controls = await codeReader.decodeFromVideoDevice(
+              activeCamera,
+              videoRef.current!, // videoRef is checked above
+              (result) => {
+                  if (result && active) {
+                      handleSuccessfulScan(result.getText());
+                  }
+              }
+          );
+          scannerRef.current = controls;
+          setError(undefined); // Clear previous errors on successful start
+      } catch (err: any) {
+          console.error(`Error starting scanner for device ${activeCamera}:`, err);
+          // Handle specific errors from decodeFromVideoDevice
+           if (err.name === 'NotFoundError') {
+               setError(`Selected camera (${activeCamera.slice(0,6)}...) not found or is unavailable. Try selecting another camera or refreshing.`);
+           } else if (err.name === 'NotReadableError') {
+               setError(`Camera (${activeCamera.slice(0,6)}...) is already in use or cannot be accessed. Close other apps using the camera and retry.`);
+           } else {
+               handleError(err); // Use the general handler for other errors
+           }
+           // Attempt to cleanup video element if scan failed to start
+           if (videoRef.current?.srcObject) {
+              const stream = videoRef.current.srcObject as MediaStream;
+              stream.getTracks().forEach(track => track.stop());
+              videoRef.current.srcObject = null;
+           }
+      }
+  };
+
+  startScan();
+
+  // Cleanup function for this effect
+  return () => {
+    console.log(`Stopping scanner for device ${activeCamera}`); // Debug log
+    active = false;
+    controls?.stop();
+    scannerRef.current = undefined; // Clear the ref
+
+    // Additional cleanup for video srcObject when component unmounts or camera changes
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null; // Important to release the camera
+    }
+  };
+}, [activeCamera]); // Rerun when activeCamera changes
 
   // Add a new effect to handle video element attributes
   useEffect(() => {
