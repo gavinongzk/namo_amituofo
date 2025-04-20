@@ -79,6 +79,7 @@ export type Event = {
   country: string
   startDateTime: Date
   endDateTime: Date
+  maxRegistrationsPerUser?: number
   organizer: {
     _id: string
   }
@@ -102,8 +103,10 @@ export type CheckoutOrderParams = {
 
 export interface CreateOrderParams {
   eventId: string;
+  membershipNumber: string;
+  last4PhoneNumberDigits: string;
   createdAt: Date;
-  customFieldValues: Omit<CustomFieldGroup, 'qrCode'>[];  // Exclude qrCode from client-side submission
+  customFieldValues: Omit<CustomFieldGroup, 'qrCode'>[];
 }
 
 export type GetOrdersByEventParams = {
@@ -138,9 +141,12 @@ export type SearchParamProps = {
 export type CustomField = {
   id: string;
   label: string;
-  type: "boolean" | "text" | "phone" | "radio" | "postal";
+  type: "boolean" | "text" | "phone" | "radio" | "postal" | "textarea";
   value?: string | boolean;
   options?: { value: string; label: string }[];
+  required?: boolean;
+  placeholder?: string;
+  validationMessage?: string;
 };
 
 export interface IRegistration {

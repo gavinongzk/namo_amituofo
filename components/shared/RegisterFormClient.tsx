@@ -10,187 +10,70 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
-import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
-import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
-import { categoryCustomFields, CategoryName } from '@/constants'
-import { useUser } from '@clerk/nextjs';
-import { getCookie, setCookie } from 'cookies-next';
+import { CreateOrderParams, CustomField } from "@/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
-import { debounce } from 'lodash';
-import { validateSingaporePostalCode } from '@/lib/utils';
-import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
+import { toChineseOrdinal } from '@/lib/utils/chineseNumerals'
 
-const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
-  return `${personIndex + 1}.${fieldIndex + 1}`;
-};
+const isGroupEmpty = (group: any, customFields: CustomField[]) => {
+  const membershipFilled = !!group?.membershipNumber;
+  const last4DigitsFilled = !!group?.last4PhoneNumberDigits;
 
-const isValidName = (name: string) => {
-  // Regex to match letters (including Chinese), spaces, brackets, and common punctuation
-  const nameRegex = /^[\p{L}\p{N}\s\-.'()\[\]{}]+$/u;
-  return nameRegex.test(name);
-};
-const sanitizeName = (name: string) => {
-  // Remove emojis and other non-standard characters while keeping Chinese characters and brackets
-  return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
-};
+  const otherFieldsFilled = customFields.some(field => {
+    if (field.id === 'membershipNumber' || field.id === 'last4PhoneNumberDigits') return false;
+    const value = group[field.id];
+    return value !== undefined && value !== null && value !== '';
+  });
 
-const isValidPostalCode = async (code: string, country: string) => {
-  if (!code) return false;
-  
-  if (country === 'Singapore') {
-    return await validateSingaporePostalCode(code);
-  } else if (country === 'Malaysia') {
-    return /^\d{5}$/.test(code);
-  }
-  
-  // For other countries, accept 4-10 digits
-  return /^\d{4,10}$/.test(code);
+  return !membershipFilled && !last4DigitsFilled && !otherFieldsFilled;
 };
 
 interface RegisterFormClientProps {
-  event: IEvent & { category: { name: CategoryName } }
+  event: IEvent & { category: { name: string } }
   initialOrderCount: number
 }
-
-const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
-  if (!phoneNumber || typeof phoneNumber !== 'string') return null;
-  if (phoneNumber.startsWith('+60')) return 'Malaysia';
-  if (phoneNumber.startsWith('+65')) return 'Singapore';
-  return null;
-};
-
-// Function to check if a person's form is empty
-const isGroupEmpty = (group: any, customFields: CustomField[]) => {
-  const nameFieldId = customFields.find(f => f.label.toLowerCase().includes('name'))?.id;
-  const phoneFieldId = customFields.find(f => f.type === 'phone')?.id;
-
-  const nameValue = nameFieldId ? group[nameFieldId] : '';
-  const phoneValue = phoneFieldId ? group[phoneFieldId] : '';
-
-  // Consider a group empty if both name and phone are not filled
-  return !nameValue && !phoneValue;
-};
 
 const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('');
-  const { user, isLoaded } = useUser();
-  const [userCountry, setUserCountry] = useState<string | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<DuplicateRegistrationDetail[]>([]);
-  const [formValues, setFormValues] = useState<any>(null);
-  const [isCountryLoading, setIsCountryLoading] = useState(true);
-  const [phoneOverrides, setPhoneOverrides] = useState<Record<number, boolean>>({});
-  const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
-  const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
-  const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
-  const [timeRemaining, setTimeRemaining] = useState<number>(5);
 
-  useEffect(() => {
-    const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
-    if (savedPostalCode) {
-      const postalField = customFields.find(f => f.type === 'postal')?.id;
-      if (postalField) {
-        form.setValue(`groups.0.${postalField}`, savedPostalCode);
-      }
-    }
-  }, []);
+  const customFields = event.customFields || [];
 
-  useEffect(() => {
-    const detectCountry = async () => {
-      setIsCountryLoading(true);
-      try {
-        // First check if we have a country in cookie
-        const cookieCountry = getCookie('userCountry');
-        if (cookieCountry) {
-          setUserCountry(cookieCountry as string);
-          setIsCountryLoading(false);
-          return;
-        }
-
-        // Then check if user is logged in and has country in metadata
-        if (isLoaded && user && user.publicMetadata.country) {
-          setUserCountry(user.publicMetadata.country as string);
-          setIsCountryLoading(false);
-          return;
-        }
-
-        // If no cookie or user metadata, use IP detection
-        const response = await fetch('https://get.geojs.io/v1/ip/country.json');
-        const data = await response.json();
-        console.log('Country data:', data);
-        const detectedCountry = data.country === 'SG' 
-          ? 'Singapore' 
-          : data.country === 'MY' 
-            ? 'Malaysia' 
-            : 'Singapore'; // Default to Others for non-SG/MY countries
-        
-        setUserCountry(detectedCountry);
-        try {
-          setCookie('userCountry', detectedCountry);
-        } catch (error) {
-          console.error('Error setting cookie:', error);
-        }
-      } catch (error) {
-        console.error('Error detecting country:', error);
-        // Default to Singapore if detection fails
-        setUserCountry('Singapore');
-      } finally {
-        setIsCountryLoading(false);
-      }
-    };
-    detectCountry();
-  }, [isLoaded, user]);
-
-  const customFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
-
-  const formSchema = z.object({
-    groups: z.array(
-      z.object(
-        Object.fromEntries(
-          customFields.map(field => [
-            field.id,
-            field.type === 'boolean'
-              ? z.boolean()
-              : field.type === 'phone'
-                ? z.string()
-                    .min(1, { message: "此栏位为必填 / This field is required" })
-                : field.type === 'postal'
-                  ? z.string()
-                  : field.label.toLowerCase().includes('name')
-                    ? z.string()
-                        .min(1, { message: "此栏位为必填 / This field is required" })
-                        .refine(
-                          (value) => isValidName(value),
-                          { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
-                        )
-                    : z.string().min(1, { message: "此栏位为必填 / This field is required" })
-          ])
-        )
-      )
+  const groupSchema = z.object({
+    membershipNumber: z.string().min(1, { message: "会员号码为必填 / Membership number is required" }),
+    last4PhoneNumberDigits: z.string()
+      .length(4, { message: "最后4个电话号码必须是4位数 / Last 4 digits must be 4 characters" })
+      .regex(/^[0-9]+$/, { message: "最后4个电话号码必须是数字 / Last 4 digits must be numeric" }),
+    ...Object.fromEntries(
+      customFields.map(field => [
+        field.id,
+        field.required
+          ? field.type === 'boolean'
+            ? z.boolean()
+            : z.string().min(1, { message: field.validationMessage || "此栏位为必填 / This field is required" })
+          : field.type === 'boolean'
+            ? z.boolean().optional()
+            : z.string().optional()
+      ])
     )
   });
 
-  // Helper function to get default country code
-  const getDefaultCountry = (country: string | null) => {
-    return country === 'Malaysia' ? 'MY' : 'SG';
-  };
+  const formSchema = z.object({
+    groups: z.array(groupSchema)
+      .min(1, "Please fill out details for at least one person.")
+  });
 
-  // Update form initialization with detected country
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      groups: Array(1).fill(null).map(() => Object.fromEntries(
-        customFields.map(field => [
-          field.id, 
-          field.type === 'boolean' ? false : ''
-        ])
-      ))
+      groups: Array(numberOfFormsToShow).fill(null).map(() => ({
+        membershipNumber: '',
+        last4PhoneNumberDigits: '',
+        ...Object.fromEntries(customFields.map(field => [field.id, field.type === 'boolean' ? false : '']))
+      }))
     },
   });
 
@@ -199,700 +82,207 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     name: "groups"
   });
 
-  // Add effect to revalidate postal fields when override status changes
-  useEffect(() => {
-    const postalFields = customFields.filter(field => field.type === 'postal');
-    if (postalFields.length > 0 && form) {
-      console.log('postalOverrides state changed:', postalOverrides);
-      
-      // For each person with a postal field
-      for (let i = 0; i < form.getValues().groups.length; i++) {
-        if (Object.keys(postalOverrides).includes(i.toString())) {
-          console.log(`Revalidating postal fields for person ${i}, override: ${postalOverrides[i]}`);
-          
-          // Trigger validation for each postal field
-          postalFields.forEach(field => {
-            // Add a small delay to ensure the state is updated before triggering validation
-            setTimeout(() => {
-              form.trigger(`groups.${i}.${field.id}`);
-            }, 100);
-          });
-        }
-      }
-    }
-  }, [postalOverrides, customFields, form]);
-
-  const checkForDuplicatePhoneNumbers = async (payload: any) => {
-    const phoneField = customFields.find(f => f.type === 'phone')?.id || '';
-    const phoneNumbers = payload.groups.map((group: any) => group[phoneField]);
-    
-    try {
-      const response = await fetch('/api/check-phone-numbers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phoneNumbers,
-          eventId: payload.eventId || event._id 
-        })
-      });
-      
-      const { duplicates } = await response.json();
-      return duplicates;
-    } catch (error) {
-      console.error('Error checking phone numbers:', error);
-      return [];
-    }
-  };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("检查报名详情中... / Checking registration details...");
-    
-    saveFormData(values);
-
-    // Filter out empty groups before further processing
     const filledGroups = values.groups.filter(group => !isGroupEmpty(group, customFields));
-
-    // If all groups are empty after filtering, show a message and return
     if (filledGroups.length === 0) {
-      toast.dismiss(toastId);
-      toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+      toast.error("请至少填写一位报名者的资料 / Please fill in the details for at least one registrant.");
       return;
     }
 
-    // Validate phone numbers first
-    const phoneField = customFields.find(f => f.type === 'phone')?.id;
-    if (phoneField) {
-      const phoneValidationErrors: string[] = [];
-      
-      for (let i = 0; i < filledGroups.length; i++) {
-        const rawValue = filledGroups[i][phoneField];
-        const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
-        
-        // Skip validation if phone override is active
-        if (phoneOverrides[i]) {
-          // For overridden numbers, just check if it starts with + and contains only numbers after that
-          if (!/^\+\d+$/.test(phoneNumber)) {
-            phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Participant ${i + 1}. Must start with + followed by numbers`);
-          }
-          continue;
-        }
-        
-        // Regular phone validation for SG/MY numbers
-        if (!isValidPhoneNumber(phoneNumber)) {
-          phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码无效 / Invalid phone number for Participant ${i + 1}`);
-        }
-      }
-      
-      if (phoneValidationErrors.length > 0) {
-        toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-        return;
-      }
+    if (filledGroups.length > 1) {
+       console.warn("Handling multiple registrations in one submission. Ensure backend supports this.");
     }
-    
-    // Validate postal codes
-    const postalField = customFields.find(f => f.type === 'postal')?.id;
-    if (postalField) {
-      const postalValidationErrors: string[] = [];
-      
-      for (let i = 0; i < filledGroups.length; i++) {
-        // Ensure we're working with a string value
-        const rawValue = filledGroups[i][postalField];
-        const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
-        
-        // Skip validation if postal code is empty (since it's optional)
-        if (!postalCode || !postalCode.trim()) {
-          // Ensure empty string is passed instead of undefined or null
-          filledGroups[i][postalField] = '';
-          continue;
-        }
-        
-        // Skip detailed validation if override is active
-        if (postalOverrides[i]) {
-          if (!/^\d+$/.test(postalCode)) {
-            postalValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
-          }
-          continue;
-        }
-        
-        try {
-          const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
-          if (!isValidCountryPostal) {
-            postalValidationErrors.push(
-              `第${toChineseOrdinal(i + 1)}位参加者: ${
-                userCountry === 'Singapore'
-                  ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                  : userCountry === 'Malaysia'
-                    ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                    : "请输入有效的邮区编号 / Please enter a valid postal code"
-              }`
-            );
-          }
-        } catch (error) {
-          console.error("Error validating postal code:", error);
-        }
-      }
-      
-      if (postalValidationErrors.length > 0) {
-        toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-        return;
-      }
-    }
-    
-    // Check for duplicate phone numbers using only filled groups
-    const duplicates = await checkForDuplicatePhoneNumbers({
-      groups: filledGroups,
-      eventId: event._id
-    } as any);
-    
-    if (duplicates.length > 0) {
-      toast.dismiss(toastId);
-      setDuplicatePhoneNumbers(duplicates);
-      setFormValues({...values, groups: filledGroups});
-      setShowConfirmation(true);
-      return;
-    }
-    
-    await submitForm({...values, groups: filledGroups}, toastId);
-  };
 
-  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
+    const groupData = filledGroups[0];
+
     setIsSubmitting(true);
     setMessage('');
-    
-    toast.loading("处理报名中... / Processing registration...", { id: toastId });
-    
+    const toastId = toast.loading("处理报名中... / Processing registration...");
+
     try {
-      const customFieldValues = values.groups.map((group, index) => ({
-        groupId: `group_${index + 1}`,
-        fields: Object.entries(group).map(([key, value]) => {
-          const field = customFields.find(f => f.id === key) as CustomField;
-          // Save first person's postal code
-          if (index === 0 && field?.type === 'postal' && value) {
-            const postalValue = String(value);
-            localStorage.setItem('lastUsedPostal', postalValue);
-            setCookie('lastUsedPostal', postalValue, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
-          }
-          return {
-            id: key,
-            label: field?.label || key,
-            type: field?.type,
-            value: value === null || value === undefined ? '' : String(value),
-            options: field?.options || [],
-          };
-        })
-      }));
+      const { membershipNumber, last4PhoneNumberDigits, ...otherFields } = groupData;
+
+      const customFieldValuesForGroup = [{
+        groupId: `group_1`,
+        fields: Object.entries(otherFields)
+          .map(([key, value]) => {
+            const fieldDefinition = customFields.find(f => f.id === key);
+            return {
+              id: key,
+              label: fieldDefinition?.label || key,
+              type: fieldDefinition?.type || 'text',
+              value: value === null || value === undefined ? '' : String(value),
+              options: fieldDefinition?.options || [],
+            };
+          })
+          .filter(field => field.value !== '' || field.type === 'boolean')
+      }];
 
       const orderData: CreateOrderParams = {
         eventId: event._id,
+        membershipNumber: membershipNumber,
+        last4PhoneNumberDigits: last4PhoneNumberDigits,
         createdAt: new Date(),
-        customFieldValues,
+        customFieldValues: customFieldValuesForGroup,
       };
 
       const response = await fetch('/api/createOrder', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Failed to create order: ${response.statusText}`);
+        throw new Error(result.message || '报名失败，请稍后再试 / Registration failed, please try again later.');
       }
 
-      const data = await response.json();
-      
-      toast.success("报名成功！/ Registration successful!", { id: toastId });
-      router.push(`/reg/${data.order._id}`);
+      setMessage(`报名成功！您的报名编号是 / Registration successful! Your registration ID is: ${result.order?._id}`);
+      toast.success(`报名成功！/ Registration successful!`, { id: toastId });
+
+      form.reset({
+         groups: Array(numberOfFormsToShow).fill(null).map(() => ({
+            membershipNumber: '',
+            last4PhoneNumberDigits: '',
+            ...Object.fromEntries(customFields.map(field => [field.id, field.type === 'boolean' ? false : '']))
+          }))
+      });
+
     } catch (error) {
-      console.error('Error submitting form:', error);
-      
-      toast.error("报名失败，请重试。/ Registration failed. Please try again.", { id: toastId });
-      setMessage('报名失败，请重试。/ Failed to submit registration. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : '发生错误 / An error occurred';
+      console.error('Registration Error:', error);
+      setMessage(`报名失败：${errorMessage} / Registration failed: ${errorMessage}`);
+      toast.error(`报名失败：${errorMessage} / Registration failed: ${errorMessage}`, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
   };
-  const isFullyBooked = initialOrderCount >= event.maxSeats;
 
-  // Update the append function
   const handleAddPerson = () => {
-    append(Object.fromEntries(
-      customFields.map(field => [
-        field.id,
-        field.type === 'boolean' ? false :
-        field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') :
-        ''
-      ])
-    ));
-    // Increment the number of forms to show
-    setNumberOfFormsToShow(prev => prev + 1);
-    // Initialize the new person's postal checkbox as unchecked
-    setPostalCheckedState(prev => ({
-      ...prev,
-      [fields.length]: false
-    }));
+    append({
+      membershipNumber: '',
+      last4PhoneNumberDigits: '',
+      ...Object.fromEntries(customFields.map(field => [field.id, field.type === 'boolean' ? false : '']))
+    });
+     setNumberOfFormsToShow(prev => prev + 1);
   };
 
-  useEffect(() => {
-    // Load saved form data from cookies
-    const savedFormData = getCookie('lastUsedFields');
-    if (savedFormData) {
-      try {
-        const parsedData = JSON.parse(savedFormData as string);
-        
-        // Pre-fill first person's non-sensitive fields
-        Object.entries(parsedData).forEach(([fieldId, value]) => {
-          // Don't pre-fill sensitive info like phone numbers
-          if (!fieldId.includes('phone')) {
-            form.setValue(`groups.0.${fieldId}`, value as string | boolean);
-          }
-        });
-      } catch (e) {
-        console.error('Error parsing saved form data:', e);
-      }
+   const handleRemovePerson = (index: number) => {
+    if (fields.length > 1) {
+      remove(index);
+       setNumberOfFormsToShow(prev => prev - 1);
+    } else {
+      toast.error("至少需要一位报名者 / At least one registrant is required.");
     }
-  }, []);
-
-  const saveFormData = (values: z.infer<typeof formSchema>) => {
-    const firstPerson = values.groups[0];
-    const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
-      // Don't save sensitive info
-      if (!key.includes('phone')) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string | boolean>);
-
-    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), { 
-      maxAge: 60 * 60 * 24 * 30 // 30 days
-    });
   };
-
-  const debouncedSaveForm = useMemo(
-    () => debounce((values: z.infer<typeof formSchema>) => {
-      saveFormData(values);
-    }, 1000),
-    []
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // We don't need to track the current step anymore
-            // as it's not used anywhere
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    fields.forEach((_, index) => {
-      const element = document.getElementById(`person-${index}`);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [fields.length]);
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      // Watch for phone number changes
-      if (name?.includes('phone')) {
-        const personIndex = parseInt(name.split('.')[1]);
-        const phoneValue = value?.groups?.[personIndex]?.phone;
-        const detectedCountry = getCountryFromPhoneNumber(phoneValue);
-        
-        if (detectedCountry) {
-          setPhoneCountries(prev => ({
-            ...prev,
-            [personIndex]: detectedCountry
-          }));
-        }
-      }
-
-      if (name?.includes('postal')) {
-        const postalField = customFields.find(f => f.type === 'postal')?.id;
-        if (postalField) {
-          debouncedSaveForm(form.getValues());
-        }
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, debouncedSaveForm]);
-
-  // Add useEffect for timer
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (showConfirmation && timeRemaining > 0) {
-      timer = setInterval(() => {
-        setTimeRemaining(prev => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [showConfirmation, timeRemaining]);
-
-  // Reset timer when dialog is closed
-  useEffect(() => {
-    if (!showConfirmation) {
-      setTimeRemaining(5);
-    }
-  }, [showConfirmation]);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {isCountryLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
-            <p className="text-gray-600 font-medium">加载中... / Loading...</p>
-          </div>
-        </div>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {message && <p className="text-red-500">{message}</p>}
-            {isFullyBooked ? (
-              <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
-                <p className="text-red-600 font-medium text-lg">此活动已满员。/ This event is fully booked.</p>
-              </div>
-            ) : (
-              <>
-                {fields.slice(0, numberOfFormsToShow).map((field, personIndex) => (
-                  <div 
-                    key={field.id}
-                    id={`person-${personIndex}`}
-                    className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
-                  >
-                    <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                      <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                        {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
-                      </h3>
-                    </div>
-
-                    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-                      {customFields.map((customField: CustomField, fieldIndex) => (
-                        <FormField
-                          key={customField.id}
-                          control={form.control}
-                          name={`groups.${personIndex}.${customField.id}`}
-                          render={({ field: formField }) => (
-                            <FormItem className="space-y-3">
-                              <FormLabel className="flex items-start gap-3 text-gray-700">
-                                <span className="text-base pt-1">{customField.label}</span>
-                              </FormLabel>
-                              
-                              <FormControl>
-                                <div className="pl-0">
-                                  {customField.type === 'boolean' ? (
-                                    <div className="flex gap-6">
-                                      <Checkbox
-                                        checked={formField.value as boolean}
-                                        onCheckedChange={formField.onChange}
-                                        className="h-5 w-5 rounded-md"
-                                      />
-                                    </div>
-                                  ) : customField.type === 'phone' ? (
-                                    <div className="space-y-2">
-                                      {phoneOverrides[personIndex] ? (
-                                        <div className="space-y-1.5">
-                                          <Input
-                                            {...formField}
-                                            value={String(formField.value)}
-                                            type="tel"
-                                            className="max-w-md h-12 text-lg border-2 focus:border-primary-500"
-                                            placeholder="e.g. +8613812345678"
-                                          />
-                                          <p className="text-sm text-gray-600 pl-1">
-                                            Format: +[country code][number]
-                                          </p>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setPhoneOverrides(prev => ({
-                                                ...prev,
-                                                [personIndex]: false
-                                              }));
-                                              form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
-                                            }}
-                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                          >
-                                            Switch back to SG/MY phone number format 切换回新马电话格式
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          <div className="phone-input-container max-w-md">
-                                            <PhoneInput
-                                              value={formField.value as string}
-                                              onChange={(value) => formField.onChange(value || '')}
-                                              defaultCountry={getDefaultCountry(userCountry)}
-                                              countries={["SG", "MY"]}
-                                              international
-                                              countryCallingCodeEditable={false}
-                                              className="h-12 text-lg"
-                                              withCountryCallingCode
-                                            />
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setPhoneOverrides(prev => ({
-                                                ...prev,
-                                                [personIndex]: true
-                                              }));
-                                              form.setValue(`groups.${personIndex}.phone`, '');
-                                            }}
-                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                          >
-                                            使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : customField.type === 'radio' ? (
-                                    <div className="flex gap-6">
-                                      {customField.options && customField.options.map((option) => (
-                                        <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                                          <input
-                                            type="radio"
-                                            value={option.value}
-                                            checked={formField.value === option.value}
-                                            onChange={() => formField.onChange(option.value)}
-                                            className="w-4 h-4 text-primary-600"
-                                          />
-                                          <span className="text-gray-700">{option.label}</span>
-                                        </label>
-                                      ))}
-                                    </div>
-                                  ) : customField.type === 'postal' ? (
-                                    <div className="space-y-2">
-                                      <Input 
-                                        {...formField}
-                                        className="max-w-md"
-                                        value={String(formField.value)}
-                                        placeholder={
-                                          postalOverrides[personIndex]
-                                            ? "输入邮区编号 Enter postal code"
-                                            : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                              ? "e.g. 12345"
-                                              : "e.g. 123456"
-                                        }
-                                        onChange={(e) => {
-                                          // Only allow numbers when in override mode
-                                          if (postalOverrides[personIndex]) {
-                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                                            formField.onChange(numericValue);
-                                          } else {
-                                            formField.onChange(e);
-                                          }
-                                        }}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          // Update the override state
-                                          const newOverrideState = !postalOverrides[personIndex];
-                                          
-                                          // Clear the field first
-                                          form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
-                                            shouldValidate: false  // Prevent validation on clear
-                                          });
-                                          
-                                          // Update the override state
-                                          setPostalOverrides(prev => ({
-                                            ...prev,
-                                            [personIndex]: newOverrideState
-                                          }));
-                                          
-                                          // Reset form errors for this field
-                                          form.clearErrors(`groups.${personIndex}.${customField.id}`);
-                                          
-                                          // Force revalidation after a small delay to ensure state is updated
-                                          setTimeout(() => {
-                                            form.trigger(`groups.${personIndex}.${customField.id}`);
-                                          }, 100);
-                                        }}
-                                        className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                      >
-                                        {postalOverrides[personIndex] ? 
-                                          "切换回邮区编号验证 Switch back to postal code validation" : 
-                                          "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
-                                      </button>
-                                      {personIndex > 0 && (
-                                        <div className="flex items-center gap-2 mt-2">
-                                          <Checkbox
-                                            checked={postalCheckedState[personIndex] ?? false}
-                                            onCheckedChange={(checked) => {
-                                              setPostalCheckedState(prev => ({
-                                                ...prev,
-                                                [personIndex]: !!checked
-                                              }));
-                                              
-                                              if (checked) {
-                                                const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
-                                                form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
-                                              } else {
-                                                form.setValue(`groups.${personIndex}.${customField.id}`, '');
-                                              }
-                                            }}
-                                            className="h-4 w-4"
-                                          />
-                                          <label className="text-sm text-gray-600">
-                                            与{toChineseOrdinal(1)}参加者相同 Same as Participant 1
-                                          </label>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <Input 
-                                      {...formField}
-                                      className="max-w-md"
-                                      value={String(formField.value)}
-                                      placeholder={customField.label}
-                                      onChange={(e) => {
-                                        const sanitized = sanitizeName(e.target.value);
-                                        formField.onChange(sanitized);
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              </FormControl>
-                              <FormMessage className="pl-0" />
-                            </FormItem>
-                          )}
-                        />
-                      ))}
-                    </div>
-                    
-                    {personIndex > 0 && (
-                      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                        <Button 
-                          type="button" 
-                          onClick={() => {
-                            remove(personIndex);
-                            setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
-                          }}
-                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
-                        >
-                          删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
-                  <Button
-                    type="button"
-                    onClick={handleAddPerson}
-                    disabled={numberOfFormsToShow >= event.maxSeats}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
-                    添加参加者 Add Participant
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-base font-medium h-10 md:h-12 disabled:bg-blue-400"
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2Icon className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
-                        提交中... Submitting...
-                      </div>
-                    ) : (
-                      '呈交 Submit'
-                    )}
-                  </Button>
-                </div>
-              </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {fields.map((item, index) => (
+          <div key={item.id} className="p-4 border rounded-md space-y-4 relative">
+            {fields.length > 1 && (
+               <Button
+                 type="button"
+                 variant="destructive"
+                 size="sm"
+                 onClick={() => handleRemovePerson(index)}
+                 className="absolute top-2 right-2"
+               >
+                 Remove Person {index + 1}
+               </Button>
             )}
-          </form>
-        </Form>
-      )}
+            <h3 className="text-lg font-semibold">报名者 {toChineseOrdinal(index + 1)} / Registrant {index + 1}</h3>
 
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl font-semibold text-gray-900">
-              发现重复报名 / Duplicate Registration Found
-            </DialogTitle>
-            <DialogDescription className="space-y-4">
-              <p className="text-gray-700 text-base">
-                以下电话号码已报名：/ The following phone number/s is/are already registered:
-              </p>
-              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-                {duplicatePhoneNumbers.map((duplicate, index) => (
-                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div className="flex flex-col gap-2">
-                      <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">名字 Name:</span>
-                        <span className="text-gray-800">{duplicate.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">队列号 Queue Number:</span>
-                        <span className="text-gray-800">{duplicate.queueNumber}</span>
-                      </div>
-                      {duplicate.qrCode && (
-                        <div className="mt-2">
-                          <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
-                          <div className="w-24 h-24 relative mx-auto">
-                            <img 
-                              src={duplicate.qrCode} 
-                              alt="QR Code" 
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        </div>
+            <FormField
+              control={form.control}
+              name={`groups.${index}.membershipNumber`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>会员号码 / Membership Number <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="输入您的会员号码 / Enter your membership number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={`groups.${index}.last4PhoneNumberDigits`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>最后4个电话号码 / Last 4 Digits of Phone Number <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="输入您注册电话号码的最后4位数 / Enter the last 4 digits of your registered phone number"
+                      type="text"
+                      maxLength={4}
+                      {...field}
+                      onChange={(e) => {
+                         const numericValue = e.target.value.replace(/D/g, '');
+                         field.onChange(numericValue);
+                       }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {customFields.map((customField, fieldIndex) => (
+              <FormField
+                key={`${item.id}-${customField.id}`}
+                control={form.control}
+                name={`groups.${index}.${customField.id}` as any}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{customField.label} {customField.required ? <span className="text-red-500">*</span> : ''}</FormLabel>
+                    <FormControl>
+                      {customField.type === 'boolean' ? (
+                        <Checkbox
+                          checked={field.value as unknown as boolean}
+                          onCheckedChange={field.onChange}
+                        />
+                      ) : customField.type === 'textarea' ? (
+                         <Input as="textarea" placeholder={customField.placeholder} {...field} value={String(field.value ?? '')} />
+                      ): (
+                        <Input placeholder={customField.placeholder} {...field} value={String(field.value ?? '')} type={customField.type || 'text'} />
                       )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-gray-700 text-base pt-2">
-                您是否仍要继续？/ Do you still want to proceed?
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sticky bottom-0 bg-white pt-2 pb-1">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowConfirmation(false);
-                // Get the first duplicate phone number to use for redirection
-                if (duplicatePhoneNumbers.length > 0) {
-                  const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
-                  // Redirect to event-lookup with the phone number as a query parameter
-                  router.push(`/event-lookup?phone=${phoneNumber}`);
-                }
-              }}
-              className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
-            >
-              取消 / Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowConfirmation(false);
-                if (formValues) {
-                  submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
-                }
-              }}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={timeRemaining > 0}
-            >
-              {timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+        ))}
+
+       {(event.maxRegistrationsPerUser === undefined || fields.length < event.maxRegistrationsPerUser) ? (
+        <Button type="button" onClick={handleAddPerson} variant="outline">
+          <PlusIcon className="mr-2 h-4 w-4" /> 添加另一位报名者 / Add Another Person
+        </Button>
+        ) : null}
+
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+          className="button w-full sm:w-auto col-span-2"
+        >
+          {isSubmitting ? (
+             <>
+              <Loader2Icon className="animate-spin mr-2" />
+              处理中... / Processing...
+            </>
+          ) : ('报名参加 / Register Now')}
+        </Button>
+
+        {message && <p className={`mt-4 p-4 rounded ${message.includes('失败') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{message}</p>}
+      </form>
+    </Form>
   )
 }
 

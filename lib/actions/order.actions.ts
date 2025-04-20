@@ -1,35 +1,79 @@
 "use server"
 
-import { CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams } from "@/types"
+import { CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams, CreateOrderActionParams } from "@/types" // Updated types import
 import { handleError } from '../utils';
 import { connectToDatabase } from '../database';
 import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
+import UserDetails from '../database/models/userDetails.model';
 import Category from '../database/models/category.model';
 import {ObjectId} from 'mongodb';
 import { IOrder, IOrderItem } from '../database/models/order.model';
 import QRCode from 'qrcode';
 import { CustomFieldGroup } from '@/types'
 import { unstable_cache } from 'next/cache'
+import { IUserDetails } from '../database/models/userDetails.model';
 
-export async function createOrder(order: CreateOrderParams) {
+// --- User Verification Action ---
+// This function is called by the API route *before* createOrder
+export const verifyUserDetails = async ({ membershipNumber, last4PhoneNumberDigits }: {
+  membershipNumber: string, last4PhoneNumberDigits: string
+}): Promise<IUserDetails> => {
+  await connectToDatabase();
+  console.log(`Verifying user with membership: ${membershipNumber}`);
+
+  if (!membershipNumber || !last4PhoneNumberDigits) {
+    throw new Error('会员号码和电话号码最后4位数皆为必填 / Membership number and last 4 phone digits are required.');
+  }
+  if (last4PhoneNumberDigits.length !== 4 || !/^\\d{4}$/.test(last4PhoneNumberDigits)) {
+    throw new Error('电话号码最后4位数格式无效 / Invalid format for last 4 phone digits.');
+  }
+
+  const userDetails = await UserDetails.findOne({ membershipNumber });
+
+  if (!userDetails) {
+    console.warn(`Membership number not found: ${membershipNumber}`);
+    throw new Error(`找不到此会员号码 / Membership number ${membershipNumber} not found.`);
+  }
+
+  // Verify last 4 digits against the masked phone number
+  const expectedSuffix = last4PhoneNumberDigits;
+  // Extract last 4 digits from maskedPhoneNumber (e.g., '****1234')
+  const actualSuffix = userDetails.maskedPhoneNumber.slice(-4);
+
+  if (actualSuffix !== expectedSuffix) {
+    console.warn(`Phone number mismatch for membership ${membershipNumber}. Expected ending: ${expectedSuffix}, Found in DB: ****${actualSuffix}`);
+    throw new Error('电话号码验证失败，请检查最后4位数 / Phone number verification failed. Please check the last 4 digits.');
+  }
+
+  console.log(`User details verified for membership number: ${membershipNumber}`);
+  // Return the full userDetails object upon successful verification
+  return userDetails;
+};
+
+
+// --- Create Order Action ---
+// Updated function signature to accept verified registrant ID and optional QR data
+export async function createOrder({ eventId, registrantDetailsId, customFieldValues, membershipNumberForQR }: CreateOrderActionParams) {
   try {
     await connectToDatabase();
-    console.log("Connected to database");
+    console.log("Creating order for event:", eventId, "Registrant ID:", registrantDetailsId);
 
-    if (!ObjectId.isValid(order.eventId)) {
-      console.log("Invalid eventId:", order.eventId);
-      throw new Error('Invalid eventId');
+    if (!ObjectId.isValid(eventId) || !ObjectId.isValid(registrantDetailsId)) {
+      console.error("Invalid eventId or registrantDetailsId", { eventId, registrantDetailsId });
+      throw new Error('无效的活动ID或注册者ID / Invalid eventId or registrantDetailsId');
     }
 
-    const event = await Event.findById(order.eventId);
+    const event = await Event.findById(eventId);
     if (!event) {
-      throw new Error('Event not found');
+      throw new Error('找不到活动 / Event not found');
     }
 
-    // Count only uncancelled registrations
+    // Removed the user lookup/verification logic as it's done prior in verifyUserDetails
+
+    // Count only uncancelled registrations for this event
     const currentRegistrations = await Order.aggregate([
-      { $match: { event: new ObjectId(order.eventId) } },
+      { $match: { event: new ObjectId(eventId) } },
       { $unwind: "$customFieldValues" },
       { $match: { "customFieldValues.cancelled": { $ne: true } } },
       { $count: "total" }
@@ -37,52 +81,71 @@ export async function createOrder(order: CreateOrderParams) {
 
     const totalRegistrations = currentRegistrations[0]?.total || 0;
 
-    if (totalRegistrations >= event.maxSeats) {
-      throw new Error('Event is fully booked');
+    if (event.maxSeats !== undefined && totalRegistrations >= event.maxSeats) {
+      console.warn("Event fully booked", { eventId, totalRegistrations, maxSeats: event.maxSeats });
+      throw new Error('活动已满员 / Event is fully booked');
     }
 
-    const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
+    // Find the last order for this event to determine the next queue number
+    const lastOrderAggregate = await Order.aggregate([
+      { $match: { event: new ObjectId(eventId) } },
+      { $unwind: "$customFieldValues" },
+      { $sort: { "customFieldValues.queueNumber": -1 } }, // Sort by queue number descending
+      { $limit: 1 },
+      { $project: { _id: 0, lastQueueNumber: "$customFieldValues.queueNumber" } } // Project only the queue number
+    ]);
+
     let lastQueueNumber = 0;
-    if (lastOrder) {
-      const allQueueNumbers = lastOrder.customFieldValues.map((group: { queueNumber: string }) => 
-        parseInt(group.queueNumber.slice(1))
-      );
-      lastQueueNumber = Math.max(...allQueueNumbers);
+    if (lastOrderAggregate.length > 0 && lastOrderAggregate[0].lastQueueNumber) {
+        // Extract numeric part, assuming format like 'XXX'
+        const numericPart = parseInt(lastOrderAggregate[0].lastQueueNumber, 10);
+        if (!isNaN(numericPart)) {
+            lastQueueNumber = numericPart;
+        }
     }
+    console.log("Last queue number found:", lastQueueNumber);
 
-    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
-      const newQueueNumber = `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
-      
-      // Find phone number from fields
-      const phoneField = group.fields.find(field => 
-        field.label.toLowerCase().includes('phone') || 
-        field.type === 'phone'
-      );
-      const phoneNumber = phoneField?.value || '';
-      
-      // Create QR code data with event ID, queue number, and phone number
-      const qrCodeData = `${order.eventId}_${newQueueNumber}_${encodeURIComponent(phoneNumber)}`;
+    // Process customFieldValues, generate queue numbers and QR codes
+    const newCustomFieldValues = await Promise.all(customFieldValues.map(async (group, index) => {
+      const newNumericQueueNumber = lastQueueNumber + index + 1;
+      const newQueueNumber = `${newNumericQueueNumber.toString().padStart(3, '0')}`;
+      console.log("Generating queue number:", newQueueNumber);
+
+      // --- Update QR Code Data ---
+      // Use membershipNumberForQR passed from the API route
+      const qrCodeData = `${eventId}_${newQueueNumber}_${membershipNumberForQR || 'N/A'}`;
       const qrCode = await QRCode.toDataURL(qrCodeData);
-      
+      console.log("Generated QR code for:", qrCodeData);
+      // --- End Update QR Code Data ---
+
       return {
         ...group,
         queueNumber: newQueueNumber,
         qrCode: qrCode,
         cancelled: false,
+        attendance: false, // Ensure attendance is initialized
         __v: 0,
       };
     }));
 
+    // Create the new order, linking the verified registrantDetailsId
     const newOrder = await Order.create({
-      ...order,
-      event: new ObjectId(order.eventId),
+      event: new ObjectId(eventId),
+      registrantDetails: new ObjectId(registrantDetailsId), // Use the verified ID
+      createdAt: new Date(),
       customFieldValues: newCustomFieldValues,
+      // buyer: null, // Explicitly set buyer to null or handle if Clerk user ID is available
     });
 
+    console.log("New order created successfully:", newOrder._id);
     return JSON.parse(JSON.stringify(newOrder));
+
   } catch (error) {
-    console.error('Error creating order:', error);
-    throw error;
+    console.error('Error in createOrder action:', error);
+    // Re-throw the error so the API route can catch and handle it
+    // Potentially wrap in a custom error or just re-throw
+    handleError(error); // Use existing error handler if appropriate
+    // Or just: throw error;
   }
 }
 

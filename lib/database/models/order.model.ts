@@ -2,7 +2,7 @@ import { Schema, model, models, Document } from 'mongoose';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Event from '@/lib/database/models/event.model';
 import User from '@/lib/database/models/user.model';
-
+import UserDetails from '@/lib/database/models/userDetails.model'; // <-- Import UserDetails
 export interface IOrder extends Document {
   _id: string;
   createdAt: Date;
@@ -16,6 +16,7 @@ export interface IOrder extends Document {
     location: string;
   };
   customFieldValues: CustomFieldGroup[];
+  registrantDetails?: { _id: string }; // <-- Add reference to UserDetails (optional for interface)
 }
 
 export interface IOrderItem {
@@ -45,6 +46,10 @@ const OrderSchema = new Schema({
   buyer: {
     type: Schema.Types.ObjectId,
     ref: User,
+  },
+  registrantDetails: { // <-- Add the new field linking to UserDetails
+    type: Schema.Types.ObjectId,
+    ref: 'UserDetails', // Use the model name string here
   },
   customFieldValues: [
     {

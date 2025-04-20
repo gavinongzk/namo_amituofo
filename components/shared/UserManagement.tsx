@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import Modal from '../ui/modal';
-
+import UserDetailsUploader from './UserDetailsUploader'; // <-- Import the new component
 type User = {
   phoneNumber: string;
   name: string;
@@ -349,6 +349,16 @@ const UserManagement = ({ country }: { country: string }) => {
           <p className={`mt-2 text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
             {message}
           </p>
+        )}
+      </div>
+
+      {/* Add the new User Details Uploader section */}
+      <div className="mt-8 pt-6 border-t">
+        <UserDetailsUploader />
+      </div>
+      {/* End of new section */}
+
+      {isLoading ? (
         )}
       </div>
       {isLoading ? (
