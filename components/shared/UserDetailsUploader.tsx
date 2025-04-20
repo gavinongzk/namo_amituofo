@@ -3,26 +3,27 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast'; // Assuming you have shadcn/ui toast configured
-import { Loader } from 'lucide-react'; // Or your preferred loader icon
+import { Loader2 } from 'lucide-react'; // Changed from Loader to Loader2 for consistency
 
 const UserDetailsUploader = () => {
     const [file, setFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-    const [errorDetails, setErrorDetails] = useState<any[] | null>(null); // To show validation/operation errors
-    const { toast } = useToast();
+    const [errorDetails, setErrorDetails] = useState<any[] | null>(null);
+
+    // Simple feedback function to replace toast
+    const showFeedback = (title: string, description: string, variant: 'default' | 'destructive' | 'warning' = 'default') => {
+        console.log(`[${variant}] ${title}: ${description}`);
+        setUploadStatus(`${title}: ${description}`);
+    };
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const selectedFile = event.target.files[0];
             // Basic client-side type check (server validates again)
             if (!['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'].includes(selectedFile.type)) {
-                toast({
-                    title: 'Invalid File Type',
-                    description: 'Please select an Excel file (.xlsx or .xls).',
-                    variant: 'destructive',
-                });
+                // Replace toast with showFeedback
+                showFeedback('Invalid File Type', 'Please select an Excel file (.xlsx or .xls).', 'destructive');
                 setFile(null);
                 event.target.value = ''; // Reset file input
             } else {
@@ -38,11 +39,8 @@ const UserDetailsUploader = () => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!file) {
-            toast({
-                title: 'No File Selected',
-                description: 'Please select an Excel file to upload.',
-                variant: 'warning',
-            });
+            // Replace toast with showFeedback
+            showFeedback('No File Selected', 'Please select an Excel file to upload.', 'warning');
             return;
         }
 
@@ -75,18 +73,13 @@ const UserDetailsUploader = () => {
                     setErrorDetails(result.operationErrors);
                 }
                 setUploadStatus(`Error: ${description}`);
-                toast({
-                    title: 'Upload Failed',
-                    description: description,
-                    variant: 'destructive',
-                });
+                // Replace toast with showFeedback
+                showFeedback('Upload Failed', description, 'destructive');
             } else {
                 // Success (200 OK or 207 Multi-Status with some failures handled above)
                 setUploadStatus(result.message);
-                toast({
-                    title: 'Upload Successful',
-                    description: result.message,
-                });
+                // Replace toast with showFeedback
+                showFeedback('Upload Successful', result.message);
                 setFile(null); // Clear file input on success
                 const fileInput = document.getElementById('userDetailsFile') as HTMLInputElement;
                 if (fileInput) fileInput.value = ''; // Reset file input visually
@@ -95,11 +88,8 @@ const UserDetailsUploader = () => {
             console.error('Upload error:', error);
             const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred.';
             setUploadStatus(`Error: ${errorMessage}`);
-            toast({
-                title: 'Upload Error',
-                description: errorMessage,
-                variant: 'destructive',
-            });
+            // Replace toast with showFeedback
+            showFeedback('Upload Error', errorMessage, 'destructive');
         } finally {
             setIsLoading(false);
         }
@@ -121,7 +111,7 @@ const UserDetailsUploader = () => {
                 <Button type="submit" disabled={!file || isLoading}>
                     {isLoading ? (
                         <>
-                            <Loader className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Uploading...
                         </>
                     ) : (
