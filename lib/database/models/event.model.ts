@@ -15,6 +15,7 @@ export interface IEvent extends Document {
   organizer: { _id: string }
   customFields: CustomField[];
   maxSeats: number;
+  maxRegistrationsPerUser?: number;
   attendeeCount?: number;
   country: string;
   isDeleted: boolean;
@@ -38,6 +39,7 @@ const EventSchema = new Schema({
     value: { type: String, required: false }
   }],
   maxSeats: { type: Number, required: true },
+  maxRegistrationsPerUser: { type: Number, required: false },
   isDeleted: { type: Boolean, default: false }
 })
 

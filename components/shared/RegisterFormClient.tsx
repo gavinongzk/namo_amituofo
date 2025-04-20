@@ -261,7 +261,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           </div>
         ))}
 
-       {(event.maxRegistrationsPerUser === undefined || fields.length < event.maxRegistrationsPerUser) ? (
+       {('maxRegistrationsPerUser' in event ? event.maxRegistrationsPerUser === undefined || fields.length < event.maxRegistrationsPerUser : true) ? (
         <Button type="button" onClick={handleAddPerson} variant="outline">
           <PlusIcon className="mr-2 h-4 w-4" /> 添加另一位报名者 / Add Another Person
         </Button>

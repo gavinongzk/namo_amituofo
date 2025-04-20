@@ -443,6 +443,41 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           />
         </div>
 
+        <div className="flex flex-col gap-5 md:flex-row">
+          <FormField
+            control={form.control}
+            name="maxRegistrationsPerUser"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
+                    <Image
+                      src="/assets/icons/user-group.svg"
+                      alt="max registrations"
+                      width={24}
+                      height={24}
+                      className="filter-grey mr-3"
+                    />
+                    <p className="mr-3 whitespace-nowrap text-grey-600">Max Registrations Per User:</p>
+                    <Input
+                      placeholder="Enter number (optional)"
+                      type="number"
+                      {...field}
+                      value={field.value || ''}
+                      className="input-field bg-transparent border-none focus:outline-none"
+                      onChange={(e) => {
+                        const value = e.target.value ? Number(e.target.value) : undefined;
+                        field.onChange(value);
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="flex flex-col gap-5">
           <div className="mb-5">
             <h3 className="text-lg font-medium mb-3">Default Questions</h3>

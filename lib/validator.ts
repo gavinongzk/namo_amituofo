@@ -17,6 +17,7 @@ export const eventFormSchema = z.object({
   endDateTime: z.date(),
   categoryId: z.string(),
   maxSeats: z.number().int().positive(),
+  maxRegistrationsPerUser: z.number().int().positive().optional(),
   customFields: z.array(z.object({
     id: z.string(),
     label: z.string(),
