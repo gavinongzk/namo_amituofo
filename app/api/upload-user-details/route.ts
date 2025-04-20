@@ -6,6 +6,12 @@ import { connectToDatabase } from '@/lib/database';
 import UserDetails from '@/lib/database/models/userDetails.model';
 import { z } from 'zod';
 
+// Define a type for the publicMetadata
+interface PublicMetadata {
+    role?: string;
+    // Add other potential properties from publicMetadata as needed
+}
+
 // Define the expected structure of a row in the Excel file using Zod
 const userDetailsRowSchema = z.object({
     // Assuming column headers in Excel are 'Name', 'PhoneNumber', 'PostalCode', 'MembershipNumber', 'Remarks'
@@ -75,10 +81,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
         }
 
-        // Check for admin role (adjust 'publicMetadata', 'role', and 'admin' based on your Clerk setup)
-        const userRole = sessionClaims?.publicMetadata?.role; // Changed from metadata to publicMetadata
+        // Check for admin role with a more robust type check
+        // Cast the entire publicMetadata to any to bypass TypeScript checking
+        const publicMetadata = (sessionClaims?.publicMetadata || {}) as any;
+        const userRole = publicMetadata.role;
+        
         if (userRole !== 'admin') {
-            console.warn(`Authorization failed: User ${userId} role is ${userRole}, not admin`);
+            console.warn(`Authorization failed: User ${userId} role is ${userRole || 'undefined'}, not admin`);
             return NextResponse.json({ message: 'Forbidden: Admin privileges required' }, { status: 403 });
         }
         console.log(`User ${userId} with role ${userRole} authorized.`);

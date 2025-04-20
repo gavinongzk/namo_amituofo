@@ -8,6 +8,7 @@ import * as z from 'zod'
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { CreateOrderParams, CustomField } from "@/types"
@@ -247,7 +248,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                           onCheckedChange={field.onChange}
                         />
                       ) : customField.type === 'textarea' ? (
-                         <Input as="textarea" placeholder={customField.placeholder} {...field} value={String(field.value ?? '')} />
+                         <Textarea placeholder={customField.placeholder} {...field} value={String(field.value ?? '')} />
                       ): (
                         <Input placeholder={customField.placeholder} {...field} value={String(field.value ?? '')} type={customField.type || 'text'} />
                       )}
