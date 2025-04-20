@@ -188,25 +188,31 @@ const UserManagement = ({ country }: { country: string }) => {
   };
 
   const confirmDelete = async () => {
-    if (!userToDelete) return;
-    
+    if (!userToDelete) {
+      setMessage('Error: No user selected for deletion.');
+      setShowDeleteModal(false);
+      return;
+    }
+
     setIsLoading(true);
+    setMessage('Deleting user...');
     try {
-      const response = await fetch('/api/tagged-users', {
+      const response = await fetch('/api/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: userToDelete.phoneNumber }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete user');
       }
 
       setUsers(users.filter(u => u.phoneNumber !== userToDelete.phoneNumber));
-      setMessage('User deleted successfully');
+      setMessage(`User ${userToDelete.name} (${userToDelete.phoneNumber}) deleted successfully.`);
     } catch (error) {
-      console.error('Error deleting user:', error);
-      setMessage('Failed to delete user');
+      console.error('Delete Error:', error);
+      setMessage(`Error deleting user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
       setShowDeleteModal(false);
@@ -358,145 +364,145 @@ const UserManagement = ({ country }: { country: string }) => {
       </div>
       {/* End of new section */}
 
-      {isLoading ? (
+      {/* Corrected Loading State Logic */}
+      <div className="mt-4"> {/* Added a container div */} 
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+          </div>
+        ) : (
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('serialNumber')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    S/N
+                    {sortConfig.key === 'serialNumber' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('name')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    Name
+                    {sortConfig.key === 'name' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('phoneNumber')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    Phone Number
+                    {sortConfig.key === 'phoneNumber' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('isNewUser')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    Status
+                    {sortConfig.key === 'isNewUser' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('createdAt')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    Created At
+                    {sortConfig.key === 'createdAt' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort('updatedAt')}
+                    className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  >
+                    Updated At
+                    {sortConfig.key === 'updatedAt' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </Button>
+                </th>
+                <th className="py-2 px-4 border-b text-left">Remarks</th>
+                <th className="py-2 px-4 border-b text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.map((user, index) => (
+                <tr key={user.phoneNumber} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
+                  <td className="py-2 px-4 border-b text-left">{((currentPage - 1) * pageSize) + index + 1}</td>
+                  <td className="py-2 px-4 border-b text-left">{user.name}</td>
+                  <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
+                  <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
+                  <td className="py-2 px-4 border-b text-left">{formatDateTime(user.createdAt)}</td>
+                  <td className="py-2 px-4 border-b text-left">{formatDateTime(user.updatedAt)}</td>
+                  <td className="py-2 px-4 border-b text-left">
+                    {editingUser === user.phoneNumber ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={user.remarks || ''}
+                          onChange={(e) => {
+                            setUsers(users.map(u => 
+                              u.phoneNumber === user.phoneNumber ? { ...u, remarks: e.target.value } : u
+                            ));
+                          }}
+                          className="w-full"
+                        />
+                        <Button 
+                          onClick={() => handleUpdateRemarks(user.phoneNumber, user.name, user.remarks || '')}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span>{user.remarks || 'No remarks'}</span>
+                        <Button variant="outline" onClick={() => setEditingUser(user.phoneNumber)}>
+                          Edit
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-2 px-4 border-b text-left">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleDeleteUser(user)}
+                      className="ml-2"
+                    >
+                      Delete
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-        </div>
-      ) : (
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('serialNumber')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  S/N
-                  {sortConfig.key === 'serialNumber' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('name')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Name
-                  {sortConfig.key === 'name' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('phoneNumber')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Phone Number
-                  {sortConfig.key === 'phoneNumber' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('isNewUser')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Status
-                  {sortConfig.key === 'isNewUser' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('createdAt')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Created At
-                  {sortConfig.key === 'createdAt' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('updatedAt')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Updated At
-                  {sortConfig.key === 'updatedAt' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
-              <th className="py-2 px-4 border-b text-left">Remarks</th>
-              <th className="py-2 px-4 border-b text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((user, index) => (
-              <tr key={user.phoneNumber} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
-                <td className="py-2 px-4 border-b text-left">{((currentPage - 1) * pageSize) + index + 1}</td>
-                <td className="py-2 px-4 border-b text-left">{user.name}</td>
-                <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
-                <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
-                <td className="py-2 px-4 border-b text-left">{formatDateTime(user.createdAt)}</td>
-                <td className="py-2 px-4 border-b text-left">{formatDateTime(user.updatedAt)}</td>
-                <td className="py-2 px-4 border-b text-left">
-                  {editingUser === user.phoneNumber ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={user.remarks || ''}
-                        onChange={(e) => {
-                          setUsers(users.map(u => 
-                            u.phoneNumber === user.phoneNumber ? { ...u, remarks: e.target.value } : u
-                          ));
-                        }}
-                        className="w-full"
-                      />
-                      <Button 
-                        onClick={() => handleUpdateRemarks(user.phoneNumber, user.name, user.remarks || '')}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <span>{user.remarks || 'No remarks'}</span>
-                      <Button variant="outline" onClick={() => setEditingUser(user.phoneNumber)}>
-                        Edit
-                      </Button>
-                    </div>
-                  )}
-                </td>
-                <td className="py-2 px-4 border-b text-left">
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleDeleteUser(user)}
-                    className="ml-2"
-                  >
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
       {totalPages > 1 && (
         <div className="mt-4 flex justify-center items-center gap-2">
           <Button
