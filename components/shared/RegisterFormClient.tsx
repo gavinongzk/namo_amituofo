@@ -22,6 +22,7 @@ import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
 import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
+import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -844,10 +845,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         <div className="mt-2">
                           <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
                           <div className="w-24 h-24 relative mx-auto">
-                            <img 
-                              src={duplicate.qrCode} 
-                              alt="QR Code" 
-                              className="w-full h-full object-contain"
+                            <QrCodeWithLogo 
+                              qrCode={duplicate.qrCode} 
+                              isAttended={false}
                             />
                           </div>
                         </div>

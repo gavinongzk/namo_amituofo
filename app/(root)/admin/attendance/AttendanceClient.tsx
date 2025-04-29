@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
 import { cn, prepareRegistrationIdentifiers } from "@/lib/utils";
+import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 
 type EventRegistration = {
   id: string;
