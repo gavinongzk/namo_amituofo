@@ -50,6 +50,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         canvas.height = scaledHeight;
         canvas.style.width = `${qrCodeImage.width}px`;
         canvas.style.height = `${qrCodeImage.height}px`;
+        canvas.style.margin = '0 auto'; // Center the canvas horizontally
 
         // Enable image smoothing for better quality
         ctx.imageSmoothingEnabled = true;
@@ -127,7 +128,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
   );
 
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full">
       <div className={containerClasses}>
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80">

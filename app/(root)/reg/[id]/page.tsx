@@ -74,12 +74,16 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   isNewlyMarked?: boolean,
   queueNumber?: string
 }) => {
-  return <QrCodeWithLogo 
-    qrCode={qrCode}
-    isAttended={isAttended}
-    isNewlyMarked={isNewlyMarked}
-    queueNumber={queueNumber}
-  />;
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <QrCodeWithLogo 
+        qrCode={qrCode}
+        isAttended={isAttended}
+        isNewlyMarked={isNewlyMarked}
+        queueNumber={queueNumber}
+      />
+    </div>
+  );
 });
 
 const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, participantInfo, queueNumber }) => {
@@ -785,10 +789,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                   {/* QR Code for this participant */}
                   {!group.cancelled && group.qrCode && (
-                    <div className="p-4">
-                      <div className="w-full max-w-sm mx-auto mb-6">
+                    <div className="p-4 flex justify-center">
+                      <div className="text-center mb-6 max-w-[250px]">
                         <h6 className="text-lg font-semibold mb-3 text-center">二维码 QR Code</h6>
-                        <div className="w-full max-w-[200px] mx-auto">
+                        <div className="flex justify-center w-[200px] h-[200px] mx-auto">
                           <QRCodeDisplay 
                             qrCode={group.qrCode} 
                             isAttended={!!group.attendance}
