@@ -29,7 +29,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
     }
 
     setIsLoading(true);
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) {
       console.error('Failed to get canvas context');
       setIsLoading(false);
@@ -40,34 +40,62 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
     qrCodeImage.onload = () => {
       const logoImage = new Image();
       logoImage.onload = () => {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Set high DPI for sharper rendering
+        const scale = window.devicePixelRatio || 1;
+        const scaledWidth = qrCodeImage.width * scale;
+        const scaledHeight = qrCodeImage.height * scale;
 
-        // Set canvas dimensions to match QR code image
-        canvas.width = qrCodeImage.width;
-        canvas.height = qrCodeImage.height;
+        // Set canvas dimensions with scale
+        canvas.width = scaledWidth;
+        canvas.height = scaledHeight;
+        canvas.style.width = `${qrCodeImage.width}px`;
+        canvas.style.height = `${qrCodeImage.height}px`;
+
+        // Enable image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Scale context to match device pixel ratio
+        ctx.scale(scale, scale);
+
+        // Fill white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, qrCodeImage.width, qrCodeImage.height);
 
         // Draw QR code
-        ctx.drawImage(qrCodeImage, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(qrCodeImage, 0, 0, qrCodeImage.width, qrCodeImage.height);
 
-        // Calculate logo size and position (25% of QR code size)
-        const logoSize = canvas.width * 0.25;
-        const logoX = (canvas.width - logoSize) / 2;
-        const logoY = (canvas.height - logoSize) / 2;
+        // Calculate logo size (20% of QR code size for better readability)
+        const logoSize = qrCodeImage.width * 0.2;
+        const logoX = (qrCodeImage.width - logoSize) / 2;
+        const logoY = (qrCodeImage.height - logoSize) / 2;
 
-        // Create a circular clip path for the logo
+        // Create a circular clip path for the logo with anti-aliasing
         ctx.save();
         ctx.beginPath();
         ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
         ctx.closePath();
-        ctx.clip();
-
-        // Add white background for logo
+        
+        // Add a white background with a slight padding for the logo
+        const padding = logoSize * 0.1;
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(logoX, logoY, logoSize, logoSize);
-
-        // Draw logo in the center
-        ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+        ctx.fill();
+        
+        // Add a subtle shadow effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+        
+        // Clip and draw the logo
+        ctx.clip();
+        ctx.drawImage(
+          logoImage,
+          logoX - padding,
+          logoY - padding,
+          logoSize + (padding * 2),
+          logoSize + (padding * 2)
+        );
         
         ctx.restore();
         setIsLoading(false);
@@ -76,8 +104,8 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         console.error('Failed to load logo image:', e);
         // Draw QR code without logo as fallback
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.width = qrCodeImage.width;
-        canvas.height = qrCodeImage.height;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(qrCodeImage, 0, 0, canvas.width, canvas.height);
         setIsLoading(false);
       };
@@ -107,7 +135,11 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
           </div>
         )}
-        <canvas ref={canvasRef} className="w-full h-full object-contain" />
+        <canvas 
+          ref={canvasRef} 
+          className="w-full h-full object-contain"
+          style={{ imageRendering: 'crisp-edges' }}
+        />
         {isAttended && (
           <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
             ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
@@ -153,5 +185,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
     prevProps.queueNumber === nextProps.queueNumber
   );
 });
+
+QrCodeWithLogo.displayName = 'QrCodeWithLogo';
 
 export default QrCodeWithLogo; 
