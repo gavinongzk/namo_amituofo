@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
+import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 
 // Define inline styles for custom UI elements
 const styles = `
@@ -73,119 +74,15 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
   isNewlyMarked?: boolean,
   queueNumber?: string
 }) => {
-  // If attendance is already marked, we don't need to keep updating the QR code
-  const [shouldUpdate, setShouldUpdate] = React.useState(!isAttended);
-
-  React.useEffect(() => {
-    // Only allow updates if attendance is not marked
-    setShouldUpdate(!isAttended);
-  }, [isAttended]);
-
-  // If we shouldn't update and it's not newly marked, return the last rendered state
-  if (!shouldUpdate && !isNewlyMarked) {
-    return (
-      <div className="w-full max-w-sm mx-auto mb-6">
-        <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
-        <div className="relative aspect-square w-full opacity-40 grayscale transition-all duration-300">
-          <Image 
-            src={qrCode} 
-            alt="QR Code" 
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain"
-          />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <svg 
-                  className="w-6 h-6 text-green-600"
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M5 13l4 4L19 7" 
-                  />
-                </svg>
-                <span className="text-lg font-semibold text-green-700">已出席</span>
-              </div>
-              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
-            </div>
-            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
-            </div>
-          </div>
-        </div>
-        {queueNumber && (
-          <div className="mt-3 text-center">
-            <p className="text-xs text-gray-500">队列号 Queue Number</p>
-            <p className="text-sm text-gray-600">{queueNumber}</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-sm mx-auto mb-6">
-      <h6 className="text-lg font-semibold mb-2 text-center">二维码 QR Code</h6>
-      <div className={`relative aspect-square w-full ${isAttended ? 'opacity-40 grayscale' : ''} transition-all duration-300
-        ${isNewlyMarked ? 'animate-flash' : ''}`}>
-        <Image 
-          src={qrCode} 
-          alt="QR Code" 
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-contain"
-          priority // Add priority to ensure QR code loads quickly
-        />
-        {isAttended && (
-          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
-            ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
-            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <svg 
-                  className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M5 13l4 4L19 7" 
-                  />
-                </svg>
-                <span className="text-lg font-semibold text-green-700">已出席</span>
-              </div>
-              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
-            </div>
-            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
-            </div>
-          </div>
-        )}
-      </div>
-      {queueNumber && (
-        <div className="mt-3 text-center">
-          <p className="text-xs text-gray-500">队列号 Queue Number</p>
-          <p className="text-sm text-gray-600">{queueNumber}</p>
-        </div>
-      )}
+    <div className="w-full h-full flex items-center justify-center">
+      <QrCodeWithLogo 
+        qrCode={qrCode}
+        isAttended={isAttended}
+        isNewlyMarked={isNewlyMarked}
+        queueNumber={queueNumber}
+      />
     </div>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison function for React.memo
-  // Only re-render if these specific props change
-  return (
-    prevProps.qrCode === nextProps.qrCode &&
-    prevProps.isAttended === nextProps.isAttended &&
-    prevProps.isNewlyMarked === nextProps.isNewlyMarked &&
-    prevProps.queueNumber === nextProps.queueNumber
   );
 });
 
@@ -893,13 +790,22 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   {/* QR Code for this participant */}
                   {!group.cancelled && group.qrCode && (
                     <div className="p-4 flex justify-center">
-                      <div className="w-full max-w-[200px]">
-                        <QRCodeDisplay 
-                          qrCode={group.qrCode} 
-                          isAttended={!!group.attendance}
-                          isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                          queueNumber={group.queueNumber}
-                        />
+                      <div className="text-center mb-6 max-w-[250px]">
+                        <h6 className="text-lg font-semibold mb-3 text-center">二维码 QR Code</h6>
+                        <div className="flex justify-center w-[200px] h-[200px] mx-auto">
+                          <QRCodeDisplay 
+                            qrCode={group.qrCode} 
+                            isAttended={!!group.attendance}
+                            isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                            queueNumber={group.queueNumber}
+                          />
+                        </div>
+                        {group.queueNumber && (
+                          <div className="mt-3 text-center">
+                            <p className="text-xs text-gray-500">队列号 Queue Number</p>
+                            <p className="text-sm text-gray-600">{group.queueNumber}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

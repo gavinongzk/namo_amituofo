@@ -62,7 +62,14 @@ export async function createOrder(order: CreateOrderParams) {
       
       // Create QR code data with event ID, queue number, and phone number
       const qrCodeData = `${order.eventId}_${newQueueNumber}_${encodeURIComponent(phoneNumber)}`;
-      const qrCode = await QRCode.toDataURL(qrCodeData);
+      const qrCode = await QRCode.toDataURL(qrCodeData, {
+        errorCorrectionLevel: 'H', // Highest error correction level
+        margin: 2, // Smaller margin
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
       
       return {
         ...group,

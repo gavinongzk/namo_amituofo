@@ -22,6 +22,9 @@ import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
 import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
+import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
+import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
+import { createRegistrationFormSchema } from '@/lib/validator';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -149,32 +152,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   const customFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
 
-  const formSchema = z.object({
-    groups: z.array(
-      z.object(
-        Object.fromEntries(
-          customFields.map(field => [
-            field.id,
-            field.type === 'boolean'
-              ? z.boolean()
-              : field.type === 'phone'
-                ? z.string()
-                    .min(1, { message: "此栏位为必填 / This field is required" })
-                : field.type === 'postal'
-                  ? z.string()
-                  : field.label.toLowerCase().includes('name')
-                    ? z.string()
-                        .min(1, { message: "此栏位为必填 / This field is required" })
-                        .refine(
-                          (value) => isValidName(value),
-                          { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
-                        )
-                    : z.string().min(1, { message: "此栏位为必填 / This field is required" })
-          ])
-        )
-      )
-    )
-  });
+  const formSchema = createRegistrationFormSchema(customFields);
 
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
@@ -190,7 +168,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           field.id, 
           field.type === 'boolean' ? false : ''
         ])
-      ))
+      )),
+      pdpaConsent: false
     },
   });
 
@@ -796,58 +775,66 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
                     添加参加者 Add Participant
                   </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-base font-medium h-10 md:h-12 disabled:bg-blue-400"
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2Icon className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
-                        提交中... Submitting...
-                      </div>
-                    ) : (
-                      '呈交 Submit'
-                    )}
-                  </Button>
                 </div>
               </>
             )}
+
+            {/* Add PDPA consent checkbox before the submit button */}
+            <PdpaConsentCheckbox 
+              name="pdpaConsent"
+              disabled={isSubmitting}
+              className="mt-6"
+            />
+
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || isFullyBooked} 
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  处理中... / Processing...
+                </>
+              ) : isFullyBooked ? (
+                '名额已满 / Fully Booked'
+              ) : (
+                '提交 / Submit'
+              )}
+            </Button>
           </form>
         </Form>
       )}
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-3">
+          <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-gray-900">
               发现重复报名 / Duplicate Registration Found
             </DialogTitle>
-            <DialogDescription className="space-y-4">
-              <p className="text-gray-700 text-base">
+            <DialogDescription className="space-y-4 pt-4">
+              <p className="text-gray-700">
                 以下电话号码已报名：/ The following phone number/s is/are already registered:
               </p>
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {duplicatePhoneNumbers.map((duplicate, index) => (
-                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div className="flex flex-col gap-2">
-                      <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">名字 Name:</span>
-                        <span className="text-gray-800">{duplicate.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">队列号 Queue Number:</span>
-                        <span className="text-gray-800">{duplicate.queueNumber}</span>
+                  <div key={index} className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="p-4 space-y-3">
+                      <p className="text-red-600 font-medium text-base">{duplicate.phoneNumber}</p>
+                      <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm">
+                        <span className="text-gray-600 font-medium whitespace-nowrap">名字 Name:</span>
+                        <span className="text-gray-900">{duplicate.name}</span>
+                        <span className="text-gray-600 font-medium whitespace-nowrap">队列号 Queue Number:</span>
+                        <span className="text-gray-900">{duplicate.queueNumber}</span>
                       </div>
                       {duplicate.qrCode && (
-                        <div className="mt-2">
-                          <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
-                          <div className="w-24 h-24 relative mx-auto">
-                            <img 
-                              src={duplicate.qrCode} 
-                              alt="QR Code" 
-                              className="w-full h-full object-contain"
+                        <div className="pt-2">
+                          <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
+                          <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
+                            <QrCodeWithLogo
+                              qrCode={duplicate.qrCode}
+                              isAttended={false}
+                              queueNumber={duplicate.queueNumber}
                             />
                           </div>
                         </div>
@@ -856,20 +843,18 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
               </div>
-              <p className="text-gray-700 text-base pt-2">
+              <p className="text-gray-700 pt-2">
                 您是否仍要继续？/ Do you still want to proceed?
               </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sticky bottom-0 bg-white pt-2 pb-1">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button
               variant="outline"
               onClick={() => {
                 setShowConfirmation(false);
-                // Get the first duplicate phone number to use for redirection
                 if (duplicatePhoneNumbers.length > 0) {
                   const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
-                  // Redirect to event-lookup with the phone number as a query parameter
                   router.push(`/event-lookup?phone=${phoneNumber}`);
                 }
               }}

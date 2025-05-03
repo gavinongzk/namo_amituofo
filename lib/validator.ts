@@ -26,3 +26,42 @@ export const eventFormSchema = z.object({
   })),
   country: z.string(),
 })
+
+// Helper function to create dynamic field validation
+const createFieldValidation = (field: { type: string, label: string }) => {
+  if (field.type === 'boolean') {
+    return z.boolean();
+  } else if (field.type === 'phone') {
+    return z.string().min(1, { message: "此栏位为必填 / This field is required" });
+  } else if (field.type === 'postal') {
+    return z.string(); // Postal code validation is handled separately
+  } else if (field.label.toLowerCase().includes('name')) {
+    return z.string()
+      .min(1, { message: "此栏位为必填 / This field is required" })
+      .refine(
+        (value) => /^[\p{L}\p{N}\s\-.'()\[\]{}]+$/u.test(value),
+        { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
+      );
+  } else {
+    return z.string().min(1, { message: "此栏位为必填 / This field is required" });
+  }
+};
+
+// Function to create the registration form schema
+export const createRegistrationFormSchema = (customFields: Array<{ id: string, type: string, label: string }>) => {
+  const groupSchema = z.object(
+    Object.fromEntries(
+      customFields.map(field => [
+        field.id,
+        createFieldValidation(field)
+      ])
+    )
+  );
+
+  return z.object({
+    groups: z.array(groupSchema),
+    pdpaConsent: z.boolean().refine(val => val === true, {
+      message: '请阅读并同意隐私政策 / Please read and agree to the Privacy Policy'
+    })
+  });
+};
