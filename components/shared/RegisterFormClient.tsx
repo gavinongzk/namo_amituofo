@@ -831,10 +831,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                         <div className="pt-2">
                           <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
                           <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
-                            <img 
-                              src={duplicate.qrCode} 
-                              alt="QR Code" 
-                              className="max-w-full max-h-full object-contain"
+                            <QrCodeWithLogo
+                              qrCode={duplicate.qrCode}
+                              isAttended={false}
+                              queueNumber={duplicate.queueNumber}
                             />
                           </div>
                         </div>

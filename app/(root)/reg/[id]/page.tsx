@@ -785,14 +785,23 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                   {/* QR Code for this participant */}
                   {!group.cancelled && group.qrCode && (
-                    <div className="p-4 flex justify-center">
-                      <div className="w-full max-w-[200px]">
-                        <QRCodeDisplay 
-                          qrCode={group.qrCode} 
-                          isAttended={!!group.attendance}
-                          isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                          queueNumber={group.queueNumber}
-                        />
+                    <div className="p-4">
+                      <div className="w-full max-w-sm mx-auto mb-6">
+                        <h6 className="text-lg font-semibold mb-3 text-center">二维码 QR Code</h6>
+                        <div className="w-full max-w-[200px] mx-auto">
+                          <QRCodeDisplay 
+                            qrCode={group.qrCode} 
+                            isAttended={!!group.attendance}
+                            isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                            queueNumber={group.queueNumber}
+                          />
+                        </div>
+                        {group.queueNumber && (
+                          <div className="mt-3 text-center">
+                            <p className="text-xs text-gray-500">队列号 Queue Number</p>
+                            <p className="text-sm text-gray-600">{group.queueNumber}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
