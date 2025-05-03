@@ -808,31 +808,29 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-3">
+          <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-gray-900">
               发现重复报名 / Duplicate Registration Found
             </DialogTitle>
-            <DialogDescription className="space-y-4">
-              <p className="text-gray-700 text-base">
+            <DialogDescription className="space-y-4 pt-4">
+              <p className="text-gray-700">
                 以下电话号码已报名：/ The following phone number/s is/are already registered:
               </p>
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {duplicatePhoneNumbers.map((duplicate, index) => (
-                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div className="flex flex-col gap-2">
-                      <p className="text-red-600 font-medium">{duplicate.phoneNumber}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">名字 Name:</span>
-                        <span className="text-gray-800">{duplicate.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-semibold">队列号 Queue Number:</span>
-                        <span className="text-gray-800">{duplicate.queueNumber}</span>
+                  <div key={index} className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="p-4 space-y-3">
+                      <p className="text-red-600 font-medium text-base">{duplicate.phoneNumber}</p>
+                      <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm">
+                        <span className="text-gray-600 font-medium whitespace-nowrap">名字 Name:</span>
+                        <span className="text-gray-900">{duplicate.name}</span>
+                        <span className="text-gray-600 font-medium whitespace-nowrap">队列号 Queue Number:</span>
+                        <span className="text-gray-900">{duplicate.queueNumber}</span>
                       </div>
                       {duplicate.qrCode && (
-                        <div className="mt-2">
-                          <p className="text-gray-700 font-semibold mb-1">二维码 QR Code:</p>
-                          <div className="w-24 h-24 relative mx-auto">
+                        <div className="pt-2">
+                          <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
+                          <div className="w-32 h-32 mx-auto bg-white p-2 rounded-lg border border-gray-200">
                             <QrCodeWithLogo 
                               qrCode={duplicate.qrCode} 
                               isAttended={false}
@@ -844,20 +842,18 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   </div>
                 ))}
               </div>
-              <p className="text-gray-700 text-base pt-2">
+              <p className="text-gray-700 pt-2">
                 您是否仍要继续？/ Do you still want to proceed?
               </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sticky bottom-0 bg-white pt-2 pb-1">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button
               variant="outline"
               onClick={() => {
                 setShowConfirmation(false);
-                // Get the first duplicate phone number to use for redirection
                 if (duplicatePhoneNumbers.length > 0) {
                   const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
-                  // Redirect to event-lookup with the phone number as a query parameter
                   router.push(`/event-lookup?phone=${phoneNumber}`);
                 }
               }}
