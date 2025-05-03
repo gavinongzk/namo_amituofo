@@ -23,6 +23,8 @@ import { debounce } from 'lodash';
 import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
+import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
+import { createRegistrationFormSchema } from '@/lib/validator';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -150,32 +152,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   const customFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
 
-  const formSchema = z.object({
-    groups: z.array(
-      z.object(
-        Object.fromEntries(
-          customFields.map(field => [
-            field.id,
-            field.type === 'boolean'
-              ? z.boolean()
-              : field.type === 'phone'
-                ? z.string()
-                    .min(1, { message: "此栏位为必填 / This field is required" })
-                : field.type === 'postal'
-                  ? z.string()
-                  : field.label.toLowerCase().includes('name')
-                    ? z.string()
-                        .min(1, { message: "此栏位为必填 / This field is required" })
-                        .refine(
-                          (value) => isValidName(value),
-                          { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
-                        )
-                    : z.string().min(1, { message: "此栏位为必填 / This field is required" })
-          ])
-        )
-      )
-    )
-  });
+  const formSchema = createRegistrationFormSchema(customFields);
 
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
@@ -191,7 +168,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           field.id, 
           field.type === 'boolean' ? false : ''
         ])
-      ))
+      )),
+      pdpaConsent: false
     },
   });
 
@@ -797,23 +775,33 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
                     添加参加者 Add Participant
                   </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-base font-medium h-10 md:h-12 disabled:bg-blue-400"
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2Icon className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
-                        提交中... Submitting...
-                      </div>
-                    ) : (
-                      '呈交 Submit'
-                    )}
-                  </Button>
                 </div>
               </>
             )}
+
+            {/* Add PDPA consent checkbox before the submit button */}
+            <PdpaConsentCheckbox 
+              name="pdpaConsent"
+              disabled={isSubmitting}
+              className="mt-6"
+            />
+
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || isFullyBooked} 
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  处理中... / Processing...
+                </>
+              ) : isFullyBooked ? (
+                '名额已满 / Fully Booked'
+              ) : (
+                '提交 / Submit'
+              )}
+            </Button>
           </form>
         </Form>
       )}
