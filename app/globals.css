@@ -403,9 +403,10 @@ input[type=checkbox] {
 .phone-input-container .PhoneInputInput {
   border: none;
   padding: 0.5rem;
-  font-size: 1.125rem;
+  font-size: 1.125rem !important; /* Force font size to prevent zoom */
   width: 100%;
   outline: none;
+  -webkit-text-size-adjust: none; /* Prevent iOS text size adjustment */
 }
 
 .phone-input-container .PhoneInputCountry {
@@ -413,20 +414,57 @@ input[type=checkbox] {
   padding: 0.25rem;
 }
 
-/* Prevent auto-zoom on iOS */
+/* Prevent auto-zoom on iOS and other mobile devices */
 @media screen and (max-width: 768px) {
   input[type="text"],
   input[type="number"],
   input[type="email"],
   input[type="tel"],
   input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="url"],
   select,
-  textarea {
+  textarea,
+  .phone-input-container input,
+  input.PhoneInputInput,
+  .select-field,
+  .input-field {
+    font-size: 16px !important;
+    max-height: none !important;
+    transform: none !important;
+  }
+
+  /* Ensure input wrappers don't zoom */
+  .PhoneInput,
+  .select-container,
+  .input-container,
+  form div {
     font-size: 16px !important;
   }
 
-  .phone-input-container input {
+  /* Reset zoom on focus */
+  input:focus,
+  select:focus,
+  textarea:focus {
     font-size: 16px !important;
+    transform: none !important;
+  }
+
+  /* Specific iOS fixes */
+  @supports (-webkit-touch-callout: none) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    
+    /* Fix for iOS Safari specific zoom issues */
+    input[type="date"],
+    input[type="time"] {
+      min-height: 36px;
+      line-height: 1;
+    }
   }
 }
 
