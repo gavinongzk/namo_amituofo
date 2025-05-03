@@ -37,22 +37,37 @@ export function PdpaConsentCheckbox({ name, disabled, className }: PdpaConsentCh
             />
           </FormControl>
           <div className="space-y-1 leading-none">
-            <FormLabel className="text-sm font-normal text-gray-700 cursor-pointer">
-              <span className="block md:inline">我已阅读并同意本站的</span>
-              <span className="hidden md:inline"> / </span>
-              <span className="block md:inline">I have read and agree to the site's</span>{' '}
-              <Link
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 underline font-medium"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                aria-label="Read Privacy Policy"
-              >
-                隐私政策 / Privacy Policy
-              </Link>
+            <FormLabel className="text-sm font-normal text-gray-700 cursor-pointer flex flex-col gap-1">
+              <div>
+                <span>我已阅读并同意本站的</span>
+                <Link
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 underline font-medium ml-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  aria-label="阅读隐私政策"
+                >
+                  隐私政策
+                </Link>
+              </div>
+              <div>
+                <span>I have read and agree to the site's</span>
+                <Link
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 underline font-medium ml-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  aria-label="Read Privacy Policy"
+                >
+                  Privacy Policy
+                </Link>
+              </div>
             </FormLabel>
             <FormMessage />
           </div>
