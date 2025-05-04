@@ -50,19 +50,12 @@ export async function createOrder(order: CreateOrderParams) {
       lastQueueNumber = Math.max(...allQueueNumbers);
     }
 
-    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
-      const newQueueNumber = `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
+    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index): Promise<CustomFieldGroup> => {
+      const newQueueNumber: string = `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
       
-      // Find phone number from fields
-      const phoneField = group.fields.find(field => 
-        field.label.toLowerCase().includes('phone') || 
-        field.type === 'phone'
-      );
-      const phoneNumber = phoneField?.value || '';
-      
-      // Create QR code data with event ID, queue number, and phone number
-      const qrCodeData = `${order.eventId}_${newQueueNumber}_${encodeURIComponent(phoneNumber)}`;
-      const qrCode = await QRCode.toDataURL(qrCodeData, {
+      // Create QR code data with order ID and group ID
+      const qrCodeData: string = `${newOrder._id}_${group.groupId}`;
+      const qrCode: string = await QRCode.toDataURL(qrCodeData, {
         errorCorrectionLevel: 'H', // Highest error correction level
         margin: 2, // Smaller margin
         color: {

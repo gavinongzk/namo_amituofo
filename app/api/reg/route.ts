@@ -5,38 +5,46 @@ import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumberIncludingCancelled } f
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const phoneNumber = searchParams.get('phoneNumber');
+    const orderId = searchParams.get('orderId');
+    const groupId = searchParams.get('groupId');
+    const includeAllRegistrations = searchParams.get('includeAllRegistrations') === 'true';
+
     await connectToDatabase();
 
-    const phoneNumber = req.nextUrl.searchParams.get('phoneNumber');
-    const includeAllRegistrations = req.nextUrl.searchParams.get('includeAllRegistrations') === 'true';
+    let query: any = {};
 
-    if (!phoneNumber) {
-      return NextResponse.json({ message: 'Phone number is required' }, { status: 400 });
-    }
-
-    // If viewing details page, include cancelled registrations
-    if (includeAllRegistrations) {
-      const formattedOrders = await getAllOrdersByPhoneNumberIncludingCancelled(phoneNumber);
-      
-      // Set cache control headers to prevent caching
-      const response = NextResponse.json(formattedOrders);
-      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      return response;
+    if (phoneNumber) {
+      // Search by phone number
+      query['customFieldValues.fields'] = {
+        $elemMatch: {
+          type: 'phone',
+          value: phoneNumber
+        }
+      };
+    } else if (orderId && groupId) {
+      // Search by order ID and group ID
+      query = {
+        _id: orderId,
+        'customFieldValues.groupId': groupId
+      };
     } else {
-      // For normal lookup, filter out cancelled registrations
-      const formattedOrders = await getOrdersByPhoneNumber(phoneNumber);
-      
-      // Set cache control headers to prevent caching
-      const response = NextResponse.json(formattedOrders);
-      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      return response;
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
+
+    if (!includeAllRegistrations) {
+      query['customFieldValues.cancelled'] = { $ne: true };
+    }
+
+    const orders = await Order.find(query)
+      .populate('event')
+      .populate('buyer')
+      .lean();
+
+    return NextResponse.json(orders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    console.error('Error in registration lookup:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

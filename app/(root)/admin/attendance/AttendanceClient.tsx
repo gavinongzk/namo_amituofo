@@ -692,9 +692,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
-    // Extract queue number and phone number from QR code
-    const [eventId, queueNumber, encodedPhone] = decodedText.split('_');
-    if (!eventId || !queueNumber || !encodedPhone) {
+    // Extract order ID and group ID from QR code
+    const [orderId, groupId] = decodedText.split('_');
+    if (!orderId || !groupId) {
       showModalWithMessage(
         'Error / 错误',
         'Invalid QR code format for this event\n此活动的二维码格式无效',
@@ -702,30 +702,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       );
       return;
     }
-
-    const phoneNumber = decodeURIComponent(encodedPhone);
     
-    // Find registration by event ID, queue number, and phone number
+    // Find registration by order ID and group ID
     const registration = registrations.find(r => 
-      r.order.customFieldValues.some(group => {
-        const hasMatchingQueue = group.queueNumber === queueNumber;
-        const phoneField = group.fields.find(field => 
-          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
-          field.value === phoneNumber
-        );
-        return hasMatchingQueue && phoneField;
-      })
+      r.order._id === orderId && 
+      r.order.customFieldValues.some(group => group.groupId === groupId)
     );
 
     if (registration) {
-      const group = registration.order.customFieldValues.find(group => {
-        const hasMatchingQueue = group.queueNumber === queueNumber;
-        const phoneField = group.fields.find(field => 
-          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
-          field.value === phoneNumber
-        );
-        return hasMatchingQueue && phoneField;
-      });
+      const group = registration.order.customFieldValues.find(group => group.groupId === groupId);
 
       if (group) {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
@@ -737,40 +722,40 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           new Audio('/assets/sounds/success-beep.mp3').play().catch(e => console.error('Error playing audio:', e));
           
           // Add to beep history to prevent future beeps for this QR code
-          beepHistory.add(queueNumber);
+          beepHistory.add(groupId);
           
           handleMarkAttendance(registration.id, group.groupId, true);
           showModalWithMessage(
             'Success / 成功',
-            `Marked attendance for: ${name} (${queueNumber})\n为 ${name} (${queueNumber}) 标记出席`,
+            `Marked attendance for: ${name} (${group.queueNumber})\n为 ${name} (${group.queueNumber}) 标记出席`,
             'success'
           );
         
           setRecentScans(prev => {
-            const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
-            return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+            const filtered = prev.filter(scan => scan.queueNumber !== group.queueNumber);
+            return [{ queueNumber: group.queueNumber, name }, ...filtered.slice(0, 4)];
           });
         } else {
           // No beep for already marked attendance
           showModalWithMessage(
             'Already Marked / 已标记',
-            `Attendance already marked for: ${name} (${queueNumber})\n${name} (${queueNumber}) 的出席已经被标记`,
+            `Attendance already marked for: ${name} (${group.queueNumber})\n${name} (${group.queueNumber}) 的出席已经被标记`,
             'error'
           );
           setRecentScans(prev => {
-            const filtered = prev.filter(scan => scan.queueNumber !== queueNumber);
-            return [{ queueNumber, name }, ...filtered.slice(0, 4)];
+            const filtered = prev.filter(scan => scan.queueNumber !== group.queueNumber);
+            return [{ queueNumber: group.queueNumber, name }, ...filtered.slice(0, 4)];
           });
         }
       }
     } else {
       showModalWithMessage(
         'Error / 错误',
-        `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
+        'Registration not found for this QR code\n找不到此二维码的报名记录',
         'error'
       );
     }
-  }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
+  }, [registrations, handleMarkAttendance, showModalWithMessage]);
 
   const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
     const remark = remarks[registrationId]; // Get the remark for the specific registrationId
