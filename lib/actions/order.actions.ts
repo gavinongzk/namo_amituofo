@@ -50,14 +50,24 @@ export async function createOrder(order: CreateOrderParams) {
       lastQueueNumber = Math.max(...allQueueNumbers);
     }
 
-    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index): Promise<CustomFieldGroup> => {
-      const newQueueNumber: string = `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
-      
-      // Create QR code data with order ID and group ID
+    // First create the order
+    const newOrder = await Order.create({
+      ...order,
+      event: new ObjectId(order.eventId),
+      customFieldValues: order.customFieldValues.map((group, index) => ({
+        ...group,
+        queueNumber: `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`,
+        cancelled: false,
+        __v: 0,
+      })),
+    });
+
+    // Then update with QR codes after we have the order ID
+    const updatedCustomFieldValues = await Promise.all(newOrder.customFieldValues.map(async (group: any, index: number): Promise<CustomFieldGroup> => {
       const qrCodeData: string = `${newOrder._id}_${group.groupId}`;
       const qrCode: string = await QRCode.toDataURL(qrCodeData, {
-        errorCorrectionLevel: 'H', // Highest error correction level
-        margin: 2, // Smaller margin
+        errorCorrectionLevel: 'H',
+        margin: 2,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
@@ -66,20 +76,15 @@ export async function createOrder(order: CreateOrderParams) {
       
       return {
         ...group,
-        queueNumber: newQueueNumber,
         qrCode: qrCode,
-        cancelled: false,
-        __v: 0,
       };
     }));
 
-    const newOrder = await Order.create({
-      ...order,
-      event: new ObjectId(order.eventId),
-      customFieldValues: newCustomFieldValues,
-    });
+    // Update the order with QR codes
+    newOrder.customFieldValues = updatedCustomFieldValues;
+    const finalOrder = await newOrder.save();
 
-    return JSON.parse(JSON.stringify(newOrder));
+    return JSON.parse(JSON.stringify(finalOrder));
   } catch (error) {
     console.error('Error creating order:', error);
     throw error;
