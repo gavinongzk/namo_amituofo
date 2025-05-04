@@ -14,6 +14,7 @@ import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
 import { cn, prepareRegistrationIdentifiers } from "@/lib/utils";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
+import crypto from 'crypto';
 
 type EventRegistration = {
   id: string;
@@ -692,9 +693,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
     lastScanTime.current = now;
 
-    // Extract queue number and phone number from QR code
-    const [eventId, queueNumber, encodedPhone] = decodedText.split('_');
-    if (!eventId || !queueNumber || !encodedPhone) {
+    // Extract event ID, queue number and registration hash from QR code
+    const [eventId, queueNumber, registrationHash] = decodedText.split('_');
+    if (!eventId || !queueNumber || !registrationHash) {
       showModalWithMessage(
         'Error / 错误',
         'Invalid QR code format for this event\n此活动的二维码格式无效',
@@ -702,29 +703,51 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       );
       return;
     }
-
-    const phoneNumber = decodeURIComponent(encodedPhone);
     
-    // Find registration by event ID, queue number, and phone number
+    // Find registration by event ID and queue number
     const registration = registrations.find(r => 
       r.order.customFieldValues.some(group => {
         const hasMatchingQueue = group.queueNumber === queueNumber;
+        if (!hasMatchingQueue) return false;
+
+        // Find phone number from fields
         const phoneField = group.fields.find(field => 
-          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
-          field.value === phoneNumber
+          field.label.toLowerCase().includes('phone') || 
+          field.type === 'phone'
         );
-        return hasMatchingQueue && phoneField;
+        const phoneNumber = phoneField?.value || '';
+
+        // Verify the registration hash
+        const computedHash = crypto
+          .createHash('sha256')
+          .update(`${phoneNumber}_${queueNumber}_${eventId}`)
+          .digest('hex')
+          .slice(0, 16);
+
+        return computedHash === registrationHash;
       })
     );
 
     if (registration) {
       const group = registration.order.customFieldValues.find(group => {
         const hasMatchingQueue = group.queueNumber === queueNumber;
+        if (!hasMatchingQueue) return false;
+
+        // Find phone number from fields
         const phoneField = group.fields.find(field => 
-          (field.label.toLowerCase().includes('phone') || field.type === 'phone') && 
-          field.value === phoneNumber
+          field.label.toLowerCase().includes('phone') || 
+          field.type === 'phone'
         );
-        return hasMatchingQueue && phoneField;
+        const phoneNumber = phoneField?.value || '';
+
+        // Verify the registration hash
+        const computedHash = crypto
+          .createHash('sha256')
+          .update(`${phoneNumber}_${queueNumber}_${eventId}`)
+          .digest('hex')
+          .slice(0, 16);
+
+        return computedHash === registrationHash;
       });
 
       if (group) {
