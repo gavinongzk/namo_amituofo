@@ -11,6 +11,7 @@ import { IOrder, IOrderItem } from '../database/models/order.model';
 import QRCode from 'qrcode';
 import { CustomFieldGroup } from '@/types'
 import { unstable_cache } from 'next/cache'
+import crypto from 'crypto';
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -60,8 +61,15 @@ export async function createOrder(order: CreateOrderParams) {
       );
       const phoneNumber = phoneField?.value || '';
       
-      // Create QR code data with event ID, queue number, and phone number
-      const qrCodeData = `${order.eventId}_${newQueueNumber}_${encodeURIComponent(phoneNumber)}`;
+      // Create a unique hash for this registration using phone number and queue number
+      const registrationHash = crypto
+        .createHash('sha256')
+        .update(`${phoneNumber}_${newQueueNumber}_${order.eventId}`)
+        .digest('hex')
+        .slice(0, 16); // Take first 16 characters of hash for shorter QR code
+      
+      // Create QR code data with event ID, queue number, and registration hash
+      const qrCodeData = `${order.eventId}_${newQueueNumber}_${registrationHash}`;
       const qrCode = await QRCode.toDataURL(qrCodeData, {
         errorCorrectionLevel: 'H', // Highest error correction level
         margin: 2, // Smaller margin
