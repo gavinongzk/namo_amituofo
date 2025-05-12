@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">1. 简介</h2>
             <p>
-              南无阿弥陀佛（“我们”）致力于保护您的个人数据。本政策概述了我们如何根据新加坡2012年《个人数据保护法》（PDPA）收集、使用和保护您的信息。
+            净土宗弥陀寺(新加坡)（“我们”）致力于保护您的个人数据。本政策概述了我们如何根据新加坡2012年《个人数据保护法》（PDPA）收集、使用和保护您的信息。
             </p>
           </section>
 
@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-3">2. 我们收集的数据</h2>
             <p>我们可能收集您的：</p>
             <ul className="list-disc pl-6 mt-2">
-              <li>姓名和联系方式（如电邮、电话号码）。</li>
+              <li>姓名和联系方式（如电话号码， 邮区编号）。</li>
               <li>活动报名信息。</li>
               <li>您提供的任何其他信息（如咨询或反馈）。</li>
               <li>技术和使用数据（如IP地址、浏览活动）。</li>
@@ -35,10 +35,10 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-3">3. 为何收集您的数据</h2>
             <p>我们使用您的数据以便：</p>
             <ul className="list-disc pl-6 mt-2">
-              <li>提供和管理我们的服务及活动。</li>
-              <li>与您沟通，回应您的请求。</li>
-              <li>改进我们的服务。</li>
-              <li>遵守法律义务。</li>
+              <li>提供和管理我们的服务及活动</li>
+              <li>与您沟通，回应您的请求</li>
+              <li>改进我们的服务</li>
+              <li>遵守法律义务</li>
             </ul>
           </section>
 
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">1. Introduction</h2>
             <p>
-              Namo Amituofo ("we", "us") is committed to protecting your personal data. This policy outlines how we collect, use, and safeguard your information in accordance with Singapore's Personal Data Protection Act 2012 (PDPA).
+              Namo Amituofo Organization Ltd. ("we", "us") is committed to protecting your personal data. This policy outlines how we collect, use, and safeguard your information in accordance with Singapore's Personal Data Protection Act 2012 (PDPA).
             </p>
           </section>
 
@@ -118,7 +118,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-3">2. Data We Collect</h2>
             <p>We may collect your:</p>
             <ul className="list-disc pl-6 mt-2">
-              <li>Name and contact details (e.g., email, phone number).</li>
+              <li>Name and contact details (e.g., phone number, postal code).</li>
               <li>Event registration information.</li>
               <li>Any other information you provide (e.g., inquiries or feedback).</li>
               <li>Technical and usage data (e.g., IP address, browsing activity).</li>
