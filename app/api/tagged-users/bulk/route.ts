@@ -21,37 +21,58 @@ export async function POST(req: Request) {
       remarks: ''
     } as TaggedUserInput));
 
-    // Validate phone numbers
-    const invalidNumbers = formattedUsers.filter(
-      (user: { phoneNumber: string; name: string; remarks: string }) => !isValidPhoneNumber(user.phoneNumber)
-    );
+    // Validate phone numbers and separate valid/invalid users
+    const validUsers: TaggedUserInput[] = [];
+    const invalidNumbers: TaggedUserInput[] = [];
 
-    if (invalidNumbers.length > 0) {
-      return NextResponse.json({
-        error: 'Invalid phone numbers found',
-        invalidNumbers
-      }, { status: 400 });
+    formattedUsers.forEach((user: TaggedUserInput) => {
+      if (isValidPhoneNumber(user.phoneNumber)) {
+        validUsers.push(user);
+      } else {
+        invalidNumbers.push(user);
+      }
+    });
+
+    let processedCount = 0;
+    if (validUsers.length > 0) {
+      // Use bulkWrite for better performance with valid users
+      const bulkWriteResult = await TaggedUser.bulkWrite(
+        validUsers.map((user: TaggedUserInput) => ({
+          updateOne: {
+            filter: { phoneNumber: user.phoneNumber },
+            update: {
+              $setOnInsert: {
+                ...user,
+                createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // Set date to 30 days ago
+                updatedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
+              }
+            },
+            upsert: true
+          }
+        }))
+      );
+      processedCount = bulkWriteResult.upsertedCount + bulkWriteResult.modifiedCount;
     }
 
-    // Use bulkWrite for better performance
-    await TaggedUser.bulkWrite(
-      formattedUsers.map((user: { phoneNumber: string; name: string; remarks: string }) => ({
-        updateOne: {
-          filter: { phoneNumber: user.phoneNumber },
-          update: { 
-            $setOnInsert: {
-              ...user,
-              createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // Set date to 30 days ago
-              updatedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
-            }
-          },
-          upsert: true
-        }
-      }))
-    );
+    if (invalidNumbers.length > 0) {
+      if (processedCount > 0) {
+        // Some users processed, some failed
+        return NextResponse.json({
+          message: `Successfully processed ${processedCount} users.`,
+          error: 'Some phone numbers were invalid.',
+          invalidNumbers
+        }, { status: 207 }); // Multi-Status
+      } else {
+        // All users had invalid numbers
+        return NextResponse.json({
+          error: 'All phone numbers provided were invalid.',
+          invalidNumbers
+        }, { status: 400 });
+      }
+    }
 
-    return NextResponse.json({ 
-      message: `Successfully processed ${formattedUsers.length} users`
+    return NextResponse.json({
+      message: `Successfully processed ${processedCount} users.`
     });
   } catch (error) {
     console.error('Error processing bulk upload:', error);

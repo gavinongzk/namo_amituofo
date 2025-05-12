@@ -24,12 +24,12 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">2. 我们收集的个人数据</h2>
             <p>我们可能收集以下类型的个人数据：</p>
             <ul className="list-disc pl-6">
-              <li>姓名和联系信息（电子邮件地址、电话号码）</li>
-              <li>您的账户资料信息</li>
-              <li>活动报名详情</li>
-              <li>您联系我们时提供的信息</li>
-              <li>技术数据（IP地址、浏览器类型、设备信息）</li>
-              <li>关于您如何使用我们服务的使用数据</li>
+              <li>姓名和联系信息（例如：电子邮件地址、电话号码、邮寄地址）</li>
+              <li>活动报名详情（例如：所选活动、参与者信息）</li>
+              <li>您通过我们服务上传或提供的内容（例如：通过文件上传功能提交的文档或图片）</li>
+              <li>您联系我们时提供的信息（例如：咨询、反馈）</li>
+              <li>技术数据（例如：IP地址、浏览器类型、操作系统、设备信息、访问时间）</li>
+              <li>关于您如何使用我们服务的使用数据（例如：浏览页面、点击链接、搜索查询、用户标签或分类信息）</li>
             </ul>
           </section>
 
@@ -37,9 +37,14 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">3. 我们如何收集个人数据</h2>
             <p>我们通过以下方式收集个人数据：</p>
             <ul className="list-disc pl-6">
-              <li>当您创建账户或注册活动时的直接互动</li>
-              <li>自动化技术或互动（cookies和类似技术）</li>
-              <li>第三方或公开可用的来源</li>
+              <li>当您注册活动或与我们服务互动时的直接互动。</li>
+              <li>自动化技术或互动，例如cookies、日志文件和分析工具，用于收集技术和使用数据。</li>
+              <li>第三方服务提供商，例如：
+                <ul className="list-circle pl-6">
+                  <li>用于文件上传服务的Uploadthing。</li>
+                </ul>
+              </li>
+              <li>来自公开可用的来源（在适用法律允许的情况下）。</li>
             </ul>
           </section>
 
@@ -47,12 +52,15 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">4. 收集、使用和披露的目的</h2>
             <p>我们收集、使用和披露您的个人数据用于以下目的：</p>
             <ul className="list-disc pl-6">
-              <li>提供和维护我们的服务</li>
-              <li>处理和管理活动报名</li>
-              <li>就我们的服务与您沟通</li>
-              <li>改进我们的服务和用户体验</li>
-              <li>遵守法律义务</li>
-              <li>检测和防止欺诈或滥用</li>
+              <li>提供、运营和维护我们的网站和服务，包括活动注册。</li>
+              <li>处理和管理活动报名和相关通讯。</li>
+              <li>通过电子邮件或其他方式就我们的服务、活动、更新和促销信息与您沟通（在您同意的情况下）。</li>
+              <li>个性化和改进我们的服务和用户体验，包括基于用户标签或偏好的内容。</li>
+              <li>处理您的咨询、反馈和请求。</li>
+              <li>分析使用趋势和模式，以改进我们的服务、开发新功能并进行业务分析。</li>
+              <li>遵守法律和监管义务。</li>
+              <li>检测、预防和解决欺诈、安全漏洞或技术问题。</li>
+              <li>向协助我们运营的第三方服务提供商（如Uploadthing）披露必要信息，以提供服务。</li>
             </ul>
           </section>
 
@@ -114,8 +122,8 @@ export default function PrivacyPolicy() {
               如果您对您的个人数据或本隐私政策有任何疑问、疑虑或请求，请联系我们的数据保护官：
             </p>
             <p>
-              电子邮件：namoamituofo@gmail.com<br />
-              地址：288 Boon Lay Way, Singapore 649565
+              电子邮件：namo.amituofo.org@gmail.com<br />
+              地址：No. 27, Lor 27, Geylang, Singapore 388163
             </p>
           </section>
 
@@ -128,7 +136,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <div className="text-sm text-gray-600 mt-8">
-              <p>最后更新日期：2025年4月29日</p>
+              <p>最后更新日期：2025年5月12日</p>
             </div>
           </section>
         </div>
@@ -153,12 +161,12 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">2. Personal Data We Collect</h2>
             <p>We may collect the following types of personal data:</p>
             <ul className="list-disc pl-6">
-              <li>Name and contact information (email address, phone number)</li>
-              <li>Profile information for your account</li>
-              <li>Event registration details</li>
-              <li>Information you provide when contacting us</li>
-              <li>Technical data (IP address, browser type, device information)</li>
-              <li>Usage data about how you interact with our services</li>
+              <li>Name and contact information (e.g., email address, phone number, mailing address).</li>
+              <li>Event registration details (e.g., selected events, attendee information).</li>
+              <li>Content you upload or provide through our services (e.g., documents or images submitted via file upload features).</li>
+              <li>Information you provide when contacting us (e.g., inquiries, feedback).</li>
+              <li>Technical data (e.g., IP address, browser type, operating system, device information, access times).</li>
+              <li>Usage data about how you interact with our services (e.g., pages visited, links clicked, search queries, user tags or categorizations).</li>
             </ul>
           </section>
 
@@ -166,9 +174,14 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">3. How We Collect Personal Data</h2>
             <p>We collect personal data through:</p>
             <ul className="list-disc pl-6">
-              <li>Direct interactions when you create an account or register for events</li>
-              <li>Automated technologies or interactions (cookies and similar technologies)</li>
-              <li>Third parties or publicly available sources</li>
+              <li>Direct interactions when you register for events, or otherwise interact with our services.</li>
+              <li>Automated technologies or interactions, such as cookies, log files, and analytics tools that collect technical and usage data.</li>
+              <li>Third-party service providers, such as:
+                <ul className="list-circle pl-6">
+                  <li>Uploadthing for file upload services.</li>
+                </ul>
+              </li>
+              <li>From publicly available sources (where permitted by applicable law).</li>
             </ul>
           </section>
 
@@ -176,12 +189,15 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold mb-4">4. Purpose of Collection, Use and Disclosure</h2>
             <p>We collect, use and disclose your personal data for the following purposes:</p>
             <ul className="list-disc pl-6">
-              <li>To provide and maintain our services</li>
-              <li>To process and manage event registrations</li>
-              <li>To communicate with you about our services</li>
-              <li>To improve our services and user experience</li>
-              <li>To comply with legal obligations</li>
-              <li>To detect and prevent fraud or abuse</li>
+              <li>To provide, operate, and maintain our website and services, including event registration.</li>
+              <li>To process and manage event registrations and related communications.</li>
+              <li>To communicate with you about our services, events, updates, and promotional offers (where you have consented).</li>
+              <li>To personalize and improve our services and your user experience, including content based on user tags or preferences.</li>
+              <li>To respond to your inquiries, feedback, and requests.</li>
+              <li>To analyze usage trends and patterns to improve our services, develop new features, and for business analytics.</li>
+              <li>To comply with legal and regulatory obligations.</li>
+              <li>To detect, prevent, and address fraud, security breaches, or technical issues.</li>
+              <li>To disclose necessary information to third-party service providers (such as Uploadthing) who assist us in our operations and service delivery.</li>
             </ul>
           </section>
 
@@ -243,8 +259,8 @@ export default function PrivacyPolicy() {
               If you have any questions, concerns, or requests regarding your personal data or this Privacy Policy, please contact our Data Protection Officer at:
             </p>
             <p>
-              Email: namoamituofo@gmail.com<br />
-              Address: 288 Boon Lay Way, Singapore 649565
+              Email: namo.amituofo.org@gmail.com<br />
+              Address: No. 27, Lor 27, Geylang, Singapore 388163
             </p>
           </section>
 
@@ -257,7 +273,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <div className="text-sm text-gray-600 mt-8">
-              <p>Last updated: April 29, 2025</p>
+              <p>Last updated: May 12, 2025</p>
             </div>
           </section>
         </div>
