@@ -203,21 +203,51 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       let hasChanges = false;
 
       // Update attendance state from localStorage
-      setOrder(prevOrder => {
-        if (!prevOrder) return null;
+      let orderChanged = false;
+      const updatedOrderCustomFields = order.customFieldValues.map(group => {
+        const currentAttendance = group.attendance;
+        const newAttendance = group.queueNumber ? attendanceState[group.queueNumber] ?? currentAttendance : currentAttendance;
+        if (newAttendance !== currentAttendance) {
+          orderChanged = true;
+          // If this is a newly marked attendance, add to newly marked groups
+          if (newAttendance && !currentAttendance && !processedAttendances.current.has(group.groupId)) {
+            playSuccessSound();
+            setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
+            processedAttendances.current.add(group.groupId);
+            // Remove from newly marked groups after animation
+            setTimeout(() => {
+              setNewlyMarkedGroups(prev => {
+                const next = new Set(prev);
+                next.delete(group.groupId);
+                return next;
+              });
+            }, 2000);
+          }
+        }
+        return {
+          ...group,
+          attendance: newAttendance
+        };
+      });
 
-        const updatedOrder = {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            const newAttendance = group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance;
-            if (newAttendance !== group.attendance) {
-              hasChanges = true;
-              // If this is a newly marked attendance, add to newly marked groups
-              if (newAttendance && !group.attendance && !processedAttendances.current.has(group.groupId)) {
-                playSuccessSound();
+      if (orderChanged) {
+        setOrder(prevOrder => prevOrder ? { ...prevOrder, customFieldValues: updatedOrderCustomFields } : null);
+      }
+
+      let relatedOrdersChanged = false;
+      const updatedRelatedOrders = relatedOrders.map(relatedOrder => {
+        let singleRelatedOrderChanged = false;
+        const updatedGroups = relatedOrder.customFieldValues.map(group => {
+          const currentAttendance = group.attendance;
+          const newAttendance = group.queueNumber ? attendanceState[group.queueNumber] ?? currentAttendance : currentAttendance;
+          if (newAttendance !== currentAttendance) {
+            relatedOrdersChanged = true;
+            singleRelatedOrderChanged = true;
+             // Also trigger animation check for related orders if needed
+             if (newAttendance && !currentAttendance && !processedAttendances.current.has(group.groupId)) {
+                playSuccessSound(); // May beep multiple times if multiple related attendees marked at once
                 setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
                 processedAttendances.current.add(group.groupId);
-                // Remove from newly marked groups after animation
                 setTimeout(() => {
                   setNewlyMarkedGroups(prev => {
                     const next = new Set(prev);
@@ -225,29 +255,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     return next;
                   });
                 }, 2000);
-              }
-            }
-            return {
-              ...group,
-              attendance: newAttendance
-            };
-          })
-        };
-
-        return hasChanges ? updatedOrder : prevOrder;
+             }
+          }
+          return { ...group, attendance: newAttendance };
+        });
+        return singleRelatedOrderChanged ? { ...relatedOrder, customFieldValues: updatedGroups } : relatedOrder;
       });
 
-      // Update related orders if needed
-      if (hasChanges) {
-        setRelatedOrders(prevOrders => {
-          return prevOrders.map(relatedOrder => ({
-            ...relatedOrder,
-            customFieldValues: relatedOrder.customFieldValues.map(group => ({
-              ...group,
-              attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-            }))
-          }));
-        });
+      if (relatedOrdersChanged) {
+        setRelatedOrders(updatedRelatedOrders);
       }
     } catch (err) {
       console.error('Error checking attendance status:', err);
