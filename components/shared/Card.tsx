@@ -69,6 +69,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     }
     e.preventDefault();
     setIsNavigating(true);
+    console.log('[Card.tsx] router.push event._id:', event._id); // Added log
     const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
     router.push(href);
   };
@@ -82,7 +83,9 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       role="article"
       aria-labelledby={`event-title-${event._id}`}
     >
-      <Link 
+{/* Added log */}
+      { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (main image) event._id:', event?._id)) || null }
+      <Link
         href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
         onClick={handleCardClick}
@@ -162,7 +165,9 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white/90 backdrop-blur-sm p-3 shadow-sm transition-all">
-          <Link 
+{/* Added log */}
+          { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (update) event._id:', event?._id)) || null }
+          <Link
             href={`/events/details/${event._id}/update`}
             className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
             aria-label="Edit event"
@@ -192,7 +197,9 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
           {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
         </time>
 
-        <Link 
+{/* Added log */}
+        { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (title) event._id:', event?._id)) || null }
+        <Link
           href={`/events/details/${event._id}`}
           className="group/title focus:outline-none"
           onClick={handleCardClick}

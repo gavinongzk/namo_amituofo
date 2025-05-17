@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { unstable_cache } from 'next/cache';
 
+import mongoose from 'mongoose'; // Added for ObjectId validation
 import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
 import User from '@/lib/database/models/user.model'
@@ -77,6 +78,12 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 export const getEventById = unstable_cache(
   async (eventId: string) => {
     try {
+      // Validate eventId format before querying
+      if (!mongoose.Types.ObjectId.isValid(eventId)) {
+        console.warn(`Invalid ObjectId format received in getEventById: ${eventId}`);
+        return null; // Return null if ID format is invalid
+      }
+
       await connectToDatabase();
 
       const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
