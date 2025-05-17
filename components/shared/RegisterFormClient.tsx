@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from "react-hot-toast"
 import { PlusIcon, Loader2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
+import * as Sentry from '@sentry/nextjs';
 import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
@@ -141,6 +142,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         }
       } catch (error) {
         console.error('Error detecting country:', error);
+        Sentry.captureException(error);
         // Default to Singapore if detection fails
         setUserCountry('Singapore');
       } finally {
@@ -219,6 +221,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       return duplicates;
     } catch (error) {
       console.error('Error checking phone numbers:', error);
+      Sentry.captureException(error);
+      toast.error("检查电话号码时出错 / Error checking phone numbers.");
       return [];
     }
   };
@@ -382,11 +386,26 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       
       toast.success("报名成功！/ Registration successful!", { id: toastId });
       router.push(`/reg/${data.order._id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
+      Sentry.captureException(error);
       
-      toast.error("报名失败，请重试。/ Registration failed. Please try again.", { id: toastId });
-      setMessage('报名失败，请重试。/ Failed to submit registration. Please try again.');
+      let errorMessage = "报名失败，请重试。/ Registration failed. Please try again.";
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        // Check if it's a custom error thrown from the API route like "Failed to create order: ..."
+        if (error.message.startsWith('Failed to create order')) {
+          // Potentially parse a more specific message if the API route includes it
+          // For now, use a slightly more specific generic message for this case
+          errorMessage = `处理报名时出错: ${error.message} / Error processing registration: ${error.message}`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorMessage, { id: toastId, duration: 5000 });
+      setMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

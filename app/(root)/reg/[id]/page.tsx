@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
+import * as Sentry from '@sentry/nextjs';
 
 // Define inline styles for custom UI elements
 const styles = `
@@ -251,6 +252,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       }
     } catch (err) {
       console.error('Error checking attendance status:', err);
+      Sentry.captureException(err);
     }
   }, [order?.event?._id]);
 
@@ -330,9 +332,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
       setError(null);
       lastFetchTime.current = now;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching order details:', err);
-      setError('Failed to load order details');
+      Sentry.captureException(err);
+      setError(err.message || 'Failed to load order details');
     } finally {
       setIsLoading(false);
     }
@@ -447,9 +450,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             duration: 3000,
             position: 'top-center',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error cancelling registration:', error);
-        toast.error('取消报名失败 / Failed to cancel registration', {
+        Sentry.captureException(error);
+        let errorMessage = '取消报名失败 / Failed to cancel registration';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        toast.error(errorMessage, {
             duration: 4000,
             position: 'top-center',
         });
@@ -535,9 +543,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             duration: 3000,
             position: 'top-center',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error restoring registration:', error);
-        toast.error('恢复报名失败 / Failed to restore registration', {
+        Sentry.captureException(error);
+        let errorMessage = '恢复报名失败 / Failed to restore registration';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        toast.error(errorMessage, {
             duration: 4000,
             position: 'top-center',
         });
@@ -681,9 +694,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             duration: 3000,
             position: 'top-center',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error updating field:', error);
-        toast.error('更新失败 Failed to update field', {
+        Sentry.captureException(error);
+        let errorMessage = '更新失败 Failed to update field';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        toast.error(errorMessage, {
             duration: 4000,
             position: 'top-center',
         });
