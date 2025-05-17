@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import mongoose from 'mongoose'; // Added for ObjectId validation
+import { notFound } from 'next/navigation'; // Added for handling not found pages
 import { getEventById } from '@/lib/actions/event.actions';
 import EventDetails from './EventDetails';
 
@@ -10,6 +12,14 @@ export async function generateMetadata({
     id: string
   }
 }): Promise<Metadata> {
+  // Validate ObjectId format before calling getEventById
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    return {
+      title: 'Event Not Found',
+      description: 'The requested event could not be found or the ID is invalid.'
+    };
+  }
+
   const event = await getEventById(params.id);
 
   if (!event) {
@@ -55,7 +65,21 @@ export async function generateMetadata({
 }
 
 export default async function EventDetailsPage({ params: { id } }: { params: { id: string } }) {
+  // Validate ObjectId format before calling getEventById
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound(); // Render a 404 page if the ID format is invalid
+  }
+
   const event = await getEventById(id);
+
+  // If event is still null here (e.g., valid ID format but event doesn't exist),
+  // EventDetails component should handle rendering a "not found" state.
+  // If getEventById itself throws or returns an unhandled error for a valid ID,
+  // Next.js error handling would take over.
+  if (!event) {
+    // This case handles if getEventById returns null for a valid ID (event genuinely not found)
+    notFound();
+  }
   
   return <EventDetails event={event} />;
 }
