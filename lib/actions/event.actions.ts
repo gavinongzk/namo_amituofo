@@ -84,7 +84,9 @@ export const getEventById = unstable_cache(
         .populate({ path: 'category', model: Category, select: '_id name' });
 
       if (!event) {
-        throw new Error('Event not found');
+        // Event not found, return null to be handled by the caller
+        // This allows the UI to display a "not found" message gracefully
+        return null;
       }
 
       const attendeeCount = await Order.countDocuments({ event: eventId });
@@ -401,12 +403,16 @@ export const getEventCategory = async (eventId: string): Promise<string | null> 
     const event = await Event.findById(eventId).populate('category', 'name');
     
     if (!event) {
-      throw new Error('Event not found');
+      // Event not found, return null
+      console.warn(`Event category not found for eventId: ${eventId}`);
+      return null;
     }
 
     return event.category?.name || null; // Return the category name or null if not found
   } catch (error) {
     console.error('Error fetching event category:', error);
+    // It's good practice to also capture this unexpected error with Sentry if it's not a simple "not found"
+    // For now, just returning null as per existing logic for other errors.
     return null; // Return null in case of an error
   }
 };
