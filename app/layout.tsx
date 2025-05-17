@@ -164,9 +164,14 @@ export default function RootLayout({
           {preloadResources}
           <style dangerouslySetInnerHTML={{ __html: inlineCriticalCss }} />
           <meta name="theme-color" content="#a2826c" />
-          <script dangerouslySetInnerHTML={{ __html: unregisterServiceWorker }} />
+          {/* unregisterServiceWorker script moved below */}
         </head>
         <body className={poppins.variable}>
+          <Script
+            id="unregister-service-worker"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{ __html: unregisterServiceWorker }}
+          />
           <NetworkStatus />
           <RouteWarmer />
 
