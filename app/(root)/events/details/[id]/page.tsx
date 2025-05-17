@@ -12,6 +12,7 @@ export async function generateMetadata({
     id: string
   }
 }): Promise<Metadata> {
+  console.log('[page.tsx generateMetadata] Received params:', params); // Added log
   // Validate ObjectId format before calling getEventById
   if (!mongoose.Types.ObjectId.isValid(params.id)) {
     return {
@@ -64,7 +65,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventDetailsPage({ params: { id } }: { params: { id: string } }) {
+export default async function EventDetailsPage({ params }: { params: { id: string } }) { // Changed to destructure params directly
+  console.log('[page.tsx EventDetailsPage] Received params:', params); // Added log
+  const { id } = params; // Destructure id from params
+
   // Validate ObjectId format before calling getEventById
   if (!mongoose.Types.ObjectId.isValid(id)) {
     notFound(); // Render a 404 page if the ID format is invalid
