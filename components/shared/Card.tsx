@@ -83,7 +83,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       role="article"
       aria-labelledby={`event-title-${event._id}`}
     >
-      {console.log('[Card.tsx] Link (main image) event._id:', event._id)} {/* Added log */}
+{/* Added log */}
+      { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (main image) event._id:', event?._id)) || null }
       <Link
         href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
@@ -164,7 +165,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white/90 backdrop-blur-sm p-3 shadow-sm transition-all">
-          {console.log('[Card.tsx] Link (update) event._id:', event._id)} {/* Added log */}
+{/* Added log */}
+          { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (update) event._id:', event?._id)) || null }
           <Link
             href={`/events/details/${event._id}/update`}
             className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
@@ -195,7 +197,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
           {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
         </time>
 
-        {console.log('[Card.tsx] Link (title) event._id:', event._id)} {/* Added log */}
+{/* Added log */}
+        { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (title) event._id:', event?._id)) || null }
         <Link
           href={`/events/details/${event._id}`}
           className="group/title focus:outline-none"
