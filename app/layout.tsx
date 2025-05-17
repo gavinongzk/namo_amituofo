@@ -23,6 +23,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://reg.plb-sea.org'),
   title: '净土宗报名系统 | Namo Amituofo Registration',
   description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
+    url: 'https://reg.plb-sea.org',
     title: '净土宗报名系统 | Namo Amituofo Registration',
     description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
     siteName: '净土宗 | Namo Amituofo',
