@@ -60,6 +60,7 @@
     "react-phone-number-input": "^3.4.8",
     "react-qr-reader": "3.0.0-beta-1",
     "recharts": "^2.13.3",
+    "sharp": "^0.34.1",
     "svix": "^1.15.0",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.1.0",

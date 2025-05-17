@@ -135,8 +135,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         return
       }
 
-      uploadedImageUrl = uploadedImages[0].url
-      console.log("File uploaded successfully:", uploadedImageUrl);
+      // Use the processedFileUrl from the server response
+      uploadedImageUrl = uploadedImages[0].processedFileUrl
+      console.log("File uploaded and processed successfully. New URL:", uploadedImageUrl);
+      console.log("Original URL (for reference, now deleted from storage):", uploadedImages[0].originalFileUrl);
     }
 
     if(type === 'Create') {
