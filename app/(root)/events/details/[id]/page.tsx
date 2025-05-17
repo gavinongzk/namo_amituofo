@@ -51,6 +51,7 @@ export async function generateMetadata({
     openGraph: {
       title: event.title,
       description: event.description || 'Join us for this special event',
+      url: `${siteUrl}/events/details/${params.id}`, // Add this line
       images: [
         {
           url: finalImageUrl,
