@@ -42,7 +42,7 @@ export async function generateMetadata({
       finalImageUrl = `${siteUrl}${event.imageUrl.startsWith('/') ? event.imageUrl : `/${event.imageUrl}`}`;
     }
   } else {
-    finalImageUrl = `${siteUrl}/assets/images/placeholder.png`; // Default fallback image
+    finalImageUrl = `${siteUrl}/assets/images/logo.svg`; // Default fallback image
   }
  
   return {
@@ -57,8 +57,8 @@ export async function generateMetadata({
           alt: event.title,
           // For optimal display, WhatsApp and other platforms prefer images around 1200x630 pixels.
           // Consider adding width and height if your images (including the placeholder) have consistent dimensions:
-          // width: 1200,
-          // height: 630,
+          width: 1200,
+          height: 630,
         }
       ],
     },
