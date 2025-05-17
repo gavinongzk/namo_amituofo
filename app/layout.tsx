@@ -23,6 +23,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL || 'https://reg.plb-sea.org'), // Add this line
   title: '净土宗报名系统 | Namo Amituofo Registration',
   description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
   icons: {
