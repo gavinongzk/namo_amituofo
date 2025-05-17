@@ -44,6 +44,17 @@ export async function generateMetadata({
   } else {
     finalImageUrl = `${siteUrl}/assets/images/logo.svg`; // Default fallback image
   }
+
+  let imageType = 'image/jpeg'; // Default for .jpg/.jpeg
+  if (finalImageUrl.endsWith('.png')) {
+    imageType = 'image/png';
+  } else if (finalImageUrl.endsWith('.svg')) {
+    imageType = 'image/svg+xml';
+  } else if (finalImageUrl.endsWith('.gif')) {
+    imageType = 'image/gif';
+  } else if (finalImageUrl.endsWith('.webp')) {
+    imageType = 'image/webp';
+  }
  
   return {
     title: `${event.title} | Namo Amituofo`,
@@ -51,10 +62,12 @@ export async function generateMetadata({
     openGraph: {
       title: event.title,
       description: event.description || 'Join us for this special event',
-      url: `${siteUrl}/events/details/${params.id}`, // Add this line
+      url: `${siteUrl}/events/details/${params.id}`,
       images: [
         {
           url: finalImageUrl,
+          secureUrl: finalImageUrl, // Assuming finalImageUrl is always HTTPS
+          type: imageType,
           alt: event.title,
           // For optimal display, WhatsApp and other platforms prefer images around 1200x630 pixels.
           // Consider adding width and height if your images (including the placeholder) have consistent dimensions:
