@@ -522,7 +522,10 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   }, []);
 
   const confirmDeleteRegistration = useCallback(async () => {
-    if (!deleteConfirmationData) return;
+    if (!deleteConfirmationData) {
+      setMessage('No registration data provided');
+      return;
+    }
 
     const { registrationId, groupId, queueNumber } = deleteConfirmationData;
     setShowDeleteConfirmation(false);
@@ -530,12 +533,23 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setModalMessage('Deleting registration... 删除报名中...');
 
     try {
+      if (!event?._id) {
+        throw new Error('Event ID is required');
+      }
+
+      if (!queueNumber) {
+        throw new Error('Queue number is required');
+      }
+
       const res = await fetch('/api/delete-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId: registrationId.split('_')[0], groupId }),
+        body: JSON.stringify({
+          eventId: event._id,
+          queueNumber: queueNumber
+        }),
       });
 
       if (res.ok) {
