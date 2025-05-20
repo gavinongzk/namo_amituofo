@@ -239,7 +239,10 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
     })
     .populate({
       path: 'event',
-      match: { endDateTime: { $gte: currentDate } }, // Only include events that haven't ended yet
+      match: {
+        endDateTime: { $gte: currentDate },
+        isDeleted: { $ne: true }
+      }, // Only include events that haven't ended yet and aren't deleted
       select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
@@ -281,7 +284,7 @@ export const getOrdersByPhoneNumber = async (phoneNumber: string) => {
         // Skip cancelled registrations
         if (group.cancelled) return;
         
-        const nameField = group.fields?.find((field: any) => 
+        const nameField = group.fields?.find((field: any) =>
           field.label.toLowerCase().includes('name'))?.value || 'Unknown';
           
         eventMap[eventId].registrations.push({
@@ -379,7 +382,10 @@ export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: s
     })
     .populate({
       path: 'event',
-      match: { endDateTime: { $gte: currentDate } }, // Only include events that haven't ended yet
+      match: {
+        endDateTime: { $gte: currentDate },
+        isDeleted: { $ne: true }
+      }, // Only include events that haven't ended yet and aren't deleted
       select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
@@ -414,7 +420,7 @@ export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: s
       
       // Add all registrations from this order, including cancelled ones
       order.customFieldValues.forEach((group: any) => {
-        const nameField = group.fields?.find((field: any) => 
+        const nameField = group.fields?.find((field: any) =>
           field.label.toLowerCase().includes('name'))?.value || 'Unknown';
           
         eventMap[eventId].registrations.push({
