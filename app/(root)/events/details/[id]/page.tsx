@@ -42,7 +42,7 @@ export async function generateMetadata({
       finalImageUrl = `${siteUrl}${event.imageUrl.startsWith('/') ? event.imageUrl : `/${event.imageUrl}`}`;
     }
   } else {
-    finalImageUrl = `${siteUrl}/assets/images/logo.svg`; // Default fallback image
+    finalImageUrl = `${siteUrl}/assets/images/logo.png`; // Default fallback image - using PNG for better social preview compatibility
   }
 
   let imageType = 'image/jpeg'; // Default for .jpg/.jpeg
@@ -56,25 +56,41 @@ export async function generateMetadata({
     imageType = 'image/webp';
   }
  
+  // Truncate description to 80 characters for optimal WhatsApp preview
+  const truncatedDescription = event.description
+    ? event.description.length > 80
+      ? event.description.substring(0, 77) + '...'
+      : event.description
+    : 'Join us for this special event';
+
   return {
-    title: `${event.title} | Namo Amituofo`,
-    description: event.description || 'Join us for this special event',
+    title: event.title,
+    description: truncatedDescription,
     openGraph: {
-      title: event.title,
-      description: event.description || 'Join us for this special event',
+      title: event.title, // Keep title without branding for WhatsApp
+      description: truncatedDescription,
       url: `${siteUrl}/events/details/${params.id}`,
+      siteName: 'Namo Amituofo',
+      locale: 'en_US',
+      type: 'website',
       images: [
         {
           url: finalImageUrl,
-          secureUrl: finalImageUrl, // Assuming finalImageUrl is always HTTPS
+          secureUrl: finalImageUrl,
           type: imageType,
           alt: event.title,
-          // For optimal display, WhatsApp and other platforms prefer images around 1200x630 pixels.
-          // Consider adding width and height if your images (including the placeholder) have consistent dimensions:
+          // WhatsApp requires images under 600KB and width >= 300px
+          // Current dimensions (1200x630) meet these requirements
           width: 1200,
           height: 630,
         }
       ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: truncatedDescription,
+      images: [finalImageUrl],
     },
   };
 }

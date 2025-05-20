@@ -37,15 +37,19 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    title: '净土宗报名系统 | Namo Amituofo Registration',
-    description: '净土宗报名系统 | Namo Amituofo Registration is a platform for users to register for events.',
-    siteName: '净土宗 | Namo Amituofo',
+    // Keep title concise for WhatsApp preview
+    title: 'Namo Amituofo Registration',
+    // Truncate description to 80 characters for WhatsApp
+    description: '净土宗报名系统 - A platform for registering Pure Land Buddhism events and activities.',
+    siteName: 'Namo Amituofo',
     images: [
       {
-        url: '/assets/images/amitabha_image.png',
+        // Use absolute URL for image
+        url: `${process.env.NEXT_PUBLIC_SERVER_URL || 'https://reg.plb-sea.org'}/assets/images/amitabha_image.png`,
         width: 1200,
         height: 630,
-        alt: '净土宗 | Namo Amituofo',
+        alt: 'Namo Amituofo',
+        type: 'image/png',
       }
     ],
   },
