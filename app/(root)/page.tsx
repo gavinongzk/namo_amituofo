@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { ErrorBoundary } from 'next/dist/client/components/error-boundary';
 import { preloadEvents } from '@/lib/actions/preload';
 import dynamic from 'next/dynamic';
 import { cookies } from 'next/headers';
@@ -59,14 +60,21 @@ export default async function Home({ searchParams }: SearchParamProps) {
       </Suspense>
 
       <Suspense fallback={<EventSkeleton />}>
-        <EventList
-          page={Number(searchParams.page) || 1}
-          searchText={searchParams.query?.toString() || ''}
-          category={searchParams.category?.toString() || ''}
-          country={country}
-          role={role}
-          userId={userId}
-        />
+        <ErrorBoundary fallback={
+          <div className="text-center py-4">
+            <p className="text-gray-600">Unable to load events. Please try again later.</p>
+            <p className="text-gray-600">无法加载活动。请稍后再试。</p>
+          </div>
+        }>
+          <EventList
+            page={Number(searchParams.page) || 1}
+            searchText={searchParams.query?.toString() || ''}
+            category={searchParams.category?.toString() || ''}
+            country={country}
+            role={role}
+            userId={userId}
+          />
+        </ErrorBoundary>
       </Suspense>
     </section>
   );

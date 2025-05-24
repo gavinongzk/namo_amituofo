@@ -171,14 +171,21 @@ export const handleError = (error: unknown) => {
     console.error('Error name:', error.name)
     console.error('Error message:', error.message)
     console.error('Error stack:', error.stack)
+    throw error; // Re-throw the original error to preserve stack trace
   }
   
   // If it's a MongoDB validation error, it might have more details
   if (typeof error === 'object' && error !== null && 'errors' in error) {
     console.error('Validation errors:', (error as any).errors)
+    throw error; // Re-throw MongoDB validation errors
   }
   
-  throw new Error(typeof error === 'string' ? error : JSON.stringify(error))
+  // For other types of errors, create a new error but with better formatting
+  throw new Error(
+    typeof error === 'string'
+      ? error
+      : `Server error: ${JSON.stringify(error, null, 2)}`
+  )
 }
 
 // ... existing code ...

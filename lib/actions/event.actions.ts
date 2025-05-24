@@ -176,10 +176,23 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
   return unstable_cache(
     async () => {
       try {
-        await connectToDatabase()
+        // Connect to database first and handle connection errors explicitly
+        try {
+          await connectToDatabase();
+        } catch (dbError) {
+          console.error('Database connection error:', dbError);
+          throw new Error('Failed to connect to database. Please try again later.');
+        }
 
         const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-        const categoryCondition = category ? await getCategoryByName(category) : null
+        let categoryCondition = null;
+        
+        try {
+          categoryCondition = category ? await getCategoryByName(category) : null;
+        } catch (categoryError) {
+          console.error('Error fetching category:', categoryError);
+          // Continue without category filter if there's an error
+        }
         
         // Add date filtering condition
         const expirationDate = EVENT_CONFIG.getExpirationDate(role);
