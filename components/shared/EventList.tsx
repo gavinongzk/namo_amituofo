@@ -4,6 +4,7 @@ import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
 import { currentUser } from '@clerk/nextjs';
+import ErrorMessage from './ErrorMessage';
 
 interface EventListProps {
   page: number;
@@ -77,9 +78,11 @@ async function EventList({ page, searchText, category, country, role, userId }: 
   } catch (error) {
     console.error('❌ Error in EventList:', error);
     return (
-      <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28 text-center">
-        <h3 className="p-bold-20 md:h5-bold">出错了 / Something went wrong</h3>
-        <p className="p-regular-14">请稍后再试。/ Please try again later.</p>
+      <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28">
+        <ErrorMessage
+          message="Something went wrong"
+          messageZh="出错了"
+        />
       </div>
     );
   }
