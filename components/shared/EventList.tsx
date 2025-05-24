@@ -4,6 +4,7 @@ import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
 import { currentUser } from '@clerk/nextjs';
+import ErrorMessage from './ErrorMessage';
 
 interface EventListProps {
   page: number;
@@ -11,6 +12,7 @@ interface EventListProps {
   category: string;
   country: string;
   role?: string;
+  userId?: string;
 }
 
 interface EventsResponse {
@@ -18,11 +20,8 @@ interface EventsResponse {
   totalPages: number;
 }
 
-async function EventList({ page, searchText, category, country, role }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role });
-  
-  const user = await currentUser();
-  const userId = user?.publicMetadata?.userId as string;
+async function EventList({ page, searchText, category, country, role, userId }: EventListProps) {
+  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role, userId });
   
   let events: EventsResponse;
   
@@ -79,9 +78,11 @@ async function EventList({ page, searchText, category, country, role }: EventLis
   } catch (error) {
     console.error('❌ Error in EventList:', error);
     return (
-      <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28 text-center">
-        <h3 className="p-bold-20 md:h5-bold">出错了 / Something went wrong</h3>
-        <p className="p-regular-14">请稍后再试。/ Please try again later.</p>
+      <div className="flex-center wrapper min-h-[200px] w-full flex-col gap-3 rounded-[14px] bg-grey-50 py-28">
+        <ErrorMessage
+          message="Something went wrong"
+          messageZh="出错了"
+        />
       </div>
     );
   }

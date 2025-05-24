@@ -83,14 +83,24 @@ export const preloadEvents = unstable_cache(
     
     try {
       console.log('📡 Fetching events from getAllEvents');
-      const events = await getAllEvents({
-        query: '',
-        category: '',
-        page: 1,
-        limit: 6,
-        country: country || 'Singapore',
-        role
-      });
+      let events;
+      try {
+        events = await getAllEvents({
+          query: '',
+          category: '',
+          page: 1,
+          limit: 6,
+          country: country || 'Singapore',
+          role
+        });
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+        // Return empty result but don't throw - allows page to load without events
+        return {
+          data: [],
+          totalPages: 0
+        };
+      }
       
       console.log('📦 Raw events response:', JSON.stringify(events, null, 2));
       

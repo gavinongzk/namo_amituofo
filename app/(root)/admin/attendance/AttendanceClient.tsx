@@ -88,29 +88,34 @@ interface SortConfig {
 
 const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
-  const [queueNumber, setQueueNumber] = useState('');
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalTitle, setModalTitle] = useState('');
-  const [attendedUsersCount, setAttendedUsersCount] = useState(0);
-  const { user } = useUser();
-  const [totalRegistrations, setTotalRegistrations] = useState(0);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
-  const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState(0);
-  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-  const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
-  const [showScanner, setShowScanner] = useState(false);
-  const [recentScans, setRecentScans] = useState<{ queueNumber: string; name: string }[]>([]);
-  const lastScanTime = useRef<number>(0);
-  const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState(false);
-  const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState('');
-  const [searchText, setSearchText] = useState('');
-  const [pageSize, setPageSize] = useState(100);  // Default to 100 rows per page
+  // State for basic UI controls
+  const [queueNumber, setQueueNumber] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string>('');
+  const [modalTitle, setModalTitle] = useState<string>('');
   const [modalType, setModalType] = useState<'loading' | 'success' | 'error'>('loading');
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [searchText, setSearchText] = useState<string>('');
+  const [pageSize, setPageSize] = useState<number>(100);  // Default to 100 rows per page
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // State for attendance tracking
+  const [attendedUsersCount, setAttendedUsersCount] = useState<number>(0);
+  const [totalRegistrations, setTotalRegistrations] = useState<number>(0);
+  const [cannotReciteAndWalkCount, setCannotReciteAndWalkCount] = useState<number>(0);
+  const [cancelledUsersCount, setCancelledUsersCount] = useState<number>(0);
+  const [beepHistory] = useState<Set<string>>(new Set()); // Track which queue numbers have already beeped
+
+  // State for remarks handling
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
+  const [modifiedRemarks, setModifiedRemarks] = useState<Set<string>>(new Set());
+  const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
+
+  // State for modals and confirmations
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
+  const [deleteConfirmationData, setDeleteConfirmationData] = useState<{ registrationId: string; groupId: string; queueNumber: string } | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const [confirmationData, setConfirmationData] = useState<{
     registrationId: string;
     groupId: string;
@@ -118,9 +123,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     currentAttendance: boolean;
     name: string;
   } | null>(null);
-  const [remarks, setRemarks] = useState<Record<string, string>>({});
-  const [cancelledUsersCount, setCancelledUsersCount] = useState(0);
-  const [beepHistory] = useState(new Set<string>()); // Track which queue numbers have already beeped
+
+  // State for QR scanner
+  const [showScanner, setShowScanner] = useState<boolean>(false);
+  const [recentScans, setRecentScans] = useState<Array<{ queueNumber: string; name: string }>>([]);
+  const [showAlreadyMarkedModal, setShowAlreadyMarkedModal] = useState<boolean>(false);
+  const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState<string>('');
+  const lastScanTime = useRef<number>(0);
+
+  // User and permissions
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
 
   // Function to save attendance state to localStorage
   const saveAttendanceState = useCallback((queueNumber: string, attended: boolean) => {
@@ -637,7 +650,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   );
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'queueNumber', direction: 'asc' });
-  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = useMemo(() => {
     return data.filter(item => 
@@ -809,23 +821,57 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
 
-  const handleUpdateRemarks = async (registrationId: string, phoneNumber: string, name: string) => {
-    const remark = remarks[registrationId]; // Get the remark for the specific registrationId
+  const handleRemarkChange = useCallback((registrationId: string, value: string): void => {
+    setRemarks((prev) => ({ ...prev, [registrationId]: value }));
+    setModifiedRemarks((prev) => new Set(prev).add(registrationId));
+  }, []); // No dependencies needed as we're only using setState functions
+
+  const handleUpdateRemarks = useCallback(async (registrationId: string, phoneNumber: string, name: string): Promise<void> => {
     try {
-        await fetch('/api/tagged-users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phoneNumber, name, remarks: remark }), // Allow empty remarks
-        });
-        // Update the local remarks state immediately after saving
-        setRemarks((prev) => ({ ...prev, [registrationId]: remark })); // Update the remarks for the specific registrationId
-        
-        // Show success modal after saving remarks
-        showModalWithMessage('Success / 成功', 'Remarks saved successfully. 备注已成功保存。', 'success');
+      const remark = remarks[registrationId];
+      await fetch('/api/tagged-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, name, remarks: remark }),
+      });
+      
+      setModifiedRemarks(prev => {
+        const next = new Set(prev);
+        next.delete(registrationId);
+        return next;
+      });
+      
+      showModalWithMessage('Success / 成功', 'Remarks saved successfully. 备注已成功保存。', 'success');
     } catch (error) {
-        console.error('Error updating remarks:', error);
+      console.error('Error updating remarks:', error);
+      showModalWithMessage('Error / 错误', 'Failed to save remarks. 备注保存失败。', 'error');
     }
-  };
+  }, [remarks, showModalWithMessage]);
+
+  const handleSaveAllRemarks = useCallback(async (): Promise<void> => {
+    showModalWithMessage('Saving / 保存中', 'Saving all modified remarks... 保存所有修改的备注...', 'loading');
+    
+    try {
+      const promises = Array.from(modifiedRemarks).map((registrationId) => {
+        const row = data.find(item => item.registrationId === registrationId);
+        if (row) {
+          return handleUpdateRemarks(registrationId, row.phoneNumber, row.name);
+        }
+        return Promise.resolve();
+      });
+
+      await Promise.all(promises);
+      showModalWithMessage('Success / 成功', 'All remarks saved successfully. 所有备注已成功保存。', 'success');
+    } catch (error) {
+      console.error('Error saving all remarks:', error);
+      showModalWithMessage('Error / 错误', 'Failed to save all remarks. 备注保存失败。', 'error');
+    }
+  }, [modifiedRemarks, data, handleUpdateRemarks, showModalWithMessage]);
+
+  // Event handler for input changes
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>): void => {
+    setter(e.target.value);
+  }, []);
 
   const handleUpdateMaxSeats = useCallback(async (newMaxSeats: number) => {
     showModalWithMessage('Updating / 更新中', 'Updating max seats... 更新最大座位数...', 'loading');
@@ -878,7 +924,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <Input
             placeholder="Enter Queue Number 输入排队号码"
             value={queueNumber}
-            onChange={(e) => setQueueNumber(e.target.value)}
+            onChange={(e) => handleInputChange(e, setQueueNumber)}
             className="flex-grow text-lg p-3"
           />
           <Button 
@@ -924,7 +970,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <Input
             placeholder="Search by name or phone number 按名字或电话号码搜索"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => handleInputChange(e, setSearchText)}
             className="w-full text-lg p-3"
           />
         </div>
@@ -948,15 +994,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
                     <span className="block text-xs">Attendance 出席</span>
                   </th>
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block text-xs">Cancelled 已取消</span>
+                  </th>
                   {isSuperAdmin && (
-                    <>
-                      <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Cancelled 已取消</span>
-                      </th>
-                      <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Delete 删除</span>
-                      </th>
-                    </>
+                    <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                      <span className="block text-xs">Delete 删除</span>
+                    </th>
                   )}
                 </tr>
               </thead>
@@ -966,9 +1010,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     key={`${row.registrationId}_${row.groupId}`}
                     className={`
                       hover:bg-gray-50 transition-colors duration-150
-                      ${isSuperAdmin && row.isDuplicate && row.cannotWalk ? 'bg-blue-50' : 
-                        isSuperAdmin && row.isDuplicate ? 'bg-green-50' : 
-                        row.cannotWalk ? 'bg-orange-50' : ''}
+                      ${row.cancelled ? 'bg-red-50 line-through text-gray-500' :
+                        (isSuperAdmin && row.isDuplicate) ? 'bg-green-50' : ''}
                     `}
                   >
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
@@ -981,14 +1024,18 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                           <Input
                             type="text"
                             value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : row.remarks}
-                            onChange={(e) => setRemarks((prev) => ({ ...prev, [row.registrationId]: e.target.value }))}
-                            className="h-8 text-sm min-w-[120px]"
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleRemarkChange(row.registrationId, e.target.value)}
+                            className={cn(
+                              "h-8 text-sm min-w-[120px]",
+                              modifiedRemarks.has(row.registrationId) && "border-yellow-500"
+                            )}
                             placeholder="Add remarks"
                           />
                           <Button
                             onClick={() => handleUpdateRemarks(row.registrationId, row.phoneNumber, row.name)}
                             className="h-8 px-3 bg-blue-500 hover:bg-blue-600 text-white text-sm"
                             size="sm"
+                            disabled={!modifiedRemarks.has(row.registrationId)}
                           >
                             Save
                           </Button>
@@ -1003,23 +1050,21 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
                       />
                     </td>
+                    <td className="py-3 px-4 border-b border-r">
+                      <Checkbox
+                        checked={row.cancelled}
+                        onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                      />
+                    </td>
                     {isSuperAdmin && (
-                      <>
-                        <td className="py-3 px-4 border-b border-r">
-                          <Checkbox
-                            checked={row.cancelled}
-                            onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                          />
-                        </td>
-                        <td className="py-3 px-4 border-b">
-                          <button
-                            onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                            className="text-red-500 hover:text-red-700 transition-colors duration-200"
-                          >
-                            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                          </button>
-                        </td>
-                      </>
+                      <td className="py-3 px-4 border-b">
+                        <button
+                          onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                          className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                        >
+                          <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                        </button>
+                      </td>
                     )}
                   </tr>
                 ))}
@@ -1057,6 +1102,15 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 {'>>'}
               </Button>
             </div>
+
+            {isSuperAdmin && modifiedRemarks.size > 0 && (
+              <Button
+                onClick={handleSaveAllRemarks}
+                className="bg-yellow-500 hover:bg-yellow-600"
+              >
+                Save All Modified Remarks ({modifiedRemarks.size})
+              </Button>
+            )}
             
             <div className="flex items-center gap-2">
               <span className="whitespace-nowrap">
@@ -1068,7 +1122,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 <Input
                   type="number"
                   value={currentPage}
-                  onChange={e => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
                     setCurrentPage(page);
                   }}
@@ -1080,7 +1134,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             <div className="flex items-center gap-2">
               <select
                 value={pageSize}
-                onChange={e => {
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
@@ -1111,11 +1165,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 Rows highlighted in light green indicate registrations with the same phone number.
                 <br />
                 浅绿色突出显示的行表示具有相同电话号码的报名。
-              </p>
-              <p className="p-2 bg-blue-100 text-sm">
-                Rows highlighted in light blue indicate participants who cannot walk and recite AND have duplicate phone numbers.
-                <br />
-                浅蓝色突出显示的行表示无法绕佛且具有重复电话号码的参与者。
               </p>
             </>
           )}

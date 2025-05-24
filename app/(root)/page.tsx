@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Error from 'next/error';
 import { preloadEvents } from '@/lib/actions/preload';
 import dynamic from 'next/dynamic';
 import { cookies } from 'next/headers';
@@ -34,8 +35,18 @@ const EventSkeleton = () => (
 export default async function Home({ searchParams }: SearchParamProps) {
   const cookieStore = cookies();
   const country = cookieStore.get('userCountry')?.value || 'Singapore';
-  const user = await currentUser();
-  const role = user?.publicMetadata?.role as string;
+  
+  let userId: string | undefined;
+  let role: string | undefined;
+
+  try {
+    const user = await currentUser();
+    userId = user?.publicMetadata?.userId as string;
+    role = user?.publicMetadata?.role as string;
+  } catch (error) {
+    console.error('Authentication error:', error);
+    // Continue without user data
+  }
 
   // Start data fetch early
   const eventsPromise = preloadEvents(country);
@@ -49,12 +60,13 @@ export default async function Home({ searchParams }: SearchParamProps) {
       </Suspense>
 
       <Suspense fallback={<EventSkeleton />}>
-        <EventList 
+        <EventList
           page={Number(searchParams.page) || 1}
           searchText={searchParams.query?.toString() || ''}
           category={searchParams.category?.toString() || ''}
           country={country}
           role={role}
+          userId={userId}
         />
       </Suspense>
     </section>
