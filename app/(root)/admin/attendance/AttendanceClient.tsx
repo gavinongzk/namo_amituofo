@@ -948,15 +948,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                   <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
                     <span className="block text-xs">Attendance 出席</span>
                   </th>
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                    <span className="block text-xs">Cancelled 已取消</span>
+                  </th>
                   {isSuperAdmin && (
-                    <>
-                      <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Cancelled 已取消</span>
-                      </th>
-                      <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
-                        <span className="block text-xs">Delete 删除</span>
-                      </th>
-                    </>
+                    <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                      <span className="block text-xs">Delete 删除</span>
+                    </th>
                   )}
                 </tr>
               </thead>
@@ -966,9 +964,8 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     key={`${row.registrationId}_${row.groupId}`}
                     className={`
                       hover:bg-gray-50 transition-colors duration-150
-                      ${isSuperAdmin && row.isDuplicate && row.cannotWalk ? 'bg-blue-50' : 
-                        isSuperAdmin && row.isDuplicate ? 'bg-green-50' : 
-                        row.cannotWalk ? 'bg-orange-50' : ''}
+                      ${row.cancelled ? 'bg-red-50' :
+                        (isSuperAdmin && row.isDuplicate) ? 'bg-blue-50' : ''}
                     `}
                   >
                     <td className="py-3 px-4 border-b border-r whitespace-normal">{row.queueNumber}</td>
@@ -1003,23 +1000,21 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                         onCheckedChange={(checked) => handleCheckboxChange(row.registrationId, row.groupId, checked as boolean)}
                       />
                     </td>
+                    <td className="py-3 px-4 border-b border-r">
+                      <Checkbox
+                        checked={row.cancelled}
+                        onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                      />
+                    </td>
                     {isSuperAdmin && (
-                      <>
-                        <td className="py-3 px-4 border-b border-r">
-                          <Checkbox
-                            checked={row.cancelled}
-                            onCheckedChange={(checked) => handleCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                          />
-                        </td>
-                        <td className="py-3 px-4 border-b">
-                          <button
-                            onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                            className="text-red-500 hover:text-red-700 transition-colors duration-200"
-                          >
-                            <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
-                          </button>
-                        </td>
-                      </>
+                      <td className="py-3 px-4 border-b">
+                        <button
+                          onClick={() => handleDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                          className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                        >
+                          <Image src="/assets/icons/delete.svg" alt="delete" width={20} height={20} />
+                        </button>
+                      </td>
                     )}
                   </tr>
                 ))}

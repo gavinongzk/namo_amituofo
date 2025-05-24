@@ -11,6 +11,7 @@ interface EventListProps {
   category: string;
   country: string;
   role?: string;
+  userId?: string;
 }
 
 interface EventsResponse {
@@ -18,11 +19,8 @@ interface EventsResponse {
   totalPages: number;
 }
 
-async function EventList({ page, searchText, category, country, role }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role });
-  
-  const user = await currentUser();
-  const userId = user?.publicMetadata?.userId as string;
+async function EventList({ page, searchText, category, country, role, userId }: EventListProps) {
+  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role, userId });
   
   let events: EventsResponse;
   
