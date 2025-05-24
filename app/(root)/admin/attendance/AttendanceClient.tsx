@@ -650,7 +650,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   );
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'queueNumber', direction: 'asc' });
-  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = useMemo(() => {
     return data.filter(item => 
@@ -826,10 +825,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     setRemarks((prev) => ({ ...prev, [registrationId]: value }));
     setModifiedRemarks((prev) => new Set(prev).add(registrationId));
   }, []); // No dependencies needed as we're only using setState functions
-
-  const handleCheckboxChange = useCallback((registrationId: string, groupId: string, checked: boolean): void => {
-    handleMarkAttendance(registrationId, groupId, checked);
-  }, [handleMarkAttendance]);
 
   const handleUpdateRemarks = useCallback(async (registrationId: string, phoneNumber: string, name: string): Promise<void> => {
     try {
