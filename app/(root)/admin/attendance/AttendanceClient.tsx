@@ -1010,7 +1010,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                     key={`${row.registrationId}_${row.groupId}`}
                     className={`
                       hover:bg-gray-50 transition-colors duration-150
-                      ${row.cancelled ? 'bg-red-50' :
+                      ${row.cancelled ? 'bg-red-50 line-through text-gray-500' :
                         (isSuperAdmin && row.isDuplicate) ? 'bg-green-50' : ''}
                     `}
                   >
