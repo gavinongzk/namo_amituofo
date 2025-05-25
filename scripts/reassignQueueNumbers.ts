@@ -3,8 +3,8 @@ import QRCode from 'qrcode';
 import crypto from 'crypto';
 
 // Adjust these imports to your project structure if needed
-import { connectToDatabase } from '@/lib/database';
-import Order from '@/lib/database/models/order.model';
+import { connectToDatabase } from '../lib/database';
+import Order from '../lib/database/models/order.model';
 
 const EVENT_ID = '68316c3e1a60981d24efedd0'; // <-- Replace with your event id
 
