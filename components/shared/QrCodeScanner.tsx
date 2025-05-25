@@ -234,7 +234,6 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     const cleanup = initializeScanner();
     return () => {
       cleanup?.then(cleanupFn => cleanupFn?.());
-      setIsActive(false);
     };
   }, [activeCamera, isActive]);
 
