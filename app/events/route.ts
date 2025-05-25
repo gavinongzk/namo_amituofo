@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { preloadEvents } from '@/lib/actions/preload';
+import { getAllEvents } from '@/lib/actions/event.actions';
 import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = cookies();
     const country = cookieStore.get('userCountry')?.value || 'Singapore';
-    
-    const events = await preloadEvents(country);
-    
+    const events = await getAllEvents({
+      query: '',
+      category: '',
+      page: 1,
+      limit: 6,
+      country
+    });
     return NextResponse.json(events, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',

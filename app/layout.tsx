@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'react-hot-toast';
-import { RouteWarmer } from '@/components/shared/RouteWarmer';
 import dynamic from 'next/dynamic'
 import Script from 'next/script'
 
@@ -177,7 +176,6 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{ __html: unregisterServiceWorker }}
           />
           <NetworkStatus />
-          <RouteWarmer />
 
           <main className="flex min-h-screen flex-col">
             {children}

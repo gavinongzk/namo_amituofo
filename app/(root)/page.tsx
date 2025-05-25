@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import Error from 'next/error';
-import { preloadEvents } from '@/lib/actions/preload';
 import dynamic from 'next/dynamic';
 import { cookies } from 'next/headers';
 import { SearchParamProps } from '@/types';
@@ -47,9 +46,6 @@ export default async function Home({ searchParams }: SearchParamProps) {
     console.error('Authentication error:', error);
     // Continue without user data
   }
-
-  // Start data fetch early
-  const eventsPromise = preloadEvents(country);
 
   return (
     <section className="wrapper my-8 flex flex-col gap-8">

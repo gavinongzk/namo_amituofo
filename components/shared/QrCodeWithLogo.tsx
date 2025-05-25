@@ -141,31 +141,35 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
           style={{ imageRendering: 'crisp-edges' }}
         />
         {isAttended && (
-          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300
-            ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
-            <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <svg 
-                  className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M5 13l4 4L19 7" 
-                  />
-                </svg>
-                <span className="text-lg font-semibold text-green-700">已出席</span>
+          <>
+            {/* Grey overlay for attended QR code */}
+            <div className="absolute inset-0 bg-gray-400/60 z-10 pointer-events-none rounded-lg" />
+            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300 z-20
+              ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
+              <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <svg 
+                    className={`w-6 h-6 text-green-600 ${isNewlyMarked ? 'animate-check-mark' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M5 13l4 4L19 7" 
+                    />
+                  </svg>
+                  <span className="text-lg font-semibold text-green-700">已出席</span>
+                </div>
+                <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
               </div>
-              <p className="text-sm text-green-600 text-center mt-1">Attendance Marked</p>
+              <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
+                <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
+              </div>
             </div>
-            <div className="bg-yellow-100/90 px-3 py-1 rounded-lg mt-2">
-              <p className="text-sm text-yellow-700">请保留此二维码以供核实 Please keep this QR code for verification</p>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>

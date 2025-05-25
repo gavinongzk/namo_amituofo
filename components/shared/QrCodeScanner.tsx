@@ -7,9 +7,10 @@ import { Flashlight, FlashlightOff, Loader2 as Loader2Icon } from 'lucide-react'
 
 interface QrCodeScannerProps {
   onScan: (decodedText: string) => void;
+  onClose?: () => void;
 }
 
-const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
+const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [activeCamera, setActiveCamera] = useState<string>();
@@ -18,6 +19,11 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
   const scannerRef = useRef<{ stop: () => void }>();
+  const [isActive, setIsActive] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryDelay, setRetryDelay] = useState(3); // seconds
+  const maxRetries = 3;
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if running on Safari
@@ -137,12 +143,43 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
 
   const handleError = (err: Error) => {
     console.error('QR Scanner Error:', err);
-    if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
+    if (
+      err.name === 'NotReadableError' ||
+      err.message.includes('hardware') ||
+      err.message.includes('in use')
+    ) {
+      if (retryCount < maxRetries) {
+        setError(
+          `Camera is in use by another application or not accessible. Retrying in ${retryDelay} seconds... (${retryCount + 1}/${maxRetries})` +
+          '\n请关闭其他使用摄像头的应用，系统将自动重试。'
+        );
+        // Start countdown
+        let seconds = retryDelay;
+        retryTimeoutRef.current && clearInterval(retryTimeoutRef.current);
+        retryTimeoutRef.current = setInterval(() => {
+          seconds -= 1;
+          setRetryDelay(seconds);
+          setError(
+            `Camera is in use by another application or not accessible. Retrying in ${seconds} seconds... (${retryCount + 1}/${maxRetries})` +
+            '\n请关闭其他使用摄像头的应用，系统将自动重试。'
+          );
+          if (seconds <= 0) {
+            clearInterval(retryTimeoutRef.current!);
+            setRetryCount(c => c + 1);
+            setRetryDelay(3);
+            setError(undefined);
+            retry();
+          }
+        }, 1000);
+      } else {
+        setError(
+          'Camera is in use by another application or not accessible. Please close other apps using the camera and try again.\n摄像头被其他应用占用，请关闭其他应用后重试，或刷新页面。'
+        );
+      }
+    } else if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
       setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.');
     } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
       setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.');
-    } else if (err.name === 'NotReadableError' || err.message.includes('hardware')) {
-      setError('Camera is in use by another application or not accessible. Please close other apps using the camera and try again.');
     } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
       setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.');
     } else {
@@ -179,12 +216,49 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
     }
   };
 
+  const stopCamera = () => {
+    setIsActive(false);
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current = undefined;
+    }
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
+      videoRef.current.srcObject = null;
+    }
+    if (onClose) onClose();
+  };
+
   useEffect(() => {
+    if (!isActive) return;
+    
+    // Reset error state when reactivating
+    setError(undefined);
+    setRetryCount(0);
+    setRetryDelay(3);
+    
     const cleanup = initializeScanner();
     return () => {
-      cleanup?.then(cleanupFn => cleanupFn?.());
+      cleanup?.then(cleanupFn => {
+        if (cleanupFn) {
+          cleanupFn();
+        }
+        // Ensure all tracks are stopped
+        if (videoRef.current?.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach(track => {
+            track.stop();
+            track.enabled = false;
+          });
+          videoRef.current.srcObject = null;
+        }
+      });
     };
-  }, [activeCamera]);
+  }, [activeCamera, isActive]);
 
   // Add a new effect to handle video element attributes
   useEffect(() => {
@@ -193,6 +267,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
       videoRef.current.setAttribute('playsinline', 'true');
       videoRef.current.setAttribute('muted', 'true');
     }
+  }, []);
+
+  // Clean up retry timer on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) clearInterval(retryTimeoutRef.current);
+    };
   }, []);
 
   return (
@@ -221,7 +302,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
         </div>
 
         {/* Camera Controls */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
           {cameras.length > 1 && (
             <select 
               value={activeCamera}
@@ -244,19 +325,32 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan }) => {
           >
             {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
           </Button>
+          {/* Turn Off Camera Button */}
+          {!error && isActive && (
+            <Button 
+              onClick={stopCamera}
+              variant="destructive"
+              size="sm"
+              className="bg-red-500 text-white ml-2"
+            >
+              Turn Off Camera
+            </Button>
+          )}
         </div>
 
         {/* Error State */}
         {error && (
           <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
             <div className="text-center p-4">
-              <p className="text-destructive mb-4">{error}</p>
-              <Button 
-                onClick={retry} 
-                disabled={isRetrying}
-              >
-                {isRetrying ? <Loader2Icon className="animate-spin" /> : '重试 / Retry'}
-              </Button>
+              <p className="text-destructive mb-4 whitespace-pre-line">{error}</p>
+              {retryCount >= maxRetries && (
+                <Button 
+                  onClick={retry} 
+                  disabled={isRetrying}
+                >
+                  {isRetrying ? <Loader2Icon className="animate-spin" /> : '重试 / Retry'}
+                </Button>
+              )}
             </div>
           </div>
         )}

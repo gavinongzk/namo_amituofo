@@ -43,3 +43,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Error uploading orders', error: (error as Error).message }, { status: 500 });
   }
 }
+
+// Add a GET endpoint to fetch all existing queue numbers for an event
+export async function GET(req: NextRequest) {
+  try {
+    await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get('eventId');
+    if (!eventId) {
+      return NextResponse.json({ queueNumbers: [] }, { status: 400 });
+    }
+    const orders = await Order.find({ event: eventId });
+    const queueNumbers = orders
+      .flatMap((order: any) => order.customFieldValues.map((g: any) => g.queueNumber))
+      .filter((qn: string | undefined) => !!qn);
+    return NextResponse.json({ queueNumbers });
+  } catch (error) {
+    return NextResponse.json({ queueNumbers: [], error: (error as Error).message }, { status: 500 });
+  }
+}
