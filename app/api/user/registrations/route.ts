@@ -39,14 +39,17 @@ export async function GET(req: NextRequest) {
       }
       const eventRegistrations = registrationsMap.get(eventId);
       order.customFieldValues.forEach((group: CustomFieldGroup) => {
-        const nameField = group.fields.find(
-          (field: CustomField) => field.label.toLowerCase().includes('name')
-        );
-        if (nameField) {
-          eventRegistrations.registrations.push({
-            queueNumber: order.queueNumber,
-            name: nameField.value
-          });
+        // Only include non-cancelled registrations
+        if (!group.cancelled) {
+          const nameField = group.fields.find(
+            (field: CustomField) => field.label.toLowerCase().includes('name')
+          );
+          if (nameField) {
+            eventRegistrations.registrations.push({
+              queueNumber: order.queueNumber,
+              name: nameField.value
+            });
+          }
         }
       });
     });
