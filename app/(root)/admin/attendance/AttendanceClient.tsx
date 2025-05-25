@@ -213,7 +213,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     // Set up continuous polling for real-time updates
     const pollingInterval = setInterval(() => {
       fetchRegistrations();
-    }, 3000); // Poll every 3 seconds
+    }, 1000); // Poll every 1 second
 
     // Cleanup interval on unmount
     return () => clearInterval(pollingInterval);
@@ -939,7 +939,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
 
         {showScanner && (
           <div className="mb-6">
-            <QrCodeScanner onScan={handleScan} />
+            <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
               <ul className="list-disc pl-5">
