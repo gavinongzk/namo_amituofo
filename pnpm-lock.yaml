@@ -86,6 +86,12 @@ importers:
       framer-motion:
         specifier: ^11.17.0
         version: 11.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      google-auth-library:
+        specifier: ^9.15.1
+        version: 9.15.1
+      googleapis:
+        specifier: ^149.0.0
+        version: 149.0.0
       jspdf:
         specifier: ^2.5.2
         version: 2.5.2
@@ -3388,6 +3394,14 @@ packages:
     resolution: {integrity: sha512-NEgUnEcBiP5HrPzufUkBzJOD/Sxsco3rLNo1F1TNf7ieU8ryUzBhqba8r756CjLX7rn3fHl6iLEwPYuqpoKgQQ==}
     engines: {node: '>=14'}
 
+  googleapis-common@7.2.0:
+    resolution: {integrity: sha512-/fhDZEJZvOV3X5jmD+fKxMqma5q2Q9nZNSF3kn1F18tpxmA86BcTxAGBQdM0N89Z3bEaIs+HVznSmFJEAmMTjA==}
+    engines: {node: '>=14.0.0'}
+
+  googleapis@149.0.0:
+    resolution: {integrity: sha512-LTMc/njwYy7KTeaUHDcQt7KxftHyghdzm2XzbL46PRLd1AXB09utT9Po2ZJn2X0EApz0pE2T5x5A9zM8iue6zw==}
+    engines: {node: '>=14.0.0'}
+
   gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
 
@@ -5479,6 +5493,9 @@ packages:
 
   url-parse@1.5.10:
     resolution: {integrity: sha512-WypcfiRhfeUP9vvF0j6rw0J3hrWrw6iZv3+22h6iRMJ/8z1Tj6XfLP4DsUix5MhMPnXpiHDoKyoZ/bdCkwBCiQ==}
+
+  url-template@2.0.8:
+    resolution: {integrity: sha512-XdVKMF4SJ0nP/O7XIPB0JwAEuT9lDIYnNsK8yGVe43y0AWoKeJNdv3ZNWh7ksJ6KqQFjOO6ox/VEitLnaVNufw==}
 
   use-callback-ref@1.3.2:
     resolution: {integrity: sha512-elOQwe6Q8gqZgDA8mrh44qRTQqpIHDcZ3hXTLjBe1i4ph8XpNJnO+aQf3NaG+lriLopI4HMx9VjQLfPQ6vhnoA==}
@@ -7920,7 +7937,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.3.7
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9414,6 +9431,26 @@ snapshots:
 
   google-logging-utils@0.0.2: {}
 
+  googleapis-common@7.2.0:
+    dependencies:
+      extend: 3.0.2
+      gaxios: 6.7.1
+      google-auth-library: 9.15.1
+      qs: 6.14.0
+      url-template: 2.0.8
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  googleapis@149.0.0:
+    dependencies:
+      google-auth-library: 9.15.1
+      googleapis-common: 7.2.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
   gopd@1.0.1:
     dependencies:
       get-intrinsic: 1.2.4
@@ -9488,14 +9525,14 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.7
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.3
-      debug: 4.3.7
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -11710,6 +11747,8 @@ snapshots:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+
+  url-template@2.0.8: {}
 
   use-callback-ref@1.3.2(@types/react@18.3.9)(react@18.3.1):
     dependencies:
