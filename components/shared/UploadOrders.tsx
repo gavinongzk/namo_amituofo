@@ -84,6 +84,14 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
         const customFields = eventCategory && categoryCustomFields[eventCategory] ? categoryCustomFields[eventCategory] : []; // Check for null
 
+        // Fetch existing queue numbers for the event
+        const existingQueueNumbersRes = await fetch(`/api/reg/existing-queue-numbers?eventId=${eventId}`);
+        const existingQueueNumbersData = await existingQueueNumbersRes.json();
+        const existingQueueNumbers = existingQueueNumbersData.queueNumbers || [];
+        const maxExistingQueueNumber = existingQueueNumbers.length > 0
+          ? Math.max(...existingQueueNumbers.map((qn: string) => parseInt((qn || '').replace(/^[^\d]*(\d+)/, '$1'))).filter((n: number) => !isNaN(n)))
+          : 0;
+
         const orders = jsonData.map((row: any, index: number) => {
           const customFieldValues = customFields.map(field => ({
             id: field.id,
@@ -92,9 +100,8 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
             value: row[field.label] || '', // Map the Excel data to the custom field
           }));
 
-          // Pad the number with leading zeros to ensure correct sorting
-          // For example: 'Q0001', 'Q0002', etc.
-          const paddedNumber = String(index + 1).padStart(3, '0');
+          // Assign queue number based on max existing + index
+          const paddedNumber = String(maxExistingQueueNumber + index + 1).padStart(3, '0');
           const queueNumber = `U${paddedNumber}`;
 
           return {

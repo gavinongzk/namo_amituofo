@@ -42,17 +42,16 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event is fully booked');
     }
 
-    const lastOrder = await Order.findOne({ event: order.eventId }).sort({ createdAt: -1 });
-    let lastQueueNumber = 0;
-    if (lastOrder) {
-      const allQueueNumbers = lastOrder.customFieldValues.map((group: { queueNumber: string }) => 
-        parseInt(group.queueNumber.slice(1))
-      );
-      lastQueueNumber = Math.max(...allQueueNumbers);
-    }
+    // Fetch all existing queue numbers for the event
+    const existingOrders = await Order.find({ event: order.eventId });
+    const existingQueueNumbers = existingOrders
+      .flatMap(o => o.customFieldValues.map((g: any) => g.queueNumber))
+      .map(qn => parseInt((qn || '').replace(/^[^\d]*(\d+)/, '$1')))
+      .filter(n => !isNaN(n));
+    const maxExistingQueueNumber = existingQueueNumbers.length > 0 ? Math.max(...existingQueueNumbers) : 0;
 
     const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
-      const newQueueNumber = `${(lastQueueNumber + index + 1).toString().padStart(3, '0')}`;
+      const newQueueNumber = `${(maxExistingQueueNumber + index + 1).toString().padStart(3, '0')}`;
       
       // Find phone number from fields
       const phoneField = group.fields.find(field => 

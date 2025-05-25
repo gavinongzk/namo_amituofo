@@ -80,4 +80,6 @@ OrderSchema.index({
   'customFieldValues.queueNumber': 1 
 });
 
+OrderSchema.index({ 'event': 1, 'customFieldValues.queueNumber': 1 }, { unique: true }); // Enforce unique queueNumber per event
+
 export default models.Order || model<IOrder>('Order', OrderSchema);
