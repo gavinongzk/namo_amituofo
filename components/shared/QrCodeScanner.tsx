@@ -220,10 +220,14 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     setIsActive(false);
     if (scannerRef.current) {
       scannerRef.current.stop();
+      scannerRef.current = undefined;
     }
     if (videoRef.current?.srcObject) {
       const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
+      tracks.forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
       videoRef.current.srcObject = null;
     }
     if (onClose) onClose();
@@ -231,9 +235,28 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
   useEffect(() => {
     if (!isActive) return;
+    
+    // Reset error state when reactivating
+    setError(undefined);
+    setRetryCount(0);
+    setRetryDelay(3);
+    
     const cleanup = initializeScanner();
     return () => {
-      cleanup?.then(cleanupFn => cleanupFn?.());
+      cleanup?.then(cleanupFn => {
+        if (cleanupFn) {
+          cleanupFn();
+        }
+        // Ensure all tracks are stopped
+        if (videoRef.current?.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach(track => {
+            track.stop();
+            track.enabled = false;
+          });
+          videoRef.current.srcObject = null;
+        }
+      });
     };
   }, [activeCamera, isActive]);
 
