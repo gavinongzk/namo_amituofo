@@ -300,7 +300,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
           const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
           if (!isValidCountryPostal) {
             postalValidationErrors.push(
-              `第${toChineseOrdinal(i + 1)}位参加者: ${
+              `${toChineseOrdinal(i + 1)}参加者: ${
                 userCountry === 'Singapore'
                   ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
                   : userCountry === 'Malaysia'
