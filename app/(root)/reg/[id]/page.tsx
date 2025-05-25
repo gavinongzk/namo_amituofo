@@ -17,6 +17,7 @@ import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOr
 import { eventDefaultValues } from "@/constants";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import * as Sentry from '@sentry/nextjs';
+import { isEqual } from 'lodash';
 
 // Define inline styles for custom UI elements
 const styles = `
@@ -226,29 +227,38 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // Compare attendance and play sound if newly marked
       setOrder(prevOrder => {
         if (!prevOrder) return latestOrder;
-        const updatedOrder = {
-          ...latestOrder,
-          customFieldValues: latestOrder.customFieldValues.map((group: CustomFieldGroup) => {
-            const prevGroup = prevOrder.customFieldValues.find(g => g.groupId === group.groupId);
-            const wasAttended = prevGroup?.attendance;
-            if (group.attendance && !wasAttended && !processedAttendances.current.has(group.groupId)) {
-              playSuccessSound();
-              setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
-              processedAttendances.current.add(group.groupId);
-              setTimeout(() => {
-                setNewlyMarkedGroups(prev => {
-                  const next = new Set(prev);
-                  next.delete(group.groupId);
-                  return next;
-                });
-              }, 2000);
-            }
-            return group;
-          })
-        };
-        return updatedOrder;
+        // Only update if changed
+        if (!isEqual(prevOrder, latestOrder)) {
+          const updatedOrder = {
+            ...latestOrder,
+            customFieldValues: latestOrder.customFieldValues.map((group: CustomFieldGroup) => {
+              const prevGroup = prevOrder.customFieldValues.find(g => g.groupId === group.groupId);
+              const wasAttended = prevGroup?.attendance;
+              if (group.attendance && !wasAttended && !processedAttendances.current.has(group.groupId)) {
+                playSuccessSound();
+                setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
+                processedAttendances.current.add(group.groupId);
+                setTimeout(() => {
+                  setNewlyMarkedGroups(prev => {
+                    const next = new Set(prev);
+                    next.delete(group.groupId);
+                    return next;
+                  });
+                }, 2000);
+              }
+              return group;
+            })
+          };
+          return updatedOrder;
+        }
+        return prevOrder;
       });
-      setRelatedOrders(updatedRelatedOrders);
+      setRelatedOrders(prevRelatedOrders => {
+        if (!isEqual(prevRelatedOrders, updatedRelatedOrders)) {
+          return updatedRelatedOrders;
+        }
+        return prevRelatedOrders;
+      });
     } catch (err) {
       console.error('Error checking attendance status:', err);
       Sentry.captureException(err);

@@ -172,7 +172,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
       const data = await response.json();
       if (Array.isArray(data.attendees)) {
-        setRegistrations(data.attendees.map((registration: EventRegistration) => ({
+        const mappedAttendees = data.attendees.map((registration: EventRegistration) => ({
           ...registration,
           order: {
             ...registration.order,
@@ -181,15 +181,20 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               cancelled: group.cancelled || false
             }))
           }
-        })));
-        
+        }));
+        // Only update if changed
+        setRegistrations(prev => {
+          if (!isEqual(prev, mappedAttendees)) {
+            return mappedAttendees;
+          }
+          return prev;
+        });
         // Calculate attended count from API data
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
           return count + registration.order.customFieldValues.filter(group =>
             group.attendance && !group.cancelled
           ).length;
         }, 0);
-        
         setAttendedUsersCount(attendedCount);
       } else {
         setRegistrations([]);
