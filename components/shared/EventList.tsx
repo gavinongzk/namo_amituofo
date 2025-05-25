@@ -1,5 +1,4 @@
 import { getAllEvents } from '@/lib/actions/event.actions';
-import { preloadEvents, preloadEventsByCategory } from '@/lib/actions/preload';
 import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
@@ -26,26 +25,15 @@ async function EventList({ page, searchText, category, country, role, userId }: 
   let events: EventsResponse;
   
   try {
-    if (!searchText && !category) {
-      console.log('📥 Using preloadEvents cache');
-      events = await preloadEvents(country, role) as EventsResponse;
-      console.log('📦 Preloaded events:', JSON.stringify(events, null, 2));
-    } else if (!searchText && category) {
-      console.log('📥 Using preloadEventsByCategory cache');
-      events = await preloadEventsByCategory(country, category, role) as EventsResponse;
-      console.log('📦 Preloaded category events:', JSON.stringify(events, null, 2));
-    } else {
-      console.log('🔍 Fetching events directly');
-      events = await getAllEvents({
-        query: searchText,
-        category,
-        page,
-        limit: 6,
-        country,
-        role
-      }) as EventsResponse;
-      console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
-    }
+    events = await getAllEvents({
+      query: searchText,
+      category,
+      page,
+      limit: 6,
+      country,
+      role
+    }) as EventsResponse;
+    console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
 
     if (!events || !events.data) {
       console.warn('⚠️ No events data available');
