@@ -214,14 +214,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   useEffect(() => {
     console.log('Fetching registrations for event:', event._id);
     fetchRegistrations();
-
-    // Set up continuous polling for real-time updates
-    const pollingInterval = setInterval(() => {
-      fetchRegistrations();
-    }, 1000); // Poll every 1 second
-
-    // Cleanup interval on unmount
-    return () => clearInterval(pollingInterval);
   }, [fetchRegistrations]);
 
   const fetchTaggedUsers = useCallback(async () => {
@@ -931,6 +923,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             className="bg-green-500 text-white text-lg p-3 w-full sm:w-auto"
           >
             {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
+          </Button>
+          <Button
+            onClick={fetchRegistrations}
+            className="bg-gray-500 text-white text-lg p-3 w-full sm:w-auto"
+          >
+            Refresh 刷新
           </Button>
           {isSuperAdmin && (
             <div className="w-full sm:w-auto">
