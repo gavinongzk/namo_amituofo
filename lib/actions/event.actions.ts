@@ -75,8 +75,7 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 }
 
 // GET ONE EVENT BY ID
-export const getEventById = unstable_cache(
-  async (eventId: string) => {
+export const getEventById = async (eventId: string) => {
     try {
       // Validate eventId format before querying
       if (!mongoose.Types.ObjectId.isValid(eventId)) {
@@ -106,13 +105,7 @@ export const getEventById = unstable_cache(
       handleError(error);
       return null;
     }
-  },
-  ['event-by-id'],
-  {
-    revalidate: 300, // Cache for 5 minutes
-    tags: ['events', 'event-images']
-  }
-);
+};
 
 // UPDATE
 export async function updateEvent({ userId, event, path }: UpdateEventParams) {
@@ -171,10 +164,6 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 
 // GET ALL EVENTS (Regular users - with date filtering)
 export async function getAllEvents({ query, limit = 6, page, category, country, role }: GetAllEventsParams & { role?: string }) {
-  const cacheKey = `events-${query}-${limit}-${page}-${category}-${country}-${role}`;
-  
-  return unstable_cache(
-    async () => {
       try {
         // Connect to database first and handle connection errors explicitly
         try {
@@ -263,13 +252,6 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
         handleError(error)
         return { data: [], totalPages: 0 }
       }
-    },
-    ['events-list', cacheKey],
-    {
-      revalidate: 300, // Cache for 5 minutes
-      tags: ['events', 'event-images']
-    }
-  )();
 }
 
 // GET ALL EVENTS (Superadmin - without date filtering)

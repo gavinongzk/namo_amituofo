@@ -135,19 +135,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
 
-  // Function to save attendance state to localStorage
-  const saveAttendanceState = useCallback((queueNumber: string, attended: boolean) => {
-    const storageKey = `attendance_${event._id}`;
-    const attendanceState = JSON.parse(localStorage.getItem(storageKey) || '{}');
-    attendanceState[queueNumber] = attended;
-    localStorage.setItem(storageKey, JSON.stringify(attendanceState));
-  }, [event._id]);
-
-  // Function to load attendance state from localStorage
-  const loadAttendanceState = useCallback(() => {
-    const storageKey = `attendance_${event._id}`;
-    return JSON.parse(localStorage.getItem(storageKey) || '{}');
-  }, [event._id]);
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -185,26 +172,21 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       }
       const data = await response.json();
       if (Array.isArray(data.attendees)) {
-        // Load attendance state from localStorage
-        const attendanceState = loadAttendanceState();
-        
         setRegistrations(data.attendees.map((registration: EventRegistration) => ({
           ...registration,
           order: {
             ...registration.order,
             customFieldValues: registration.order.customFieldValues.map((group) => ({
               ...group,
-              // Override attendance from API with localStorage state if available
-              attendance: attendanceState[group.queueNumber] ?? group.attendance,
               cancelled: group.cancelled || false
             }))
           }
         })));
         
-        // Calculate attended count including localStorage state
+        // Calculate attended count from API data
         const attendedCount = data.attendees.reduce((count: number, registration: EventRegistration) => {
-          return count + registration.order.customFieldValues.filter(group => 
-            (attendanceState[group.queueNumber] ?? group.attendance) && !group.cancelled
+          return count + registration.order.customFieldValues.filter(group =>
+            group.attendance && !group.cancelled
           ).length;
         }, 0);
         
@@ -222,11 +204,19 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [event._id, loadAttendanceState]);
+  }, [event._id]);
 
   useEffect(() => {
     console.log('Fetching registrations for event:', event._id);
     fetchRegistrations();
+
+    // Set up continuous polling for real-time updates
+    const pollingInterval = setInterval(() => {
+      fetchRegistrations();
+    }, 3000); // Poll every 3 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(pollingInterval);
   }, [fetchRegistrations]);
 
   const fetchTaggedUsers = useCallback(async () => {
@@ -293,8 +283,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             if (r.id === registrationId) {
               const updatedCustomFieldValues = r.order.customFieldValues.map(g => {
                 if (g.groupId === groupId) {
-                  // Save attendance state to localStorage when marking attendance
-                  saveAttendanceState(g.queueNumber, attended);
                   return { ...g, attendance: attended };
                 }
                 return g;
@@ -337,7 +325,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.error('Error updating attendance:', error);
       showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
     }
-  }, [event._id, registrations, calculateCounts, showModalWithMessage, saveAttendanceState]);
+  }, [event._id, registrations, calculateCounts, showModalWithMessage, fetchRegistrations]);
 
   const handleQueueNumberSubmit = useCallback(async () => {
     console.log('Submitting queue number:', queueNumber);

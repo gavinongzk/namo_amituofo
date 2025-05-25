@@ -21,11 +21,15 @@ export const routeCacheConfig = {
   
   // API endpoints - dynamic data
   '/api/events': {
-    revalidate: 60, // 1 minute for event data
+    revalidate: 0, // No cache for real-time data
     prefetch: false
   },
   '/api/events/*/counts': {
-    revalidate: 30, // 30 seconds for real-time counts
+    revalidate: 0, // No cache for real-time counts
+    prefetch: false
+  },
+  '/api/events/*/attendees': {
+    revalidate: 0, // No cache for attendance data
     prefetch: false
   },
   
