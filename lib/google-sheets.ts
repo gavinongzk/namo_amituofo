@@ -8,14 +8,17 @@ const auth = new JWT({
   scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file'],
 });
 
+// Get the folder ID from environment variable
+const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '1DEKSTTDwEF57MZ9mE4-_csU0YrkQxrB9';
+
 export async function createOrGetSpreadsheet(title: string) {
   const sheets = google.sheets({ version: 'v4', auth });
   const drive = google.drive({ version: 'v3', auth });
 
   try {
-    // Search for existing spreadsheet with the same title
+    // Search for existing spreadsheet with the same title in the specified folder
     const response = await drive.files.list({
-      q: `name='${title}' and mimeType='application/vnd.google-apps.spreadsheet'`,
+      q: `name='${title}' and mimeType='application/vnd.google-apps.spreadsheet' and '${FOLDER_ID}' in parents`,
       fields: 'files(id, name)',
     });
 
@@ -31,6 +34,15 @@ export async function createOrGetSpreadsheet(title: string) {
         },
       },
     });
+
+    // Move the spreadsheet to the specified folder
+    if (spreadsheet.data.spreadsheetId) {
+      await drive.files.update({
+        fileId: spreadsheet.data.spreadsheetId,
+        addParents: FOLDER_ID,
+        fields: 'id, parents',
+      });
+    }
 
     // Share the spreadsheet with the user's email if provided
     if (process.env.GOOGLE_USER_EMAIL) {
