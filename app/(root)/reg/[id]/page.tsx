@@ -191,70 +191,69 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
-  // Add function to check attendance status
   const checkAttendanceStatus = useCallback(async () => {
     if (!order?.event?._id) return;
-
     try {
-      // Load attendance state from localStorage
-      const storageKey = `attendance_${order.event._id}`;
-      const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      // Fetch the latest order details from the server
+      const response = await fetch(`/api/order/${order._id}`);
+      if (!response.ok) throw new Error('Failed to fetch order');
+      const latestOrder = await response.json();
 
-      // Check if any attendance status has changed
-      let hasChanges = false;
+      // Fetch related orders if needed (by phone number)
+      const phoneNumbers = latestOrder.customFieldValues.flatMap((group: CustomFieldGroup) =>
+        group.fields
+          .filter((field: CustomField) => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
+          .map((field: CustomField) => field.value)
+      );
+      let updatedRelatedOrders = [];
+      if (phoneNumbers.length > 0) {
+        const phoneNumber = phoneNumbers[0];
+        const relRes = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
+        if (relRes.ok) {
+          const data = await relRes.json();
+          const currentEventId = latestOrder.event._id;
+          const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
+          if (currentEventOrders) {
+            const orderIds = currentEventOrders.orderIds;
+            const allOrders = await Promise.all(
+              orderIds.map((orderId: string) => fetch(`/api/order/${orderId}`).then(r => r.ok ? r.json() : null))
+            );
+            updatedRelatedOrders = allOrders.filter(o => o && o._id !== latestOrder._id);
+          }
+        }
+      }
 
-      // Update attendance state from localStorage
+      // Compare attendance and play sound if newly marked
       setOrder(prevOrder => {
-        if (!prevOrder) return null;
-
+        if (!prevOrder) return latestOrder;
         const updatedOrder = {
-          ...prevOrder,
-          customFieldValues: prevOrder.customFieldValues.map(group => {
-            const newAttendance = group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance;
-            if (newAttendance !== group.attendance) {
-              hasChanges = true;
-              // If this is a newly marked attendance, add to newly marked groups
-              if (newAttendance && !group.attendance && !processedAttendances.current.has(group.groupId)) {
-                playSuccessSound();
-                setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
-                processedAttendances.current.add(group.groupId);
-                // Remove from newly marked groups after animation
-                setTimeout(() => {
-                  setNewlyMarkedGroups(prev => {
-                    const next = new Set(prev);
-                    next.delete(group.groupId);
-                    return next;
-                  });
-                }, 2000);
-              }
+          ...latestOrder,
+          customFieldValues: latestOrder.customFieldValues.map((group: CustomFieldGroup) => {
+            const prevGroup = prevOrder.customFieldValues.find(g => g.groupId === group.groupId);
+            const wasAttended = prevGroup?.attendance;
+            if (group.attendance && !wasAttended && !processedAttendances.current.has(group.groupId)) {
+              playSuccessSound();
+              setNewlyMarkedGroups(prev => new Set([...prev, group.groupId]));
+              processedAttendances.current.add(group.groupId);
+              setTimeout(() => {
+                setNewlyMarkedGroups(prev => {
+                  const next = new Set(prev);
+                  next.delete(group.groupId);
+                  return next;
+                });
+              }, 2000);
             }
-            return {
-              ...group,
-              attendance: newAttendance
-            };
+            return group;
           })
         };
-
-        return hasChanges ? updatedOrder : prevOrder;
+        return updatedOrder;
       });
-
-      // Update related orders if needed
-      if (hasChanges) {
-        setRelatedOrders(prevOrders => {
-          return prevOrders.map(relatedOrder => ({
-            ...relatedOrder,
-            customFieldValues: relatedOrder.customFieldValues.map(group => ({
-              ...group,
-              attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-            }))
-          }));
-        });
-      }
+      setRelatedOrders(updatedRelatedOrders);
     } catch (err) {
       console.error('Error checking attendance status:', err);
       Sentry.captureException(err);
     }
-  }, [order?.event?._id]);
+  }, [order?.event?._id, order?._id]);
 
   const fetchOrderDetails = useCallback(async () => {
     // Don't fetch if we've fetched recently (debounce)
