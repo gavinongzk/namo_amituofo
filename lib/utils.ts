@@ -429,27 +429,8 @@ export const debugLog = (component: string, message: string, data?: any) => {
 };
 
 export async function validateSingaporePostalCode(postalCode: string): Promise<boolean> {
-  if (!/^\d{6}$/.test(postalCode)) {
-    return false;
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-    
-    const response = await fetch(
-      `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=N&getAddrDetails=Y`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timeoutId);
-    
-    const data = await response.json();
-    return data.results && data.results.length > 0;
-  } catch (error) {
-    console.error('Error validating postal code:', error);
-    // Fallback to basic validation if API fails
-    return /^\d{6}$/.test(postalCode);
-  }
+  // Only check for 6 digits, no API or region validation
+  return /^\d{6}$/.test(postalCode);
 }
 
 /**
