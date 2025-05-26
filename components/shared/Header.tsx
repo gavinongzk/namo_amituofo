@@ -72,7 +72,7 @@ const Header = () => {
           className="md:hidden flex items-center gap-2 p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation ml-2"
         >
           <Search className="h-5 w-5 text-primary-600" />
-          <span className="text-sm font-medium text-primary-600">查询</span>
+          <span className="text-sm font-medium text-primary-600">活动查询</span>
         </Link>
 
         {/* Main Nav (hidden on mobile) */}
