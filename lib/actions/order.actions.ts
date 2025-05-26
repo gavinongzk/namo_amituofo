@@ -594,16 +594,24 @@ export const getOrderDetailsWithoutExpirationCheck = unstable_cache(
   async (orderId: string) => {
     try {
       await connectToDatabase();
+      console.log('Attempting to find order with ID:', orderId);
       const order = await Order.findById(orderId)
         .populate('event')
         .populate('buyer')
         .select('-__v') // Exclude version field but keep all other fields including qrCode
         .lean(); // Use lean() for better performance
-      
-      if (!order) throw new Error('Order not found');
+
+      console.log('Query result for ID', orderId, ':', order ? 'Order found' : 'Order not found');
+
+      if (!order) {
+        console.error('Order not found for ID:', orderId);
+        throw new Error('Order not found');
+      }
       return JSON.parse(JSON.stringify(order));
     } catch (error) {
+      console.error('Error in getOrderDetailsWithoutExpirationCheck for ID:', orderId, error);
       handleError(error);
+      return null;
     }
   },
   ['order-details-no-expiration'],
