@@ -352,13 +352,13 @@ export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: s
   try {
     await connectToDatabase();
     
-    console.log('Searching for phone number (including cancelled):', phoneNumber);
+    console.log('Searching for phone number (including cancelled): ', phoneNumber);
 
     // Remove any cache-busting query params from the phone number
     const cleanPhoneNumber = phoneNumber.split('?')[0];
 
     // Get current date for filtering events that haven't ended yet
-    const currentDate = new Date();
+    // const currentDate = new Date(); // Remove or comment out this line
 
     // Ensure Category model is registered before using it
     require('../database/models/category.model');
@@ -375,10 +375,9 @@ export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: s
     })
     .populate({
       path: 'event',
-      match: {
-        endDateTime: { $gte: currentDate },
-        isDeleted: { $ne: true }
-      }, // Only include events that haven't ended yet and aren't deleted
+      // Remove the date filtering from here:
+      // match: { endDateTime: { $gte: currentDate }, isDeleted: { $ne: true } },
+      match: { isDeleted: { $ne: true } }, // Keep only the isDeleted filter
       select: '_id title imageUrl startDateTime endDateTime organizer',
       populate: {
         path: 'category',
@@ -387,8 +386,8 @@ export const getAllOrdersByPhoneNumberIncludingCancelled = async (phoneNumber: s
       }
     })
     .lean();
-    
-    // Filter out any null events (those that didn't match the date criteria)
+
+    // Filter out any null events (those that didn't match the date criteria - this filter is now removed)
     const filteredOrders = orders.filter(order => order.event);
     
     // Group orders by event ID
@@ -589,3 +588,34 @@ export const aggregateOrdersByPhoneNumber = async (phoneNumber: string) => {
     throw error;
   }
 };
+
+export const getOrderDetailsWithoutExpirationCheck = unstable_cache(
+  async (orderId: string) => {
+    try {
+      await connectToDatabase();
+      // console.log('Attempting to find order with ID:', orderId); // Removed log
+      const order = await Order.findById(orderId)
+        .populate('event')
+        .populate('buyer')
+        .select('-__v') // Exclude version field but keep all other fields including qrCode
+        .lean(); // Use lean() for better performance
+
+      // console.log('Query result for ID', orderId, ':', order ? 'Order found' : 'Order not found'); // Removed log
+
+      if (!order) {
+        // console.error('Order not found for ID:', orderId); // Removed log
+        throw new Error('Order not found');
+      }
+      return JSON.parse(JSON.stringify(order));
+    } catch (error) {
+      // console.error('Error in getOrderDetailsWithoutExpirationCheck for ID:', orderId, error); // Removed log
+      handleError(error);
+      return null;
+    }
+  },
+  ['order-details-no-expiration'],
+  {
+    revalidate: 60, // Cache for 60 seconds
+    tags: ['order-details', 'orders'] // Cache tags for invalidation
+  }
+);

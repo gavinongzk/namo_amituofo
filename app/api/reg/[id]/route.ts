@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
+import { getOrderDetailsWithoutExpirationCheck } from '@/lib/actions/order.actions';
 
 export async function GET(
   req: NextRequest,
@@ -18,12 +19,9 @@ export async function GET(
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
-    // Find the order by ID
+    // Find the order by ID using the new function
     console.log('Querying database for order...');
-    const order = await Order.findById(id)
-      .populate('event')
-      .populate('buyer')
-      .select('-__v'); // Exclude version field to reduce payload size
+    const order = await getOrderDetailsWithoutExpirationCheck(id);
     
     console.log('Query result:', order ? 'Order found' : 'Order not found');
     
@@ -32,7 +30,7 @@ export async function GET(
     }
     
     // Set cache control headers to prevent caching
-    const response = NextResponse.json(JSON.parse(JSON.stringify(order)));
+    const response = NextResponse.json(order);
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');

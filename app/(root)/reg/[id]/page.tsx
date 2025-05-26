@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { getOrderById } from '@/lib/actions/order.actions';
+import { getOrderById, getOrderDetailsWithoutExpirationCheck } from '@/lib/actions/order.actions';
 import { formatBilingualDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
@@ -275,14 +275,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setIsLoading(true);
     try {
       // First get the initial order to get the phone number
-      const initialOrder = await getOrderById(id);
+      const initialOrder = await getOrderDetailsWithoutExpirationCheck(id);
       if (!initialOrder) {
         setError('Order not found');
         return;
       }
 
       // Extract phone numbers from the order
-      const phoneNumbers = initialOrder.customFieldValues.flatMap((group: CustomFieldGroup) => 
+      const phoneNumbers = initialOrder.customFieldValues.flatMap((group: CustomFieldGroup) =>
         group.fields
           .filter((field: CustomField) => field.type === 'phone' || field.label.toLowerCase().includes('phone'))
           .map((field: CustomField) => field.value)
@@ -292,7 +292,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
         const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
-        
+
         if (response.status === 403) {
           // If user is not superadmin, only show non-cancelled registrations
           const normalResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
@@ -300,15 +300,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             const data = await normalResponse.json();
             const currentEventId = initialOrder.event._id;
             const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
-            
+
             if (currentEventOrders) {
               const orderIds = currentEventOrders.orderIds;
               const allOrders = await Promise.all(
                 orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
               );
-              
+
               const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
-              
+
               // Load attendance state from localStorage
               const storageKey = `attendance_${initialOrder.event._id}`;
               const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -328,22 +328,22 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           }
         } else if (response.ok) {
           const data = await response.json();
-          
+
           // data is an array of grouped orders by event
           // We need to find all orders for the current event
           const currentEventId = initialOrder.event._id;
           const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
-          
+
           if (currentEventOrders) {
             // Get all orders for this event
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
               orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
             );
-            
+
             // Filter out the current order and any null results
             const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
-            
+
             // Load attendance state from localStorage
             const storageKey = `attendance_${initialOrder.event._id}`;
             const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -356,7 +356,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
               }))
             };
-
             setOrder(updatedInitialOrder);
             setRelatedOrders(otherOrders);
           }
