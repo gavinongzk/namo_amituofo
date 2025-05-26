@@ -274,8 +274,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     setIsLoading(true);
     try {
+      console.log('Calling getOrderDetailsWithoutExpirationCheck with ID:', id);
       // First get the initial order to get the phone number
       const initialOrder = await getOrderDetailsWithoutExpirationCheck(id);
+      console.log('Received initialOrder from server action:', initialOrder);
       if (!initialOrder) {
         setError('Order not found');
         return;
