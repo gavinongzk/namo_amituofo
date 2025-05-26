@@ -18,6 +18,8 @@ import { eventDefaultValues } from "@/constants";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import * as Sentry from '@sentry/nextjs';
 import { isEqual } from 'lodash';
+import { useRouter } from 'next/navigation';
+import { useUser } from "@clerk/nextjs";
 
 // Define inline styles for custom UI elements
 const styles = `
@@ -89,28 +91,49 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
 });
 
 const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, participantInfo, queueNumber }) => {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleCancelClick = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmCancel = () => {
+    onCancel(groupId, queueNumber);
+    setShowConfirmation(false);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="w-full">
-          取消报名 Cancel Registration
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>确认取消报名 / Confirm Cancellation</AlertDialogTitle>
-          <AlertDialogDescription>
-            您确定要取消 {participantInfo} 的报名吗？/ Are you sure you want to cancel the registration for {participantInfo}?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onCancel(groupId, queueNumber)}>
-            确认 / Confirm
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <Button
+        onClick={handleCancelClick}
+        className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 h-auto"
+        size="sm"
+      >
+        Cancel
+      </Button>
+
+      {showConfirmation && (
+        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to cancel this registration{participantInfo ? `: ${participantInfo}` : ''}? This action cannot be undone.
+                您确定要取消此报名吗${participantInfo ? `: ${participantInfo}` : ''}? 此操作无法撤消。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex justify-end gap-2">
+              <AlertDialogCancel>No 否</AlertDialogCancel>
+              <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={handleConfirmCancel}>Yes 是的</AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   );
 };
 
@@ -186,6 +209,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const lastFetchTime = useRef<number>(0);
   const processedAttendances = useRef<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const { user } = useUser();
+  const router = useRouter();
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -209,9 +234,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       let updatedRelatedOrders = [];
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
-        const relRes = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
-        if (relRes.ok) {
-          const data = await relRes.json();
+        // Check if user is superadmin before including cancelled registrations
+        const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+        const relatedOrdersResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${isSuperAdmin ? '&includeAllRegistrations=true' : ''}`);
+
+        if (relatedOrdersResponse.ok) {
+          const data = await relatedOrdersResponse.json();
           const currentEventId = latestOrder.event._id;
           const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
           if (currentEventOrders) {
@@ -263,7 +291,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       console.error('Error checking attendance status:', err);
       Sentry.captureException(err);
     }
-  }, [order?.event?._id, order?._id]);
+  }, [order?.event?._id, order?._id, user?.publicMetadata.role]);
 
   const fetchOrderDetails = useCallback(async () => {
     // Don't fetch if we've fetched recently (debounce)
@@ -288,45 +316,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           .map((field: CustomField) => field.value)
       );
 
-      // If we have phone numbers, fetch all orders including cancelled ones
+      // If we have phone numbers, fetch orders
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
-        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
+        // Check if user is superadmin before including cancelled registrations
+        const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+        
+        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${isSuperAdmin ? '&includeAllRegistrations=true' : ''}`);
 
-        if (response.status === 403) {
-          // If user is not superadmin, only show non-cancelled registrations
-          const normalResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
-          if (normalResponse.ok) {
-            const data = await normalResponse.json();
-            const currentEventId = initialOrder.event._id;
-            const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
-
-            if (currentEventOrders) {
-              const orderIds = currentEventOrders.orderIds;
-              const allOrders = await Promise.all(
-                orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
-              );
-
-              const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
-
-              // Load attendance state from localStorage
-              const storageKey = `attendance_${initialOrder.event._id}`;
-              const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-              // Update attendance state from localStorage
-              const updatedInitialOrder = {
-                ...initialOrder,
-                customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
-                  ...group,
-                  attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-                }))
-              };
-
-              setOrder(updatedInitialOrder);
-              setRelatedOrders(otherOrders);
-            }
-          }
-        } else if (response.ok) {
+        if (response.ok) {
           const data = await response.json();
 
           // data is an array of grouped orders by event
@@ -359,7 +357,19 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             setOrder(updatedInitialOrder);
             setRelatedOrders(otherOrders);
           }
+        } else {
+           // Handle non-OK responses for both superadmin and non-superadmin cases
+           // Depending on the desired behavior, you might want to show an error
+           // or handle specific status codes other than 403 if necessary.
+           // For 403 specifically, the conditional fetch above should prevent it
+           // for non-superadmins, so any remaining 403 would be unexpected.
+           console.error('Error fetching related orders:', response.status, response.statusText);
+           setError(`Failed to load related orders: ${response.statusText}`);
         }
+      } else {
+        // No phone numbers found, just set the initial order
+        setOrder(initialOrder);
+        setRelatedOrders([]); // No related orders to fetch
       }
 
       setError(null);
@@ -371,7 +381,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, user?.publicMetadata.role, getOrderDetailsWithoutExpirationCheck]);
 
   // Initial fetch
   useEffect(() => {
@@ -465,40 +475,38 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         };
 
         // Make API call
-        const response = await fetch('/api/update-registration', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
+        const res = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
         });
 
-        if (!response.ok) {
-            // Revert local state if API call fails
+        if (res.ok) {
+            toast.success('报名已成功取消 / Registration cancelled successfully', {
+                duration: 4000,
+                position: 'top-center',
+            });
+            // Refetch data after successful cancellation to ensure state is accurate
+            fetchOrderDetails();
+        } else {
+            // Revert state if API call fails
             setOrder(oldOrder);
             setRelatedOrders(oldRelatedOrders);
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to cancel registration');
+            const errorData = await res.json();
+            console.error('Cancellation failed:', errorData);
+            toast.error(`取消报名失败: ${errorData.message || '未知错误'} / Failed to cancel registration: ${errorData.message || 'Unknown error'}`, {
+                duration: 4000,
+                position: 'top-center',
+            });
         }
-
-        // Update session storage in the background
-        if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('eventLookupRegistrations');
-            sessionStorage.removeItem('eventLookupAllRegistrations');
-        }
-
-        toast.success('成功取消报名 / Successfully cancelled registration', {
-            duration: 3000,
-            position: 'top-center',
-        });
-    } catch (error: any) {
-        console.error('Error cancelling registration:', error);
-        Sentry.captureException(error);
-        let errorMessage = '取消报名失败 / Failed to cancel registration';
-        if (error.message) {
-            errorMessage = error.message;
-        }
-        toast.error(errorMessage, {
+    } catch (error) {
+        // Revert state if an exception occurs
+        setOrder(oldOrder);
+        setRelatedOrders(oldRelatedOrders);
+        console.error('Error during cancellation:', error);
+        toast.error('取消报名失败: 网络错误 / Failed to cancel registration: Network error', {
             duration: 4000,
             position: 'top-center',
         });
@@ -508,7 +516,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const handleUncancellation = async (groupId: string, queueNumber: string): Promise<void> => {
     if (!queueNumber) {
         console.error('Cannot uncancel registration: queueNumber is required');
-        toast.error('恢复报名失败: 缺少队列号 / Cannot restore registration: missing queue number', {
+        toast.error('恢复报名失败: 缺少队列号 / Cannot uncancel registration: missing queue number', {
             duration: 4000,
             position: 'top-center',
         });
@@ -517,7 +525,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     if (!order?.event?._id) {
         console.error('Cannot uncancel registration: eventId is required');
-        toast.error('恢复报名失败: 缺少活动ID / Cannot restore registration: missing event ID', {
+        toast.error('恢复报名失败: 缺少活动ID / Cannot uncancel registration: missing event ID', {
             duration: 4000,
             position: 'top-center',
         });
@@ -558,40 +566,38 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         };
 
         // Make API call
-        const response = await fetch('/api/update-registration', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
+        const res = await fetch('/api/cancel-registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
         });
 
-        if (!response.ok) {
-            // Revert local state if API call fails
+        if (res.ok) {
+            toast.success('报名已成功恢复 / Registration uncanceled successfully', {
+                duration: 4000,
+                position: 'top-center',
+            });
+            // Refetch data after successful uncancellation to ensure state is accurate
+            fetchOrderDetails();
+        } else {
+             // Revert state if API call fails
             setOrder(oldOrder);
             setRelatedOrders(oldRelatedOrders);
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to restore registration');
+            const errorData = await res.json();
+            console.error('Uncancellation failed:', errorData);
+            toast.error(`恢复报名失败: ${errorData.message || '未知错误'} / Failed to uncancel registration: ${errorData.message || 'Unknown error'}`, {
+                duration: 4000,
+                position: 'top-center',
+            });
         }
-
-        // Update session storage in the background
-        if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('eventLookupRegistrations');
-            sessionStorage.removeItem('eventLookupAllRegistrations');
-        }
-
-        toast.success('成功恢复报名 / Successfully restored registration', {
-            duration: 3000,
-            position: 'top-center',
-        });
-    } catch (error: any) {
-        console.error('Error restoring registration:', error);
-        Sentry.captureException(error);
-        let errorMessage = '恢复报名失败 / Failed to restore registration';
-        if (error.message) {
-            errorMessage = error.message;
-        }
-        toast.error(errorMessage, {
+    } catch (error) {
+         // Revert state if an exception occurs
+        setOrder(oldOrder);
+        setRelatedOrders(oldRelatedOrders);
+        console.error('Error during uncancellation:', error);
+        toast.error('恢复报名失败: 网络错误 / Failed to uncancel registration: Network error', {
             duration: 4000,
             position: 'top-center',
         });
