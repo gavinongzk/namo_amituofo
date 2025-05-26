@@ -196,7 +196,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     if (!order?.event?._id) return;
     try {
       // Fetch the latest order details from the server
-      const response = await fetch(`/api/order/${order._id}`);
+      const response = await fetch(`/api/reg/${order._id}`);
       if (!response.ok) throw new Error('Failed to fetch order');
       const latestOrder = await response.json();
 
@@ -217,7 +217,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           if (currentEventOrders) {
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => fetch(`/api/order/${orderId}`).then(r => r.ok ? r.json() : null))
+              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
             );
             updatedRelatedOrders = allOrders.filter(o => o && o._id !== latestOrder._id);
           }
@@ -293,7 +293,40 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         const phoneNumber = phoneNumbers[0];
         const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
         
-        if (response.ok) {
+        if (response.status === 403) {
+          // If user is not superadmin, only show non-cancelled registrations
+          const normalResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+          if (normalResponse.ok) {
+            const data = await normalResponse.json();
+            const currentEventId = initialOrder.event._id;
+            const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
+            
+            if (currentEventOrders) {
+              const orderIds = currentEventOrders.orderIds;
+              const allOrders = await Promise.all(
+                orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
+              );
+              
+              const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
+              
+              // Load attendance state from localStorage
+              const storageKey = `attendance_${initialOrder.event._id}`;
+              const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+              // Update attendance state from localStorage
+              const updatedInitialOrder = {
+                ...initialOrder,
+                customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
+                  ...group,
+                  attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+                }))
+              };
+
+              setOrder(updatedInitialOrder);
+              setRelatedOrders(otherOrders);
+            }
+          }
+        } else if (response.ok) {
           const data = await response.json();
           
           // data is an array of grouped orders by event
@@ -305,7 +338,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             // Get all orders for this event
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => getOrderById(orderId))
+              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
             );
             
             // Filter out the current order and any null results
@@ -324,17 +357,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               }))
             };
 
-            // Update attendance state for other orders
-            const updatedOtherOrders = otherOrders.map(order => ({
-              ...order,
-              customFieldValues: order.customFieldValues.map((group: CustomFieldGroup) => ({
-                ...group,
-                attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-              }))
-            }));
-            
             setOrder(updatedInitialOrder);
-            setRelatedOrders(updatedOtherOrders);
+            setRelatedOrders(otherOrders);
           }
         }
       }
@@ -352,7 +376,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   // Initial fetch
   useEffect(() => {
-    fetchOrderDetails();
+    const fetchData = async () => {
+      try {
+        await fetchOrderDetails();
+      } catch (error) {
+        console.error("Error fetching order details in useEffect:", error);
+        setError("Failed to load registration details."); // Set an error state to display a user-friendly message
+        setIsLoading(false); // Ensure loading state is turned off
+      }
+    };
+    fetchData();
   }, [fetchOrderDetails]);
 
   // Add polling effect for attendance status only

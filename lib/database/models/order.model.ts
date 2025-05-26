@@ -68,10 +68,19 @@ const OrderSchema = new Schema({
 
 // Add this index
 OrderSchema.index({ 'customFieldValues.fields.value': 1 });
+
 // Add indexes for queueNumber and groupId for better lookup performance
 OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Primary lookup key
 OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Secondary lookup key
-OrderSchema.index({ 'event': 1, 'customFieldValues.queueNumber': 1 }); // Compound index for event+queueNumber lookups
+
+// Compound index for event+queueNumber lookups with uniqueness constraint
+OrderSchema.index(
+  { 'event': 1, 'customFieldValues.queueNumber': 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { 'customFieldValues.queueNumber': { $exists: true } }
+  }
+);
 
 // Compound index for event+phone+queueNumber lookups
 OrderSchema.index({ 
@@ -80,6 +89,39 @@ OrderSchema.index({
   'customFieldValues.queueNumber': 1 
 });
 
-OrderSchema.index({ 'event': 1, 'customFieldValues.queueNumber': 1 }, { unique: true }); // Enforce unique queueNumber per event
+// Add a pre-save hook to validate queue number uniqueness
+OrderSchema.pre('save', async function(next) {
+  try {
+    const order = this;
+    if (!order.isModified('customFieldValues')) {
+      return next();
+    }
+
+    // Check for duplicate queue numbers within the same event
+    const queueNumbers = order.customFieldValues.map(g => g.queueNumber);
+    const uniqueQueueNumbers = new Set(queueNumbers);
+    
+    if (queueNumbers.length !== uniqueQueueNumbers.size) {
+      throw new Error('Duplicate queue numbers found within the same order');
+    }
+
+    // Check for duplicate queue numbers across other orders in the same event
+    for (const group of order.customFieldValues) {
+      const existingOrder = await models.Order.findOne({
+        _id: { $ne: order._id },
+        event: order.event,
+        'customFieldValues.queueNumber': group.queueNumber
+      });
+
+      if (existingOrder) {
+        throw new Error(`Queue number ${group.queueNumber} already exists for this event`);
+      }
+    }
+
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
+});
 
 export default models.Order || model<IOrder>('Order', OrderSchema);

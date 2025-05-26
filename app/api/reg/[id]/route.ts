@@ -7,18 +7,25 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('Connecting to database...');
     await connectToDatabase();
+    console.log('Database connection successful');
     
     const { id } = params;
+    console.log('Looking for order with ID:', id);
+    
     if (!id) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
     // Find the order by ID
+    console.log('Querying database for order...');
     const order = await Order.findById(id)
       .populate('event')
       .populate('buyer')
       .select('-__v'); // Exclude version field to reduce payload size
+    
+    console.log('Query result:', order ? 'Order found' : 'Order not found');
     
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });

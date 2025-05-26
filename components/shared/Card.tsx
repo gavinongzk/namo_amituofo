@@ -40,6 +40,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
   const [imageError, setImageError] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
+  const isExpired = new Date(event.endDateTime) < new Date();
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
@@ -69,7 +70,6 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     }
     e.preventDefault();
     setIsNavigating(true);
-    console.log('[Card.tsx] router.push event._id:', event._id); // Added log
     const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
     router.push(href);
   };
@@ -78,13 +78,12 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     <div 
       className={cn(
         "group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-card transition-all duration-300 ease-in-out hover:shadow-card-hover focus-within:ring-2 focus-within:ring-primary-500 md:min-h-[438px]",
-        isNavigating && "pointer-events-none opacity-70"
+        isNavigating && "pointer-events-none opacity-70",
+        isExpired && "opacity-75"
       )}
       role="article"
       aria-labelledby={`event-title-${event._id}`}
     >
-{/* Added log */}
-      { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (main image) event._id:', event?._id)) || null }
       <Link
         href={isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`}
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
@@ -165,8 +164,6 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
 
       {isEventCreator && (
         <div className="absolute right-2 top-2 flex flex-col gap-4 rounded-xl bg-white/90 backdrop-blur-sm p-3 shadow-sm transition-all">
-{/* Added log */}
-          { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (update) event._id:', event?._id)) || null }
           <Link
             href={`/events/details/${event._id}/update`}
             className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
@@ -180,14 +177,21 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
       )}
 
       <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4">
-        <div className="flex items-center gap-2">
-          <span 
-            className={`w-3 h-3 rounded-full ${categoryColor.split(' ')[0]}`} 
-            role="presentation" 
-          />
-          <p className={`text-sm font-medium ${categoryColor.split(' ')[1]}`}>
-            {event.category.name}
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span 
+              className={`w-3 h-3 rounded-full ${categoryColor.split(' ')[0]}`} 
+              role="presentation" 
+            />
+            <p className={`text-sm font-medium ${categoryColor.split(' ')[1]}`}>
+              {event.category.name}
+            </p>
+          </div>
+          {isExpired && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+              已过期 / Expired
+            </span>
+          )}
         </div>
         
         <time 
@@ -197,8 +201,6 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
           {formatBilingualDateTime(event.startDateTime).combined.dateOnly} | {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
         </time>
 
-{/* Added log */}
-        { (typeof window !== 'undefined' && console.log('[Card.tsx] Link (title) event._id:', event?._id)) || null }
         <Link
           href={`/events/details/${event._id}`}
           className="group/title focus:outline-none"

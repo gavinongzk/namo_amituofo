@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import Modal from '@/components/ui/modal';
 import { categoryCustomFields } from '@/constants'; // Import the category custom fields
 import { getEventCategory } from '@/lib/actions/event.actions';
+import { generateQueueNumber } from '@/lib/utils/queueNumber';
 
 
 interface UploadOrdersProps {
@@ -41,7 +42,7 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
     }
   };
 
-  const handleUpload = useCallback(async () => { // New function to handle upload
+  const handleUpload = useCallback(async () => {
     if (!selectedFile) return; // Ensure a file is selected
 
     const reader = new FileReader();
@@ -84,47 +85,39 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
 
         const customFields = eventCategory && categoryCustomFields[eventCategory] ? categoryCustomFields[eventCategory] : []; // Check for null
 
-        // Fetch existing queue numbers for the event
-        const existingQueueNumbersRes = await fetch(`/api/reg/existing-queue-numbers?eventId=${eventId}`);
-        const existingQueueNumbersData = await existingQueueNumbersRes.json();
-        const existingQueueNumbers = existingQueueNumbersData.queueNumbers || [];
-        const maxExistingQueueNumber = existingQueueNumbers.length > 0
-          ? Math.max(...existingQueueNumbers.map((qn: string) => parseInt((qn || '').replace(/^[^\d]*(\d+)/, '$1'))).filter((n: number) => !isNaN(n)))
-          : 0;
-
-        const orders = jsonData.map((row: any, index: number) => {
+        // Process each row and generate queue numbers atomically
+        const orders = await Promise.all(jsonData.map(async (row: any) => {
           const customFieldValues = customFields.map(field => ({
             id: field.id,
             label: field.label,
             type: field.type,
-            value: row[field.label] || '', // Map the Excel data to the custom field
+            value: row[field.label] || '',
           }));
 
-          // Assign queue number based on max existing + index
-          const paddedNumber = String(maxExistingQueueNumber + index + 1).padStart(3, '0');
-          const queueNumber = `U${paddedNumber}`;
+          // Generate queue number atomically with 'U' prefix for uploaded orders
+          const queueNumber = await generateQueueNumber(eventId, 'U');
 
           return {
             customFieldValues: [
               {
-                groupId: `uploaded_group_${index + 1}`,
-                queueNumber, // Use the padded queue number
+                groupId: `uploaded_group_${Date.now()}`,
+                queueNumber,
                 fields: customFieldValues,
                 attendance: true,
                 cancelled: false,
               },
             ],
           };
-        });
+        }));
 
-        console.log('Orders to upload:', orders); // Log the orders before sending
+        console.log('Orders to upload:', orders);
 
         const response = await fetch('/api/reg/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ eventId, ordersData: orders }), // Change 'orders' to 'ordersData'
+          body: JSON.stringify({ eventId, ordersData: orders }),
         });
 
         if (!response.ok) {
