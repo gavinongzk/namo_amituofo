@@ -8,7 +8,7 @@ import Link from "next/link"
 import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
 import CountrySelector from '@/components/shared/CountrySelector';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 
 const AdminLoginButton = () => (
   <Link 
@@ -70,7 +70,17 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+          {/* Mobile-only Event Lookup Link */}
+          <Link 
+            href="/event-lookup"
+            className="md:hidden flex items-center gap-2 p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation"
+          >
+            <Search className="h-5 w-5 text-primary-600" />
+            <span className="text-sm font-medium text-primary-600">查询</span>
+          </Link>
+
           <SignedIn>
+            {/* Group CountrySelector and UserButton */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
               <CountrySelector />
               <UserButton 
@@ -84,11 +94,16 @@ const Header = () => {
             </div>
           </SignedIn>
           <SignedOut>
-            <CountrySelector />
-            <div className="hidden md:block">
-              <AdminLoginButton />
+            {/* Group CountrySelector and AdminLoginButton */}
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+              <CountrySelector />
+              <div className="hidden md:block">
+                <AdminLoginButton />
+              </div>
             </div>
           </SignedOut>
+
+          {/* MobileNav */}
           <MobileNav />
         </div>
       </nav>
