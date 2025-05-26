@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 import { CustomFieldGroup } from '@/types'
 import { unstable_cache } from 'next/cache'
 import crypto from 'crypto';
+import { generateQueueNumber } from '../utils/queueNumber';
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -42,16 +43,9 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event is fully booked');
     }
 
-    // Fetch all existing queue numbers for the event
-    const existingOrders = await Order.find({ event: order.eventId });
-    const existingQueueNumbers = existingOrders
-      .flatMap(o => o.customFieldValues.map((g: any) => g.queueNumber))
-      .map(qn => parseInt((qn || '').replace(/^[^\d]*(\d+)/, '$1')))
-      .filter(n => !isNaN(n));
-    const maxExistingQueueNumber = existingQueueNumbers.length > 0 ? Math.max(...existingQueueNumbers) : 0;
-
-    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
-      const newQueueNumber = `${(maxExistingQueueNumber + index + 1).toString().padStart(3, '0')}`;
+    // Generate queue numbers atomically for each group
+    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group) => {
+      const newQueueNumber = await generateQueueNumber(order.eventId);
       
       // Find phone number from fields
       const phoneField = group.fields.find(field => 
@@ -65,13 +59,13 @@ export async function createOrder(order: CreateOrderParams) {
         .createHash('sha256')
         .update(`${phoneNumber}_${newQueueNumber}_${order.eventId}`)
         .digest('hex')
-        .slice(0, 16); // Take first 16 characters of hash for shorter QR code
+        .slice(0, 16);
       
       // Create QR code data with event ID, queue number, and registration hash
       const qrCodeData = `${order.eventId}_${newQueueNumber}_${registrationHash}`;
       const qrCode = await QRCode.toDataURL(qrCodeData, {
-        errorCorrectionLevel: 'H', // Highest error correction level
-        margin: 2, // Smaller margin
+        errorCorrectionLevel: 'H',
+        margin: 2,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
