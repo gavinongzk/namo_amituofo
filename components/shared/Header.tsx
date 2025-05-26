@@ -45,6 +45,7 @@ const Header = () => {
   return (
     <header className="w-full border-b bg-white shadow-sm">
       <nav className="wrapper flex items-center justify-between py-2 sm:py-3 md:py-4">
+        {/* Logo Button */}
         <button 
           onClick={() => handleNavigation('/')}
           className="transition-transform hover:scale-105 relative"
@@ -65,20 +66,22 @@ const Header = () => {
           )}
         </button>
 
+        {/* Mobile-only Event Lookup Link - positioned right after logo */}
+        <Link 
+          href="/event-lookup"
+          className="md:hidden flex items-center gap-2 p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation ml-2"
+        >
+          <Search className="h-5 w-5 text-primary-600" />
+          <span className="text-sm font-medium text-primary-600">查询</span>
+        </Link>
+
+        {/* Main Nav (hidden on mobile) */}
         <nav className="md:flex-between hidden w-full max-w-xl mx-4 lg:mx-8">
           <NavWrapper />
         </nav>
 
+        {/* Right-side elements (Country, User/Admin, MobileNav) */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-          {/* Mobile-only Event Lookup Link */}
-          <Link 
-            href="/event-lookup"
-            className="md:hidden flex items-center gap-2 p-2 rounded-full bg-primary-50 hover:bg-primary-100 active:bg-primary-200 transition-all duration-200 touch-manipulation"
-          >
-            <Search className="h-5 w-5 text-primary-600" />
-            <span className="text-sm font-medium text-primary-600">查询</span>
-          </Link>
-
           <SignedIn>
             {/* Group CountrySelector and UserButton */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
