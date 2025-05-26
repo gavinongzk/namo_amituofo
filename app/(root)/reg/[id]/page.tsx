@@ -352,7 +352,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   // Initial fetch
   useEffect(() => {
-    fetchOrderDetails();
+    const fetchData = async () => {
+      try {
+        await fetchOrderDetails();
+      } catch (error) {
+        console.error("Error fetching order details in useEffect:", error);
+        setError("Failed to load registration details."); // Set an error state to display a user-friendly message
+        setIsLoading(false); // Ensure loading state is turned off
+      }
+    };
+    fetchData();
   }, [fetchOrderDetails]);
 
   // Add polling effect for attendance status only
