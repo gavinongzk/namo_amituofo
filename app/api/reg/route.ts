@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumberIncludingCancelled } from '@/lib/actions/order.actions';
+import { auth } from '@clerk/nextjs';
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,8 +15,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Phone number is required' }, { status: 400 });
     }
 
-    // If viewing details page, include cancelled registrations
+    // Check if user is superadmin when includeAllRegistrations is true
     if (includeAllRegistrations) {
+      const { sessionClaims } = auth();
+      const role = sessionClaims?.role as string;
+      
+      if (role !== 'superadmin') {
+        return NextResponse.json({ message: 'Unauthorized: Only superadmins can view all registrations' }, { status: 403 });
+      }
+      
       const formattedOrders = await getAllOrdersByPhoneNumberIncludingCancelled(phoneNumber);
       
       // Set cache control headers to prevent caching

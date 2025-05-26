@@ -293,7 +293,40 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         const phoneNumber = phoneNumbers[0];
         const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
         
-        if (response.ok) {
+        if (response.status === 403) {
+          // If user is not superadmin, only show non-cancelled registrations
+          const normalResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+          if (normalResponse.ok) {
+            const data = await normalResponse.json();
+            const currentEventId = initialOrder.event._id;
+            const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
+            
+            if (currentEventOrders) {
+              const orderIds = currentEventOrders.orderIds;
+              const allOrders = await Promise.all(
+                orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
+              );
+              
+              const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
+              
+              // Load attendance state from localStorage
+              const storageKey = `attendance_${initialOrder.event._id}`;
+              const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+              // Update attendance state from localStorage
+              const updatedInitialOrder = {
+                ...initialOrder,
+                customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
+                  ...group,
+                  attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+                }))
+              };
+
+              setOrder(updatedInitialOrder);
+              setRelatedOrders(otherOrders);
+            }
+          }
+        } else if (response.ok) {
           const data = await response.json();
           
           // data is an array of grouped orders by event
@@ -324,17 +357,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               }))
             };
 
-            // Update attendance state for other orders
-            const updatedOtherOrders = otherOrders.map(order => ({
-              ...order,
-              customFieldValues: order.customFieldValues.map((group: CustomFieldGroup) => ({
-                ...group,
-                attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-              }))
-            }));
-            
             setOrder(updatedInitialOrder);
-            setRelatedOrders(updatedOtherOrders);
+            setRelatedOrders(otherOrders);
           }
         }
       }
