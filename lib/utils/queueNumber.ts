@@ -1,8 +1,19 @@
 import { connectToDatabase } from '../database';
-import QueueCounter from '../database/models/queueCounter.model';
+import QueueCounter, { initializeQueueCounter } from '../database/models/queueCounter.model';
+
+// Initialize the counter when the module is loaded
+let isInitialized = false;
+
+async function ensureInitialized() {
+  if (!isInitialized) {
+    await connectToDatabase();
+    await initializeQueueCounter();
+    isInitialized = true;
+  }
+}
 
 export async function generateQueueNumber(eventId: string, prefix: string = ''): Promise<string> {
-  await connectToDatabase();
+  await ensureInitialized();
 
   // Use findOneAndUpdate for atomic operation
   const counter = await QueueCounter.findOneAndUpdate(
@@ -25,7 +36,7 @@ export async function generateQueueNumber(eventId: string, prefix: string = ''):
 }
 
 export async function getNextQueueNumber(eventId: string, prefix: string = ''): Promise<string> {
-  await connectToDatabase();
+  await ensureInitialized();
 
   // Get the current counter without incrementing
   const counter = await QueueCounter.findOne({ eventId, prefix });
@@ -35,7 +46,7 @@ export async function getNextQueueNumber(eventId: string, prefix: string = ''): 
 }
 
 export async function resetQueueCounter(eventId: string, prefix: string = ''): Promise<void> {
-  await connectToDatabase();
+  await ensureInitialized();
   await QueueCounter.findOneAndUpdate(
     { eventId, prefix },
     { lastNumber: 0 },

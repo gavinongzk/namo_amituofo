@@ -107,7 +107,7 @@ OrderSchema.pre('save', async function(next) {
 
     // Check for duplicate queue numbers across other orders in the same event
     for (const group of order.customFieldValues) {
-      const existingOrder = await Order.findOne({
+      const existingOrder = await models.Order.findOne({
         _id: { $ne: order._id },
         event: order.event,
         'customFieldValues.queueNumber': group.queueNumber
@@ -120,7 +120,7 @@ OrderSchema.pre('save', async function(next) {
 
     next();
   } catch (error) {
-    next(error);
+    next(error as Error);
   }
 });
 
