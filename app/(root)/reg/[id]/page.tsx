@@ -196,7 +196,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     if (!order?.event?._id) return;
     try {
       // Fetch the latest order details from the server
-      const response = await fetch(`/api/order/${order._id}`);
+      const response = await fetch(`/api/reg/${order._id}`);
       if (!response.ok) throw new Error('Failed to fetch order');
       const latestOrder = await response.json();
 
@@ -217,7 +217,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           if (currentEventOrders) {
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => fetch(`/api/order/${orderId}`).then(r => r.ok ? r.json() : null))
+              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
             );
             updatedRelatedOrders = allOrders.filter(o => o && o._id !== latestOrder._id);
           }
@@ -305,7 +305,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             // Get all orders for this event
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => getOrderById(orderId))
+              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
             );
             
             // Filter out the current order and any null results
