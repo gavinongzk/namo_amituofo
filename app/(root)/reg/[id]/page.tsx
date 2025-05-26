@@ -274,17 +274,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     setIsLoading(true);
     try {
-      console.log('Calling getOrderDetailsWithoutExpirationCheck with ID:', id);
       // First get the initial order to get the phone number
       const initialOrder = await getOrderDetailsWithoutExpirationCheck(id);
-      console.log('Received initialOrder from server action:', initialOrder);
       if (!initialOrder) {
-        console.log('initialOrder is null after server action'); // Should not happen based on previous logs, but keep for safety
         setError('Order not found');
         return;
       }
-
-      console.log('Initial order successfully fetched, proceeding to fetch related orders.'); // New log
 
       // Extract phone numbers from the order
       const phoneNumbers = initialOrder.customFieldValues.flatMap((group: CustomFieldGroup) =>
@@ -293,30 +288,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           .map((field: CustomField) => field.value)
       );
 
-      console.log('Extracted phone numbers:', phoneNumbers); // New log
-
       // If we have phone numbers, fetch all orders including cancelled ones
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
-        console.log('Fetching related orders for phone number:', phoneNumber); // New log
         const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&includeAllRegistrations=true`);
 
-        console.log('Response status from /api/reg:', response.status); // New log
-
         if (response.status === 403) {
-          console.log('/api/reg returned 403, handling as non-superadmin'); // New log
           // If user is not superadmin, only show non-cancelled registrations
           const normalResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}`);
-           console.log('Response status from /api/reg (normal fetch):', normalResponse.status); // New log
           if (normalResponse.ok) {
-            console.log('/api/reg (normal fetch) response OK'); // New log
             const data = await normalResponse.json();
-             console.log('Data from /api/reg (normal fetch):', data); // New log
             const currentEventId = initialOrder.event._id;
             const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
 
             if (currentEventOrders) {
-              console.log('Found current event orders in normal fetch data'); // New log
               const orderIds = currentEventOrders.orderIds;
               const allOrders = await Promise.all(
                 orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
@@ -337,15 +322,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 }))
               };
 
-              console.log('Setting order and related orders from normal fetch'); // New log
               setOrder(updatedInitialOrder);
               setRelatedOrders(otherOrders);
             }
           }
         } else if (response.ok) {
-          console.log('/api/reg response OK (including cancelled)'); // New log
           const data = await response.json();
-          console.log('Data from /api/reg (including cancelled):', data); // New log
 
           // data is an array of grouped orders by event
           // We need to find all orders for the current event
@@ -353,7 +335,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
 
           if (currentEventOrders) {
-             console.log('Found current event orders in data (including cancelled)'); // New log
             // Get all orders for this event
             const orderIds = currentEventOrders.orderIds;
             const allOrders = await Promise.all(
@@ -375,7 +356,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
               }))
             };
-            console.log('Setting order and related orders from data (including cancelled)'); // New log
             setOrder(updatedInitialOrder);
             setRelatedOrders(otherOrders);
           }
@@ -385,7 +365,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       setError(null);
       lastFetchTime.current = now;
     } catch (err: any) {
-      console.error('Error fetching order details:', err); // Existing log, now more likely to be hit by errors in the second fetch part
+      console.error('Error fetching order details:', err);
       Sentry.captureException(err);
       setError(err.message || 'Failed to load order details');
     } finally {
