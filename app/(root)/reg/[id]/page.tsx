@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { getOrderById } from '@/lib/actions/order.actions';
+import { getOrderById, getOrderDetailsWithoutExpirationCheck } from '@/lib/actions/order.actions';
 import { formatBilingualDateTime } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
@@ -275,7 +275,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setIsLoading(true);
     try {
       // First get the initial order to get the phone number
-      const initialOrder = await getOrderById(id);
+      const initialOrder = await getOrderDetailsWithoutExpirationCheck(id);
       if (!initialOrder) {
         setError('Order not found');
         return;

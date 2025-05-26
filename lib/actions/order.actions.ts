@@ -589,3 +589,26 @@ export const aggregateOrdersByPhoneNumber = async (phoneNumber: string) => {
     throw error;
   }
 };
+
+export const getOrderDetailsWithoutExpirationCheck = unstable_cache(
+  async (orderId: string) => {
+    try {
+      await connectToDatabase();
+      const order = await Order.findById(orderId)
+        .populate('event')
+        .populate('buyer')
+        .select('-__v') // Exclude version field but keep all other fields including qrCode
+        .lean(); // Use lean() for better performance
+      
+      if (!order) throw new Error('Order not found');
+      return JSON.parse(JSON.stringify(order));
+    } catch (error) {
+      handleError(error);
+    }
+  },
+  ['order-details-no-expiration'],
+  {
+    revalidate: 60, // Cache for 60 seconds
+    tags: ['order-details', 'orders'] // Cache tags for invalidation
+  }
+);
