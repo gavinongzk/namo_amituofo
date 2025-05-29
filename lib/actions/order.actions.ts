@@ -43,6 +43,31 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event is fully booked');
     }
 
+    // Check for duplicate submissions within the last 5 seconds
+    const fiveSecondsAgo = new Date(Date.now() - 5000);
+    const recentOrders = await Order.find({
+      event: new ObjectId(order.eventId),
+      createdAt: { $gte: fiveSecondsAgo }
+    });
+
+    // For each recent order, check if it has the same custom field values
+    for (const recentOrder of recentOrders) {
+      const isDuplicate = recentOrder.customFieldValues.every((recentGroup: { fields: Array<{ value: string }> }, index: number) => {
+        const newGroup = order.customFieldValues[index];
+        if (!newGroup) return false;
+        
+        return recentGroup.fields.every((recentField: { value: string }, fieldIndex: number) => {
+          const newField = newGroup.fields[fieldIndex];
+          return newField && recentField.value === newField.value;
+        });
+      });
+
+      if (isDuplicate) {
+        console.log('Duplicate submission detected within 5 seconds');
+        throw new Error('Duplicate submission detected. Please wait a moment and try again.');
+      }
+    }
+
     // Generate queue numbers atomically for each group
     const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group) => {
       const newQueueNumber = await generateQueueNumber(order.eventId);

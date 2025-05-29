@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -94,6 +94,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number>(5);
+  const [submissionInProgress, setSubmissionInProgress] = useState(false);
+  const submissionLockRef = useRef(false);
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -227,123 +229,146 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const toastId = toast.loading("检查报名详情中... / Checking registration details...");
-    
-    saveFormData(values);
-
-    // Filter out empty groups before further processing
-    const filledGroups = values.groups.filter(group => !isGroupEmpty(group, customFields));
-
-    // If all groups are empty after filtering, show a message and return
-    if (filledGroups.length === 0) {
-      toast.dismiss(toastId);
-      toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
-      return;
-    }
-
-    // Validate phone numbers first
-    const phoneField = customFields.find(f => f.type === 'phone')?.id;
-    if (phoneField) {
-      const phoneValidationErrors: string[] = [];
-      
-      for (let i = 0; i < filledGroups.length; i++) {
-        const rawValue = filledGroups[i][phoneField];
-        const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
-        
-        // Skip validation if phone override is active
-        if (phoneOverrides[i]) {
-          // For overridden numbers, just check if it starts with + and contains only numbers after that
-          if (!/^\+\d+$/.test(phoneNumber)) {
-            phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Participant ${i + 1}. Must start with + followed by numbers`);
-          }
-          continue;
-        }
-        
-        // Regular phone validation for SG/MY numbers
-        if (!isValidPhoneNumber(phoneNumber)) {
-          phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码无效 / Invalid phone number for Participant ${i + 1}`);
-        }
-      }
-      
-      if (phoneValidationErrors.length > 0) {
-        toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-        return;
-      }
-    }
-    
-    // Validate postal codes
-    const postalField = customFields.find(f => f.type === 'postal')?.id;
-    if (postalField) {
-      const postalValidationErrors: string[] = [];
-      
-      for (let i = 0; i < filledGroups.length; i++) {
-        // Ensure we're working with a string value
-        const rawValue = filledGroups[i][postalField];
-        const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
-        
-        // Skip validation if postal code is empty (since it's optional)
-        if (!postalCode || !postalCode.trim()) {
-          // Ensure empty string is passed instead of undefined or null
-          filledGroups[i][postalField] = '';
-          continue;
-        }
-        
-        // Skip detailed validation if override is active
-        if (postalOverrides[i]) {
-          if (!/^\d+$/.test(postalCode)) {
-            postalValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
-          }
-          continue;
-        }
-        
-        try {
-          const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
-          if (!isValidCountryPostal) {
-            postalValidationErrors.push(
-              `${toChineseOrdinal(i + 1)}参加者: ${
-                userCountry === 'Singapore'
-                  ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
-                  : userCountry === 'Malaysia'
-                    ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
-                    : "请输入有效的邮区编号 / Please enter a valid postal code"
-              }`
-            );
-          }
-        } catch (error) {
-          console.error("Error validating postal code:", error);
-        }
-      }
-      
-      if (postalValidationErrors.length > 0) {
-        toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-        return;
-      }
-    }
-    
-    // Check for duplicate phone numbers using only filled groups
-    const duplicates = await checkForDuplicatePhoneNumbers({
-      groups: filledGroups,
-      eventId: event._id
-    } as any);
-    
-    if (duplicates.length > 0) {
-      toast.dismiss(toastId);
-      setDuplicatePhoneNumbers(duplicates);
-      setFormValues({...values, groups: filledGroups});
-      setShowConfirmation(true);
+    // Prevent duplicate submissions
+    if (submissionLockRef.current) {
+      console.log('Submission already in progress, ignoring duplicate submission');
       return;
     }
     
-    await submitForm({...values, groups: filledGroups}, toastId);
+    try {
+      submissionLockRef.current = true;
+      setSubmissionInProgress(true);
+      
+      const toastId = toast.loading("检查报名详情中... / Checking registration details...");
+      
+      saveFormData(values);
+
+      // Filter out empty groups before further processing
+      const filledGroups = values.groups.filter(group => !isGroupEmpty(group, customFields));
+
+      // If all groups are empty after filtering, show a message and return
+      if (filledGroups.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+        return;
+      }
+
+      // Validate phone numbers first
+      const phoneField = customFields.find(f => f.type === 'phone')?.id;
+      if (phoneField) {
+        const phoneValidationErrors: string[] = [];
+        
+        for (let i = 0; i < filledGroups.length; i++) {
+          const rawValue = filledGroups[i][phoneField];
+          const phoneNumber = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+          
+          // Skip validation if phone override is active
+          if (phoneOverrides[i]) {
+            // For overridden numbers, just check if it starts with + and contains only numbers after that
+            if (!/^\+\d+$/.test(phoneNumber)) {
+              phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format for Participant ${i + 1}. Must start with + followed by numbers`);
+            }
+            continue;
+          }
+          
+          // Regular phone validation for SG/MY numbers
+          if (!isValidPhoneNumber(phoneNumber)) {
+            phoneValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的电话号码无效 / Invalid phone number for Participant ${i + 1}`);
+          }
+        }
+        
+        if (phoneValidationErrors.length > 0) {
+          toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          return;
+        }
+      }
+      
+      // Validate postal codes
+      const postalField = customFields.find(f => f.type === 'postal')?.id;
+      if (postalField) {
+        const postalValidationErrors: string[] = [];
+        
+        for (let i = 0; i < filledGroups.length; i++) {
+          // Ensure we're working with a string value
+          const rawValue = filledGroups[i][postalField];
+          const postalCode = typeof rawValue === 'boolean' ? '' : String(rawValue || '');
+          
+          // Skip validation if postal code is empty (since it's optional)
+          if (!postalCode || !postalCode.trim()) {
+            // Ensure empty string is passed instead of undefined or null
+            filledGroups[i][postalField] = '';
+            continue;
+          }
+          
+          // Skip detailed validation if override is active
+          if (postalOverrides[i]) {
+            if (!/^\d+$/.test(postalCode)) {
+              postalValidationErrors.push(`${toChineseOrdinal(i + 1)}参加者的邮区编号必须只包含数字 / Postal code for Person ${i + 1} must contain only numbers`);
+            }
+            continue;
+          }
+          
+          try {
+            const isValidCountryPostal = await isValidPostalCode(postalCode, userCountry || 'Singapore');
+            if (!isValidCountryPostal) {
+              postalValidationErrors.push(
+                `${toChineseOrdinal(i + 1)}参加者: ${
+                  userCountry === 'Singapore'
+                    ? "新加坡邮区编号无效 / Invalid postal code for Singapore"
+                    : userCountry === 'Malaysia'
+                      ? "马来西亚邮区编号必须是5位数字 / Must be 5 digits for Malaysia"
+                      : "请输入有效的邮区编号 / Please enter a valid postal code"
+                }`
+              );
+            }
+          } catch (error) {
+            console.error("Error validating postal code:", error);
+          }
+        }
+        
+        if (postalValidationErrors.length > 0) {
+          toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          return;
+        }
+      }
+      
+      // Check for duplicate phone numbers using only filled groups
+      const duplicates = await checkForDuplicatePhoneNumbers({
+        groups: filledGroups,
+        eventId: event._id
+      } as any);
+      
+      if (duplicates.length > 0) {
+        toast.dismiss(toastId);
+        setDuplicatePhoneNumbers(duplicates);
+        setFormValues({...values, groups: filledGroups});
+        setShowConfirmation(true);
+        return;
+      }
+      
+      await submitForm({...values, groups: filledGroups}, toastId);
+    } finally {
+      // Only reset the lock if we're not showing the confirmation dialog
+      if (!showConfirmation) {
+        submissionLockRef.current = false;
+        setSubmissionInProgress(false);
+      }
+    }
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
-    setIsSubmitting(true);
-    setMessage('');
-    
-    toast.loading("处理报名中... / Processing registration...", { id: toastId });
+    if (submissionLockRef.current) {
+      console.log('Submission already in progress, ignoring duplicate submission');
+      return;
+    }
     
     try {
+      submissionLockRef.current = true;
+      setIsSubmitting(true);
+      setMessage('');
+      
+      toast.loading("处理报名中... / Processing registration...", { id: toastId });
+      
       const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
         fields: Object.entries(group).map(([key, value]) => {
@@ -394,10 +419,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       if (error.response && error.response.data && error.response.data.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
-        // Check if it's a custom error thrown from the API route like "Failed to create order: ..."
         if (error.message.startsWith('Failed to create order')) {
-          // Potentially parse a more specific message if the API route includes it
-          // For now, use a slightly more specific generic message for this case
           errorMessage = `处理报名时出错: ${error.message} / Error processing registration: ${error.message}`;
         } else {
           errorMessage = error.message;
@@ -408,6 +430,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       setMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
+      submissionLockRef.current = false;
+      setSubmissionInProgress(false);
     }
   };
   const isFullyBooked = initialOrderCount >= event.maxSeats;
