@@ -61,6 +61,7 @@ const OrderSchema = new Schema({
       attendance: { type: Boolean, default: false },
       cancelled: { type: Boolean, default: false },
       qrCode: { type: String, default: '' },
+      lastUpdated: { type: Date, default: Date.now },
       __v: { type: Number, default: 0 },
     },
   ],

@@ -316,7 +316,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         });
         calculateCounts(updatedRegistrations);
       } else {
-        throw new Error('Failed to update attendance 更新出席情况失败');
+        const errorData = await res.json();
+        if (errorData.error === 'CANCELLED_REGISTRATION') {
+          showModalWithMessage(
+            'Error / 错误', 
+            'Cannot mark attendance for cancelled registration. Please uncancel the registration first.\n无法为已取消的报名标记出席。请先取消取消状态。',
+            'error'
+          );
+        } else {
+          throw new Error(errorData.message || 'Failed to update attendance 更新出席情况失败');
+        }
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
@@ -328,7 +337,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     console.log('Submitting queue number:', queueNumber);
     const registration = registrations.find(r => r.order.customFieldValues.some(group => group.queueNumber === queueNumber));
     if (registration) {
-      const group = registration.order.customFieldValues[0];
+      const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
       if (group) {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
         setConfirmationData({
@@ -345,6 +354,35 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       console.log('Registration not found with this queue number:', queueNumber);
     }
   }, [queueNumber, registrations]);
+
+  // New function to handle queue number input and show participant name immediately
+  const handleQueueNumberChange = useCallback((value: string) => {
+    setQueueNumber(value);
+    
+    // Clear previous message
+    setMessage('');
+    
+    // If queue number is entered, try to find and display the participant name
+    if (value.trim()) {
+      const registration = registrations.find(r => 
+        r.order.customFieldValues.some(group => group.queueNumber === value.trim())
+      );
+      
+      if (registration) {
+        const group = registration.order.customFieldValues.find(g => g.queueNumber === value.trim());
+        if (group) {
+          const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+          const participantName = nameField ? nameField.value : 'N/A';
+          const attendanceStatus = group.attendance ? '已出席 (Attended)' : '未出席 (Not Attended)';
+          const cancelledStatus = group.cancelled ? '已取消 (Cancelled)' : '有效 (Active)';
+          
+          setMessage(`找到参加者 Found: ${participantName} - ${attendanceStatus} - ${cancelledStatus}`);
+        }
+      } else {
+        setMessage('未找到此排队号码的报名 Registration not found with this queue number');
+      }
+    }
+  }, [registrations]);
 
   const handleConfirmAttendance = useCallback(async () => {
     if (confirmationData) {
@@ -909,7 +947,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <Input
             placeholder="Enter Queue Number 输入排队号码"
             value={queueNumber}
-            onChange={(e) => handleInputChange(e, setQueueNumber)}
+            onChange={(e) => handleQueueNumberChange(e.target.value)}
             className="flex-grow text-lg p-3"
           />
           <Button 
@@ -1069,28 +1107,52 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => setCurrentPage(1)}
+                onClick={() => {
+                  setCurrentPage(1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 disabled={currentPage === 1}
+                title="First page & scroll to top"
               >
                 {'<<'}
               </Button>
               <Button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
+                title="Previous page"
               >
                 {'<'}
               </Button>
               <Button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
+                title="Next page"
               >
                 {'>'}
               </Button>
               <Button
-                onClick={() => setCurrentPage(totalPages)}
+                onClick={() => {
+                  setCurrentPage(totalPages);
+                  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+                }}
                 disabled={currentPage === totalPages}
+                title="Last page & scroll to bottom"
               >
                 {'>>'}
+              </Button>
+              <Button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                title="Scroll to top"
+              >
+                ↑ Top
+              </Button>
+              <Button
+                onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                title="Scroll to bottom"
+              >
+                ↓ Bottom
               </Button>
             </div>
 
