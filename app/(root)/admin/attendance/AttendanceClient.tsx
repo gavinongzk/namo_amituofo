@@ -132,6 +132,11 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState<string>('');
   const lastScanTime = useRef<number>(0);
 
+  // Add auto-refresh functionality
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
+  const autoRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // User and permissions
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
@@ -238,6 +243,31 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   useEffect(() => {
     calculateCounts(registrations);
   }, [registrations, calculateCounts]);
+
+  // Auto-refresh effect to periodically fetch new registrations
+  useEffect(() => {
+    if (autoRefreshEnabled) {
+      // Refresh more frequently when QR scanner is active for better UX
+      const refreshInterval = showScanner ? 10000 : 15000; // 10s when scanner active, 15s otherwise
+      
+      const interval = setInterval(() => {
+        setLastRefreshTime(Date.now());
+        fetchRegistrations();
+      }, refreshInterval);
+      autoRefreshIntervalRef.current = interval;
+
+      return () => {
+        if (autoRefreshIntervalRef.current) {
+          clearInterval(autoRefreshIntervalRef.current);
+        }
+      };
+    } else {
+      if (autoRefreshIntervalRef.current) {
+        clearInterval(autoRefreshIntervalRef.current);
+        autoRefreshIntervalRef.current = null;
+      }
+    }
+  }, [autoRefreshEnabled, showScanner, fetchRegistrations]);
 
   const showModalWithMessage = useCallback((title: string, message: string, type: 'loading' | 'success' | 'error') => {
     setModalTitle(title);
@@ -735,7 +765,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     handleMarkAttendance(registrationId, groupId, checked);
   }, [handleMarkAttendance]);
 
-  const handleScan = useCallback((decodedText: string) => {
+  const handleScan = useCallback(async (decodedText: string) => {
     const now = Date.now();
     // Debounce scans to prevent duplicates
     if (now - lastScanTime.current < 2000) {
@@ -753,32 +783,35 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       );
       return;
     }
-    
-    // Find registration by event ID and queue number
-    const registration = registrations.find(r => 
-      r.order.customFieldValues.some(group => {
-        const hasMatchingQueue = group.queueNumber === queueNumber;
-        if (!hasMatchingQueue) return false;
 
-        // Find phone number from fields
-        const phoneField = group.fields.find(field => 
-          field.label.toLowerCase().includes('phone') || 
-          field.type === 'phone'
-        );
-        const phoneNumber = phoneField?.value || '';
+    // Function to find registration by queue number and verify hash
+    const findAndVerifyRegistration = (registrationsList: EventRegistration[]) => {
+      return registrationsList.find(r => 
+        r.order.customFieldValues.some(group => {
+          const hasMatchingQueue = group.queueNumber === queueNumber;
+          if (!hasMatchingQueue) return false;
 
-        // Verify the registration hash
-        const computedHash = crypto
-          .createHash('sha256')
-          .update(`${phoneNumber}_${queueNumber}_${eventId}`)
-          .digest('hex')
-          .slice(0, 16);
+          // Find phone number from fields
+          const phoneField = group.fields.find(field => 
+            field.label.toLowerCase().includes('phone') || 
+            field.type === 'phone'
+          );
+          const phoneNumber = phoneField?.value || '';
 
-        return computedHash === registrationHash;
-      })
-    );
+          // Verify the registration hash
+          const computedHash = crypto
+            .createHash('sha256')
+            .update(`${phoneNumber}_${queueNumber}_${eventId}`)
+            .digest('hex')
+            .slice(0, 16);
 
-    if (registration) {
+          return computedHash === registrationHash;
+        })
+      );
+    };
+
+    // Function to process a found registration
+    const processRegistration = (registration: EventRegistration) => {
       const group = registration.order.customFieldValues.find(group => {
         const hasMatchingQueue = group.queueNumber === queueNumber;
         if (!hasMatchingQueue) return false;
@@ -836,14 +869,73 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           });
         }
       }
+    };
+    
+    // First, try to find the registration in current data
+    let registration = findAndVerifyRegistration(registrations);
+
+    if (registration) {
+      processRegistration(registration);
     } else {
+      // If registration not found, try refreshing data and search again
+      console.log('Registration not found, refreshing data and retrying...');
       showModalWithMessage(
-        'Error / 错误',
-        `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
-        'error'
+        'Searching / 搜索中',
+        `Searching for registration: ${queueNumber}\n搜索注册信息: ${queueNumber}`,
+        'loading'
       );
+
+      try {
+        // Fetch fresh data from the API
+        const response = await fetch(`/api/events/${event._id}/attendees`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch fresh registrations');
+        }
+        const data = await response.json();
+        
+        if (Array.isArray(data.attendees)) {
+          const freshRegistrations = data.attendees.map((registration: EventRegistration) => ({
+            ...registration,
+            order: {
+              ...registration.order,
+              customFieldValues: registration.order.customFieldValues.map((group) => ({
+                ...group,
+                cancelled: group.cancelled || false
+              }))
+            }
+          }));
+
+          // Search in fresh data
+          const updatedRegistration = findAndVerifyRegistration(freshRegistrations);
+
+          if (updatedRegistration) {
+            console.log('Found registration after refresh, processing...');
+            // Update the registrations state with fresh data
+            setRegistrations(freshRegistrations);
+            setLastRefreshTime(Date.now());
+            
+            // Process the found registration
+            processRegistration(updatedRegistration);
+          } else {
+            showModalWithMessage(
+              'Error / 错误',
+              `Registration not found for: ${queueNumber}\n未找到队列号 ${queueNumber} 的报名`,
+              'error'
+            );
+          }
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error) {
+        console.error('Error refreshing registrations:', error);
+        showModalWithMessage(
+          'Error / 错误',
+          `Failed to refresh data. Registration not found for: ${queueNumber}\n刷新数据失败。未找到队列号 ${queueNumber} 的报名`,
+          'error'
+        );
+      }
     }
-  }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory]);
+  }, [registrations, handleMarkAttendance, showModalWithMessage, beepHistory, event._id]);
 
   const handleRemarkChange = useCallback((registrationId: string, value: string): void => {
     setRemarks((prev) => ({ ...prev, [registrationId]: value }));
@@ -969,6 +1061,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           >
             Refresh 刷新
           </Button>
+          <Button
+            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+            className={`text-lg p-3 w-full sm:w-auto ${autoRefreshEnabled ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
+          >
+            {autoRefreshEnabled ? 'Disable Auto-Refresh' : 'Enable Auto-Refresh'}
+          </Button>
           {isSuperAdmin && (
             <div className="w-full sm:w-auto">
               <DownloadCsvButton 
@@ -976,6 +1074,21 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 searchText={searchText}
               />
             </div>
+          )}
+        </div>
+
+        {/* Auto-refresh status */}
+        <div className="mb-4 text-sm text-gray-600">
+          <span>
+            Auto-refresh: {autoRefreshEnabled ? 
+              `ON (every ${showScanner ? '10' : '15'} seconds${showScanner ? ' - Scanner Active' : ''})` : 
+              'OFF'
+            }
+          </span>
+          {autoRefreshEnabled && (
+            <span className="ml-4">
+              Last refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
+            </span>
           )}
         </div>
 
