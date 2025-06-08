@@ -547,6 +547,23 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4 shadow-xl">
+            <Loader2Icon className="h-12 w-12 animate-spin text-blue-600" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                处理报名中... / Processing Registration...
+              </h3>
+              <p className="text-gray-600">
+                请稍候，请勿关闭页面 / Please wait, do not close this page
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isCountryLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
@@ -811,19 +828,10 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
 
             <Button 
               type="submit" 
-              disabled={isSubmitting || isFullyBooked} 
+              disabled={isFullyBooked} 
               className="w-full"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                  处理中... / Processing...
-                </>
-              ) : isFullyBooked ? (
-                '名额已满 / Fully Booked'
-              ) : (
-                '提交 / Submit'
-              )}
+              {isFullyBooked ? '名额已满 / Fully Booked' : '提交 / Submit'}
             </Button>
           </form>
         </Form>
