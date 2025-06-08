@@ -77,7 +77,8 @@ export async function createOrder(order: CreateOrderParams) {
               const phoneField = group.fields.find((field: any) => 
                 field.label.toLowerCase().includes('phone') || field.type === 'phone'
               );
-              return phoneField?.value;
+              const phoneValue = phoneField?.value;
+              return typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
             })
             .filter(Boolean)
         );
@@ -129,7 +130,8 @@ export async function createOrder(order: CreateOrderParams) {
         field.label.toLowerCase().includes('phone') || 
         field.type === 'phone'
       );
-      const phoneNumber = phoneField?.value || '';
+      const phoneValue = phoneField?.value;
+      const phoneNumber = typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
       
       // Create a unique hash for this registration using phone number and queue number
       const registrationHash = crypto

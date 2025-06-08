@@ -250,6 +250,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       if (filledGroups.length === 0) {
         toast.dismiss(toastId);
         toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+        // Reset lock on validation error
+        submissionLockRef.current = false;
+        setSubmissionInProgress(false);
         return;
       }
 
@@ -279,6 +282,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (phoneValidationErrors.length > 0) {
           toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          // Reset lock on validation error
+          submissionLockRef.current = false;
+          setSubmissionInProgress(false);
           return;
         }
       }
@@ -328,6 +334,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (postalValidationErrors.length > 0) {
           toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          // Reset lock on validation error
+          submissionLockRef.current = false;
+          setSubmissionInProgress(false);
           return;
         }
       }
@@ -343,6 +352,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         setDuplicatePhoneNumbers(duplicates);
         setFormValues({...values, groups: filledGroups});
         setShowConfirmation(true);
+        // Reset lock when showing confirmation dialog
+        submissionLockRef.current = false;
+        setSubmissionInProgress(false);
         return;
       }
       
