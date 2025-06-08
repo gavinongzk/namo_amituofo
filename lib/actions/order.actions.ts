@@ -49,7 +49,9 @@ export async function createOrder(order: CreateOrderParams) {
         field.label.toLowerCase().includes('phone') || 
         field.type === 'phone'
       );
-      return phoneField?.value || '';
+      const phoneValue = phoneField?.value;
+      // Ensure we only work with string values and convert to string if needed
+      return typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
     }).filter(phone => phone.length > 0);
 
     if (phoneNumbers.length > 0) {
