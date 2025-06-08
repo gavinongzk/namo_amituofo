@@ -557,7 +557,7 @@ const UserManagement = ({ country }: { country: string }) => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
-        position="top-right"
+        position="bottom-right"
         showPagination={true}
         showScrollButtons={true}
       />

@@ -1236,7 +1236,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
-          position="top-right"
+          position="bottom-right"
           showPagination={true}
           showScrollButtons={true}
         />
