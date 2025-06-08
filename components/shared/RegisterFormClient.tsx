@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -94,8 +94,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number>(5);
-  const [submissionInProgress, setSubmissionInProgress] = useState(false);
-  const submissionLockRef = useRef(false);
+
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -229,15 +228,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Prevent duplicate submissions
-    if (submissionLockRef.current) {
-      console.log('Submission already in progress, ignoring duplicate submission');
-      return;
-    }
-    
     try {
-      submissionLockRef.current = true;
-      setSubmissionInProgress(true);
+
       
       const toastId = toast.loading("检查报名详情中... / Checking registration details...");
       
@@ -250,9 +242,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       if (filledGroups.length === 0) {
         toast.dismiss(toastId);
         toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
-        // Reset lock on validation error
-        submissionLockRef.current = false;
-        setSubmissionInProgress(false);
         return;
       }
 
@@ -282,9 +271,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (phoneValidationErrors.length > 0) {
           toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-          // Reset lock on validation error
-          submissionLockRef.current = false;
-          setSubmissionInProgress(false);
           return;
         }
       }
@@ -334,9 +320,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (postalValidationErrors.length > 0) {
           toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
-          // Reset lock on validation error
-          submissionLockRef.current = false;
-          setSubmissionInProgress(false);
           return;
         }
       }
@@ -352,30 +335,17 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         setDuplicatePhoneNumbers(duplicates);
         setFormValues({...values, groups: filledGroups});
         setShowConfirmation(true);
-        // Reset lock when showing confirmation dialog
-        submissionLockRef.current = false;
-        setSubmissionInProgress(false);
         return;
       }
       
       await submitForm({...values, groups: filledGroups}, toastId);
-    } finally {
-      // Only reset the lock if we're not showing the confirmation dialog
-      if (!showConfirmation) {
-        submissionLockRef.current = false;
-        setSubmissionInProgress(false);
+          } finally {
+        // Cleanup handled by individual functions
       }
-    }
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
-    if (submissionLockRef.current) {
-      console.log('Submission already in progress, ignoring duplicate submission');
-      return;
-    }
-    
     try {
-      submissionLockRef.current = true;
       setIsSubmitting(true);
       setMessage('');
       
@@ -442,8 +412,6 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       setMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
-      submissionLockRef.current = false;
-      setSubmissionInProgress(false);
     }
   };
   const isFullyBooked = initialOrderCount >= event.maxSeats;
