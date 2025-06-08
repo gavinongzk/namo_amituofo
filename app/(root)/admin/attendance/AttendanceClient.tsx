@@ -14,6 +14,7 @@ import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import DownloadCsvButton from '@/components/shared/DownloadCsvButton';
 import { cn, prepareRegistrationIdentifiers } from "@/lib/utils";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
+import FloatingNavigation from '@/components/shared/FloatingNavigation';
 import crypto from 'crypto';
 
 type EventRegistration = {
@@ -1004,6 +1005,31 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
           />
         </div>
 
+        {/* Pagination above the table */}
+        {!isLoading && totalPages > 1 && (
+          <div className="mb-4 flex justify-center items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              title="Previous page"
+            >
+              ← Previous
+            </Button>
+            <span className="mx-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              title="Next page"
+            >
+              Next →
+            </Button>
+          </div>
+        )}
+
         <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -1204,6 +1230,16 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
         )}
 
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+
+        {/* Floating Navigation */}
+        <FloatingNavigation
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          position="top-right"
+          showPagination={true}
+          showScrollButtons={true}
+        />
 
         {/* Notes section moved here */}
         <div className="mt-6 space-y-2">

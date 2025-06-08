@@ -24,6 +24,7 @@ import {
 import UserAnalyticsVisuals from '@/components/shared/UserAnalyticsVisuals'
 import { X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import FloatingActionButtons from './FloatingActionButtons';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -947,6 +948,14 @@ const AnalyticsDashboard: React.FC = () => {
                     />
                 </Card>
             )}
+
+            {/* Floating Action Buttons */}
+            <FloatingActionButtons
+                showPagination={false}
+                showScrollButtons={true}
+                position="bottom-right"
+                autoHide={true}
+            />
         </div>
     );
 };
