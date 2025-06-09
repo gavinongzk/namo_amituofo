@@ -94,24 +94,22 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, particip
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 h-auto"
-          size="sm"
-        >
-          Cancel
+        <Button variant="destructive" className="w-full">
+          取消报名 Cancel Registration
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogTitle>确认取消报名 / Confirm Cancellation</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to cancel this registration{participantInfo ? `: ${participantInfo}` : ''}? This action cannot be undone.
-            您确定要取消此报名吗${participantInfo ? `: ${participantInfo}` : ''}? 此操作无法撤消。
+            您确定要取消 {participantInfo} 的报名吗？/ Are you sure you want to cancel the registration for {participantInfo}?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>No 否</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={() => onCancel(groupId, queueNumber)}>Yes 是的</AlertDialogAction>
+          <AlertDialogCancel>取消 / Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => onCancel(groupId, queueNumber)}>
+            确认 / Confirm
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
