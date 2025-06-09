@@ -491,7 +491,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           currentPage={currentPage}
           totalPages={Math.ceil(tableData.length / pageSize)}
           onPageChange={setCurrentPage}
-          position="bottom-right"
+          position="bottom-left"
           showPagination={true}
           showScrollButtons={true}
         />

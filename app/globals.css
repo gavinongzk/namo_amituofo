@@ -393,6 +393,32 @@ input[type=checkbox] {
   }
 }
 
+/* Floating button spacing and z-index management */
+.floating-bottom-left {
+  z-index: 1000;
+}
+
+.floating-bottom-right {
+  z-index: 1001;
+}
+
+.floating-top-left {
+  z-index: 1000;
+}
+
+.floating-top-right {
+  z-index: 1001;
+}
+
+/* Ensure sufficient spacing between floating elements */
+.floating-buttons-container {
+  pointer-events: none;
+}
+
+.floating-buttons-container > * {
+  pointer-events: auto;
+}
+
 /* Backdrop blur support */
 .backdrop-blur-sm {
   backdrop-filter: blur(4px);

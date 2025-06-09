@@ -91,49 +91,30 @@ const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumb
 });
 
 const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, participantInfo, queueNumber }) => {
-  const [showConfirmation, setShowConfirmation] = useState(false);
-
-  const handleCancelClick = () => {
-    setShowConfirmation(true);
-  };
-
-  const handleConfirmCancel = () => {
-    onCancel(groupId, queueNumber);
-    setShowConfirmation(false);
-  };
-
-  const handleCloseConfirmation = () => {
-    setShowConfirmation(false);
-  };
-
   return (
-    <>
-      <Button
-        onClick={handleCancelClick}
-        className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 h-auto"
-        size="sm"
-      >
-        Cancel
-      </Button>
-
-      {showConfirmation && (
-        <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to cancel this registration{participantInfo ? `: ${participantInfo}` : ''}? This action cannot be undone.
-                您确定要取消此报名吗${participantInfo ? `: ${participantInfo}` : ''}? 此操作无法撤消。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="flex justify-end gap-2">
-              <AlertDialogCancel>No 否</AlertDialogCancel>
-              <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={handleConfirmCancel}>Yes 是的</AlertDialogAction>
-            </div>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 h-auto"
+          size="sm"
+        >
+          Cancel
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Cancellation 确认取消</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this registration{participantInfo ? `: ${participantInfo}` : ''}? This action cannot be undone.
+            您确定要取消此报名吗${participantInfo ? `: ${participantInfo}` : ''}? 此操作无法撤消。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>No 否</AlertDialogCancel>
+          <AlertDialogAction className="bg-red-500 hover:bg-red-600 text-white" onClick={() => onCancel(groupId, queueNumber)}>Yes 是的</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

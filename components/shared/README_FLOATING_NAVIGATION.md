@@ -205,6 +205,36 @@ Both components are designed to be mobile-friendly:
 5. **Provide custom scroll targets** when working with specific containers
 6. **Consider performance** - the scroll listeners are optimized but still monitor usage
 
+## Preventing Overlaps 🚨
+
+### Positioning Strategy
+When using multiple floating components on the same page:
+
+- **Primary action button**: `bottom-right` (higher z-index: 1001)
+- **Secondary navigation**: `bottom-left` (lower z-index: 1000)
+- **Alternative positions**: `top-left`, `top-right` for less critical actions
+
+### Example: AttendanceClient Implementation
+
+```tsx
+// Primary FAB for quick actions
+<FloatingActionButton
+  // ... props
+  // Positioned at bottom-right by default
+/>
+
+// Secondary navigation for pagination/scrolling
+<FloatingNavigation
+  position="bottom-left"  // ← Prevents overlap
+  // ... other props
+/>
+```
+
+### Z-Index Hierarchy
+- **Critical action buttons**: z-index 1001
+- **Navigation elements**: z-index 1000
+- **Background overlays**: z-index 50
+
 ## Troubleshooting
 
 ### Common Issues:
