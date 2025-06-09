@@ -132,9 +132,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState<string>('');
   const lastScanTime = useRef<number>(0);
 
-  // Add auto-refresh functionality
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
+  // Add auto-refresh functionality - start disabled to prevent hydration issues
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const autoRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // User and permissions
@@ -244,6 +244,13 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     calculateCounts(registrations);
   }, [registrations, calculateCounts]);
 
+  // Enable auto-refresh after component mounts to prevent hydration issues
+  useEffect(() => {
+    // Initialize auto-refresh and timestamp on client-side only
+    setAutoRefreshEnabled(true);
+    setLastRefreshTime(Date.now());
+  }, []);
+
   // Auto-refresh effect to periodically fetch new registrations
   useEffect(() => {
     if (autoRefreshEnabled) {
@@ -259,14 +266,17 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       return () => {
         if (autoRefreshIntervalRef.current) {
           clearInterval(autoRefreshIntervalRef.current);
+          autoRefreshIntervalRef.current = null;
         }
       };
-    } else {
+    }
+    
+    return () => {
       if (autoRefreshIntervalRef.current) {
         clearInterval(autoRefreshIntervalRef.current);
         autoRefreshIntervalRef.current = null;
       }
-    }
+    };
   }, [autoRefreshEnabled, showScanner, fetchRegistrations]);
 
   const showModalWithMessage = useCallback((title: string, message: string, type: 'loading' | 'success' | 'error') => {
@@ -1085,7 +1095,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               'OFF'
             }
           </span>
-          {autoRefreshEnabled && (
+          {autoRefreshEnabled && lastRefreshTime > 0 && (
             <span className="ml-4">
               Last refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
             </span>
