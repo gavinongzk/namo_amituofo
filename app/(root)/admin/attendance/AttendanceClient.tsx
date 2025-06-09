@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 import crypto from 'crypto';
 
 // Import our new modular components and hooks
-import AttendanceHeader from './components/AttendanceHeader';
-import AttendanceTable from './components/AttendanceTable';
+import AttendanceHeaderImproved from './components/AttendanceHeaderImproved';
+import AttendanceTableImproved from './components/AttendanceTableImproved';
+import FloatingActionButton from './components/FloatingActionButton';
 import { useAttendanceData } from './hooks/useAttendanceData';
 import { useAutoRefresh } from './hooks/useAutoRefresh';
 import { attendanceApi } from './services/attendanceApi';
@@ -424,7 +425,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
       />
 
       <div className="mt-8">
-        <AttendanceHeader
+        <AttendanceHeaderImproved
           queueNumber={queueNumber}
           onQueueNumberChange={handleQueueNumberChange}
           onQueueNumberSubmit={handleQueueNumberSubmit}
@@ -469,7 +470,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           </div>
         )}
 
-        <AttendanceTable
+        <AttendanceTableImproved
           data={tableData}
           searchText={searchText}
           onSearchChange={setSearchText}
@@ -586,6 +587,23 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
             </div>
           </Modal>
         )}
+
+        {/* Floating Action Button for Quick Access */}
+        <FloatingActionButton
+          onQuickAttendance={() => {
+            // Focus on queue number input for quick access
+            const input = document.querySelector('input[placeholder*="Queue Number"]') as HTMLInputElement;
+            if (input) {
+              input.focus();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          onToggleScanner={() => setShowScanner(!showScanner)}
+          onRefresh={fetchRegistrations}
+          onExport={isSuperAdmin ? handleDownloadCsv : undefined}
+          showScanner={showScanner}
+          isSuperAdmin={isSuperAdmin}
+        />
       </div>
     </div>
   );
