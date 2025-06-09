@@ -228,8 +228,13 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Prevent multiple submissions immediately
+    if (isSubmitting) {
+      return;
+    }
+    
     try {
-
+      setIsSubmitting(true);
       
       const toastId = toast.loading("检查报名详情中... / Checking registration details...");
       
@@ -242,6 +247,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       if (filledGroups.length === 0) {
         toast.dismiss(toastId);
         toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+        setIsSubmitting(false);
         return;
       }
 
@@ -271,6 +277,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (phoneValidationErrors.length > 0) {
           toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          setIsSubmitting(false);
           return;
         }
       }
@@ -320,6 +327,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         
         if (postalValidationErrors.length > 0) {
           toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          setIsSubmitting(false);
           return;
         }
       }
@@ -335,18 +343,21 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
         setDuplicatePhoneNumbers(duplicates);
         setFormValues({...values, groups: filledGroups});
         setShowConfirmation(true);
+        setIsSubmitting(false);
         return;
       }
       
       await submitForm({...values, groups: filledGroups}, toastId);
-          } finally {
-        // Cleanup handled by individual functions
-      }
+    } catch (error: any) {
+      console.error('Error in onSubmit:', error);
+      setIsSubmitting(false);
+    } finally {
+      // Cleanup handled by individual functions
+    }
   };
 
   const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
     try {
-      setIsSubmitting(true);
       setMessage('');
       
       toast.loading("处理报名中... / Processing registration...", { id: toastId });
@@ -779,7 +790,8 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                             remove(personIndex);
                             setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
                           }}
-                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10"
+                          disabled={isSubmitting}
+                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
                         </Button>
@@ -792,7 +804,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
                   <Button
                     type="button"
                     onClick={handleAddPerson}
-                    disabled={numberOfFormsToShow >= event.maxSeats}
+                    disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
@@ -812,7 +824,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             <Button 
               type="submit" 
               disabled={isSubmitting || isFullyBooked} 
-              className="w-full"
+              className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -876,6 +888,7 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
               variant="outline"
               onClick={() => {
                 setShowConfirmation(false);
+                setIsSubmitting(false); // Reset submission state when canceling
                 if (duplicatePhoneNumbers.length > 0) {
                   const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
                   router.push(`/event-lookup?phone=${phoneNumber}`);
@@ -888,14 +901,20 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
             <Button
               onClick={() => {
                 setShowConfirmation(false);
+                setIsSubmitting(true);
                 if (formValues) {
                   submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
                 }
               }}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={timeRemaining > 0}
+              disabled={timeRemaining > 0 || isSubmitting}
             >
-              {timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
+              {isSubmitting ? (
+                <>
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  处理中... / Processing...
+                </>
+              ) : timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
             </Button>
           </DialogFooter>
         </DialogContent>
