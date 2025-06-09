@@ -141,6 +141,9 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
 
+  // State for export functionality
+  const [isExporting, setIsExporting] = useState(false);
+
 
   const calculateCounts = useCallback((registrations: EventRegistration[]) => {
     let total = 0;
@@ -1033,6 +1036,54 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     }
   }, [event, showModalWithMessage]);
 
+  const handleDownloadCsv = useCallback(() => {
+    const queryParams = new URLSearchParams({
+      eventId: event._id || '',
+      searchText: searchText || '',
+    }).toString();
+
+    // Open the API route in a new window to trigger download
+    window.open(`/api/download-csv?${queryParams}`, '_blank');
+  }, [event._id, searchText]);
+
+  const handleExportToSheets = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams({
+        eventId: event._id || '',
+        searchText: searchText || '',
+      }).toString();
+
+      const response = await fetch(`/api/google-sheets?${queryParams}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export to Google Sheets');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Open the Google Sheets document in a new tab
+        window.open(`https://docs.google.com/spreadsheets/d/${data.spreadsheetId}`, '_blank');
+        showModalWithMessage(
+          'Success / 成功',
+          'Successfully exported to Google Sheets\n成功导出到Google表格',
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Error exporting to Google Sheets:', error);
+      showModalWithMessage(
+        'Error / 错误',
+        'Failed to export to Google Sheets\n导出到Google表格失败',
+        'error'
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [event._id, searchText, showModalWithMessage]);
+
   return (
     <div className="wrapper my-8">
       <AttendanceDetailsCard 
@@ -1046,114 +1097,272 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
       />
 
       <div className="mt-8">
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-          <Input
-            placeholder="Enter Queue Number 输入排队号码"
-            value={queueNumber}
-            onChange={(e) => handleQueueNumberChange(e.target.value)}
-            className="flex-grow text-lg p-3"
-          />
-          <Button 
-            onClick={handleQueueNumberSubmit} 
-            className="bg-blue-500 text-white text-lg p-3 w-full sm:w-auto"
-          >
-            Mark Attendance 标记出席
-          </Button>
-          <Button
-            onClick={() => setShowScanner(!showScanner)}
-            className="bg-green-500 text-white text-lg p-3 w-full sm:w-auto"
-          >
-            {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
-          </Button>
-          <Button
-            onClick={fetchRegistrations}
-            className="bg-gray-500 text-white text-lg p-3 w-full sm:w-auto"
-          >
-            Refresh 刷新
-          </Button>
-          <Button
-            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-            className={`text-lg p-3 w-full sm:w-auto ${autoRefreshEnabled ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
-          >
-            {autoRefreshEnabled ? 'Disable Auto-Refresh' : 'Enable Auto-Refresh'}
-          </Button>
-          {isSuperAdmin && (
-            <div className="w-full sm:w-auto">
-              <DownloadCsvButton 
-                eventId={event._id} 
-                searchText={searchText}
-              />
+        {/* Enhanced control panel for larger screens */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+          {/* Queue number input section */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Quick Attendance / 快速出席
+            </label>
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="flex-1 max-w-md">
+                <Input
+                  placeholder="Enter Queue Number 输入排队号码"
+                  value={queueNumber}
+                  onChange={(e) => handleQueueNumberChange(e.target.value)}
+                  className="text-lg p-3 h-12"
+                />
+              </div>
+              <Button 
+                onClick={handleQueueNumberSubmit} 
+                className="bg-blue-500 hover:bg-blue-600 text-white text-lg px-6 h-12 min-w-[200px]"
+              >
+                Mark Attendance 标记出席
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Auto-refresh status */}
-        <div className="mb-4 text-sm text-gray-600">
-          <span>
-            Auto-refresh: {autoRefreshEnabled ? 
-              `ON (every ${showScanner ? '10' : '15'} seconds${showScanner ? ' - Scanner Active' : ''})` : 
-              'OFF'
-            }
-          </span>
-          {autoRefreshEnabled && lastRefreshTime > 0 && (
-            <span className="ml-4">
-              Last refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
-            </span>
-          )}
+          {/* Action buttons grid for larger screens */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+            <Button
+              onClick={() => setShowScanner(!showScanner)}
+              className="bg-green-500 hover:bg-green-600 text-white h-12 flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">📱</span>
+              {showScanner ? 'Hide Scanner' : 'Scan QR Code'}
+            </Button>
+            
+            <Button
+              onClick={fetchRegistrations}
+              className="bg-gray-500 hover:bg-gray-600 text-white h-12 flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">🔄</span>
+              Refresh 刷新
+            </Button>
+            
+            <Button
+              onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+              className={`h-12 flex items-center justify-center gap-2 ${
+                autoRefreshEnabled 
+                  ? 'bg-orange-500 hover:bg-orange-600' 
+                  : 'bg-green-600 hover:bg-green-700'
+              } text-white`}
+            >
+              <span className="text-lg">{autoRefreshEnabled ? '⏸️' : '▶️'}</span>
+              {autoRefreshEnabled ? 'Disable Auto-Refresh' : 'Enable Auto-Refresh'}
+            </Button>
+
+            {isSuperAdmin && (
+              <>
+                <Button
+                  onClick={handleDownloadCsv}
+                  className="bg-blue-500 hover:bg-blue-600 text-white h-12 flex items-center justify-center gap-2"
+                >
+                  <span className="text-lg">📊</span>
+                  Download CSV
+                </Button>
+                
+                <Button 
+                  onClick={handleExportToSheets} 
+                  className="bg-green-500 hover:bg-green-600 text-white h-12 flex items-center justify-center gap-2"
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">📋</span>
+                      Export to Sheets
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Auto-refresh status bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                Auto-refresh: {autoRefreshEnabled ? 
+                  `ON (every ${showScanner ? '10' : '15'} seconds${showScanner ? ' - Scanner Active' : ''})` : 
+                  'OFF'
+                }
+              </span>
+              {autoRefreshEnabled && lastRefreshTime > 0 && (
+                <span className="text-gray-500">
+                  Last refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+            
+            {message && (
+              <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded">
+                {message}
+              </div>
+            )}
+          </div>
         </div>
 
         {showScanner && (
-          <div className="mb-6">
-            <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold mb-2">Recent Scans:</h4>
-              <ul className="list-disc pl-5">
-                {recentScans.map((scan, index) => (
-                  <li key={index}>{scan.name} ({scan.queueNumber})</li>
-                ))}
-              </ul>
+          <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <span className="text-lg">📋</span>
+                  Recent Scans
+                </h4>
+                <div className="space-y-2">
+                  {recentScans.length > 0 ? (
+                    recentScans.map((scan, index) => (
+                      <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                        <div className="font-medium">{scan.name}</div>
+                        <div className="text-gray-500">Queue: {scan.queueNumber}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-sm italic">No recent scans</div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        <h4 className="text-xl font-bold mb-4">Registered Users 报名用户</h4>
-        
-        {/* Search input */}
-        <div className="mb-4">
-          <Input
-            placeholder="Search by name or phone number 按名字或电话号码搜索"
-            value={searchText}
-            onChange={(e) => handleInputChange(e, setSearchText)}
-            className="w-full text-lg p-3"
-          />
+        {/* Enhanced header with search and controls */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <h4 className="text-2xl font-bold flex items-center gap-2">
+              <span className="text-2xl">👥</span>
+              Registered Users 报名用户
+            </h4>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-[300px]">
+                <Input
+                  placeholder="Search by name or phone number 按名字或电话号码搜索"
+                  value={searchText}
+                  onChange={(e) => handleInputChange(e, setSearchText)}
+                  className="h-10"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded px-3 py-2 h-10 bg-white"
+                >
+                  {[100, 200, 300].map(size => (
+                    <option key={size} value={size}>
+                      Show {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced pagination for larger screens */}
+          {!isLoading && totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentPage(1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === 1}
+                  title="First page & scroll to top"
+                  className="h-8 px-3"
+                >
+                  {'<<'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  title="Previous page"
+                  className="h-8 px-3"
+                >
+                  {'<'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  title="Next page"
+                  className="h-8 px-3"
+                >
+                  {'>'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentPage(totalPages);
+                    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+                  }}
+                  disabled={currentPage === totalPages}
+                  title="Last page & scroll to bottom"
+                  className="h-8 px-3"
+                >
+                  {'>>'}
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                </span>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Go to:</span>
+                  <Input
+                    type="number"
+                    value={currentPage}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                      setCurrentPage(page);
+                    }}
+                    className="w-16 h-8"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="h-8 px-3 text-xs"
+                  title="Scroll to top"
+                >
+                  ↑ Top
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                  className="h-8 px-3 text-xs"
+                  title="Scroll to bottom"
+                >
+                  ↓ Bottom
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Pagination above the table */}
-        {!isLoading && totalPages > 1 && (
-          <div className="mb-4 flex justify-center items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              title="Previous page"
-            >
-              ← Previous
-            </Button>
-            <span className="mx-2">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              title="Next page"
-            >
-              Next →
-            </Button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
+                 <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -1248,113 +1457,113 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-
-        {/* Pagination controls */}
-        {!isLoading && (
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setCurrentPage(1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                disabled={currentPage === 1}
-                title="First page & scroll to top"
-              >
-                {'<<'}
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                title="Previous page"
-              >
-                {'<'}
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                title="Next page"
-              >
-                {'>'}
-              </Button>
-              <Button
-                onClick={() => {
-                  setCurrentPage(totalPages);
-                  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
-                }}
-                disabled={currentPage === totalPages}
-                title="Last page & scroll to bottom"
-              >
-                {'>>'}
-              </Button>
-              <Button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-700"
-                title="Scroll to top"
-              >
-                ↑ Top
-              </Button>
-              <Button
-                onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-700"
-                title="Scroll to bottom"
-              >
-                ↓ Bottom
-              </Button>
-            </div>
-
-            {isSuperAdmin && modifiedRemarks.size > 0 && (
-              <Button
-                onClick={handleSaveAllRemarks}
-                className="bg-yellow-500 hover:bg-yellow-600"
-              >
-                Save All Modified Remarks ({modifiedRemarks.size})
-              </Button>
-            )}
-            
-            <div className="flex items-center gap-2">
-              <span className="whitespace-nowrap">
-                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-              </span>
-              
-              <span className="flex items-center gap-1">
-                <span className="whitespace-nowrap">Go to:</span>
-                <Input
-                  type="number"
-                  value={currentPage}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
-                    setCurrentPage(page);
-                  }}
-                  className="w-16"
-                />
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <select
-                value={pageSize}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="border rounded p-1"
-              >
-                {[100, 200, 300].map(size => (
-                  <option key={size} value={size}>
-                    Show {size}
-                  </option>
-                ))}
-              </select>
-            </div>
+                      )}
           </div>
-        )}
 
-        {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+          {/* Bottom pagination controls */}
+          {!isLoading && (
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    setCurrentPage(1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === 1}
+                  title="First page & scroll to top"
+                >
+                  {'<<'}
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  title="Previous page"
+                >
+                  {'<'}
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  title="Next page"
+                >
+                  {'>'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setCurrentPage(totalPages);
+                    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+                  }}
+                  disabled={currentPage === totalPages}
+                  title="Last page & scroll to bottom"
+                >
+                  {'>>'}
+                </Button>
+                <Button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                  title="Scroll to top"
+                >
+                  ↑ Top
+                </Button>
+                <Button
+                  onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                  title="Scroll to bottom"
+                >
+                  ↓ Bottom
+                </Button>
+              </div>
 
-        {/* Floating Navigation */}
+              {isSuperAdmin && modifiedRemarks.size > 0 && (
+                <Button
+                  onClick={handleSaveAllRemarks}
+                  className="bg-yellow-500 hover:bg-yellow-600"
+                >
+                  Save All Modified Remarks ({modifiedRemarks.size})
+                </Button>
+              )}
+              
+              <div className="flex items-center gap-2">
+                <span className="whitespace-nowrap">
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                </span>
+                
+                <span className="flex items-center gap-1">
+                  <span className="whitespace-nowrap">Go to:</span>
+                  <Input
+                    type="number"
+                    value={currentPage}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const page = Math.max(1, Math.min(Number(e.target.value), totalPages));
+                      setCurrentPage(page);
+                    }}
+                    className="w-16"
+                  />
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded p-1"
+                >
+                  {[100, 200, 300].map(size => (
+                    <option key={size} value={size}>
+                      Show {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+                     )}
+
+          {message && <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">{message}</div>}
+
+          {/* Floating Navigation */}
         <FloatingNavigation
           currentPage={currentPage}
           totalPages={totalPages}
