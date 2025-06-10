@@ -43,53 +43,6 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event is fully booked');
     }
 
-    // Phone number duplicate validation: check for existing registrations with same phone numbers
-    const phoneNumbers = order.customFieldValues.map(group => {
-      const phoneField = group.fields.find(field => 
-        field.label.toLowerCase().includes('phone') || 
-        field.type === 'phone'
-      );
-      const phoneValue = phoneField?.value;
-      // Ensure we only work with string values and convert to string if needed
-      return typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
-    }).filter(phone => phone.length > 0);
-
-    if (phoneNumbers.length > 0) {
-      // Check for existing registrations with the same phone numbers for this event
-      const existingRegistrations = await Order.find({
-        event: new ObjectId(order.eventId),
-        'customFieldValues.fields': {
-          $elemMatch: {
-            $or: [
-              { type: 'phone', value: { $in: phoneNumbers } },
-              { label: { $regex: /phone/i }, value: { $in: phoneNumbers } }
-            ]
-          }
-        },
-        'customFieldValues.cancelled': { $ne: true }
-      });
-
-      if (existingRegistrations.length > 0) {
-        const existingPhones = existingRegistrations.flatMap(reg => 
-          reg.customFieldValues
-            .filter((group: any) => !group.cancelled)
-            .map((group: any) => {
-              const phoneField = group.fields.find((field: any) => 
-                field.label.toLowerCase().includes('phone') || field.type === 'phone'
-              );
-              const phoneValue = phoneField?.value;
-              return typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
-            })
-            .filter(Boolean)
-        );
-        
-        const duplicatePhones = phoneNumbers.filter(phone => existingPhones.includes(phone));
-        if (duplicatePhones.length > 0) {
-          throw new Error(`Phone number(s) already registered for this event: ${duplicatePhones.join(', ')}`);
-        }
-      }
-    }
-
     // Generate queue numbers atomically for each group with retry logic
     const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
       let newQueueNumber;
