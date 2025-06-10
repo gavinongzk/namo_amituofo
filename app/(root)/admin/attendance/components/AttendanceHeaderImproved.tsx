@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, Play, Pause, ChevronDown } from 'lucide-react';
@@ -43,7 +43,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
   isSuperAdmin,
   lastRefreshTime
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
@@ -90,7 +90,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             className={`${showScanner ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50 hover:border-green-300'} transition-all duration-200`}
           >
             <QrCode className="h-4 w-4 mr-2" />
-            {showScanner ? 'Hide Scanner' : 'QR Scanner'}
+            {showScanner ? 'Hide QR' : 'QR Scan'}
           </Button>
           
           <Button
@@ -119,8 +119,8 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span>
               {autoRefreshEnabled ? 
-                `Auto-refresh: ON (${showScanner ? '10s' : '15s'})` : 
-                'Auto-refresh: OFF'
+                `Auto: ON (${showScanner ? '10s' : '15s'})` : 
+                'Auto: OFF'
               }
             </span>
             {autoRefreshEnabled && lastRefreshTime > 0 && (
@@ -166,51 +166,11 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             </DropdownMenu>
           )}
 
-          {/* Advanced options toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-          </Button>
+
         </div>
       </div>
 
-      {/* Advanced/Detailed Status (Collapsible) */}
-      {showAdvanced && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg border-t">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="font-medium">Auto-refresh:</span>
-              <span>{autoRefreshEnabled ? 'ON' : 'OFF'}</span>
-            </div>
-            
-            {autoRefreshEnabled && (
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Interval:</span>
-                <span>{showScanner ? '10 seconds' : '15 seconds'}</span>
-              </div>
-            )}
-            
-            {autoRefreshEnabled && lastRefreshTime > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Last refresh:</span>
-                <span>{new Date(lastRefreshTime).toLocaleTimeString()}</span>
-              </div>
-            )}
-            
-            {showScanner && (
-              <div className="flex items-center gap-2">
-                <QrCode className="h-4 w-4 text-green-600" />
-                <span className="font-medium text-green-600">QR Scanner Active</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

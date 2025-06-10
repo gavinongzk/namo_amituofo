@@ -191,16 +191,15 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
       <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
           <div>
-            <h4 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="text-3xl">👥</span>
+            <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span className="text-2xl">👥</span>
               <div>
-                <div>Registered Users</div>
-                <div className="text-sm font-normal text-gray-600">报名用户</div>
+                <div>Users / 用户</div>
+                <div className="text-sm font-normal text-gray-600">
+                  {filteredData.length} of {data.length}
+                </div>
               </div>
             </h4>
-            <p className="text-sm text-gray-600 mt-1">
-              {filteredData.length} of {data.length} registrations
-            </p>
           </div>
           
           {/* Enhanced Search */}
@@ -208,7 +207,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search by name, phone, or queue number..."
+                placeholder="Search..."
                 value={searchText}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500"
@@ -233,7 +232,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
             >
               {[50, 100, 200, 300].map(size => (
                 <option key={size} value={size}>
-                  Show {size}
+                  {size}
                 </option>
               ))}
             </select>
@@ -245,7 +244,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
           <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg border border-blue-200">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-900">
-                {selectedRows.size} item(s) selected
+                {selectedRows.size} selected
               </span>
               <div className="flex gap-2">
                 <Button 
@@ -253,7 +252,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                   onClick={() => handleBulkAction('mark')}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  Mark Attended
+                  Mark
                 </Button>
                 <Button 
                   size="sm" 
@@ -302,7 +301,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1}
               >
-                Previous
+                Prev
               </Button>
               <Button
                 variant="outline"
@@ -410,7 +409,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                               "h-8 text-sm",
                               modifiedRemarks.has(row.registrationId) && "border-yellow-400 bg-yellow-50"
                             )}
-                            placeholder="Add remarks..."
+                            placeholder="Remarks..."
                           />
                           {modifiedRemarks.has(row.registrationId) && (
                             <Button
@@ -429,38 +428,18 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                     
                     {/* Attendance */}
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={row.attendance}
-                          onCheckedChange={(checked) => onAttendanceChange(row.registrationId, row.groupId, checked as boolean)}
-                        />
-                        <span className={cn(
-                          "text-xs px-2 py-1 rounded-full",
-                          row.attendance 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-gray-100 text-gray-600"
-                        )}>
-                          {row.attendance ? 'Present' : 'Absent'}
-                        </span>
-                      </div>
+                      <Checkbox
+                        checked={row.attendance}
+                        onCheckedChange={(checked) => onAttendanceChange(row.registrationId, row.groupId, checked as boolean)}
+                      />
                     </td>
                     
                     {/* Status */}
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={row.cancelled}
-                          onCheckedChange={(checked) => onCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                        />
-                        <span className={cn(
-                          "text-xs px-2 py-1 rounded-full",
-                          row.cancelled 
-                            ? "bg-red-100 text-red-800" 
-                            : "bg-green-100 text-green-800"
-                        )}>
-                          {row.cancelled ? 'Cancelled' : 'Active'}
-                        </span>
-                      </div>
+                      <Checkbox
+                        checked={row.cancelled}
+                        onCheckedChange={(checked) => onCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                      />
                     </td>
                     
                     {/* Actions */}
