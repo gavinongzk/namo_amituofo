@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, QrCode, RefreshCw, Download, X, Zap } from 'lucide-react';
+import { Plus, QrCode, RefreshCw, Download, X, Zap, Edit2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import Image from 'next/image';
 
 interface FloatingActionButtonProps {
   onQuickAttendance: () => void;
@@ -95,17 +94,17 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-16 h-16 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300",
+          "w-12 h-12 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300",
           isOpen 
             ? "bg-red-600 hover:bg-red-700 rotate-45" 
             : "bg-blue-600 hover:bg-blue-700"
         )}
-        size="lg"
+        size="sm"
       >
         {isOpen ? (
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5" />
         ) : (
-          <Image src="/assets/icons/edit.svg" alt="Edit" width={24} height={24} />
+          <Edit2 className="h-5 w-5" />
         )}
       </Button>
     </div>
