@@ -4,10 +4,10 @@ import { Suspense, useEffect, useState } from 'react'
 import { getOrderCountByEvent } from '@/lib/actions/order.actions'
 import { IEvent } from '@/lib/database/models/event.model'
 import { CategoryName } from '@/constants'
-import { RegisterFormClient } from './RegisterFormClient'
+import RegisterFormClient from './RegisterFormClient'
 import { RegisterFormSkeleton } from './RegisterFormSkeleton'
 
-async function RegisterFormWrapper({ 
+function RegisterFormWrapper({ 
   event 
 }: { 
   event: IEvent & { category: { name: CategoryName } }
