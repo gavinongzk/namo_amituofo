@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, QrCode, RefreshCw, Download, X, Zap } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import Image from 'next/image';
 
 interface FloatingActionButtonProps {
   onQuickAttendance: () => void;
@@ -104,7 +105,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         {isOpen ? (
           <X className="h-6 w-6" />
         ) : (
-          <Plus className="h-6 w-6" />
+          <Image src="/edit.svg" alt="Edit" width={24} height={24} />
         )}
       </Button>
     </div>
