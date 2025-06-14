@@ -132,10 +132,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
   const [alreadyMarkedQueueNumber, setAlreadyMarkedQueueNumber] = useState<string>('');
   const lastScanTime = useRef<number>(0);
 
-  // Add auto-refresh functionality - start disabled to prevent hydration issues
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(false);
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
-  const autoRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
 
   // User and permissions
   const { user } = useUser();
@@ -247,40 +244,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
     calculateCounts(registrations);
   }, [registrations, calculateCounts]);
 
-  // Enable auto-refresh after component mounts to prevent hydration issues
-  useEffect(() => {
-    // Initialize auto-refresh and timestamp on client-side only
-    setAutoRefreshEnabled(true);
-    setLastRefreshTime(Date.now());
-  }, []);
 
-  // Auto-refresh effect to periodically fetch new registrations
-  useEffect(() => {
-    if (autoRefreshEnabled) {
-      // Refresh more frequently when QR scanner is active for better UX
-      const refreshInterval = showScanner ? 10000 : 15000; // 10s when scanner active, 15s otherwise
-      
-      const interval = setInterval(() => {
-        setLastRefreshTime(Date.now());
-        fetchRegistrations();
-      }, refreshInterval);
-      autoRefreshIntervalRef.current = interval;
-
-      return () => {
-        if (autoRefreshIntervalRef.current) {
-          clearInterval(autoRefreshIntervalRef.current);
-          autoRefreshIntervalRef.current = null;
-        }
-      };
-    }
-    
-    return () => {
-      if (autoRefreshIntervalRef.current) {
-        clearInterval(autoRefreshIntervalRef.current);
-        autoRefreshIntervalRef.current = null;
-      }
-    };
-  }, [autoRefreshEnabled, showScanner, fetchRegistrations]);
 
   const showModalWithMessage = useCallback((title: string, message: string, type: 'loading' | 'success' | 'error') => {
     setModalTitle(title);
@@ -925,7 +889,6 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             console.log('Found registration after refresh, processing...');
             // Update the registrations state with fresh data
             setRegistrations(freshRegistrations);
-            setLastRefreshTime(Date.now());
             
             // Process the found registration
             processRegistration(updatedRegistration);
@@ -1139,18 +1102,7 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
               <span className="text-lg">🔄</span>
               Refresh 刷新
             </Button>
-            
-            <Button
-              onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-              className={`h-12 flex items-center justify-center gap-2 ${
-                autoRefreshEnabled 
-                  ? 'bg-orange-500 hover:bg-orange-600' 
-                  : 'bg-green-600 hover:bg-green-700'
-              } text-white`}
-            >
-              <span className="text-lg">{autoRefreshEnabled ? '⏸️' : '▶️'}</span>
-              {autoRefreshEnabled ? 'Disable Auto-Refresh' : 'Enable Auto-Refresh'}
-            </Button>
+
 
             {isSuperAdmin && (
               <>
@@ -1183,29 +1135,12 @@ const AttendanceClient = React.memo(({ event }: { event: Event }) => {
             )}
           </div>
 
-          {/* Auto-refresh status bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                Auto-refresh: {autoRefreshEnabled ? 
-                  `ON (every ${showScanner ? '10' : '15'} seconds${showScanner ? ' - Scanner Active' : ''})` : 
-                  'OFF'
-                }
-              </span>
-              {autoRefreshEnabled && lastRefreshTime > 0 && (
-                <span className="text-gray-500">
-                  Last refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
-                </span>
-              )}
+          {/* Message display */}
+          {message && (
+            <div className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
+              <p className="text-sm text-blue-700">{message}</p>
             </div>
-            
-            {message && (
-              <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded">
-                {message}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {showScanner && (

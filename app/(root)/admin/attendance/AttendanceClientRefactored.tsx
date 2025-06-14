@@ -13,7 +13,6 @@ import crypto from 'crypto';
 import AttendanceHeader from './components/AttendanceHeader';
 import AttendanceTable from './components/AttendanceTable';
 import { useAttendanceData } from './hooks/useAttendanceData';
-import { useAutoRefresh } from './hooks/useAutoRefresh';
 import { attendanceApi } from './services/attendanceApi';
 import { 
   Event, 
@@ -68,12 +67,6 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
   // User permissions
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-
-  // Auto-refresh hook
-  const { autoRefreshEnabled, lastRefreshTime, toggleAutoRefresh } = useAutoRefresh({
-    onRefresh: fetchRegistrations,
-    scannerActive: showScanner
-  });
 
   // Helper function for showing modals
   const showModalWithMessage = useCallback((title: string, message: string, type: ModalType) => {
@@ -424,13 +417,10 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           showScanner={showScanner}
           onToggleScanner={() => setShowScanner(!showScanner)}
           onRefresh={fetchRegistrations}
-          autoRefreshEnabled={autoRefreshEnabled}
-          onToggleAutoRefresh={toggleAutoRefresh}
           onDownloadCsv={isSuperAdmin ? handleDownloadCsv : undefined}
           onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
           isExporting={isExporting}
           isSuperAdmin={isSuperAdmin}
-          lastRefreshTime={lastRefreshTime}
         />
 
         {showScanner && (

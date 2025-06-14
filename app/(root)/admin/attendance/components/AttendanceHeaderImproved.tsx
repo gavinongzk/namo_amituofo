@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, Play, Pause, ChevronDown } from 'lucide-react';
+import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,13 +18,10 @@ interface AttendanceHeaderImprovedProps {
   showScanner: boolean;
   onToggleScanner: () => void;
   onRefresh: () => void;
-  autoRefreshEnabled: boolean;
-  onToggleAutoRefresh: () => void;
   onDownloadCsv?: () => void;
   onExportToSheets?: () => void;
   isExporting?: boolean;
   isSuperAdmin: boolean;
-  lastRefreshTime: number;
 }
 
 const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
@@ -35,13 +32,10 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
   showScanner,
   onToggleScanner,
   onRefresh,
-  autoRefreshEnabled,
-  onToggleAutoRefresh,
   onDownloadCsv,
   onExportToSheets,
   isExporting = false,
-  isSuperAdmin,
-  lastRefreshTime
+  isSuperAdmin
 }) => {
 
 
@@ -101,35 +95,10 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          
-          <Button
-            onClick={onToggleAutoRefresh}
-            variant={autoRefreshEnabled ? "default" : "outline"}
-            className={`${autoRefreshEnabled ? 'bg-orange-500 hover:bg-orange-600' : 'hover:bg-orange-50 hover:border-orange-300'} transition-all duration-200`}
-          >
-            {autoRefreshEnabled ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-            Auto-refresh
-          </Button>
         </div>
 
         {/* Right: Export Actions (Grouped) */}
         <div className="flex items-center gap-3">
-          {/* Auto-refresh status */}
-          <div className="hidden lg:flex items-center gap-2 text-sm text-gray-600">
-            <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span>
-              {autoRefreshEnabled ? 
-                `Auto: ON (${showScanner ? '10s' : '15s'})` : 
-                'Auto: OFF'
-              }
-            </span>
-            {autoRefreshEnabled && lastRefreshTime > 0 && (
-              <span className="text-gray-500 ml-2">
-                {new Date(lastRefreshTime).toLocaleTimeString()}
-              </span>
-            )}
-          </div>
-
           {/* Export dropdown for superadmin */}
           {isSuperAdmin && (onDownloadCsv || onExportToSheets) && (
             <DropdownMenu>
