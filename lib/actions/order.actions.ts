@@ -205,14 +205,15 @@ export async function getOrderCountByEvent(eventId: string) {
       throw new Error('Invalid eventId');
     }
 
-    // Count total registrations regardless of cancelled status
-    // since maxSeats is already adjusted during cancellation
-    const orders = await Order.find({ event: eventId });
-    const totalRegistrations = orders.reduce((count, order) => {
-      return count + order.customFieldValues.length;
-    }, 0);
+    // Count only uncancelled registrations
+    const currentRegistrations = await Order.aggregate([
+      { $match: { event: new ObjectId(eventId) } },
+      { $unwind: "$customFieldValues" },
+      { $match: { "customFieldValues.cancelled": { $ne: true } } },
+      { $count: "total" }
+    ]);
 
-    return totalRegistrations;
+    return currentRegistrations[0]?.total || 0;
   } catch (error) {
     console.error('Error fetching registration count:', error);
     throw error;

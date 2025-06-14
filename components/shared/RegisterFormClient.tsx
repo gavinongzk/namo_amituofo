@@ -57,6 +57,7 @@ const isValidPostalCode = async (code: string, country: string) => {
 interface RegisterFormClientProps {
   event: IEvent & { category: { name: CategoryName } }
   initialOrderCount: number
+  onRefresh: () => Promise<void>
 }
 
 const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
@@ -78,7 +79,7 @@ const isGroupEmpty = (group: any, customFields: CustomField[]) => {
   return !nameValue && !phoneValue;
 };
 
-const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
+const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFormClientProps) => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('');
@@ -401,6 +402,9 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
       }
 
       const data = await response.json();
+      
+      // Refresh the order count after successful submission
+      await onRefresh();
       
       toast.success("报名成功！/ Registration successful!", { id: toastId });
       router.push(`/reg/${data.order._id}`);
