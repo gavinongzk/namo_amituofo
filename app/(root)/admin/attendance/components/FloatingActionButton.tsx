@@ -105,7 +105,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         {isOpen ? (
           <X className="h-6 w-6" />
         ) : (
-          <Image src="/edit.svg" alt="Edit" width={24} height={24} />
+          <Image src="/assets/icons/edit.svg" alt="Edit" width={24} height={24} />
         )}
       </Button>
     </div>
