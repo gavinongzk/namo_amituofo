@@ -43,41 +43,48 @@ export async function createOrder(order: CreateOrderParams) {
       throw new Error('Event is fully booked');
     }
 
-    // Check for duplicate submissions within the last 5 seconds
-    const fiveSecondsAgo = new Date(Date.now() - 5000);
-    const recentOrders = await Order.find({
-      event: new ObjectId(order.eventId),
-      createdAt: { $gte: fiveSecondsAgo }
-    });
+    // Generate queue numbers atomically for each group with retry logic
+    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group, index) => {
+      let newQueueNumber;
+      let retryCount = 0;
+      const maxRetries = 3;
 
-    // For each recent order, check if it has the same custom field values
-    for (const recentOrder of recentOrders) {
-      const isDuplicate = recentOrder.customFieldValues.every((recentGroup: { fields: Array<{ value: string }> }, index: number) => {
-        const newGroup = order.customFieldValues[index];
-        if (!newGroup) return false;
-        
-        return recentGroup.fields.every((recentField: { value: string }, fieldIndex: number) => {
-          const newField = newGroup.fields[fieldIndex];
-          return newField && recentField.value === newField.value;
-        });
-      });
+      while (retryCount < maxRetries) {
+        try {
+          newQueueNumber = await generateQueueNumber(order.eventId);
+          
+          // Verify the queue number is unique
+          const existingWithSameQueue = await Order.findOne({
+            event: new ObjectId(order.eventId),
+            'customFieldValues.queueNumber': newQueueNumber
+          });
 
-      if (isDuplicate) {
-        console.log('Duplicate submission detected within 5 seconds');
-        throw new Error('Duplicate submission detected. Please wait a moment and try again.');
+          if (!existingWithSameQueue) {
+            break; // Queue number is unique, proceed
+          } else {
+            console.log(`Queue number ${newQueueNumber} already exists, retrying...`);
+            retryCount++;
+            if (retryCount >= maxRetries) {
+              throw new Error(`Failed to generate unique queue number after ${maxRetries} attempts`);
+            }
+          }
+        } catch (error) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            throw new Error(`Failed to generate queue number: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
-    }
-
-    // Generate queue numbers atomically for each group
-    const newCustomFieldValues = await Promise.all(order.customFieldValues.map(async (group) => {
-      const newQueueNumber = await generateQueueNumber(order.eventId);
       
       // Find phone number from fields
       const phoneField = group.fields.find(field => 
         field.label.toLowerCase().includes('phone') || 
         field.type === 'phone'
       );
-      const phoneNumber = phoneField?.value || '';
+      const phoneValue = phoneField?.value;
+      const phoneNumber = typeof phoneValue === 'string' ? phoneValue : (phoneValue ? String(phoneValue) : '');
       
       // Create a unique hash for this registration using phone number and queue number
       const registrationHash = crypto
@@ -102,6 +109,7 @@ export async function createOrder(order: CreateOrderParams) {
         queueNumber: newQueueNumber,
         qrCode: qrCode,
         cancelled: false,
+        lastUpdated: new Date(),
         __v: 0,
       };
     }));
@@ -112,6 +120,7 @@ export async function createOrder(order: CreateOrderParams) {
       customFieldValues: newCustomFieldValues,
     });
 
+    console.log(`Successfully created order with ${newCustomFieldValues.length} registrations`);
     return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
     console.error('Error creating order:', error);
@@ -196,14 +205,15 @@ export async function getOrderCountByEvent(eventId: string) {
       throw new Error('Invalid eventId');
     }
 
-    // Count total registrations regardless of cancelled status
-    // since maxSeats is already adjusted during cancellation
-    const orders = await Order.find({ event: eventId });
-    const totalRegistrations = orders.reduce((count, order) => {
-      return count + order.customFieldValues.length;
-    }, 0);
+    // Count only uncancelled registrations
+    const currentRegistrations = await Order.aggregate([
+      { $match: { event: new ObjectId(eventId) } },
+      { $unwind: "$customFieldValues" },
+      { $match: { "customFieldValues.cancelled": { $ne: true } } },
+      { $count: "total" }
+    ]);
 
-    return totalRegistrations;
+    return currentRegistrations[0]?.total || 0;
   } catch (error) {
     console.error('Error fetching registration count:', error);
     throw error;

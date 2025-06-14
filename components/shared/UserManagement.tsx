@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import Modal from '../ui/modal';
+import FloatingNavigation from './FloatingNavigation';
 
 type User = {
   phoneNumber: string;
@@ -351,6 +352,31 @@ const UserManagement = ({ country }: { country: string }) => {
           </p>
         )}
       </div>
+      {/* Pagination above the table */}
+      {totalPages > 1 && (
+        <div className="mb-4 flex justify-center items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            title="Previous page"
+          >
+            ← Previous
+          </Button>
+          <span className="mx-2">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            title="Next page"
+          >
+            Next →
+          </Button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
@@ -525,6 +551,17 @@ const UserManagement = ({ country }: { country: string }) => {
       <div className="mt-2 text-sm text-gray-600">
         Total Records: {sortedData.length}
       </div>
+
+      {/* Floating Navigation */}
+      <FloatingNavigation
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        position="bottom-right"
+        showPagination={true}
+        showScrollButtons={true}
+      />
+
       {showDeleteModal && userToDelete && (
         <Modal>
           <div className="p-6 bg-white rounded-lg">
