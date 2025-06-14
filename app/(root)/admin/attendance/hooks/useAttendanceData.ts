@@ -200,10 +200,6 @@ export const useAttendanceData = ({ eventId }: UseAttendanceDataProps) => {
     calculateStats(registrations);
   }, [registrations, calculateStats]);
 
-  useEffect(() => {
-    fetchRegistrations();
-  }, [fetchRegistrations]);
-
   return {
     registrations,
     isLoading,

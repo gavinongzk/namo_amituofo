@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
 import Modal from '@/components/ui/modal';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
@@ -39,6 +39,11 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
     cancelRegistration,
     deleteRegistration,
   } = useAttendanceData({ eventId: event._id });
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchRegistrations();
+  }, [fetchRegistrations]);
 
   // UI State
   const [queueNumber, setQueueNumber] = useState('');
