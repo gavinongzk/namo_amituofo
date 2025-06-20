@@ -829,7 +829,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         {...formField}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
-                                          placeholder={customField.label}
+                                          placeholder="e.g. 佛莲"
                                           onChange={(e) => {
                                             const sanitized = sanitizeName(e.target.value);
                                             formField.onChange(sanitized);
