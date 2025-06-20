@@ -14,6 +14,7 @@ export default authMiddleware({
     '/events/:id/thank-you',
     '/event-lookup',
     '/api/reg',
+    '/api/reg/:id',
     '/api/update-registration',
     '/api/cancel-registration',
     '/api/all-registrations',
