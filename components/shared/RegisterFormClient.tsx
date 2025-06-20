@@ -628,30 +628,30 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                             control={form.control}
                             name={`groups.${personIndex}.${customField.id}`}
                             render={({ field: formField }) => (
-                              <FormItem className="space-y-4 p-4 rounded-lg border border-gray-100 bg-gray-50/30 hover:bg-gray-50/50 transition-colors">
-                                <FormLabel className="flex items-start gap-3 text-gray-800 font-medium">
-                                  <span className="flex items-center gap-2">
-                                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-semibold text-white bg-primary-500 rounded-full">
-                                      {getQuestionNumber(personIndex, fieldIndex)}
-                                    </span>
-                                    <span className="text-base">{customField.label}</span>
+                                                          <FormItem className="space-y-3 sm:space-y-4 p-2 sm:p-4 rounded-lg border border-gray-100 bg-gray-50/30 hover:bg-gray-50/50 transition-colors">
+                              <FormLabel className="flex items-start gap-2 sm:gap-3 text-gray-800 font-medium">
+                                <span className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 text-xs font-semibold text-white bg-primary-500 rounded-full">
+                                    {getQuestionNumber(personIndex, fieldIndex)}
                                   </span>
-                                </FormLabel>
+                                  <span className="text-sm sm:text-base">{customField.label}</span>
+                                </span>
+                              </FormLabel>
                                 
                                 <FormControl>
-                                  <div className="pl-8 space-y-3">
+                                  <div className="pl-4 sm:pl-8 space-y-2 sm:space-y-3">
                                     {customField.type === 'boolean' ? (
-                                      <div className="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200 hover:border-primary-300 transition-colors">
+                                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-md border border-gray-200 hover:border-primary-300 transition-colors">
                                         <Checkbox
                                           checked={formField.value as boolean}
                                           onCheckedChange={formField.onChange}
-                                          className="h-5 w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
+                                          className="h-4 w-4 sm:h-5 sm:w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                                         />
-                                        <span className="text-sm text-gray-600">Check if applicable</span>
+                                        <span className="text-xs sm:text-sm text-gray-600">Check if applicable</span>
                                       </div>
                                     ) : customField.type === 'phone' ? (
-                                      <div className="space-y-3 p-4 bg-white rounded-md border border-gray-200">
-                                        <div className="flex items-center gap-2 mb-2">
+                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="hidden sm:flex items-center gap-2 mb-2">
                                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                           <span className="text-sm font-medium text-gray-700">Phone Number</span>
                                         </div>
@@ -661,7 +661,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                               {...formField}
                                               value={String(formField.value)}
                                               type="tel"
-                                              className="w-full h-12 text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                               placeholder="e.g. +8613812345678"
                                             />
                                             <p className="text-sm text-gray-600 pl-1">
@@ -691,11 +691,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 countries={["SG", "MY"]}
                                                 international
                                                 countryCallingCodeEditable={false}
-                                                className="h-12 text-lg phone-input-enhanced"
+                                                className="h-10 sm:h-12 text-base sm:text-lg phone-input-enhanced"
                                                 withCountryCallingCode
                                               />
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
                                               <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
                                               <span>Singapore (+65) or Malaysia (+60) numbers only</span>
                                             </div>
@@ -716,36 +716,36 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         )}
                                       </div>
                                     ) : customField.type === 'radio' ? (
-                                      <div className="p-4 bg-white rounded-md border border-gray-200">
-                                        <div className="flex items-center gap-2 mb-3">
+                                      <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="hidden sm:flex items-center gap-2 mb-3">
                                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                                           <span className="text-sm font-medium text-gray-700">Select One Option</span>
                                         </div>
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col gap-2 sm:gap-3">
                                           {customField.options && customField.options.map((option) => (
-                                            <label key={option.value} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-primary-300 transition-colors">
+                                            <label key={option.value} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-primary-300 transition-colors">
                                               <input
                                                 type="radio"
                                                 value={option.value}
                                                 checked={formField.value === option.value}
                                                 onChange={() => formField.onChange(option.value)}
-                                                className="w-5 h-5 text-primary-600 focus:ring-primary-500 focus:ring-2"
+                                                className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 focus:ring-primary-500 focus:ring-2"
                                               />
-                                              <span className="text-gray-700 font-medium">{option.label}</span>
+                                              <span className="text-sm sm:text-base text-gray-700 font-medium">{option.label}</span>
                                             </label>
                                           ))}
                                         </div>
                                       </div>
                                     ) : customField.type === 'postal' ? (
-                                      <div className="space-y-3 p-4 bg-white rounded-md border border-gray-200">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                          <span className="text-sm font-medium text-gray-700">Postal Code</span>
-                                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                                          <div className="w-2 h-2 bg-blue-500 rounded-full sm:block hidden"></div>
+                                          <span className="text-xs sm:text-sm font-medium text-gray-700">Postal Code</span>
+                                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">Optional</span>
                                         </div>
                                         <Input 
                                           {...formField}
-                                          className="w-full h-12 text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                          className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                           value={String(formField.value)}
                                           placeholder={
                                             postalOverrides[personIndex]
@@ -820,16 +820,16 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                           </div>
                                         )}
                                       </div>
-                                    ) : (
-                                      <div className="p-4 bg-white rounded-md border border-gray-200">
-                                        <div className="flex items-center gap-2 mb-3">
-                                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                          <span className="text-sm font-medium text-gray-700">Text Input</span>
-                                        </div>
-                                        <Input 
-                                          {...formField}
-                                          className="w-full h-12 text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
-                                          value={String(formField.value)}
+                                                                      ) : (
+                                    <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                      <div className="hidden sm:flex items-center gap-2 mb-3">
+                                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-gray-700">Text Input</span>
+                                      </div>
+                                      <Input 
+                                        {...formField}
+                                        className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                        value={String(formField.value)}
                                           placeholder={customField.label}
                                           onChange={(e) => {
                                             const sanitized = sanitizeName(e.target.value);
@@ -840,7 +840,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                     )}
                                   </div>
                                 </FormControl>
-                                <FormMessage className="pl-8 text-sm font-medium bg-red-50 text-red-700 p-2 rounded-md border border-red-200" />
+                                <FormMessage className="pl-4 sm:pl-8 text-xs sm:text-sm font-medium bg-red-50 text-red-700 p-1.5 sm:p-2 rounded-md border border-red-200" />
                               </FormItem>
                             )}
                           />
@@ -871,26 +871,26 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                     </div>
                   ))}
 
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-6">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm font-semibold text-blue-800">Add More Participants</span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleAddPerson}
-                        disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
-                        className="w-full bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 hover:border-blue-400 gap-3 text-sm md:text-base font-semibold h-12 md:h-14 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                      >
-                        <PlusIcon className="w-5 h-5 md:w-6 md:h-6" />
-                        添加参加者 Add Participant
-                      </Button>
-                      <p className="text-xs text-blue-600 mt-2 text-center">
-                        Maximum {event.maxSeats} participants per registration
-                      </p>
+                                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-3 sm:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
+                      <span className="text-xs sm:text-sm font-semibold text-blue-800">Add More Participants</span>
                     </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddPerson}
+                      disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
+                      className="w-full bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 hover:border-blue-400 gap-2 sm:gap-3 text-sm md:text-base font-semibold h-10 sm:h-12 md:h-14 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                      添加参加者 Add Participant
+                    </Button>
+                    <p className="text-xs text-blue-600 mt-1 sm:mt-2 text-center">
+                      Maximum {event.maxSeats} participants per registration
+                    </p>
                   </div>
+                </div>
                 </>
               )}
 
@@ -901,31 +901,31 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                 className="mt-6"
               />
 
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 mt-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-semibold text-green-800">Ready to Submit</span>
-                </div>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || isFullyBooked} 
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2Icon className="mr-3 h-5 w-5 animate-spin" />
-                      处理中... / Processing...
-                    </>
-                  ) : isFullyBooked ? (
-                    '名额已满 / Fully Booked'
-                  ) : (
-                    '提交 / Submit'
-                  )}
-                </Button>
-                <p className="text-xs text-green-700 mt-3 text-center">
-                  Please review all information before submitting
-                </p>
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
+                <span className="text-xs sm:text-sm font-semibold text-green-800">Ready to Submit</span>
               </div>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || isFullyBooked} 
+                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                    处理中... / Processing...
+                  </>
+                ) : isFullyBooked ? (
+                  '名额已满 / Fully Booked'
+                ) : (
+                  '提交 / Submit'
+                )}
+              </Button>
+              <p className="text-xs text-green-700 mt-2 sm:mt-3 text-center">
+                Please review all information before submitting
+              </p>
+            </div>
             </form>
           </Form>
         )}
