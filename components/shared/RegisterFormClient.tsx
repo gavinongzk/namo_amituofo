@@ -561,369 +561,443 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   }, [showConfirmation]);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {isCountryLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
-            <p className="text-gray-600 font-medium">加载中... / Loading...</p>
+    <>
+      <style jsx global>{`
+        .phone-input-enhanced .PhoneInputInput {
+          border: 2px solid #e5e7eb;
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          font-size: 1.125rem;
+          line-height: 1.75rem;
+          height: 3rem;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .phone-input-enhanced .PhoneInputInput:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          outline: none;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect {
+          border: 2px solid #e5e7eb;
+          border-radius: 0.5rem 0 0 0.5rem;
+          padding: 0.75rem 0.5rem;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          outline: none;
+        }
+      `}</style>
+      <div className="max-w-3xl mx-auto">
+        {isCountryLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
+              <p className="text-gray-600 font-medium">加载中... / Loading...</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {message && <p className="text-red-500">{message}</p>}
-            {isFullyBooked ? (
-              <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
-                <p className="text-red-600 font-medium text-lg">此活动已满员。/ This event is fully booked.</p>
-              </div>
-            ) : (
-              <>
-                {fields.slice(0, numberOfFormsToShow).map((field, personIndex) => (
-                  <div 
-                    key={field.id}
-                    id={`person-${personIndex}`}
-                    className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
-                  >
-                    <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                      <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                        {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
-                      </h3>
-                    </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {message && <p className="text-red-500">{message}</p>}
+              {isFullyBooked ? (
+                <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
+                  <p className="text-red-600 font-medium text-lg">此活动已满员。/ This event is fully booked.</p>
+                </div>
+              ) : (
+                <>
+                  {fields.slice(0, numberOfFormsToShow).map((field, personIndex) => (
+                    <div 
+                      key={field.id}
+                      id={`person-${personIndex}`}
+                      className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
+                    >
+                      <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                        <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
+                          {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
+                        </h3>
+                      </div>
 
-                    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-                      {customFields.map((customField: CustomField, fieldIndex) => (
-                        <FormField
-                          key={customField.id}
-                          control={form.control}
-                          name={`groups.${personIndex}.${customField.id}`}
-                          render={({ field: formField }) => (
-                            <FormItem className="space-y-3">
-                              <FormLabel className="flex items-start gap-3 text-gray-700">
-                                <span className="text-base pt-1">{customField.label}</span>
+                      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+                        {customFields.map((customField: CustomField, fieldIndex) => (
+                          <FormField
+                            key={customField.id}
+                            control={form.control}
+                            name={`groups.${personIndex}.${customField.id}`}
+                            render={({ field: formField }) => (
+                                                          <FormItem className="space-y-3 sm:space-y-4 p-2 sm:p-4 rounded-lg border border-gray-100 bg-gray-50/30 hover:bg-gray-50/50 transition-colors">
+                              <FormLabel className="flex items-start gap-2 sm:gap-3 text-gray-800 font-medium">
+                                <span className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 text-xs font-semibold text-white bg-primary-500 rounded-full">
+                                    {getQuestionNumber(personIndex, fieldIndex)}
+                                  </span>
+                                  <span className="text-sm sm:text-base">{customField.label}</span>
+                                </span>
                               </FormLabel>
-                              
-                              <FormControl>
-                                <div className="pl-0">
-                                  {customField.type === 'boolean' ? (
-                                    <div className="flex gap-6">
-                                      <Checkbox
-                                        checked={formField.value as boolean}
-                                        onCheckedChange={formField.onChange}
-                                        className="h-5 w-5 rounded-md"
-                                      />
-                                    </div>
-                                  ) : customField.type === 'phone' ? (
-                                    <div className="space-y-2">
-                                      {phoneOverrides[personIndex] ? (
-                                        <div className="space-y-1.5">
-                                          <Input
-                                            {...formField}
-                                            value={String(formField.value)}
-                                            type="tel"
-                                            className="max-w-md h-12 text-lg border-2 focus:border-primary-500"
-                                            placeholder="e.g. +8613812345678"
-                                          />
-                                          <p className="text-sm text-gray-600 pl-1">
-                                            Format: +[country code][number]
-                                          </p>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setPhoneOverrides(prev => ({
-                                                ...prev,
-                                                [personIndex]: false
-                                              }));
-                                              form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
-                                            }}
-                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                          >
-                                            Switch back to SG/MY phone number format 切换回新马电话格式
-                                          </button>
+                                
+                                <FormControl>
+                                  <div className="pl-4 sm:pl-8 space-y-2 sm:space-y-3">
+                                    {customField.type === 'boolean' ? (
+                                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-md border border-gray-200 hover:border-primary-300 transition-colors">
+                                        <Checkbox
+                                          checked={formField.value as boolean}
+                                          onCheckedChange={formField.onChange}
+                                          className="h-4 w-4 sm:h-5 sm:w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
+                                        />
+                                        <span className="text-xs sm:text-sm text-gray-600">Check if applicable</span>
+                                      </div>
+                                    ) : customField.type === 'phone' ? (
+                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="hidden sm:flex items-center gap-2 mb-2">
+                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                          <span className="text-sm font-medium text-gray-700">Phone Number</span>
                                         </div>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          <div className="phone-input-container max-w-md">
-                                            <PhoneInput
-                                              value={formField.value as string}
-                                              onChange={(value) => formField.onChange(value || '')}
-                                              defaultCountry={getDefaultCountry(userCountry)}
-                                              countries={["SG", "MY"]}
-                                              international
-                                              countryCallingCodeEditable={false}
-                                              className="h-12 text-lg"
-                                              withCountryCallingCode
+                                        {phoneOverrides[personIndex] ? (
+                                          <div className="space-y-2">
+                                            <Input
+                                              {...formField}
+                                              value={String(formField.value)}
+                                              type="tel"
+                                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                              placeholder="e.g. +8613812345678"
                                             />
+                                            <p className="text-sm text-gray-600 pl-1">
+                                              Format: +[country code][number]
+                                            </p>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setPhoneOverrides(prev => ({
+                                                  ...prev,
+                                                  [personIndex]: false
+                                                }));
+                                                form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
+                                              }}
+                                              className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                            >
+                                              Switch back to SG/MY phone number format 切换回新马电话格式
+                                            </button>
                                           </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setPhoneOverrides(prev => ({
-                                                ...prev,
-                                                [personIndex]: true
-                                              }));
-                                              form.setValue(`groups.${personIndex}.phone`, '');
-                                            }}
-                                            className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                          >
-                                            使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
-                                          </button>
+                                        ) : (
+                                          <div className="space-y-2">
+                                            <div className="phone-input-container w-full">
+                                              <PhoneInput
+                                                value={formField.value as string}
+                                                onChange={(value) => formField.onChange(value || '')}
+                                                defaultCountry={getDefaultCountry(userCountry)}
+                                                countries={["SG", "MY"]}
+                                                international
+                                                countryCallingCodeEditable={false}
+                                                className="h-10 sm:h-12 text-base sm:text-lg phone-input-enhanced"
+                                                withCountryCallingCode
+                                              />
+                                            </div>
+                                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                                              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                              <span>Singapore (+65) or Malaysia (+60) numbers only</span>
+                                            </div>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setPhoneOverrides(prev => ({
+                                                  ...prev,
+                                                  [personIndex]: true
+                                                }));
+                                                form.setValue(`groups.${personIndex}.phone`, '');
+                                              }}
+                                              className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                            >
+                                              使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : customField.type === 'radio' ? (
+                                      <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="hidden sm:flex items-center gap-2 mb-3">
+                                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                          <span className="text-sm font-medium text-gray-700">Select One Option</span>
                                         </div>
-                                      )}
-                                    </div>
-                                  ) : customField.type === 'radio' ? (
-                                    <div className="flex gap-6">
-                                      {customField.options && customField.options.map((option) => (
-                                        <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                                          <input
-                                            type="radio"
-                                            value={option.value}
-                                            checked={formField.value === option.value}
-                                            onChange={() => formField.onChange(option.value)}
-                                            className="w-4 h-4 text-primary-600"
-                                          />
-                                          <span className="text-gray-700">{option.label}</span>
-                                        </label>
-                                      ))}
-                                    </div>
-                                  ) : customField.type === 'postal' ? (
-                                    <div className="space-y-2">
+                                        <div className="flex flex-col gap-2 sm:gap-3">
+                                          {customField.options && customField.options.map((option) => (
+                                            <label key={option.value} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-primary-300 transition-colors">
+                                              <input
+                                                type="radio"
+                                                value={option.value}
+                                                checked={formField.value === option.value}
+                                                onChange={() => formField.onChange(option.value)}
+                                                className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 focus:ring-primary-500 focus:ring-2"
+                                              />
+                                              <span className="text-sm sm:text-base text-gray-700 font-medium">{option.label}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ) : customField.type === 'postal' ? (
+                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                                          <div className="w-2 h-2 bg-blue-500 rounded-full sm:block hidden"></div>
+                                          <span className="text-xs sm:text-sm font-medium text-gray-700">Postal Code</span>
+                                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">Optional</span>
+                                        </div>
+                                        <Input 
+                                          {...formField}
+                                          className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                          value={String(formField.value)}
+                                          placeholder={
+                                            postalOverrides[personIndex]
+                                              ? "输入邮区编号 Enter postal code"
+                                              : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
+                                                ? "e.g. 12345"
+                                                : "e.g. 123456"
+                                          }
+                                          onChange={(e) => {
+                                            // Only allow numbers when in override mode
+                                            if (postalOverrides[personIndex]) {
+                                              const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                              formField.onChange(numericValue);
+                                            } else {
+                                              formField.onChange(e);
+                                            }
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            // Update the override state
+                                            const newOverrideState = !postalOverrides[personIndex];
+                                            
+                                            // Clear the field first
+                                            form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
+                                              shouldValidate: false  // Prevent validation on clear
+                                            });
+                                            
+                                            // Update the override state
+                                            setPostalOverrides(prev => ({
+                                              ...prev,
+                                              [personIndex]: newOverrideState
+                                            }));
+                                            
+                                            // Reset form errors for this field
+                                            form.clearErrors(`groups.${personIndex}.${customField.id}`);
+                                            
+                                            // Force revalidation after a small delay to ensure state is updated
+                                            setTimeout(() => {
+                                              form.trigger(`groups.${personIndex}.${customField.id}`);
+                                            }, 100);
+                                          }}
+                                          className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                        >
+                                          {postalOverrides[personIndex] ? 
+                                            "切换回邮区编号验证 Switch back to postal code validation" : 
+                                            "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
+                                        </button>
+                                        {personIndex > 0 && (
+                                          <div className="flex items-center gap-2 mt-2">
+                                            <Checkbox
+                                              checked={postalCheckedState[personIndex] ?? false}
+                                              onCheckedChange={(checked) => {
+                                                setPostalCheckedState(prev => ({
+                                                  ...prev,
+                                                  [personIndex]: !!checked
+                                                }));
+                                                
+                                                if (checked) {
+                                                  const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
+                                                  form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
+                                                } else {
+                                                  form.setValue(`groups.${personIndex}.${customField.id}`, '');
+                                                }
+                                              }}
+                                              className="h-4 w-4"
+                                            />
+                                            <label className="text-sm text-gray-600">
+                                              与{toChineseOrdinal(1)}参加者相同 Same as Participant 1
+                                            </label>
+                                          </div>
+                                        )}
+                                      </div>
+                                                                      ) : (
+                                    <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                      <div className="hidden sm:flex items-center gap-2 mb-3">
+                                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-gray-700">Text Input</span>
+                                      </div>
                                       <Input 
                                         {...formField}
-                                        className="max-w-md"
+                                        className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
-                                        placeholder={
-                                          postalOverrides[personIndex]
-                                            ? "输入邮区编号 Enter postal code"
-                                            : phoneCountries[personIndex] === 'Malaysia' || (!phoneCountries[personIndex] && userCountry === 'Malaysia')
-                                              ? "e.g. 12345"
-                                              : "e.g. 123456"
-                                        }
-                                        onChange={(e) => {
-                                          // Only allow numbers when in override mode
-                                          if (postalOverrides[personIndex]) {
-                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                                            formField.onChange(numericValue);
-                                          } else {
-                                            formField.onChange(e);
-                                          }
-                                        }}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          // Update the override state
-                                          const newOverrideState = !postalOverrides[personIndex];
-                                          
-                                          // Clear the field first
-                                          form.setValue(`groups.${personIndex}.${customField.id}`, '', { 
-                                            shouldValidate: false  // Prevent validation on clear
-                                          });
-                                          
-                                          // Update the override state
-                                          setPostalOverrides(prev => ({
-                                            ...prev,
-                                            [personIndex]: newOverrideState
-                                          }));
-                                          
-                                          // Reset form errors for this field
-                                          form.clearErrors(`groups.${personIndex}.${customField.id}`);
-                                          
-                                          // Force revalidation after a small delay to ensure state is updated
-                                          setTimeout(() => {
-                                            form.trigger(`groups.${personIndex}.${customField.id}`);
-                                          }, 100);
-                                        }}
-                                        className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
-                                      >
-                                        {postalOverrides[personIndex] ? 
-                                          "切换回邮区编号验证 Switch back to postal code validation" : 
-                                          "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
-                                      </button>
-                                      {personIndex > 0 && (
-                                        <div className="flex items-center gap-2 mt-2">
-                                          <Checkbox
-                                            checked={postalCheckedState[personIndex] ?? false}
-                                            onCheckedChange={(checked) => {
-                                              setPostalCheckedState(prev => ({
-                                                ...prev,
-                                                [personIndex]: !!checked
-                                              }));
-                                              
-                                              if (checked) {
-                                                const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
-                                                form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
-                                              } else {
-                                                form.setValue(`groups.${personIndex}.${customField.id}`, '');
-                                              }
-                                            }}
-                                            className="h-4 w-4"
-                                          />
-                                          <label className="text-sm text-gray-600">
-                                            与{toChineseOrdinal(1)}参加者相同 Same as Participant 1
-                                          </label>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <Input 
-                                      {...formField}
-                                      className="max-w-md"
-                                      value={String(formField.value)}
-                                      placeholder={customField.label}
-                                      onChange={(e) => {
-                                        const sanitized = sanitizeName(e.target.value);
-                                        formField.onChange(sanitized);
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              </FormControl>
-                              <FormMessage className="pl-0" />
-                            </FormItem>
-                          )}
-                        />
-                      ))}
-                    </div>
-                    
-                    {personIndex > 0 && (
-                      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                        <Button 
-                          type="button" 
-                          onClick={() => {
-                            remove(personIndex);
-                            setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
-                          }}
-                          disabled={isSubmitting}
-                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white h-10 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
-                        </Button>
+                                          placeholder={customField.label}
+                                          onChange={(e) => {
+                                            const sanitized = sanitizeName(e.target.value);
+                                            formField.onChange(sanitized);
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </FormControl>
+                                <FormMessage className="pl-4 sm:pl-8 text-xs sm:text-sm font-medium bg-red-50 text-red-700 p-1.5 sm:p-2 rounded-md border border-red-200" />
+                              </FormItem>
+                            )}
+                          />
+                        ))}
                       </div>
-                    )}
-                  </div>
-                ))}
-
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
-                  <Button
-                    type="button"
-                    onClick={handleAddPerson}
-                    disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 gap-2 text-sm md:text-base font-medium h-10 md:h-12 border-2 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
-                    添加参加者 Add Participant
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {/* Add PDPA consent checkbox before the submit button */}
-            <PdpaConsentCheckbox 
-              name="pdpaConsent"
-              disabled={isSubmitting}
-              className="mt-6"
-            />
-
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || isFullyBooked} 
-              className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                  处理中... / Processing...
-                </>
-              ) : isFullyBooked ? (
-                '名额已满 / Fully Booked'
-              ) : (
-                '提交 / Submit'
-              )}
-            </Button>
-          </form>
-        </Form>
-      )}
-
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-gray-900">
-              发现重复报名 / Duplicate Registration Found
-            </DialogTitle>
-            <DialogDescription className="space-y-4 pt-4">
-              <p className="text-gray-700">
-                以下电话号码已报名：/ The following phone number/s is/are already registered:
-              </p>
-              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-                {duplicatePhoneNumbers.map((duplicate, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="p-4 space-y-3">
-                      <p className="text-red-600 font-medium text-base">{duplicate.phoneNumber}</p>
-                      <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm">
-                        <span className="text-gray-600 font-medium whitespace-nowrap">名字 Name:</span>
-                        <span className="text-gray-900">{duplicate.name}</span>
-                        <span className="text-gray-600 font-medium whitespace-nowrap">队列号 Queue Number:</span>
-                        <span className="text-gray-900">{duplicate.queueNumber}</span>
-                      </div>
-                      {duplicate.qrCode && (
-                        <div className="pt-2">
-                          <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
-                          <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
-                            <QrCodeWithLogo
-                              qrCode={duplicate.qrCode}
-                              isAttended={false}
-                              queueNumber={duplicate.queueNumber}
-                            />
+                      
+                      {personIndex > 0 && (
+                        <div className="px-6 py-4 bg-red-50 border-t border-red-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                            </div>
+                            <Button 
+                              type="button" 
+                              onClick={() => {
+                                remove(personIndex);
+                                setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
+                              }}
+                              disabled={isSubmitting}
+                              className="bg-red-600 hover:bg-red-700 text-white h-10 px-6 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
+                            </Button>
                           </div>
                         </div>
                       )}
                     </div>
+                  ))}
+
+                                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-3 sm:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddPerson}
+                      disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
+                      className="w-full bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 hover:border-blue-400 gap-2 sm:gap-3 text-sm md:text-base font-semibold h-10 sm:h-12 md:h-14 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                      添加参加者 Add Participant
+                    </Button>
                   </div>
-                ))}
-              </div>
-              <p className="text-gray-700 pt-2">
-                您是否仍要继续？/ Do you still want to proceed?
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowConfirmation(false);
-                setIsSubmitting(false); // Reset submission state when canceling
-                if (duplicatePhoneNumbers.length > 0) {
-                  const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
-                  router.push(`/event-lookup?phone=${phoneNumber}`);
-                }
-              }}
-              className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
-            >
-              取消 / Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowConfirmation(false);
-                setIsSubmitting(true);
-                if (formValues) {
-                  submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
-                }
-              }}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={timeRemaining > 0 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                  处理中... / Processing...
+                </div>
                 </>
-              ) : timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+              )}
+
+              {/* Add PDPA consent checkbox before the submit button */}
+              <PdpaConsentCheckbox 
+                name="pdpaConsent"
+                disabled={isSubmitting}
+                className="mt-6"
+              />
+
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              </div>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || isFullyBooked} 
+                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                    处理中... / Processing...
+                  </>
+                ) : isFullyBooked ? (
+                  '名额已满 / Fully Booked'
+                ) : (
+                  '提交 / Submit'
+                )}
+              </Button>
+            </div>
+            </form>
+          </Form>
+        )}
+
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                发现重复报名 / Duplicate Registration Found
+              </DialogTitle>
+              <DialogDescription className="space-y-4 pt-4">
+                <p className="text-gray-700">
+                  以下电话号码已报名：/ The following phone number/s is/are already registered:
+                </p>
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                  {duplicatePhoneNumbers.map((duplicate, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                      <div className="p-4 space-y-3">
+                        <p className="text-red-600 font-medium text-base">{duplicate.phoneNumber}</p>
+                        <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm">
+                          <span className="text-gray-600 font-medium whitespace-nowrap">名字 Name:</span>
+                          <span className="text-gray-900">{duplicate.name}</span>
+                          <span className="text-gray-600 font-medium whitespace-nowrap">队列号 Queue Number:</span>
+                          <span className="text-gray-900">{duplicate.queueNumber}</span>
+                        </div>
+                        {duplicate.qrCode && (
+                          <div className="pt-2">
+                            <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
+                            <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
+                              <QrCodeWithLogo
+                                qrCode={duplicate.qrCode}
+                                isAttended={false}
+                                queueNumber={duplicate.queueNumber}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-gray-700 pt-2">
+                  您是否仍要继续？/ Do you still want to proceed?
+                </p>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowConfirmation(false);
+                  setIsSubmitting(false); // Reset submission state when canceling
+                  if (duplicatePhoneNumbers.length > 0) {
+                    const phoneNumber = encodeURIComponent(duplicatePhoneNumbers[0].phoneNumber);
+                    router.push(`/event-lookup?phone=${phoneNumber}`);
+                  }
+                }}
+                className="w-full sm:w-auto border-gray-300 hover:bg-gray-50"
+              >
+                取消 / Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowConfirmation(false);
+                  setIsSubmitting(true);
+                  if (formValues) {
+                    submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
+                  }
+                }}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={timeRemaining > 0 || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                    处理中... / Processing...
+                  </>
+                ) : timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   )
 }
 

@@ -80,11 +80,19 @@ const EventLookupPage = () => {
                 }
                 
                 const data = await response.json();
-                setRegistrations(data);
+                
+                // Sort registrations by event start date in ascending order
+                const sortedData = data.sort((a: IRegistration, b: IRegistration) => {
+                    const dateA = new Date(a.event.startDateTime || 0);
+                    const dateB = new Date(b.event.startDateTime || 0);
+                    return dateA.getTime() - dateB.getTime();
+                });
+                
+                setRegistrations(sortedData);
                 
                 // Save to session storage for back navigation
                 if (typeof window !== 'undefined') {
-                    sessionStorage.setItem('eventLookupRegistrations', JSON.stringify(data));
+                    sessionStorage.setItem('eventLookupRegistrations', JSON.stringify(sortedData));
                     sessionStorage.setItem('eventLookupPhoneNumber', phoneNumber);
                     sessionStorage.setItem('eventLookupHasSearched', 'true');
                 }
@@ -145,7 +153,16 @@ const EventLookupPage = () => {
             if (isBackFromOrderDetails && savedRegistrations && savedPhoneNumber && savedHasSearched) {
                 setIsRestoringFromSession(true);
                 setPhoneNumber(savedPhoneNumber);
-                setRegistrations(JSON.parse(savedRegistrations));
+                
+                // Sort restored registrations by event start date in ascending order
+                const restoredRegistrations = JSON.parse(savedRegistrations);
+                const sortedRestoredRegistrations = restoredRegistrations.sort((a: IRegistration, b: IRegistration) => {
+                    const dateA = new Date(a.event.startDateTime || 0);
+                    const dateB = new Date(b.event.startDateTime || 0);
+                    return dateA.getTime() - dateB.getTime();
+                });
+                
+                setRegistrations(sortedRestoredRegistrations);
                 setHasSearched(savedHasSearched === 'true');
                 
                 if (savedAllRegistrations) {
