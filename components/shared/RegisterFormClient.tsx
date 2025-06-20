@@ -741,7 +741,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
                                           <div className="w-2 h-2 bg-blue-500 rounded-full sm:block hidden"></div>
                                           <span className="text-xs sm:text-sm font-medium text-gray-700">Postal Code</span>
-                                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">Optional</span>
                                         </div>
                                         <Input 
                                           {...formField}
