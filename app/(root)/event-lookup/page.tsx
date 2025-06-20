@@ -81,10 +81,10 @@ const EventLookupPage = () => {
                 
                 const data = await response.json();
                 
-                // Sort registrations by eventstart in ascending order
+                // Sort registrations by event start date in ascending order
                 const sortedData = data.sort((a: IRegistration, b: IRegistration) => {
-                    const dateA = new Date(a.eventstart);
-                    const dateB = new Date(b.eventstart);
+                    const dateA = new Date(a.event.startDateTime || 0);
+                    const dateB = new Date(b.event.startDateTime || 0);
                     return dateA.getTime() - dateB.getTime();
                 });
                 
@@ -154,11 +154,11 @@ const EventLookupPage = () => {
                 setIsRestoringFromSession(true);
                 setPhoneNumber(savedPhoneNumber);
                 
-                // Sort restored registrations by eventstart in ascending order
+                // Sort restored registrations by event start date in ascending order
                 const restoredRegistrations = JSON.parse(savedRegistrations);
                 const sortedRestoredRegistrations = restoredRegistrations.sort((a: IRegistration, b: IRegistration) => {
-                    const dateA = new Date(a.eventstart);
-                    const dateB = new Date(b.eventstart);
+                    const dateA = new Date(a.event.startDateTime || 0);
+                    const dateB = new Date(b.event.startDateTime || 0);
                     return dateA.getTime() - dateB.getTime();
                 });
                 
