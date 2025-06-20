@@ -851,7 +851,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                         <div className="px-6 py-4 bg-red-50 border-t border-red-200">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                             </div>
                             <Button 
                               type="button" 
@@ -873,8 +872,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6">
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-3 sm:p-6">
                     <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
-                      <span className="text-xs sm:text-sm font-semibold text-blue-800">Add More Participants</span>
                     </div>
                     <Button
                       type="button"
@@ -902,7 +899,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
                           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
               </div>
               <Button 
                 type="submit" 
