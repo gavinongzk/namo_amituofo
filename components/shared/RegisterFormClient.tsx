@@ -852,7 +852,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              <span className="text-sm font-medium text-red-700">Remove this participant</span>
                             </div>
                             <Button 
                               type="button" 
@@ -904,7 +903,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
-                <span className="text-xs sm:text-sm font-semibold text-green-800">Ready to Submit</span>
               </div>
               <Button 
                 type="submit" 
@@ -922,9 +920,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                   '提交 / Submit'
                 )}
               </Button>
-              <p className="text-xs text-green-700 mt-2 sm:mt-3 text-center">
-                Please review all information before submitting
-              </p>
             </div>
             </form>
           </Form>
