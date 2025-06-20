@@ -18,6 +18,7 @@ export default authMiddleware({
     '/api/cancel-registration',
     '/api/all-registrations',
     '/monitoring',
+    '/reg/:id'
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
