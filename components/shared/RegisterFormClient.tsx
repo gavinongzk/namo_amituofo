@@ -882,9 +882,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                       <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                       添加参加者 Add Participant
                     </Button>
-                    <p className="text-xs text-blue-600 mt-1 sm:mt-2 text-center">
-                      Maximum {event.maxSeats} participants per registration
-                    </p>
                   </div>
                 </div>
                 </>
