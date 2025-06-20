@@ -741,7 +741,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
                                           <div className="w-2 h-2 bg-blue-500 rounded-full sm:block hidden"></div>
                                           <span className="text-xs sm:text-sm font-medium text-gray-700">Postal Code</span>
-                                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">Optional</span>
                                         </div>
                                         <Input 
                                           {...formField}
@@ -830,7 +829,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         {...formField}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
-                                          placeholder={customField.label}
+                                          placeholder="e.g. 佛莲"
                                           onChange={(e) => {
                                             const sanitized = sanitizeName(e.target.value);
                                             formField.onChange(sanitized);
