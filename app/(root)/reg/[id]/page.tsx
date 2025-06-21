@@ -813,19 +813,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     </div>
                   )}
                   <div className={`${group.cancelled ? 'bg-gray-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                      <div className="flex flex-col gap-1">
-                        <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex flex-col gap-1 flex-1">
+                        <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2 flex-wrap">
                           <span>{toChineseOrdinal(index + 1)}参加者 Participant {index + 1}</span>
                           {group.cancelled && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                               已取消 Cancelled
                             </span>
                           )}
-                          <span className="text-xs opacity-50">#{group.queueNumber}</span>
                         </h5>
                         <div className="text-white/90 text-sm sm:text-base">
                           {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
+                        </div>
+                      </div>
+                      {/* Prominent Queue Number Display */}
+                      <div className="flex flex-col items-center sm:items-end gap-1">
+                        <div className="text-white/80 text-xs font-medium">队列号 Queue #</div>
+                        <div className="bg-white/90 text-primary-600 px-4 py-2 rounded-lg font-bold text-xl sm:text-2xl min-w-[80px] text-center shadow-md">
+                          {group.queueNumber}
                         </div>
                       </div>
                     </div>
@@ -845,9 +851,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                           />
                         </div>
                         {group.queueNumber && (
-                          <div className="mt-3 text-center">
-                            <p className="text-xs text-gray-500">队列号 Queue Number</p>
-                            <p className="text-sm text-gray-600">{group.queueNumber}</p>
+                          <div className="mt-4 text-center">
+                            <p className="text-sm text-primary-600 font-medium mb-2">点名队列号 Attendance Queue Number</p>
+                            <div className="bg-primary-500 text-white px-6 py-3 rounded-xl inline-block shadow-lg">
+                              <p className="text-2xl font-bold">#{group.queueNumber}</p>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">请在报到处出示此号码 Please show this number at registration</p>
                           </div>
                         )}
                       </div>

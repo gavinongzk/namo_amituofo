@@ -25,6 +25,20 @@ const RegistrationCard = ({ event, registrations }: Props) => {
     setImageLoading(true);
   }, [event.imageUrl]);
 
+  // Sort registrations by queue number
+  const sortedRegistrations = [...registrations].sort((a, b) => {
+    // Handle cases where queue numbers might be missing or invalid
+    const queueA = a.queueNumber ? parseInt(a.queueNumber.toString()) : 999999;
+    const queueB = b.queueNumber ? parseInt(b.queueNumber.toString()) : 999999;
+    
+    // If both are invalid numbers, maintain original order
+    if (isNaN(queueA) && isNaN(queueB)) return 0;
+    if (isNaN(queueA)) return 1; // Move invalid numbers to end
+    if (isNaN(queueB)) return -1; // Move invalid numbers to end
+    
+    return queueA - queueB;
+  });
+
   return (
     <div className="group relative flex min-h-[320px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[380px]">
       <Link 
@@ -114,22 +128,29 @@ const RegistrationCard = ({ event, registrations }: Props) => {
               已报名参加者 Registered Participants
             </div>
             <div className="text-sm font-semibold text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
-              {registrations.length}
+              {sortedRegistrations.length}
             </div>
           </div>
           
           <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1.5 border border-gray-100 rounded-lg p-2 bg-gray-50/50">
-            {registrations.length > 0 ? (
-              registrations.map((registration, index) => (
+            {sortedRegistrations.length > 0 ? (
+              sortedRegistrations.map((registration, index) => (
                 <div 
                   key={index} 
                   className="bg-white p-2 rounded-md shadow-sm border border-gray-100 animate-fadeIn hover:border-primary-200 transition-colors"
                 >
-                  <p className="p-medium-14 md:p-medium-16 text-grey-700 flex items-center">
-                    <span className="inline-flex items-center justify-center bg-primary-100 text-primary-700 w-5 h-5 rounded-full text-xs font-medium mr-2">
-                      {index + 1}
+                  <p className="p-medium-14 md:p-medium-16 text-grey-700 flex items-center justify-between">
+                    <span className="flex items-center">
+                      <span className="inline-flex items-center justify-center bg-primary-100 text-primary-700 w-5 h-5 rounded-full text-xs font-medium mr-2">
+                        {index + 1}
+                      </span>
+                      {registration.name || 'N/A'}
                     </span>
-                    {registration.name || 'N/A'}
+                    {registration.queueNumber && (
+                      <span className="inline-flex items-center justify-center bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
+                        #{registration.queueNumber}
+                      </span>
+                    )}
                   </p>
                 </div>
               ))
