@@ -822,7 +822,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                               已取消 Cancelled
                             </span>
                           )}
-                          <span className="text-xs opacity-50">#{group.queueNumber}</span>
+                          <span className="text-sm bg-white/20 px-2 py-1 rounded-md font-medium">#{group.queueNumber}</span>
                         </h5>
                         <div className="text-white/90 text-sm sm:text-base">
                           {group.fields.find(field => field.label.toLowerCase().includes('name'))?.value || 'N/A'}
@@ -847,7 +847,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         {group.queueNumber && (
                           <div className="mt-3 text-center">
                             <p className="text-xs text-gray-500">队列号 Queue Number</p>
-                            <p className="text-sm text-gray-600">{group.queueNumber}</p>
+                            <p className="text-base font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-lg inline-block">#{group.queueNumber}</p>
                           </div>
                         )}
                       </div>

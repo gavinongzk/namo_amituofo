@@ -125,11 +125,18 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                   key={index} 
                   className="bg-white p-2 rounded-md shadow-sm border border-gray-100 animate-fadeIn hover:border-primary-200 transition-colors"
                 >
-                  <p className="p-medium-14 md:p-medium-16 text-grey-700 flex items-center">
-                    <span className="inline-flex items-center justify-center bg-primary-100 text-primary-700 w-5 h-5 rounded-full text-xs font-medium mr-2">
-                      {index + 1}
+                  <p className="p-medium-14 md:p-medium-16 text-grey-700 flex items-center justify-between">
+                    <span className="flex items-center">
+                      <span className="inline-flex items-center justify-center bg-primary-100 text-primary-700 w-5 h-5 rounded-full text-xs font-medium mr-2">
+                        {index + 1}
+                      </span>
+                      {registration.name || 'N/A'}
                     </span>
-                    {registration.name || 'N/A'}
+                    {registration.queueNumber && (
+                      <span className="inline-flex items-center justify-center bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
+                        #{registration.queueNumber}
+                      </span>
+                    )}
                   </p>
                 </div>
               ))
