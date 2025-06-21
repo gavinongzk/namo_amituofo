@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { unstable_cache } from 'next/cache';
+import { eventCache, invalidateEventCache } from '@/lib/cache/eventCache';
 
 import mongoose from 'mongoose'; // Added for ObjectId validation
 import { connectToDatabase } from '@/lib/database'
@@ -63,6 +64,8 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 
     console.log("New event created successfully:", newEvent);
 
+    // Invalidate caches
+    await invalidateEventCache.onMajorEventUpdate();
     revalidatePath(path);
     revalidatePath('/');
     revalidateTag('events');
@@ -83,24 +86,27 @@ export const getEventById = async (eventId: string) => {
         return null; // Return null if ID format is invalid
       }
 
-      await connectToDatabase();
+      // Use cached query for event details
+      return await eventCache.getEventDetails(eventId, async () => {
+        await connectToDatabase();
 
-      const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
-        .populate({ path: 'organizer', model: User, select: '_id' })
-        .populate({ path: 'category', model: Category, select: '_id name' });
+        const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
+          .populate({ path: 'organizer', model: User, select: '_id' })
+          .populate({ path: 'category', model: Category, select: '_id name' });
 
-      if (!event) {
-        // Event not found, return null to be handled by the caller
-        // This allows the UI to display a "not found" message gracefully
-        return null;
-      }
+        if (!event) {
+          // Event not found, return null to be handled by the caller
+          // This allows the UI to display a "not found" message gracefully
+          return null;
+        }
 
-      const attendeeCount = await Order.countDocuments({ event: eventId });
+        const attendeeCount = await Order.countDocuments({ event: eventId });
 
-      return {
-        ...JSON.parse(JSON.stringify(event)),
-        attendeeCount,
-      };
+        return {
+          ...JSON.parse(JSON.stringify(event)),
+          attendeeCount,
+        };
+      });
     } catch (error) {
       handleError(error);
       return null;
@@ -127,6 +133,9 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { new: true }
     );
     
+    // Invalidate caches for updated event
+    await invalidateEventCache.onEventUpdate(event._id);
+    
     // Revalidate all relevant caches
     revalidatePath(path);
     revalidatePath('/');
@@ -150,8 +159,9 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
       { new: true }
     )
     
-    // Revalidate all relevant caches
+    // Invalidate caches for deleted event
     if (deletedEvent) {
+      await invalidateEventCache.onEventUpdate(eventId);
       revalidatePath(path);
       revalidatePath('/');
       revalidateTag('events');

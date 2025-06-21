@@ -13,6 +13,7 @@ import { CustomFieldGroup } from '@/types'
 import { unstable_cache } from 'next/cache'
 import crypto from 'crypto';
 import { generateQueueNumber } from '../utils/queueNumber';
+import { eventCache, invalidateEventCache } from '@/lib/cache/eventCache';
 
 export async function createOrder(order: CreateOrderParams) {
   try {
@@ -121,6 +122,10 @@ export async function createOrder(order: CreateOrderParams) {
     });
 
     console.log(`Successfully created order with ${newCustomFieldValues.length} registrations`);
+    
+    // Invalidate registration-related caches
+    await invalidateEventCache.onRegistrationChange(order.eventId);
+    
     return JSON.parse(JSON.stringify(newOrder));
   } catch (error) {
     console.error('Error creating order:', error);
@@ -198,6 +203,7 @@ export const getOrderById = unstable_cache(
 );
 
 export async function getOrderCountByEvent(eventId: string) {
+  return eventCache.getRegistrationCounts(eventId, async () => {
   try {
     await connectToDatabase();
 
