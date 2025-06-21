@@ -72,6 +72,15 @@ const convertLinksInText = (text: string) => {
   return processedText;
 };
 
+const isPostalCodeField = (field: CustomField): boolean => {
+  const label = field.label.toLowerCase();
+  return label.includes('postal') || 
+         label.includes('postcode') || 
+         label.includes('zip') || 
+         label.includes('邮编') || 
+         label.includes('邮政编码');
+};
+
 const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
   qrCode: string, 
   isAttended: boolean,
@@ -865,7 +874,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                   {/* Registration Details Section */}
                   <div className="p-4 space-y-4">
-                    {group.fields.map((field: CustomField) => (
+                    {group.fields.filter(field => !isPostalCodeField(field)).map((field: CustomField) => (
                       <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
                         <div className="flex-1 flex items-center gap-2">
