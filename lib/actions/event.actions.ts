@@ -163,7 +163,7 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 }
 
 // GET ALL EVENTS (Regular users - with date filtering)
-export async function getAllEvents({ query, limit = 6, page, category, country, role }: GetAllEventsParams & { role?: string }) {
+export async function getAllEvents({ query, limit = 6, page, category, country, region, role }: GetAllEventsParams & { role?: string }) {
       try {
         // Connect to database first and handle connection errors explicitly
         try {
@@ -187,11 +187,20 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
         const expirationDate = EVENT_CONFIG.getExpirationDate(role);
         const dateCondition = { endDateTime: { $gte: expirationDate } };
 
+        // Build region/country conditions
+        let locationCondition = {};
+        if (region) {
+          locationCondition = { region: region };
+        } else if (country) {
+          // Fallback to country if region not specified
+          locationCondition = { country: country };
+        }
+
         const conditions = {
           $and: [
             titleCondition,
             categoryCondition ? { category: categoryCondition._id } : {},
-            { country: country },
+            locationCondition,
             { isDeleted: { $ne: true } },
             dateCondition
           ]
@@ -255,18 +264,27 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
 }
 
 // GET ALL EVENTS (Superadmin - without date filtering)
-export async function getAllEventsForSuperAdmin({ query, limit = 6, page, category, country }: GetAllEventsParams) {
+export async function getAllEventsForSuperAdmin({ query, limit = 6, page, category, country, region }: GetAllEventsParams) {
   try {
     await connectToDatabase()
 
     const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
     const categoryCondition = category ? await getCategoryByName(category) : null
 
+    // Build region/country conditions
+    let locationCondition = {};
+    if (region) {
+      locationCondition = { region: region };
+    } else if (country) {
+      // Fallback to country if region not specified
+      locationCondition = { country: country };
+    }
+
     const conditions = {
       $and: [
         titleCondition,
         categoryCondition ? { category: categoryCondition._id } : {},
-        { country: country },
+        locationCondition,
         { isDeleted: { $ne: true } }
       ]
     }

@@ -7,7 +7,7 @@ import Image from "next/image"
 import Link from "next/link"
 import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
-import CountrySelector from '@/components/shared/CountrySelector';
+import RegionSelector from '@/components/shared/CountrySelector';
 import { Loader2, Search } from 'lucide-react';
 
 const AdminLoginButton = () => (
@@ -83,9 +83,9 @@ const Header = () => {
         {/* Right-side elements (Country, User/Admin, MobileNav) */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
           <SignedIn>
-            {/* Group CountrySelector and UserButton */}
+            {/* Group RegionSelector and UserButton */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-              <CountrySelector />
+              <RegionSelector />
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
@@ -97,9 +97,9 @@ const Header = () => {
             </div>
           </SignedIn>
           <SignedOut>
-            {/* Group CountrySelector and AdminLoginButton */}
+            {/* Group RegionSelector and AdminLoginButton */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-              <CountrySelector />
+              <RegionSelector />
               <div className="hidden md:block">
                 <AdminLoginButton />
               </div>

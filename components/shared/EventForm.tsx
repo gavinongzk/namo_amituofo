@@ -67,6 +67,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       ? {
           ...event,
           country: event.country || "Singapore",
+          region: event.region || "Singapore",
           startDateTime: new Date(event.startDateTime),
           endDateTime: new Date(event.endDateTime),
           categoryId: event.category._id,
@@ -88,20 +89,31 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   })
 
   useEffect(() => {
-    const detectCountry = async () => {
+    const detectRegion = async () => {
       try {
         const response = await fetch('https://get.geojs.io/v1/ip/country.json');
         const data = await response.json();
-        const country = data.country === 'SG' ? 'Singapore' : data.country === 'MY' ? 'Malaysia' : null;
-        if (country && !form.getValues('country')) {
+        let region = 'Singapore'; // Default
+        let country = 'Singapore';
+        
+        if (data.country === 'SG') {
+          region = 'Singapore';
+          country = 'Singapore';
+        } else if (data.country === 'MY') {
+          region = 'Malaysia-KL'; // Default to KL for Malaysia
+          country = 'Malaysia';
+        }
+        
+        if (!form.getValues('region')) {
+          form.setValue('region', region);
           form.setValue('country', country);
         }
       } catch (error) {
-        console.error('Error detecting country:', error);
+        console.error('Error detecting region:', error);
       }
     };
 
-    detectCountry();
+    detectRegion();
   }, [form]);
 
   const router = useRouter()
@@ -116,12 +128,19 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
     console.log("Form submitted with values:", values);
     
-    // Ensure country is set
+    // Ensure region and country are set
+    if (!values.region) {
+      console.log("Region is required but not set");
+      values.region = "Singapore";
+      values.country = "Singapore";
+      console.log("Set default region to Singapore");
+    }
+    
     if (!values.country) {
       console.log("Country is required but not set");
-      // Set a default country if not provided
-      values.country = "Singapore";
-      console.log("Set default country to Singapore");
+      // Set country based on region
+      values.country = values.region.startsWith('Malaysia') ? 'Malaysia' : 'Singapore';
+      console.log("Set country based on region:", values.country);
     }
     
     let uploadedImageUrl = values.imageUrl || ''; // Ensure it's always a string
@@ -282,29 +301,35 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
             control={form.control}
-            name="country"
+            name="region"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
                   <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
                     <Image
                       src="/assets/icons/location-grey.svg"
-                      alt="country"
+                      alt="region"
                       width={24}
                       height={24}
                       className="filter-grey mr-3"
                     />
-                    <p className="mr-3 whitespace-nowrap text-grey-600">Country:</p>
+                    <p className="mr-3 whitespace-nowrap text-grey-600">Region:</p>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Set country based on region selection
+                        const country = value.startsWith('Malaysia') ? 'Malaysia' : 'Singapore';
+                        form.setValue('country', country);
+                      }}
                       defaultValue={field.value}
                     >
                       <SelectTrigger className="w-full bg-transparent border-none focus:outline-none">
-                        <SelectValue placeholder="Select Country" />
+                        <SelectValue placeholder="Select Region" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Singapore">Singapore</SelectItem>
-                        <SelectItem value="Malaysia">Malaysia</SelectItem>
+                        <SelectItem value="Malaysia-JB">Malaysia - Johor Bahru</SelectItem>
+                        <SelectItem value="Malaysia-KL">Malaysia - Kuala Lumpur</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

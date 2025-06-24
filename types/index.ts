@@ -3,11 +3,22 @@ export type CreateUserParams = {
   clerkId: string
   email: string
   phoneNumber: string
+  region?: string
 }
 
 export type UpdateUserParams = {
   email: string
   phoneNumber: string
+  region?: string
+}
+
+// ====== REGION TYPES
+export type Region = 'Singapore' | 'Malaysia-JB' | 'Malaysia-KL'
+
+export const REGIONS: { [key: string]: string } = {
+  'Singapore': 'Singapore',
+  'Malaysia-JB': 'Malaysia - Johor Bahru',
+  'Malaysia-KL': 'Malaysia - Kuala Lumpur'
 }
 
 // ====== EVENT PARAMS
@@ -23,6 +34,7 @@ export type CreateEventParams = {
     categoryId: string
     customFields: CustomField[]
     country: string
+    region: string
   }
   path: string
 }
@@ -40,6 +52,7 @@ export type UpdateEventParams = {
     categoryId: string
     customFields: CustomField[]
     country: string
+    region: string
   }
   path: string
 }
@@ -55,6 +68,7 @@ export type GetAllEventsParams = {
   limit: number
   page: number
   country: string
+  region?: string
 }
 
 export type GetEventsByUserParams = {
@@ -77,6 +91,7 @@ export type Event = {
   imageUrl: string
   location: string
   country: string
+  region: string
   startDateTime: Date
   endDateTime: Date
   organizer: {

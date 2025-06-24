@@ -17,6 +17,7 @@ export interface IEvent extends Document {
   maxSeats: number;
   attendeeCount?: number;
   country: string;
+  region: string;
   isDeleted: boolean;
 }
 
@@ -24,6 +25,11 @@ const EventSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String },
   country: { type: String, required: true },
+  region: { 
+    type: String, 
+    required: true,
+    enum: ['Singapore', 'Malaysia-JB', 'Malaysia-KL']
+  },
   location: { type: String },
   createdAt: { type: Date, default: Date.now },
   imageUrl: { type: String },

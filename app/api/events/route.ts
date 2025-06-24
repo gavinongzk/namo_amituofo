@@ -13,13 +13,14 @@ type SessionClaims = {
 };
 
 const getCachedEvents = unstable_cache(
-  async (country: string) => {
+  async (region: string) => {
     const events = await getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 1000,
-      country: country
+      country: region.startsWith('Malaysia') ? 'Malaysia' : 'Singapore',
+      region: region
     });
 
     // Ensure all fields are present in the response
@@ -33,7 +34,7 @@ const getCachedEvents = unstable_cache(
 
     return eventsWithAllFields;
   },
-  ['api-events-list', 'country'],  // Include country in cache key
+  ['api-events-list', 'region'],  // Include region in cache key
   {
     revalidate: 300, // Cache for 5 minutes
     tags: ['events']
@@ -41,13 +42,14 @@ const getCachedEvents = unstable_cache(
 );
 
 const getCachedSuperAdminEvents = unstable_cache(
-  async (country: string) => {
+  async (region: string) => {
     const events = await getAllEventsForSuperAdmin({
       query: '',
       category: '',
       page: 1,
       limit: 1000, // Explicitly set high limit
-      country: country
+      country: region.startsWith('Malaysia') ? 'Malaysia' : 'Singapore',
+      region: region
     });
 
     if (!events || !events.data) {
@@ -66,27 +68,27 @@ const getCachedSuperAdminEvents = unstable_cache(
 
     return eventsWithAllFields;
   },
-  ['superadmin-events-list', 'country'],  // Include country in cache key
+  ['superadmin-events-list', 'region'],  // Include region in cache key
   {
     revalidate: 300, // Cache for 5 minutes
     tags: ['events', 'admin-events']
   }
 );
 
-const COMMON_COUNTRIES = ['Singapore', 'Malaysia'];
+const COMMON_REGIONS = ['Singapore', 'Malaysia-JB', 'Malaysia-KL'];
 
 // Staggered preloading to avoid overwhelming the server
 const preloadEvents = () => {
   let delay = 0;
-  COMMON_COUNTRIES.forEach(country => {
+  COMMON_REGIONS.forEach(region => {
     setTimeout(() => {
-      void getCachedEvents(country);
+      void getCachedEvents(region);
       // After events are cached, preload super admin events with a small delay
       setTimeout(() => {
-        void getCachedSuperAdminEvents(country);
+        void getCachedSuperAdminEvents(region);
       }, 500);
     }, delay);
-    delay += 1000; // Stagger each country's preload by 1 second
+    delay += 1000; // Stagger each region's preload by 1 second
   });
 };
 
@@ -96,7 +98,7 @@ setTimeout(preloadEvents, 1000);
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const country = searchParams.get('country') || 'Singapore';
+    const region = searchParams.get('region') || searchParams.get('country') || 'Singapore';
     const bustCache = searchParams.get('bustCache') === 'true';
     const role = searchParams.get('role');
     
@@ -108,8 +110,8 @@ export async function GET(request: NextRequest) {
     const isSuperAdmin = role === 'superadmin';
     
     const events = isSuperAdmin 
-      ? await getCachedSuperAdminEvents(country)
-      : await getCachedEvents(country);
+      ? await getCachedSuperAdminEvents(region)
+      : await getCachedEvents(region);
     
     // Improved caching strategy
     return new NextResponse(JSON.stringify(events), {

@@ -33,7 +33,7 @@ const EventSkeleton = () => (
 
 export default async function Home({ searchParams }: SearchParamProps) {
   const cookieStore = cookies();
-  const country = cookieStore.get('userCountry')?.value || 'Singapore';
+  const region = cookieStore.get('userRegion')?.value || cookieStore.get('userCountry')?.value || 'Singapore';
   
   let userId: string | undefined;
   let role: string | undefined;
@@ -60,7 +60,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
           page={Number(searchParams.page) || 1}
           searchText={searchParams.query?.toString() || ''}
           category={searchParams.category?.toString() || ''}
-          country={country}
+          region={region}
           role={role}
           userId={userId}
         />

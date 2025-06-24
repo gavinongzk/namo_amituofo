@@ -9,7 +9,7 @@ interface EventListProps {
   page: number;
   searchText: string;
   category: string;
-  country: string;
+  region: string;
   role?: string;
   userId?: string;
 }
@@ -19,8 +19,8 @@ interface EventsResponse {
   totalPages: number;
 }
 
-async function EventList({ page, searchText, category, country, role, userId }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role, userId });
+async function EventList({ page, searchText, category, region, role, userId }: EventListProps) {
+  console.log('🎬 EventList starting with params:', { page, searchText, category, region, role, userId });
   
   let events: EventsResponse;
   
@@ -30,7 +30,8 @@ async function EventList({ page, searchText, category, country, role, userId }: 
       category,
       page,
       limit: 6,
-      country,
+      country: region.startsWith('Malaysia') ? 'Malaysia' : 'Singapore',
+      region,
       role
     }) as EventsResponse;
     console.log('📦 Fetched events:', JSON.stringify(events, null, 2));

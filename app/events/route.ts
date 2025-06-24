@@ -5,13 +5,14 @@ import { cookies } from 'next/headers';
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = cookies();
-    const country = cookieStore.get('userCountry')?.value || 'Singapore';
+    const region = cookieStore.get('userRegion')?.value || cookieStore.get('userCountry')?.value || 'Singapore';
     const events = await getAllEvents({
       query: '',
       category: '',
       page: 1,
       limit: 6,
-      country
+      country: region.startsWith('Malaysia') ? 'Malaysia' : 'Singapore',
+      region: region
     });
     return NextResponse.json(events, {
       headers: {

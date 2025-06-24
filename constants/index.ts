@@ -8,6 +8,7 @@ export const eventDefaultValues = {
   categoryId: '',
   maxSeats: 300,
   country: 'Singapore',
+  region: 'Singapore',
   registrationSuccessMessage: `
     📣 通知 / Notice
     🪷 已收到您的报名 / Registration Received

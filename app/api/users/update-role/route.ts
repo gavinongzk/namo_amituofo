@@ -11,11 +11,16 @@ export async function PATCH(req: NextRequest) {
 
   try {
     await connectToDatabase();
-    const { userId, newRole } = await req.json();
+    const { userId, newRole, region } = await req.json();
 
     // Validate newRole
     if (!['user', 'admin', 'superadmin'].includes(newRole)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
+
+    // Validate region if provided
+    if (region && !['Singapore', 'Malaysia-JB', 'Malaysia-KL'].includes(region)) {
+      return NextResponse.json({ error: 'Invalid region' }, { status: 400 });
     }
 
     // Validate userId is a valid ObjectId
@@ -23,10 +28,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
     }
 
+    // Prepare update data
+    const updateData: { role: string; region?: string } = { role: newRole };
+    if (region) {
+      updateData.region = region;
+    }
+
     // Update user in your database using _id
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
-      { role: newRole },
+      updateData,
       { new: true }
     );
 
@@ -38,10 +49,13 @@ export async function PATCH(req: NextRequest) {
     console.log('User role updated successfully:', updatedUser);
 
     // Update Clerk user metadata
+    const clerkMetadata: { role: string; region?: string } = { role: newRole };
+    if (region) {
+      clerkMetadata.region = region;
+    }
+
     await clerkClient.users.updateUser(updatedUser.clerkId, {
-      publicMetadata: {
-        role: newRole
-      }
+      publicMetadata: clerkMetadata
     });
 
     return NextResponse.json({ message: 'User role updated successfully', user: updatedUser });

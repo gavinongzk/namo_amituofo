@@ -118,6 +118,31 @@ export async function updateUserRole(userId: string, newRole: 'user' | 'admin' |
   }
 }
 
+export async function updateUserRoleWithRegion(
+  userId: string, 
+  newRole: 'user' | 'admin' | 'superadmin',
+  region?: string
+) {
+  try {
+    const response = await fetch('/api/users/update-role', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, newRole, region }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update user role and region');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user role and region:', error);
+    throw error;
+  }
+}
+
 export async function getAllUsers() {
   try {
     await connectToDatabase();
@@ -176,7 +201,7 @@ export async function getUserForAdmin(userId: string) {
   }
 }
 
-export async function getAllUniquePhoneNumbers(superadminCountry: string, customDate?: string) {
+export async function getAllUniquePhoneNumbers(superadminRegion: string, customDate?: string) {
   try {
     await connectToDatabase();
 
@@ -188,9 +213,9 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
     const cutoffDate = customDate ? new Date(customDate) : new Date();
     cutoffDate.setHours(0, 0, 0, 0);
 
-    const countryEvents = await Event.find({ country: superadminCountry }).select('_id');
-    const countryEventIds = countryEvents.map(event => event._id);
-    const orders = await Order.find({ event: { $in: countryEventIds } }).select('customFieldValues createdAt');
+    const regionEvents = await Event.find({ region: superadminRegion }).select('_id');
+    const regionEventIds = regionEvents.map(event => event._id);
+    const orders = await Order.find({ event: { $in: regionEventIds } }).select('customFieldValues createdAt');
     
     const userList: UniquePhoneNumber[] = [];
     const phoneMap = new Map<string, { count: number; firstOrderDate: Date }>();
@@ -272,5 +297,37 @@ export async function getAllUniquePhoneNumbers(superadminCountry: string, custom
   } catch (error) {
     console.error('Error fetching unique phone numbers:', error);
     throw error;
+  }
+}
+
+export async function getUserRegion(clerkId: string): Promise<string> {
+  try {
+    await connectToDatabase()
+    
+    const user = await User.findOne({ clerkId }).select('region')
+    
+    if (!user) {
+      return 'Singapore' // Default region
+    }
+    
+    return user.region || 'Singapore'
+  } catch (error) {
+    console.error('Error fetching user region:', error)
+    return 'Singapore' // Default fallback
+  }
+}
+
+export async function updateUserRegion(clerkId: string, region: string): Promise<void> {
+  try {
+    await connectToDatabase()
+    
+    await User.findOneAndUpdate(
+      { clerkId }, 
+      { region }, 
+      { new: true, upsert: true }
+    )
+  } catch (error) {
+    console.error('Error updating user region:', error)
+    throw error
   }
 }

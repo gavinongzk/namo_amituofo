@@ -25,6 +25,10 @@ export const eventFormSchema = z.object({
     options: z.array(z.string()).optional()
   })),
   country: z.string(),
+  region: z.enum(['Singapore', 'Malaysia-JB', 'Malaysia-KL'], {
+    required_error: '请选择地区 / Please select a region',
+    invalid_type_error: '无效的地区 / Invalid region'
+  }),
 })
 
 // Helper function to create dynamic field validation

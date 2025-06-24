@@ -73,11 +73,34 @@ export default authMiddleware({
     }
 
     const role = auth.sessionClaims?.role as string;
+    const userRegion = auth.sessionClaims?.region as string;
 
+    // Role-based access control
     if ((req.nextUrl.pathname.startsWith('/api/')) || (req.nextUrl.pathname.startsWith('/admin/'))) {
       const allowedRoles = getAllowedRoles(req.nextUrl.pathname);
       if (!allowedRoles.includes(role)) {
         return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Region-based access control for admin and regular admin users
+    if (role === 'admin' || role === 'superadmin') {
+      const { searchParams } = req.nextUrl;
+      const requestedRegion = searchParams.get('region') || searchParams.get('country');
+      
+      // Superadmins have global access
+      if (role === 'superadmin') {
+        return NextResponse.next();
+      }
+      
+      // Regular admins can only access their own region
+      if (role === 'admin' && requestedRegion && requestedRegion !== userRegion) {
+        return new NextResponse(JSON.stringify({ 
+          error: 'Access denied: You can only access data from your assigned region' 
+        }), {
           status: 403,
           headers: { 'Content-Type': 'application/json' },
         });
