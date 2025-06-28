@@ -43,25 +43,87 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
   };
 
+  // New function to clean up all existing camera streams
+  const cleanupAllCameraStreams = async () => {
+    try {
+      // Stop any existing scanner
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+        scannerRef.current = undefined;
+      }
+
+      // Stop current video stream if exists
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        videoRef.current.srcObject = null;
+      }
+
+      // Try to enumerate and stop any other active camera streams
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        
+        // For each camera device, try to get and immediately stop any stream
+        for (const device of videoDevices) {
+          try {
+            if (device.deviceId) {
+              const testStream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: device.deviceId }
+              });
+              testStream.getTracks().forEach(track => track.stop());
+            }
+          } catch (err) {
+            // Ignore errors - device might not be accessible or already in use
+            console.log(`Cleanup attempt for device ${device.deviceId} failed:`, err);
+          }
+        }
+      } catch (err) {
+        console.log('Device enumeration during cleanup failed:', err);
+      }
+
+      // Small delay to ensure cleanup is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (err) {
+      console.log('Camera cleanup completed with some errors:', err);
+    }
+  };
+
   const initializeScanner = async () => {
     try {
       setIsScanning(true);
       checkBrowserCompatibility();
 
-      // Step 1: First request basic camera permission to ensure we can access cameras
+      // Step 0: Clean up all existing camera streams first
+      await cleanupAllCameraStreams();
+
+      // Step 1: Request camera permission with progressive fallback
       let initialStream;
       try {
+        // Try environment camera first (back camera on mobile)
         initialStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } // Start with basic constraint
+          video: { facingMode: 'environment' }
         });
-      } catch (permissionError) {
-        // If environment camera fails, try any camera
+      } catch (environmentError) {
+        console.log('Environment camera failed, trying user camera:', environmentError);
         try {
+          // Try user camera (front camera)
           initialStream = await navigator.mediaDevices.getUserMedia({ 
-            video: true 
+            video: { facingMode: 'user' }
           });
-        } catch (fallbackError) {
-          throw new Error('Camera access denied or no camera available. Please check your browser permissions and ensure no other applications are using the camera.');
+        } catch (userError) {
+          console.log('User camera failed, trying any camera:', userError);
+          try {
+            // Try any available camera
+            initialStream = await navigator.mediaDevices.getUserMedia({ 
+              video: true 
+            });
+          } catch (anyError) {
+            throw new Error('Camera access denied or no camera available. Please check your browser permissions and ensure no other applications are using the camera.');
+          }
         }
       }
 
@@ -206,17 +268,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         }, 1000);
       } else {
         setError(
-          'Camera is in use by another application or not accessible. Please close other apps using the camera and try again.\n摄像头被其他应用占用，请关闭其他应用后重试，或刷新页面。'
+          'Camera is in use by another application or not accessible. Please close other apps using the camera and try again.\n摄像头被其他应用占用，请关闭其他应用后重试，或刷新页面。\n\nTry:\n• Close other browser tabs with camera access\n• Close camera apps (Zoom, Teams, etc.)\n• Restart your browser\n• Use the Force Reset button below'
         );
       }
     } else if (err.name === 'NotAllowedError') {
-      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.');
+      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.\n摄像头权限被拒绝，请在浏览器设置中启用摄像头权限并刷新页面。\n\nHow to enable:\n• Click the camera icon in your browser address bar\n• Select "Always allow camera access"\n• Refresh the page');
     } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
-      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.');
+      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.\n未找到摄像头，请确保您的设备有摄像头且未被其他应用使用。\n\nTroubleshooting:\n• Check if camera is connected properly\n• Try the Force Reset button below\n• Restart your browser');
     } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
-      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.');
+      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.\n您的浏览器不完全支持摄像头访问，请尝试使用Chrome、Firefox或Safari。');
     } else {
-      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.`);
+      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.\n摄像头错误：${err.message}。请刷新页面或尝试其他浏览器。\n\nIf this persists, try the Force Reset button below.`);
     }
   };
 
@@ -264,6 +326,38 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       videoRef.current.srcObject = null;
     }
     if (onClose) onClose();
+  };
+
+  const forceReset = async () => {
+    setIsRetrying(true);
+    setError(undefined);
+    setRetryCount(0);
+    setRetryDelay(3);
+    
+    try {
+      // Force cleanup all camera streams
+      await cleanupAllCameraStreams();
+      
+      // Additional cleanup - clear any cached permissions
+      if ('permissions' in navigator) {
+        try {
+          await navigator.permissions.query({ name: 'camera' as PermissionName });
+        } catch (permErr) {
+          console.log('Permission query not supported:', permErr);
+        }
+      }
+      
+      // Wait a bit longer for thorough cleanup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reinitialize
+      await initializeScanner();
+    } catch (err) {
+      console.error('Force reset failed:', err);
+      setError('Force reset failed. Please refresh the page or restart your browser.\n强制重置失败，请刷新页面或重启浏览器。');
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   useEffect(() => {
@@ -447,30 +541,50 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
                 <h3 className="text-lg font-semibold text-center mb-2 text-gray-900">Camera Issue</h3>
                 <p className="text-gray-600 text-center text-sm mb-4 whitespace-pre-line leading-relaxed">{error}</p>
                 {retryCount >= maxRetries && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={retry} 
+                        disabled={isRetrying}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {isRetrying ? (
+                          <>
+                            <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                            Retrying...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCw className="h-4 w-4 mr-2" />
+                            Try Again
+                          </>
+                        )}
+                      </Button>
+                      <Button 
+                        onClick={stopCamera}
+                        variant="outline"
+                        className="px-4"
+                      >
+                        Close
+                      </Button>
+                    </div>
                     <Button 
-                      onClick={retry} 
+                      onClick={forceReset} 
                       disabled={isRetrying}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      variant="outline"
+                      className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
                     >
                       {isRetrying ? (
                         <>
                           <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                          Retrying...
+                          Force Resetting...
                         </>
                       ) : (
                         <>
-                          <RotateCw className="h-4 w-4 mr-2" />
-                          Try Again
+                          <Zap className="h-4 w-4 mr-2" />
+                          Force Camera Reset
                         </>
                       )}
-                    </Button>
-                    <Button 
-                      onClick={stopCamera}
-                      variant="outline"
-                      className="px-4"
-                    >
-                      Close
                     </Button>
                   </div>
                 )}
