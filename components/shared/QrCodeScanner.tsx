@@ -48,49 +48,65 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       setIsScanning(true);
       checkBrowserCompatibility();
 
-      // First explicitly request camera permission with more specific constraints
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-
-      // Immediately set the stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Ensure video plays
+      // Step 1: First request basic camera permission to ensure we can access cameras
+      let initialStream;
+      try {
+        initialStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } // Start with basic constraint
+        });
+      } catch (permissionError) {
+        // If environment camera fails, try any camera
         try {
-          await videoRef.current.play();
-        } catch (playError) {
-          console.error('Error playing video:', playError);
-          throw new Error('Failed to start video stream');
+          initialStream = await navigator.mediaDevices.getUserMedia({ 
+            video: true 
+          });
+        } catch (fallbackError) {
+          throw new Error('Camera access denied or no camera available. Please check your browser permissions and ensure no other applications are using the camera.');
         }
       }
-      
+
+      // Step 2: Now that we have permission, enumerate devices
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      const videoDevices = devices.filter(d => d.kind === 'videoinput' && d.deviceId);
+      
+      // Stop the initial stream
+      if (initialStream) {
+        initialStream.getTracks().forEach(track => track.stop());
+      }
+
+      // Step 3: Validate we found cameras and handle fallback
+      let availableCameras = videoDevices;
       
       if (videoDevices.length === 0) {
-        throw new Error('No cameras found on this device.');
+        // Try alternative method - sometimes devices are found but without deviceId initially
+        const alternativeDevices = devices.filter(d => d.kind === 'videoinput');
+        if (alternativeDevices.length === 0) {
+          throw new Error('No cameras detected on this device. Please ensure your camera is connected and not being used by another application.');
+        } else {
+          // Use the alternative devices
+          availableCameras = alternativeDevices;
+        }
       }
       
-      setCameras(videoDevices);
+      setCameras(availableCameras);
       
-      // Prefer back camera for mobile devices
-      const backCamera = videoDevices.find(device => 
+      // Step 4: Select the best camera from available cameras
+      const backCamera = availableCameras.find(device => 
         device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear')
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
       );
       
-      const selectedCamera = backCamera?.deviceId || videoDevices[0]?.deviceId;
+      let selectedCamera: string | undefined = backCamera?.deviceId || availableCameras[0]?.deviceId;
+      
+      // Fallback: if no deviceId, use undefined to let browser choose
+      if (!selectedCamera && availableCameras.length > 0) {
+        selectedCamera = undefined; // Let browser pick default
+      }
+      
       setActiveCamera(selectedCamera);
 
-      if (!selectedCamera) {
-        throw new Error('Failed to select a camera.');
-      }
-
+      // Step 5: Initialize the QR code reader with better constraints
       const codeReader = new BrowserQRCodeReader(undefined, {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
@@ -98,9 +114,22 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       let active = true;
 
-      // Stop the initial stream before starting the code reader
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      // Step 6: Start the actual camera stream for QR scanning
+      const videoConstraints = selectedCamera ? {
+        deviceId: { exact: selectedCamera },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      } : {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      };
+
+      // Set up video element
+      if (videoRef.current) {
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
       }
 
       const controls = await codeReader.decodeFromVideoDevice(
