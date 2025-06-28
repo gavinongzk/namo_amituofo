@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
-import { Flashlight, FlashlightOff, Loader2 as Loader2Icon, Camera, CameraOff, RotateCw, Zap } from 'lucide-react';
+import { Camera, CameraOff, RotateCw, X, Zap } from 'lucide-react';
 
 interface QrCodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -12,761 +12,277 @@ interface QrCodeScannerProps {
 
 const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
-  const [activeCamera, setActiveCamera] = useState<string>();
-  const [torchEnabled, setTorchEnabled] = useState(false);
-  const [error, setError] = useState<string>();
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
-  const scannerRef = useRef<{ stop: () => void }>();
-  const [isActive, setIsActive] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [retryDelay, setRetryDelay] = useState(3); // seconds
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  const [codeReader, setCodeReader] = useState<BrowserQRCodeReader | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const maxRetries = 3;
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    // Check if running on Safari
-    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    setIsSafari(isSafariBrowser);
-  }, []);
-
-  const checkBrowserCompatibility = () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('Your browser doesn\'t support camera access. Please use a modern browser like Chrome, Firefox, or Safari.');
-    }
-
-    // Check if running in insecure context
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      throw new Error('Camera access requires a secure (HTTPS) connection.');
-    }
-  };
-
-  // New function to clean up all existing camera streams
-  const cleanupAllCameraStreams = async () => {
+  const startCamera = async () => {
     try {
-      // Stop any existing scanner
-      if (scannerRef.current) {
-        scannerRef.current.stop();
-        scannerRef.current = undefined;
+      setIsLoading(true);
+      setError('');
+      setIsScanning(false);
+
+      // Stop any existing stream
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
       }
 
-      // Stop current video stream if exists
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => {
-          track.stop();
-          track.enabled = false;
-        });
-        videoRef.current.srcObject = null;
-      }
-
-      // Try to enumerate and stop any other active camera streams
+      let mediaStream;
+      
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === 'videoinput');
-        
-        // For each camera device, try to get and immediately stop any stream
-        for (const device of videoDevices) {
-          try {
-            if (device.deviceId) {
-              const testStream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: device.deviceId }
-              });
-              testStream.getTracks().forEach(track => track.stop());
-            }
-          } catch (err) {
-            // Ignore errors - device might not be accessible or already in use
-            console.log(`Cleanup attempt for device ${device.deviceId} failed:`, err);
-          }
-        }
-      } catch (err) {
-        console.log('Device enumeration during cleanup failed:', err);
-      }
-
-      // Small delay to ensure cleanup is complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (err) {
-      console.log('Camera cleanup completed with some errors:', err);
-    }
-  };
-
-  const initializeScanner = async () => {
-    try {
-      setIsScanning(true);
-      checkBrowserCompatibility();
-
-      // Step 0: Clean up all existing camera streams first
-      await cleanupAllCameraStreams();
-
-      // Step 1: Request camera permission with progressive fallback
-      let initialStream;
-      try {
-        // Try environment camera first (back camera on mobile)
-        initialStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment',
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 }
-          }
-        });
-      } catch (environmentError) {
-        console.log('Environment camera failed, trying user camera:', environmentError);
-        try {
-          // Try user camera (front camera)
-          initialStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              facingMode: 'user',
-              width: { ideal: 1280, min: 640 },
-              height: { ideal: 720, min: 480 }
-            }
-          });
-        } catch (userError) {
-          console.log('User camera failed, trying any camera:', userError);
-          try {
-            // Try any available camera
-            initialStream = await navigator.mediaDevices.getUserMedia({ 
-              video: {
-                width: { ideal: 1280, min: 640 },
-                height: { ideal: 720, min: 480 }
-              }
-            });
-          } catch (anyError) {
-            throw new Error('Camera access denied or no camera available. Please check your browser permissions and ensure no other applications are using the camera.');
-          }
-        }
-      }
-
-      // Step 2: Immediately set up video element with the stream
-      if (videoRef.current && initialStream) {
-        videoRef.current.srcObject = initialStream;
-        videoRef.current.setAttribute('autoplay', 'true');
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('muted', 'true');
-        
-        // Force video to play and wait for it to start
-        try {
-          await videoRef.current.play();
-          // Wait a moment for video to start showing
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (playError) {
-          console.error('Error playing video:', playError);
-        }
-      }
-
-      // Step 3: Now enumerate devices for camera selection
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput');
-      
-      // Step 4: Validate we found cameras and handle fallback
-      let availableCameras = videoDevices;
-      
-      if (videoDevices.length === 0) {
-        // Try alternative method - sometimes devices are found but without deviceId initially
-        const alternativeDevices = devices.filter(d => d.kind === 'videoinput');
-        if (alternativeDevices.length === 0) {
-          throw new Error('No cameras detected on this device. Please ensure your camera is connected and not being used by another application.');
-        } else {
-          // Use the alternative devices
-          availableCameras = alternativeDevices;
-        }
-      }
-      
-      setCameras(availableCameras);
-      
-      // Step 5: Select the best camera from available cameras
-      const backCamera = availableCameras.find(device => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('environment')
-      );
-      
-      let selectedCamera: string | undefined = backCamera?.deviceId || availableCameras[0]?.deviceId;
-      
-      // Fallback: if no deviceId, use undefined to let browser choose
-      if (!selectedCamera && availableCameras.length > 0) {
-        selectedCamera = undefined; // Let browser pick default
-      }
-      
-      setActiveCamera(selectedCamera);
-
-      // Step 6: Initialize the QR code reader with better constraints
-      const codeReader = new BrowserQRCodeReader(undefined, {
-        delayBetweenScanAttempts: 100,
-        delayBetweenScanSuccess: 1500
-      });
-
-      let active = true;
-
-      // Step 7: If we need to switch to a specific camera, do it now
-      if (selectedCamera && selectedCamera !== 'default') {
-        // Stop the initial stream
-        initialStream.getTracks().forEach(track => track.stop());
-        
-        // Get stream from selected camera
-        const selectedStream = await navigator.mediaDevices.getUserMedia({
+        // Try back camera first
+        mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: selectedCamera },
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 }
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           }
         });
-        
-        // Update video element with new stream
-        if (videoRef.current) {
-          videoRef.current.srcObject = selectedStream;
-          await videoRef.current.play();
-        }
-      }
-
-      // Step 8: Start QR code detection
-      const controls = await codeReader.decodeFromVideoDevice(
-        selectedCamera,
-        videoRef.current!,
-        (result) => {
-          if (result && active) {
-            handleSuccessfulScan(result.getText());
-          }
-        }
-      );
-
-      scannerRef.current = controls;
-      setIsScanning(false);
-
-      return () => {
-        active = false;
-        if (controls) {
-          controls.stop();
-        }
-        // Clean up any remaining video tracks
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
-        }
-      };
-    } catch (err: any) {
-      setIsScanning(false);
-      handleError(err);
-      return () => {};
-    }
-  };
-
-  const handleSuccessfulScan = (text: string) => {
-    // Vibrate if supported
-    if (navigator.vibrate) {
-      navigator.vibrate(200);
-    }
-    
-    // Don't play sound here as it's handled by the parent component
-    
-    onScan(text);
-  };
-
-  const handleError = (err: Error) => {
-    console.error('QR Scanner Error:', err);
-    if (
-      err.name === 'NotReadableError' ||
-      err.message.includes('hardware') ||
-      err.message.includes('in use')
-    ) {
-      if (retryCount < maxRetries) {
-        setError(
-          `Camera is in use by another application or not accessible. Retrying in ${retryDelay} seconds... (${retryCount + 1}/${maxRetries})` +
-          '\n请关闭其他使用摄像头的应用，系统将自动重试。'
-        );
-        // Start countdown
-        let seconds = retryDelay;
-        retryTimeoutRef.current && clearInterval(retryTimeoutRef.current);
-        retryTimeoutRef.current = setInterval(() => {
-          seconds -= 1;
-          setRetryDelay(seconds);
-          setError(
-            `Camera is in use by another application or not accessible. Retrying in ${seconds} seconds... (${retryCount + 1}/${maxRetries})` +
-            '\n请关闭其他使用摄像头的应用，系统将自动重试。'
-          );
-          if (seconds <= 0) {
-            clearInterval(retryTimeoutRef.current!);
-            setRetryCount(c => c + 1);
-            setRetryDelay(3);
-            setError(undefined);
-            retry();
-          }
-        }, 1000);
-      } else {
-        setError(
-          'Camera is in use by another application or not accessible. Please close other apps using the camera and try again.\n摄像头被其他应用占用，请关闭其他应用后重试，或刷新页面。\n\nTry:\n• Close other browser tabs with camera access\n• Close camera apps (Zoom, Teams, etc.)\n• Restart your browser\n• Use the Force Reset button below'
-        );
-      }
-    } else if (err.name === 'NotAllowedError') {
-      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.\n摄像头权限被拒绝，请在浏览器设置中启用摄像头权限并刷新页面。\n\nHow to enable:\n• Click the camera icon in your browser address bar\n• Select "Always allow camera access"\n• Refresh the page');
-    } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
-      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.\n未找到摄像头，请确保您的设备有摄像头且未被其他应用使用。\n\nTroubleshooting:\n• Check if camera is connected properly\n• Try the Force Reset button below\n• Restart your browser');
-    } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
-      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.\n您的浏览器不完全支持摄像头访问，请尝试使用Chrome、Firefox或Safari。');
-    } else {
-      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.\n摄像头错误：${err.message}。请刷新页面或尝试其他浏览器。\n\nIf this persists, try the Force Reset button below.`);
-    }
-  };
-
-  const toggleTorch = async () => {
-    const stream = videoRef.current?.srcObject as MediaStream;
-    const track = stream?.getTracks().find(track => track.kind === 'video');
-      
-    if (track && 'getCapabilities' in track) {
-      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
-      if (capabilities.torch) {
+      } catch (backCameraError) {
+        console.log('Back camera failed, trying front camera');
         try {
-          await track.applyConstraints({
-            advanced: [{ torch: !torchEnabled } as any]
+          // Try front camera
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
           });
-          setTorchEnabled(!torchEnabled);
-        } catch (err) {
-          console.error('Error toggling torch:', err);
+        } catch (frontCameraError) {
+          console.log('Front camera failed, trying any camera');
+          // Try any camera
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true
+          });
         }
       }
-    }
-  };
 
-  const retry = async () => {
-    setIsRetrying(true);
-    setError(undefined);
-    try {
-      await initializeScanner();
-    } finally {
-      setIsRetrying(false);
+      if (videoRef.current && mediaStream) {
+        videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => resolve(true);
+          }
+        });
+
+        // Initialize QR code reader
+        const reader = new BrowserQRCodeReader();
+        setCodeReader(reader);
+
+        // Start scanning
+        reader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+          if (result) {
+            setIsScanning(false);
+            onScan(result.getText());
+          }
+          // Ignore errors, they're usually just "no QR code found"
+        });
+
+        setIsLoading(false);
+        setIsScanning(true);
+      }
+    } catch (err: any) {
+      console.error('Camera error:', err);
+      setIsLoading(false);
+      
+      if (err.name === 'NotAllowedError') {
+        setError('摄像头权限被拒绝，请允许摄像头访问后重试 / Camera permission denied. Please allow camera access and try again.');
+      } else if (err.name === 'NotFoundError') {
+        setError('未找到摄像头，请检查设备是否有摄像头 / No camera found. Please check your device has a camera.');
+      } else if (err.name === 'NotSupportedError') {
+        setError('此浏览器不支持摄像头，请使用Chrome、Firefox或Safari / Camera not supported in this browser. Try Chrome, Firefox, or Safari.');
+      } else {
+        setError('摄像头错误 Camera error: ' + err.message);
+      }
     }
   };
 
   const stopCamera = () => {
-    setIsActive(false);
-    if (scannerRef.current) {
-      scannerRef.current.stop();
-      scannerRef.current = undefined;
+    // Clean up code reader if needed
+    setCodeReader(null);
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
     }
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setIsScanning(false);
+  };
+
+  const handleClose = () => {
+    stopCamera();
     if (onClose) onClose();
   };
 
-  const forceReset = async () => {
-    setIsRetrying(true);
-    setError(undefined);
-    setRetryCount(0);
-    setRetryDelay(3);
-    
-    try {
-      // Force cleanup all camera streams
-      await cleanupAllCameraStreams();
-      
-      // Additional cleanup - clear any cached permissions
-      if ('permissions' in navigator) {
-        try {
-          await navigator.permissions.query({ name: 'camera' as PermissionName });
-        } catch (permErr) {
-          console.log('Permission query not supported:', permErr);
-        }
-      }
-      
-      // Wait a bit longer for thorough cleanup
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reinitialize
-      await initializeScanner();
-    } catch (err) {
-      console.error('Force reset failed:', err);
-      setError('Force reset failed. Please refresh the page or restart your browser.\n强制重置失败，请刷新页面或重启浏览器。');
-    } finally {
-      setIsRetrying(false);
-    }
-  };
-
-  const testCamera = async () => {
-    setIsRetrying(true);
-    try {
-      // Direct camera test - get a fresh stream and immediately display it
-      const testStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 }
-        }
-      });
-
-      if (videoRef.current) {
-        // Stop any existing stream
-        if (videoRef.current.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
-        }
-
-        // Set the new stream
-        videoRef.current.srcObject = testStream;
-        
-        // Force play
-        await videoRef.current.play();
-        
-        console.log('Camera test successful - stream should be visible now');
-        setError(undefined); // Clear any existing errors
-      }
-    } catch (err) {
-      console.error('Camera test failed:', err);
-      setError(`Camera test failed: ${(err as Error).message}`);
-    } finally {
-      setIsRetrying(false);
-    }
+  const retry = () => {
+    stopCamera();
+    setTimeout(startCamera, 500);
   };
 
   useEffect(() => {
-    if (!isActive) return;
-    
-    // Reset error state when reactivating
-    setError(undefined);
-    setRetryCount(0);
-    setRetryDelay(3);
-    
-    const cleanup = initializeScanner();
-    return () => {
-      cleanup?.then(cleanupFn => {
-        if (cleanupFn) {
-          cleanupFn();
-        }
-        // Ensure all tracks are stopped
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            track.enabled = false;
-          });
-          videoRef.current.srcObject = null;
-        }
-      });
-    };
-  }, [activeCamera, isActive]);
-
-  // Add a new effect to handle video element attributes
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.setAttribute('autoplay', 'true');
-      videoRef.current.setAttribute('playsinline', 'true');
-      videoRef.current.setAttribute('muted', 'true');
-    }
-  }, []);
-
-  // Clean up retry timer on unmount
-  useEffect(() => {
-    return () => {
-      if (retryTimeoutRef.current) clearInterval(retryTimeoutRef.current);
-    };
+    startCamera();
+    return () => stopCamera();
   }, []);
 
   return (
-    <div className="relative w-full max-w-[500px] mx-auto">
-      <div className="relative aspect-square bg-black rounded-2xl overflow-hidden shadow-2xl">
-        <video 
+    <div className="relative w-full max-w-lg mx-auto p-4">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Zap className="w-5 h-5" />
+          <span className="font-semibold">QR 扫描器 / QR Scanner</span>
+        </div>
+      </div>
+
+      {/* Camera Container */}
+      <div className="relative aspect-square bg-gradient-to-br from-gray-900 to-black rounded-3xl overflow-hidden shadow-2xl ring-4 ring-blue-500/20">
+        <video
           ref={videoRef}
           className="w-full h-full object-cover"
           autoPlay
           playsInline
           muted
-          style={{
-            backgroundColor: '#000000',
-            minHeight: '100%',
-            minWidth: '100%',
-            objectFit: 'cover'
-          }}
-          onLoadedMetadata={() => {
-            console.log('Video metadata loaded');
-          }}
-          onCanPlay={() => {
-            console.log('Video can play');
-          }}
-          onPlay={() => {
-            console.log('Video started playing');
-          }}
-          onError={(e) => {
-            console.error('Video error:', e);
-          }}
         />
-        
-        {/* Modern Scanning Guide Overlay */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="w-full h-full relative">
-            
-            {/* Animated corner brackets - Modern design */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-64 h-64">
-                {/* Top-left corner */}
-                <div className="absolute top-0 left-0 w-16 h-16">
-                  <div className="absolute top-0 left-0 w-12 h-1.5 bg-gradient-to-r from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute top-0 left-0 w-1.5 h-12 bg-gradient-to-b from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute top-1 left-1 w-4 h-4 border-2 border-blue-300/60 rounded-tl-lg" />
-                </div>
-                
-                {/* Top-right corner */}
-                <div className="absolute top-0 right-0 w-16 h-16">
-                  <div className="absolute top-0 right-0 w-12 h-1.5 bg-gradient-to-l from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute top-0 right-0 w-1.5 h-12 bg-gradient-to-b from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute top-1 right-1 w-4 h-4 border-2 border-blue-300/60 rounded-tr-lg" />
-                </div>
-                
-                {/* Bottom-left corner */}
-                <div className="absolute bottom-0 left-0 w-16 h-16">
-                  <div className="absolute bottom-0 left-0 w-12 h-1.5 bg-gradient-to-r from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute bottom-0 left-0 w-1.5 h-12 bg-gradient-to-t from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute bottom-1 left-1 w-4 h-4 border-2 border-blue-300/60 rounded-bl-lg" />
-                </div>
-                
-                {/* Bottom-right corner */}
-                <div className="absolute bottom-0 right-0 w-16 h-16">
-                  <div className="absolute bottom-0 right-0 w-12 h-1.5 bg-gradient-to-l from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute bottom-0 right-0 w-1.5 h-12 bg-gradient-to-t from-blue-400 to-blue-500 animate-corner-pulse rounded-full shadow-lg shadow-blue-400/50" />
-                  <div className="absolute bottom-1 right-1 w-4 h-4 border-2 border-blue-300/60 rounded-br-lg" />
-                </div>
-                
-                {/* Center scanning area outline */}
-                <div className="absolute inset-4 border-2 border-blue-300/30 rounded-xl" />
-              </div>
-            </div>
-            
-            {/* Animated scanning line */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-56 h-56 overflow-hidden rounded-xl">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-red-400 to-transparent animate-scan-line opacity-75" />
-              </div>
-            </div>
-            
-            {/* Pulse effect when scanning */}
-            {isScanning && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-64 h-64 border-2 border-blue-400/50 rounded-xl animate-ping" />
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Enhanced Camera Controls */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-          {/* Left side - Camera selector */}
-          <div className="flex items-center gap-2">
-            {cameras.length > 1 && (
-              <div className="relative">
-                <select 
-                  value={activeCamera}
-                  onChange={e => setActiveCamera(e.target.value)}
-                  className="bg-black/70 backdrop-blur-sm text-white rounded-lg px-3 py-2 text-sm border border-white/20 focus:border-blue-400 focus:outline-none appearance-none pr-8"
-                >
-                  {cameras.map((camera, index) => (
-                    <option key={camera.deviceId} value={camera.deviceId} className="bg-black text-white">
-                      {camera.label || `Camera ${index + 1}`}
-                    </option>
-                  ))}
-                </select>
-                <Camera className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70 pointer-events-none" />
-              </div>
-            )}
-          </div>
-          
-          {/* Right side - Action buttons */}
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={toggleTorch}
-              variant="ghost" 
-              size="icon"
-              className="bg-black/70 backdrop-blur-sm text-white hover:bg-white/20 border border-white/20 rounded-lg"
-            >
-              {torchEnabled ? (
-                <FlashlightOff className="h-4 w-4 text-yellow-400" />
-              ) : (
-                <Flashlight className="h-4 w-4" />
-              )}
-            </Button>
-            
-            <Button 
-              onClick={stopCamera}
-              variant="ghost"
-              size="icon"
-              className="bg-red-500/80 backdrop-blur-sm text-white hover:bg-red-600/80 border border-red-400/30 rounded-lg"
-            >
-              <CameraOff className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        {/* Gradient overlay for better contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Status indicator */}
-        <div className="absolute bottom-4 left-4 right-4 flex justify-center z-10">
-          <div className="bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm border border-white/20">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isScanning ? 'bg-blue-400 animate-pulse' : error ? 'bg-red-400' : 'bg-green-400'}`} />
-              <span>
-                {isScanning ? 'Initializing...' : error ? 'Camera Error' : 'Ready to Scan'}
-              </span>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-900/90 to-indigo-900/90 backdrop-blur-sm">
+            <div className="text-white text-center">
+              <div className="relative mb-4">
+                <div className="animate-spin w-12 h-12 border-3 border-white/30 border-t-white rounded-full mx-auto"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-white animate-pulse" />
+                </div>
+              </div>
+              <p className="text-lg font-medium">启动摄像头中...</p>
+              <p className="text-sm text-white/80">Starting camera...</p>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Enhanced Error State */}
+        {/* Error State */}
         {error && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-20 p-4">
-            <div className="w-full max-w-sm max-h-full overflow-y-auto">
-              <div className="bg-white rounded-2xl p-4 shadow-2xl">
-                <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-3">
-                  <CameraOff className="h-6 w-6 text-red-600" />
-                </div>
-                <h3 className="text-base font-semibold text-center mb-2 text-gray-900">Camera Issue</h3>
-                <p className="text-gray-600 text-center text-xs mb-3 whitespace-pre-line leading-relaxed max-h-32 overflow-y-auto">{error}</p>
-                
-                {/* Always show buttons when there's an error */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={retry} 
-                      disabled={isRetrying}
-                      size="sm"
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                    >
-                      {isRetrying ? (
-                        <>
-                          <Loader2Icon className="animate-spin h-3 w-3 mr-1" />
-                          Retrying...
-                        </>
-                      ) : (
-                        <>
-                          <RotateCw className="h-3 w-3 mr-1" />
-                          Try Again
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      onClick={stopCamera}
-                      variant="outline"
-                      size="sm"
-                      className="px-3 text-xs"
-                    >
-                      Close
-                    </Button>
-                  </div>
-                  <Button 
-                    onClick={forceReset} 
-                    disabled={isRetrying}
-                    variant="outline"
-                    size="sm"
-                    className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 text-xs"
-                  >
-                    {isRetrying ? (
-                      <>
-                        <Loader2Icon className="animate-spin h-3 w-3 mr-1" />
-                        Force Resetting...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-3 w-3 mr-1" />
-                        Force Camera Reset
-                      </>
-                    )}
-                  </Button>
-                </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-900/90 to-red-800/90 backdrop-blur-sm">
+            <div className="text-white text-center p-6 max-w-xs">
+              <div className="bg-red-500/20 rounded-full p-4 inline-block mb-4">
+                <CameraOff className="w-8 h-8 text-red-300" />
+              </div>
+              <p className="text-sm mb-6 leading-relaxed">{error}</p>
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={retry} 
+                  size="sm" 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+                >
+                  <RotateCw className="w-4 h-4 mr-2" />
+                  重试 Retry
+                </Button>
+                <Button 
+                  onClick={handleClose} 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-white/30 text-white hover:bg-white/10"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  关闭 Close
+                </Button>
               </div>
             </div>
           </div>
         )}
+
+        {/* Enhanced Scanning Frame */}
+        {!isLoading && !error && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64">
+              {/* Animated corner brackets with glow */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-blue-400 animate-corner-pulse drop-shadow-lg">
+                <div className="absolute -top-1 -left-1 w-10 h-10 border-t-2 border-l-2 border-blue-300/50 animate-scan-glow"></div>
+              </div>
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-blue-400 animate-corner-pulse drop-shadow-lg">
+                <div className="absolute -top-1 -right-1 w-10 h-10 border-t-2 border-r-2 border-blue-300/50 animate-scan-glow"></div>
+              </div>
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-blue-400 animate-corner-pulse drop-shadow-lg">
+                <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-2 border-l-2 border-blue-300/50 animate-scan-glow"></div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-blue-400 animate-corner-pulse drop-shadow-lg">
+                <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-2 border-r-2 border-blue-300/50 animate-scan-glow"></div>
+              </div>
+              
+              {/* Animated scanning line */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-400 to-transparent animate-scan-line drop-shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-scan-glow"></div>
+              </div>
+              
+              {/* Subtle grid overlay */}
+              <div className="absolute inset-4 border border-dashed border-white/20 rounded-lg"></div>
+              
+              {/* Central target dot */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse shadow-lg shadow-red-400/50">
+                  <div className="absolute inset-0 bg-red-300 rounded-full animate-ping"></div>
+                </div>
+              </div>
+
+              {/* Status indicator */}
+              {isScanning && (
+                <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 bg-green-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                    扫描中... Scanning...
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Close button */}
+        <Button
+          onClick={handleClose}
+          size="icon"
+          variant="ghost"
+          className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-sm shadow-lg"
+        >
+          <X className="w-5 h-5" />
+        </Button>
       </div>
 
       {/* Enhanced Instructions */}
-      <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-            <Zap className="h-4 w-4 text-blue-600" />
+      <div className="mt-6 text-center">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 shadow-lg border border-blue-100">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-gray-800">使用说明 Instructions</span>
           </div>
-          <h4 className="font-semibold text-blue-900">Scanning Instructions</h4>
-        </div>
-        <div className="space-y-2 text-sm text-blue-800">
-          <p className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-            将二维码置于蓝色框内 Position QR code within the blue frame
-          </p>
-          <p className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-            保持设备稳定，等待自动识别 Keep device steady for auto-detection
-          </p>
-          <p className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-            确保光线充足，可使用闪光灯 Ensure good lighting, use flash if needed
+          <p className="text-gray-700 leading-relaxed">
+            将二维码对准扫描框内，保持稳定等待识别<br />
+            <span className="text-sm text-gray-600">Position QR code within the frame and hold steady</span>
           </p>
         </div>
       </div>
 
-      {/* Quick Action Buttons - Always visible */}
+      {/* Enhanced Manual retry button */}
       {error && (
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
-          <h4 className="font-semibold text-red-900 mb-3 text-center">Camera Not Working?</h4>
-          <div className="flex flex-col gap-2">
-            <Button 
-              onClick={retry} 
-              disabled={isRetrying}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isRetrying ? (
-                <>
-                  <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                  Retrying Camera...
-                </>
-              ) : (
-                <>
-                  <RotateCw className="h-4 w-4 mr-2" />
-                  Refresh Camera
-                </>
-              )}
-            </Button>
-            <Button 
-              onClick={forceReset} 
-              disabled={isRetrying}
-              variant="outline"
-              className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
-            >
-              {isRetrying ? (
-                <>
-                  <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                  Force Resetting...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Force Camera Reset
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Camera Test Button - Always visible when camera shows Ready but appears dark */}
-      {!error && !isScanning && (
-        <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
-          <h4 className="font-semibold text-gray-700 mb-2 text-center text-sm">Camera appears dark or not working?</h4>
+        <div className="mt-6">
           <Button 
-            onClick={testCamera} 
-            disabled={isRetrying}
-            variant="outline"
-            className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            onClick={retry} 
+            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-4 rounded-2xl shadow-lg font-medium text-lg"
           >
-            {isRetrying ? (
-              <>
-                <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                Testing Camera...
-              </>
-            ) : (
-              <>
-                <Camera className="h-4 w-4 mr-2" />
-                Test Camera Stream
-              </>
-            )}
+            <Camera className="w-5 h-5 mr-3" />
+            重新尝试摄像头 Try Camera Again
           </Button>
         </div>
       )}
