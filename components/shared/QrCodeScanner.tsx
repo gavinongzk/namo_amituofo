@@ -105,21 +105,32 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       try {
         // Try environment camera first (back camera on mobile)
         initialStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' }
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 }
+          }
         });
       } catch (environmentError) {
         console.log('Environment camera failed, trying user camera:', environmentError);
         try {
           // Try user camera (front camera)
           initialStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user' }
+            video: { 
+              facingMode: 'user',
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 }
+            }
           });
         } catch (userError) {
           console.log('User camera failed, trying any camera:', userError);
           try {
             // Try any available camera
             initialStream = await navigator.mediaDevices.getUserMedia({ 
-              video: true 
+              video: {
+                width: { ideal: 1280, min: 640 },
+                height: { ideal: 720, min: 480 }
+              }
             });
           } catch (anyError) {
             throw new Error('Camera access denied or no camera available. Please check your browser permissions and ensure no other applications are using the camera.');
@@ -127,16 +138,28 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         }
       }
 
-      // Step 2: Now that we have permission, enumerate devices
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput' && d.deviceId);
-      
-      // Stop the initial stream
-      if (initialStream) {
-        initialStream.getTracks().forEach(track => track.stop());
+      // Step 2: Immediately set up video element with the stream
+      if (videoRef.current && initialStream) {
+        videoRef.current.srcObject = initialStream;
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        
+        // Force video to play and wait for it to start
+        try {
+          await videoRef.current.play();
+          // Wait a moment for video to start showing
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (playError) {
+          console.error('Error playing video:', playError);
+        }
       }
 
-      // Step 3: Validate we found cameras and handle fallback
+      // Step 3: Now enumerate devices for camera selection
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      
+      // Step 4: Validate we found cameras and handle fallback
       let availableCameras = videoDevices;
       
       if (videoDevices.length === 0) {
@@ -152,7 +175,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       
       setCameras(availableCameras);
       
-      // Step 4: Select the best camera from available cameras
+      // Step 5: Select the best camera from available cameras
       const backCamera = availableCameras.find(device => 
         device.label.toLowerCase().includes('back') || 
         device.label.toLowerCase().includes('rear') ||
@@ -168,7 +191,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       
       setActiveCamera(selectedCamera);
 
-      // Step 5: Initialize the QR code reader with better constraints
+      // Step 6: Initialize the QR code reader with better constraints
       const codeReader = new BrowserQRCodeReader(undefined, {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
@@ -176,24 +199,28 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       let active = true;
 
-      // Step 6: Start the actual camera stream for QR scanning
-      const videoConstraints = selectedCamera ? {
-        deviceId: { exact: selectedCamera },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      } : {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      };
-
-      // Set up video element
-      if (videoRef.current) {
-        videoRef.current.setAttribute('autoplay', 'true');
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('muted', 'true');
+      // Step 7: If we need to switch to a specific camera, do it now
+      if (selectedCamera && selectedCamera !== 'default') {
+        // Stop the initial stream
+        initialStream.getTracks().forEach(track => track.stop());
+        
+        // Get stream from selected camera
+        const selectedStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: selectedCamera },
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 }
+          }
+        });
+        
+        // Update video element with new stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = selectedStream;
+          await videoRef.current.play();
+        }
       }
 
+      // Step 8: Start QR code detection
       const controls = await codeReader.decodeFromVideoDevice(
         selectedCamera,
         videoRef.current!,
@@ -360,6 +387,42 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
   };
 
+  const testCamera = async () => {
+    setIsRetrying(true);
+    try {
+      // Direct camera test - get a fresh stream and immediately display it
+      const testStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 }
+        }
+      });
+
+      if (videoRef.current) {
+        // Stop any existing stream
+        if (videoRef.current.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach(track => track.stop());
+        }
+
+        // Set the new stream
+        videoRef.current.srcObject = testStream;
+        
+        // Force play
+        await videoRef.current.play();
+        
+        console.log('Camera test successful - stream should be visible now');
+        setError(undefined); // Clear any existing errors
+      }
+    } catch (err) {
+      console.error('Camera test failed:', err);
+      setError(`Camera test failed: ${(err as Error).message}`);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   useEffect(() => {
     if (!isActive) return;
     
@@ -412,6 +475,24 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           autoPlay
           playsInline
           muted
+          style={{
+            backgroundColor: '#000000',
+            minHeight: '100%',
+            minWidth: '100%',
+            objectFit: 'cover'
+          }}
+          onLoadedMetadata={() => {
+            console.log('Video metadata loaded');
+          }}
+          onCanPlay={() => {
+            console.log('Video can play');
+          }}
+          onPlay={() => {
+            console.log('Video started playing');
+          }}
+          onError={(e) => {
+            console.error('Video error:', e);
+          }}
         />
         
         {/* Modern Scanning Guide Overlay */}
@@ -532,62 +613,65 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
         {/* Enhanced Error State */}
         {error && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-20">
-            <div className="max-w-sm mx-4">
-              <div className="bg-white rounded-2xl p-6 shadow-2xl">
-                <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
-                  <CameraOff className="h-8 w-8 text-red-600" />
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-20 p-4">
+            <div className="w-full max-w-sm max-h-full overflow-y-auto">
+              <div className="bg-white rounded-2xl p-4 shadow-2xl">
+                <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-3">
+                  <CameraOff className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-center mb-2 text-gray-900">Camera Issue</h3>
-                <p className="text-gray-600 text-center text-sm mb-4 whitespace-pre-line leading-relaxed">{error}</p>
-                {retryCount >= maxRetries && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={retry} 
-                        disabled={isRetrying}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {isRetrying ? (
-                          <>
-                            <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                            Retrying...
-                          </>
-                        ) : (
-                          <>
-                            <RotateCw className="h-4 w-4 mr-2" />
-                            Try Again
-                          </>
-                        )}
-                      </Button>
-                      <Button 
-                        onClick={stopCamera}
-                        variant="outline"
-                        className="px-4"
-                      >
-                        Close
-                      </Button>
-                    </div>
+                <h3 className="text-base font-semibold text-center mb-2 text-gray-900">Camera Issue</h3>
+                <p className="text-gray-600 text-center text-xs mb-3 whitespace-pre-line leading-relaxed max-h-32 overflow-y-auto">{error}</p>
+                
+                {/* Always show buttons when there's an error */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
                     <Button 
-                      onClick={forceReset} 
+                      onClick={retry} 
                       disabled={isRetrying}
-                      variant="outline"
-                      className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+                      size="sm"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
                     >
                       {isRetrying ? (
                         <>
-                          <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                          Force Resetting...
+                          <Loader2Icon className="animate-spin h-3 w-3 mr-1" />
+                          Retrying...
                         </>
                       ) : (
                         <>
-                          <Zap className="h-4 w-4 mr-2" />
-                          Force Camera Reset
+                          <RotateCw className="h-3 w-3 mr-1" />
+                          Try Again
                         </>
                       )}
                     </Button>
+                    <Button 
+                      onClick={stopCamera}
+                      variant="outline"
+                      size="sm"
+                      className="px-3 text-xs"
+                    >
+                      Close
+                    </Button>
                   </div>
-                )}
+                  <Button 
+                    onClick={forceReset} 
+                    disabled={isRetrying}
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 text-xs"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <Loader2Icon className="animate-spin h-3 w-3 mr-1" />
+                        Force Resetting...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-3 w-3 mr-1" />
+                        Force Camera Reset
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -617,6 +701,75 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           </p>
         </div>
       </div>
+
+      {/* Quick Action Buttons - Always visible */}
+      {error && (
+        <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+          <h4 className="font-semibold text-red-900 mb-3 text-center">Camera Not Working?</h4>
+          <div className="flex flex-col gap-2">
+            <Button 
+              onClick={retry} 
+              disabled={isRetrying}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isRetrying ? (
+                <>
+                  <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                  Retrying Camera...
+                </>
+              ) : (
+                <>
+                  <RotateCw className="h-4 w-4 mr-2" />
+                  Refresh Camera
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={forceReset} 
+              disabled={isRetrying}
+              variant="outline"
+              className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+            >
+              {isRetrying ? (
+                <>
+                  <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                  Force Resetting...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Force Camera Reset
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Test Button - Always visible when camera shows Ready but appears dark */}
+      {!error && !isScanning && (
+        <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+          <h4 className="font-semibold text-gray-700 mb-2 text-center text-sm">Camera appears dark or not working?</h4>
+          <Button 
+            onClick={testCamera} 
+            disabled={isRetrying}
+            variant="outline"
+            className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+          >
+            {isRetrying ? (
+              <>
+                <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                Testing Camera...
+              </>
+            ) : (
+              <>
+                <Camera className="h-4 w-4 mr-2" />
+                Test Camera Stream
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
