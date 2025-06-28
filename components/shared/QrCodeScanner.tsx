@@ -17,79 +17,164 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const [codeReader, setCodeReader] = useState<BrowserQRCodeReader | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
+  const checkCameraDevices = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        setDebugInfo('Device enumeration not supported');
+        return;
+      }
+      
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setDebugInfo(`Found ${videoDevices.length} camera(s): ${videoDevices.map(d => d.label || 'Unknown camera').join(', ')}`);
+    } catch (error) {
+      setDebugInfo(`Error checking devices: ${error}`);
+    }
+  };
 
   const startCamera = async () => {
     try {
       setIsLoading(true);
       setError('');
       setIsScanning(false);
+      setDebugInfo('正在初始化摄像头... Initializing camera...');
 
       // Stop any existing stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      let mediaStream;
+      // Check if browser supports camera access
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Browser does not support camera access');
+      }
+
+      // Check if page is served over HTTPS (required for camera access in most browsers)
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        throw new Error('Camera access requires HTTPS. Please use a secure connection.');
+      }
+
+      let mediaStream = null;
       
-      try {
-        // Try back camera first
-        mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        });
-      } catch (backCameraError) {
-        console.log('Back camera failed, trying front camera');
-        try {
-          // Try front camera
-          mediaStream = await navigator.mediaDevices.getUserMedia({
+      // Try different camera configurations in order of preference (simplified for better compatibility)
+      const cameraConfigs = [
+        {
+          name: 'back camera (ideal)',
+          config: {
             video: {
-              facingMode: 'user',
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
+              facingMode: { ideal: 'environment' }
             }
-          });
-        } catch (frontCameraError) {
-          console.log('Front camera failed, trying any camera');
-          // Try any camera
-          mediaStream = await navigator.mediaDevices.getUserMedia({
+          }
+        },
+        {
+          name: 'front camera (ideal)',
+          config: {
+            video: {
+              facingMode: { ideal: 'user' }
+            }
+          }
+        },
+        {
+          name: 'any camera (no constraints)',
+          config: {
             video: true
-          });
+          }
+        }
+      ];
+
+      let lastError = null;
+      for (const { name, config } of cameraConfigs) {
+        try {
+          console.log(`Attempting to access ${name}...`);
+          setDebugInfo(`尝试访问 ${name}... Trying ${name}...`);
+          mediaStream = await navigator.mediaDevices.getUserMedia(config);
+          console.log(`Successfully accessed ${name}`);
+          setDebugInfo(`成功访问 ${name} Successfully accessed ${name}`);
+          break;
+        } catch (error: any) {
+          console.log(`Failed to access ${name}:`, error);
+          setDebugInfo(`${name} 失败: ${error.name} ${name} failed: ${error.name}`);
+          lastError = error;
+          
+          // If it's a permission error, don't try other configs
+          if (error.name === 'NotAllowedError') {
+            throw error;
+          }
+          continue;
         }
       }
 
-      if (videoRef.current && mediaStream) {
+      if (!mediaStream) {
+        throw lastError || new Error('Failed to access any camera');
+      }
+
+      // Set up video element
+      if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
         
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => resolve(true);
+        // Wait for video to be ready with timeout
+        await new Promise((resolve, reject) => {
+          if (!videoRef.current) {
+            reject(new Error('Video element not available'));
+            return;
           }
+
+          const timeout = setTimeout(() => {
+            reject(new Error('Video loading timeout'));
+          }, 10000); // 10 second timeout
+
+          const handleLoadedMetadata = () => {
+            clearTimeout(timeout);
+            resolve(true);
+          };
+
+          const handleError = () => {
+            clearTimeout(timeout);
+            reject(new Error('Video element error'));
+          };
+
+          videoRef.current.onloadedmetadata = handleLoadedMetadata;
+          videoRef.current.onerror = handleError;
+
+          // Try to play the video
+          videoRef.current.play().catch(e => {
+            console.log('Video play failed:', e);
+            // Don't reject here, sometimes play fails but video still works
+          });
         });
 
         // Initialize QR code reader
         const reader = new BrowserQRCodeReader();
         setCodeReader(reader);
 
-        // Start scanning
-        reader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
-          if (result) {
-            setIsScanning(false);
-            onScan(result.getText());
-          }
-          // Ignore errors, they're usually just "no QR code found"
-        });
+        // Start scanning with error handling
+        try {
+          reader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+            if (result) {
+              console.log('QR Code detected:', result.getText());
+              setIsScanning(false);
+              onScan(result.getText());
+            }
+            // Ignore scanning errors, they're usually just "no QR code found"
+          });
+        } catch (scanError) {
+          console.error('QR scanner initialization failed:', scanError);
+          // Continue anyway, the camera is working
+        }
 
         setIsLoading(false);
         setIsScanning(true);
+        console.log('Camera initialization successful');
+      } else {
+        throw new Error('Video element not found');
       }
     } catch (err: any) {
-      console.error('Camera error:', err);
+      console.error('Camera initialization error:', err);
       setIsLoading(false);
+      setIsScanning(false);
       
       if (err.name === 'NotAllowedError') {
         setError('摄像头权限被拒绝，请允许摄像头访问后重试 / Camera permission denied. Please allow camera access and try again.');
@@ -97,8 +182,12 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         setError('未找到摄像头，请检查设备是否有摄像头 / No camera found. Please check your device has a camera.');
       } else if (err.name === 'NotSupportedError') {
         setError('此浏览器不支持摄像头，请使用Chrome、Firefox或Safari / Camera not supported in this browser. Try Chrome, Firefox, or Safari.');
+      } else if (err.name === 'NotReadableError') {
+        setError('摄像头被其他应用占用，请关闭其他使用摄像头的应用 / Camera is being used by another application. Please close other camera apps.');
+      } else if (err.message.includes('timeout')) {
+        setError('摄像头启动超时，请重试 / Camera startup timeout. Please try again.');
       } else {
-        setError('摄像头错误 Camera error: ' + err.message);
+        setError(`摄像头错误 Camera error: ${err.message || '未知错误 Unknown error'}`);
       }
     }
   };
@@ -177,7 +266,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               <div className="bg-red-500/20 rounded-full p-4 inline-block mb-4">
                 <CameraOff className="w-8 h-8 text-red-300" />
               </div>
-              <p className="text-sm mb-6 leading-relaxed">{error}</p>
+              <p className="text-sm mb-4 leading-relaxed">{error}</p>
+              {debugInfo && (
+                <p className="text-xs mb-4 text-white/70 bg-black/20 p-2 rounded">{debugInfo}</p>
+              )}
               <div className="flex flex-col gap-3">
                 <Button 
                   onClick={retry} 
@@ -186,6 +278,15 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
                 >
                   <RotateCw className="w-4 h-4 mr-2" />
                   重试 Retry
+                </Button>
+                <Button 
+                  onClick={checkCameraDevices} 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-white/30 text-white hover:bg-white/10"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  检查设备 Check Devices
                 </Button>
                 <Button 
                   onClick={handleClose} 
@@ -271,6 +372,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             将二维码对准扫描框内，保持稳定等待识别<br />
             <span className="text-sm text-gray-600">Position QR code within the frame and hold steady</span>
           </p>
+          {debugInfo && !error && (
+            <p className="text-xs mt-3 text-blue-600 bg-blue-50 p-2 rounded">{debugInfo}</p>
+          )}
         </div>
       </div>
 
