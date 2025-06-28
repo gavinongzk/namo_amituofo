@@ -21,16 +21,52 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
   const checkCameraDevices = async () => {
     try {
+      setDebugInfo('正在检查摄像头设备... Checking camera devices...');
+      
       if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-        setDebugInfo('Device enumeration not supported');
+        setDebugInfo('设备枚举不支持 Device enumeration not supported');
         return;
       }
       
+      // First check permissions
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        setDebugInfo(`摄像头权限状态: ${permissionStatus.state} Camera permission: ${permissionStatus.state}`);
+      } catch (permError) {
+        console.log('Permission check failed:', permError);
+      }
+      
+      // Enumerate devices
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setDebugInfo(`Found ${videoDevices.length} camera(s): ${videoDevices.map(d => d.label || 'Unknown camera').join(', ')}`);
-    } catch (error) {
-      setDebugInfo(`Error checking devices: ${error}`);
+      
+      console.log('All devices:', devices);
+      console.log('Video devices:', videoDevices);
+      
+      if (videoDevices.length === 0) {
+        setDebugInfo('未找到任何摄像头设备。请检查：1) 摄像头是否连接 2) 其他应用是否占用摄像头 3) 浏览器权限设置 / No camera devices found. Please check: 1) Camera connected 2) Other apps using camera 3) Browser permissions');
+      } else {
+        const deviceInfo = videoDevices.map((device, index) => 
+          `${index + 1}. ${device.label || `摄像头 ${index + 1} Camera ${index + 1}`} (ID: ${device.deviceId.substring(0, 8)}...)`
+        ).join('\n');
+        setDebugInfo(`找到 ${videoDevices.length} 个摄像头设备:\n${deviceInfo} / Found ${videoDevices.length} camera device(s):\n${deviceInfo}`);
+      }
+      
+      // Try to get basic media stream to test actual access
+      try {
+        setDebugInfo('测试基本摄像头访问... Testing basic camera access...');
+        const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (testStream) {
+          testStream.getTracks().forEach(track => track.stop());
+          setDebugInfo('✅ 基本摄像头访问成功！点击重试按钮。 Basic camera access successful! Click retry.');
+        }
+      } catch (testError: any) {
+        setDebugInfo(`❌ 摄像头访问测试失败: ${testError.name} - ${testError.message} / Camera access test failed: ${testError.name} - ${testError.message}`);
+      }
+      
+    } catch (error: any) {
+      setDebugInfo(`设备检查错误: ${error.message} / Device check error: ${error.message}`);
+      console.error('Device check error:', error);
     }
   };
 
@@ -177,17 +213,19 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       setIsScanning(false);
       
       if (err.name === 'NotAllowedError') {
-        setError('摄像头权限被拒绝，请允许摄像头访问后重试 / Camera permission denied. Please allow camera access and try again.');
+        setError('摄像头权限被拒绝。请点击"请求权限"按钮，或在浏览器设置中允许摄像头访问。 / Camera permission denied. Click "Request Permission" or allow camera access in browser settings.');
       } else if (err.name === 'NotFoundError') {
-        setError('未找到摄像头，请检查设备是否有摄像头 / No camera found. Please check your device has a camera.');
+        setError('未找到摄像头设备。请检查：1) 摄像头是否正确连接 2) 其他应用是否占用摄像头 3) 重启浏览器后重试。点击"检查设备"获取详细信息。 / No camera found. Check: 1) Camera properly connected 2) Other apps using camera 3) Restart browser. Click "Check Devices" for details.');
       } else if (err.name === 'NotSupportedError') {
-        setError('此浏览器不支持摄像头，请使用Chrome、Firefox或Safari / Camera not supported in this browser. Try Chrome, Firefox, or Safari.');
+        setError('此浏览器不支持摄像头访问。请使用最新版本的Chrome、Firefox、Safari或Edge浏览器。 / Camera not supported in this browser. Please use latest Chrome, Firefox, Safari, or Edge.');
       } else if (err.name === 'NotReadableError') {
-        setError('摄像头被其他应用占用，请关闭其他使用摄像头的应用 / Camera is being used by another application. Please close other camera apps.');
+        setError('摄像头被其他应用占用。请关闭其他使用摄像头的应用（如Zoom、Teams、Skype等），然后重试。 / Camera is being used by another application. Close other camera apps (Zoom, Teams, Skype, etc.) and retry.');
       } else if (err.message.includes('timeout')) {
-        setError('摄像头启动超时，请重试 / Camera startup timeout. Please try again.');
+        setError('摄像头启动超时。请重试，或检查摄像头连接。 / Camera startup timeout. Please retry or check camera connection.');
+      } else if (err.message.includes('HTTPS')) {
+        setError('摄像头访问需要HTTPS连接。请使用 https://localhost 或部署到HTTPS服务器。 / Camera access requires HTTPS. Use https://localhost or deploy to HTTPS server.');
       } else {
-        setError(`摄像头错误 Camera error: ${err.message || '未知错误 Unknown error'}`);
+        setError(`摄像头初始化失败: ${err.name || 'Unknown'} - ${err.message || '未知错误'}。请点击"检查设备"获取详细信息。 / Camera initialization failed: ${err.name || 'Unknown'} - ${err.message || 'Unknown error'}. Click "Check Devices" for details.`);
       }
     }
   };
@@ -215,7 +253,35 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     setTimeout(startCamera, 500);
   };
 
+  const requestCameraPermission = async () => {
+    try {
+      setDebugInfo('正在请求摄像头权限... Requesting camera permission...');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setDebugInfo('✅ 摄像头权限已获取！正在重新初始化... Camera permission granted! Reinitializing...');
+        setTimeout(() => {
+          setError('');
+          startCamera();
+        }, 1000);
+      }
+    } catch (error: any) {
+      setDebugInfo(`权限请求失败: ${error.name} - ${error.message} / Permission request failed: ${error.name} - ${error.message}`);
+    }
+  };
+
   useEffect(() => {
+    // Log system information for debugging
+    console.log('🔍 QR Scanner Debug Info:');
+    console.log('- User Agent:', navigator.userAgent);
+    console.log('- Protocol:', location.protocol);
+    console.log('- Hostname:', location.hostname);
+    console.log('- MediaDevices supported:', !!navigator.mediaDevices);
+    console.log('- getUserMedia supported:', !!navigator.mediaDevices?.getUserMedia);
+    console.log('- enumerateDevices supported:', !!navigator.mediaDevices?.enumerateDevices);
+    console.log('- HTTPS:', location.protocol === 'https:');
+    console.log('- Localhost:', location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+    
     startCamera();
     return () => stopCamera();
   }, []);
@@ -278,6 +344,14 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
                 >
                   <RotateCw className="w-4 h-4 mr-2" />
                   重试 Retry
+                </Button>
+                <Button 
+                  onClick={requestCameraPermission} 
+                  size="sm" 
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  请求权限 Request Permission
                 </Button>
                 <Button 
                   onClick={checkCameraDevices} 
@@ -381,6 +455,16 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       {/* Enhanced Manual retry button */}
       {error && (
         <div className="mt-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-4">
+            <h4 className="font-semibold text-yellow-800 mb-2">🔧 故障排除建议 Troubleshooting Tips:</h4>
+            <ul className="text-sm text-yellow-700 space-y-1">
+              <li>• 🔄 刷新页面重试 Refresh page and retry</li>
+              <li>• 🔒 检查浏览器权限设置 Check browser permission settings</li>
+              <li>• 📱 关闭其他摄像头应用 Close other camera apps</li>
+              <li>• 🔌 重新连接摄像头设备 Reconnect camera device</li>
+              <li>• 🌐 使用 Chrome/Firefox/Safari 浏览器 Use Chrome/Firefox/Safari browser</li>
+            </ul>
+          </div>
           <Button 
             onClick={retry} 
             className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-4 rounded-2xl shadow-lg font-medium text-lg"
