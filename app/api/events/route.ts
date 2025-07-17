@@ -111,14 +111,14 @@ export async function GET(request: NextRequest) {
       ? await getCachedSuperAdminEvents(country)
       : await getCachedEvents(country);
     
-    // Improved caching strategy
+    // Improved caching strategy with longer cache times
     return new NextResponse(JSON.stringify(events), {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': isSuperAdmin 
-          ? 'private, max-age=60, s-maxage=300, stale-while-revalidate=600' 
-          : 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
-        'Surrogate-Control': 'max-age=300',
+          ? 'private, max-age=300, s-maxage=600, stale-while-revalidate=1800' 
+          : 'public, max-age=300, s-maxage=600, stale-while-revalidate=1800',
+        'Surrogate-Control': 'max-age=600',
       },
     });
   } catch (error) {
