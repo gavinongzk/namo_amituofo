@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.11.0",
   "scripts": {
+    "optimize-costs": "node scripts/optimize-vercel-costs.js",
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
     "build": "next build",

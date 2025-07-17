@@ -18,6 +18,8 @@ export default authMiddleware({
     '/api/update-registration',
     '/api/cancel-registration',
     '/api/all-registrations',
+    '/api/batch',
+    '/api/categories',
     '/monitoring',
     '/reg/:id'
   ],

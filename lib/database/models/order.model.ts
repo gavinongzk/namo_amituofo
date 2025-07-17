@@ -90,6 +90,13 @@ OrderSchema.index({
   'customFieldValues.queueNumber': 1 
 });
 
+// Add indexes for better query performance
+OrderSchema.index({ event: 1, 'customFieldValues.queueNumber': 1 }, { unique: true });
+OrderSchema.index({ 'customFieldValues.fields.type': 1, 'customFieldValues.fields.value': 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ 'customFieldValues.cancelled': 1 });
+OrderSchema.index({ 'customFieldValues.attendance': 1 });
+
 // Add a pre-save hook to validate queue number uniqueness
 OrderSchema.pre('save', async function(next) {
   try {
