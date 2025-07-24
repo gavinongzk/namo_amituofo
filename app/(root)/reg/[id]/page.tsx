@@ -191,7 +191,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     queueNumber?: string;
   } | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [isPolling, setIsPolling] = useState(false);
   const [newlyMarkedGroups, setNewlyMarkedGroups] = useState<Set<string>>(new Set());
   const previousOrder = useRef<typeof order>(null);
   const lastFetchTime = useRef<number>(0);
@@ -384,31 +383,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     };
     fetchData();
   }, [fetchOrderDetails]);
-
-  // Add polling effect for attendance status only
-  useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
-
-    const startPolling = () => {
-      setIsPolling(true);
-      pollInterval = setInterval(checkAttendanceStatus, 5000); // Poll every 5 seconds
-    };
-
-    const stopPolling = () => {
-      setIsPolling(false);
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-    };
-
-    // Start polling when the component mounts
-    startPolling();
-
-    // Stop polling when the component unmounts
-    return () => {
-      stopPolling();
-    };
-  }, [checkAttendanceStatus]);
 
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
     if (!queueNumber) {
