@@ -11,7 +11,7 @@ export interface IEvent extends Document {
   imageUrl?: string;
   startDateTime: Date;
   endDateTime: Date;
-  category: { _id: string, name: string }
+  category: { _id: string, name: string, color?: string }
   organizer: { _id: string }
   customFields: CustomField[];
   maxSeats: number;

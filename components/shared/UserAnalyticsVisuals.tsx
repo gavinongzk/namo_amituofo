@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { format, parseISO, startOfYear, addMonths } from 'date-fns';
 import { Card } from '@/components/ui/card';
+import { getCategoryColor } from '@/lib/utils/colorUtils';
 
 interface UserAnalyticsVisualsProps {
   attendee: {
@@ -69,7 +70,40 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
     return acc;
   }, {} as Record<string, number>);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  // Generate colors for categories dynamically
+  const categoryColors = Object.keys(eventCategoryData).map(categoryName => {
+    const fullColor = getCategoryColor(categoryName, undefined);
+    // Extract hex color from Tailwind class (simplified approach)
+    const colorMap: { [key: string]: string } = {
+      'bg-blue-200': '#93c5fd',
+      'bg-orange-200': '#fed7aa',
+      'bg-green-200': '#bbf7d0',
+      'bg-purple-200': '#c4b5fd',
+      'bg-pink-200': '#fbcfe8',
+      'bg-indigo-200': '#c7d2fe',
+      'bg-teal-200': '#99f6e4',
+      'bg-red-200': '#fecaca',
+      'bg-yellow-200': '#fef3c7',
+      'bg-cyan-200': '#a5f3fc',
+      'bg-lime-200': '#d9f99d',
+      'bg-emerald-200': '#a7f3d0',
+      'bg-violet-200': '#ddd6fe',
+      'bg-rose-200': '#fecdd3',
+      'bg-amber-200': '#fde68a',
+      'bg-sky-200': '#bae6fd',
+      'bg-fuchsia-200': '#e9d5ff',
+      'bg-slate-200': '#e2e8f0',
+      'bg-gray-200': '#e5e7eb',
+      'bg-zinc-200': '#e4e4e7',
+    };
+    
+    // Extract background class and convert to hex
+    const bgMatch = fullColor.match(/bg-(\w+)-200/);
+    if (bgMatch && colorMap[fullColor]) {
+      return colorMap[fullColor];
+    }
+    return '#93c5fd'; // Default blue
+  });
 
   // Group events by category and sort by date
   const eventsByCategory = attendee.events.reduce((acc, event) => {
@@ -168,7 +202,7 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
                   dataKey="value"
                 >
                   {Object.entries(eventCategoryData).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={categoryColors[index]} />
                   ))}
                 </Pie>
                 <Tooltip />
