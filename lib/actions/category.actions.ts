@@ -6,14 +6,19 @@ import { connectToDatabase } from "../database"
 import Category from "../database/models/category.model"
 import Event from "../database/models/event.model"
 import { unstable_cache } from "next/cache"
+import { assignCategoryColor } from "../utils/colorUtils"
 
 export const createCategory = async ({ categoryName }: CreateCategoryParams) => {
   try {
     await connectToDatabase();
 
+    // Automatically assign a color to the new category
+    const assignedColor = assignCategoryColor(categoryName);
+
     const newCategory = await Category.create({ 
       name: categoryName,
-      isHidden: false 
+      isHidden: false,
+      color: assignedColor
     });
 
     return JSON.parse(JSON.stringify(newCategory));
@@ -42,7 +47,7 @@ export const getAllCategories = async (includeHidden: boolean = false) => {
 
         // Use lean() for better performance and only select needed fields
         const categories = await Category.find(query)
-          .select('_id name isHidden')
+          .select('_id name isHidden color')
           .lean()
           .exec();
 

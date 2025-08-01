@@ -10,8 +10,9 @@ import React, { useState, useEffect } from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types'
 import { cn } from '@/lib/utils'
+import { getCategoryColor } from '@/lib/utils/colorUtils'
 
-// Shared category colors - matching with actual categories
+// Legacy category colors for backward compatibility
 export const categoryColors: { [key: string]: string } = {
   'All': 'bg-gray-200 text-gray-700',
   '念佛超荐法会': 'bg-blue-200 text-blue-700',
@@ -39,7 +40,12 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
   const [isNavigating, setIsNavigating] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const categoryColor = categoryColors[event.category.name] || 'bg-gray-200 text-gray-700';
+  
+  // Use dynamic color assignment with fallback to legacy colors
+  const categoryColor = event.category.color 
+    ? event.category.color 
+    : categoryColors[event.category.name] || getCategoryColor(event.category.name);
+    
   const isExpired = new Date(event.endDateTime) < new Date();
 
   useEffect(() => {

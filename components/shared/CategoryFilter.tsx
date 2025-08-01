@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { getCategoryBgColor } from "@/lib/utils/colorUtils";
 
 const CategoryFilter = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -24,7 +25,7 @@ const CategoryFilter = () => {
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
 
-  // Define category colors using useMemo to prevent recreation on each render
+  // Legacy category colors for backward compatibility
   const categoryColors: Record<string, string> = useMemo(() => ({
     'All': 'bg-gray-200',
     '念佛超荐法会': 'bg-blue-200',
@@ -34,6 +35,18 @@ const CategoryFilter = () => {
 
   // Define the desired category order using useMemo
   const categoryOrder = useMemo(() => ['念佛超荐法会', '念佛共修', '外出结缘法会'], []);
+
+  // Function to get category color with fallback
+  const getCategoryColor = useCallback((category: ICategory) => {
+    if (category.color) {
+      // Extract background color from full color string
+      const bgMatch = category.color.match(/bg-\w+-\d+/);
+      if (bgMatch) {
+        return bgMatch[0];
+      }
+    }
+    return categoryColors[category.name] || getCategoryBgColor(category.name);
+  }, [categoryColors]);
 
   // Memoize the getCategories function
   const getCategories = useCallback(async () => {
@@ -136,7 +149,7 @@ const CategoryFilter = () => {
               className="select-item p-regular-14 hover:bg-gray-50"
             >
               <div className="flex items-center gap-2 w-full">
-                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors[category.name] || 'bg-gray-200'}`} />
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getCategoryColor(category)}`} />
                 <span>{category.name}</span>
               </div>
             </SelectItem>
