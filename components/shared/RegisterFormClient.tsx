@@ -15,14 +15,15 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { useUser } from '@clerk/nextjs';
-import { getCookie, setCookie } from 'cookies-next';
+import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
-import { PlusIcon, Loader2Icon } from 'lucide-react'
+import { PlusIcon, Loader2Icon, RefreshCwIcon } from 'lucide-react'
 import { debounce } from 'lodash';
 import * as Sentry from '@sentry/nextjs';
 import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
+import { clearAllClientCache, isClientSideError, getErrorMessage } from '@/lib/utils/cache';
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
 import { createRegistrationFormSchema } from '@/lib/validator';
@@ -95,7 +96,85 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number>(5);
+  
+  // New state for error handling and retry
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const maxRetries = 3;
 
+  // Function to clear all client-side cache and storage
+  const clearAllCache = async () => {
+    try {
+      await clearAllClientCache();
+      
+      // Clear specific cookies that might cause issues
+      deleteCookie('lastUsedFields');
+      deleteCookie('lastUsedPostal');
+      deleteCookie('userCountry');
+      
+      console.log('All client-side cache cleared successfully');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  };
+
+  // Function to handle retry after cache clearing
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    setRetryCount(prev => prev + 1);
+    
+    try {
+      // Clear all cache first
+      await clearAllCache();
+      
+      // Show loading message
+      toast.loading("正在重试... / Retrying...", { id: 'retry-toast' });
+      
+      // Wait a moment for cache clearing to take effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Refresh the page to get fresh data
+      router.refresh();
+      
+      // Close error dialog
+      setShowErrorDialog(false);
+      setErrorDetails('');
+      
+      toast.success("页面已刷新，请重试。/ Page refreshed, please try again.", { id: 'retry-toast' });
+      
+    } catch (error) {
+      console.error('Error during retry:', error);
+      toast.error("重试失败，请手动刷新页面。/ Retry failed, please refresh manually.", { id: 'retry-toast' });
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // Function to handle client-side errors
+  const handleClientSideError = (error: any, context: string = 'registration') => {
+    console.error(`Client-side error in ${context}:`, error);
+    
+    // Capture error in Sentry
+    Sentry.captureException(error, {
+      tags: {
+        context,
+        retryCount,
+        component: 'RegisterFormClient'
+      }
+    });
+    
+    // Get user-friendly error message
+    const errorMessage = getErrorMessage(error);
+    
+    // Set error details for dialog
+    setErrorDetails(errorMessage);
+    setShowErrorDialog(true);
+    
+    // Show error toast
+    toast.error(errorMessage, { duration: 5000 });
+  };
 
   useEffect(() => {
     const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
@@ -393,6 +472,9 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
         body: JSON.stringify(orderData),
       });
@@ -410,21 +492,31 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       router.push(`/reg/${data.order._id}`);
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      Sentry.captureException(error);
       
-      let errorMessage = "报名失败，请重试。/ Registration failed. Please try again.";
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        if (error.message.startsWith('Failed to create order')) {
-          errorMessage = `处理报名时出错: ${error.message} / Error processing registration: ${error.message}`;
-        } else {
-          errorMessage = error.message;
+      // Check if this is a client-side error that might benefit from cache clearing
+      const isClientSideErrorType = isClientSideError(error);
+      
+              if (isClientSideErrorType && retryCount < maxRetries) {
+        // Handle client-side error with retry option
+        handleClientSideError(error, 'form-submission');
+      } else {
+        // Handle server-side errors or max retries exceeded
+        Sentry.captureException(error);
+        
+        let errorMessage = "报名失败，请重试。/ Registration failed. Please try again.";
+        if (error.response && error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          if (error.message.startsWith('Failed to create order')) {
+            errorMessage = `处理报名时出错: ${error.message} / Error processing registration: ${error.message}`;
+          } else {
+            errorMessage = error.message;
+          }
         }
+        
+        toast.error(errorMessage, { id: toastId, duration: 5000 });
+        setMessage(errorMessage);
       }
-      
-      toast.error(errorMessage, { id: toastId, duration: 5000 });
-      setMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -562,6 +654,61 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
   return (
     <>
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCwIcon className="h-5 w-5 text-orange-500" />
+              遇到问题 / Issue Encountered
+            </DialogTitle>
+            <DialogDescription>
+              {errorDetails}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              <p>这可能是由于缓存问题导致的。我们可以：</p>
+              <p className="mt-1">This might be due to cache issues. We can:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>清除所有缓存数据 / Clear all cached data</li>
+                <li>刷新页面获取最新数据 / Refresh the page for fresh data</li>
+                <li>重新尝试提交 / Retry the submission</li>
+              </ul>
+            </div>
+            <div className="text-xs text-gray-500">
+              重试次数 / Retry count: {retryCount}/{maxRetries}
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowErrorDialog(false)}
+              disabled={isRetrying}
+            >
+              取消 / Cancel
+            </Button>
+            <Button
+              onClick={handleRetry}
+              disabled={isRetrying || retryCount >= maxRetries}
+              className="flex items-center gap-2"
+            >
+              {isRetrying ? (
+                <>
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                  处理中... / Processing...
+                </>
+              ) : (
+                <>
+                  <RefreshCwIcon className="h-4 w-4" />
+                  清除缓存并重试 / Clear Cache & Retry
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <style jsx global>{`
         .phone-input-enhanced .PhoneInputInput {
           border: 2px solid #e5e7eb;

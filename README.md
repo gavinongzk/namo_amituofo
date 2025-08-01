@@ -1,175 +1,144 @@
-# 净土宗报名系统 | Namo Amituofo Registration
+# Namo Amituofo Event Registration System
 
-净土宗报名系统 | Namo Amituofo Registration is a comprehensive platform designed to facilitate user registrations for various Buddhist events. Built with modern web technologies, it offers a seamless experience for both users and administrators, ensuring efficient event management and attendance tracking.
-
-## Table of Contents
-
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Folder Structure](#folder-structure)
-- [Contributing](#contributing)
+A comprehensive event registration system built with Next.js, featuring real-time attendance tracking, QR code generation, and multi-language support.
 
 ## Features
 
-### User Features
-- **Event Registration:** 
-  - Register for events with unique queue numbers
-  - QR code generation for each registration
-  - Support for multiple participants per registration
-- **Profile Management:** 
-  - View registered events and tickets
-  - Access QR codes for quick check-in
-  - Track registration status
-- **Responsive Design:** 
-  - Mobile-first approach
-  - Optimized for both desktop and mobile devices
+### Core Functionality
+- **Event Management**: Create, edit, and manage events with custom fields
+- **Registration System**: Multi-participant registration with validation
+- **QR Code Integration**: Generate and scan QR codes for attendance tracking
+- **Real-time Analytics**: Live attendance tracking and analytics dashboard
+- **Multi-language Support**: Bilingual interface (English/Chinese)
+- **Mobile Responsive**: Optimized for all device sizes
 
-### Admin Features
-- **Advanced Dashboard:**
-  - Real-time statistics and analytics
-  - Event attendance tracking
-  - User registration trends
-- **Event Management:**
-  - Create and manage events
-  - Customize registration fields
-  - Set event categories and capacities
-- **Attendance System:**
-  - QR code scanning for quick check-in
-  - Real-time attendance tracking
-  - Bulk attendance management
-  - Support for walk-in registrations
-- **User Management:**
-  - Track new vs returning users
-  - Add remarks and notes to user profiles
-  - View participation history
-- **Data Management:**
-  - Bulk import registrations via Excel
-  - Export attendance data to CSV/Excel
-  - Generate detailed reports
-- **Multi-language Support:**
-  - Bilingual interface (English/Chinese)
-  - Localized error messages and notifications
+### Advanced Features
+- **Client-Side Error Recovery**: Automatic cache clearing and retry mechanism for registration form errors
+- **Offline Support**: Network status detection and offline prevention
+- **Queue Number Management**: Automatic queue number generation with uniqueness validation
+- **Duplicate Detection**: Phone number duplicate checking with confirmation
+- **File Upload**: Bulk registration via CSV upload
+- **Export Functionality**: CSV export for registrations and analytics
 
-## Tech Stack
+## Client-Side Error Handling
 
-- **Frontend:**
-  - Next.js 14 (App Router)
-  - React 18 with TypeScript
-  - Tailwind CSS & Shadcn UI
-  - React Hook Form
-  - Clerk Authentication
-  - Chart.js for analytics
+The registration form includes comprehensive error handling for client-side issues:
 
-- **Backend:**
-  - Next.js API Routes
-  - MongoDB & Mongoose
-  - Uploadthing for file handling
-  - QR code generation and scanning
+### Automatic Cache Clearing
+When a client-side error occurs during form submission, the system can:
+- Clear all localStorage and sessionStorage
+- Clear browser cache and service worker cache
+- Clear specific cookies that might cause issues
+- Refresh the page to get fresh data
 
-- **Development Tools:**
-  - TypeScript
-  - ESLint & Prettier
-  - Jest for testing
-  - React Error Boundary
+### Retry Mechanism
+- **Smart Error Detection**: Automatically identifies client-side vs server-side errors
+- **User-Friendly Dialog**: Shows clear error messages with retry options
+- **Retry Counter**: Limits retries to prevent infinite loops (max 3 attempts)
+- **Bilingual Support**: Error messages in both English and Chinese
+
+### Error Types Handled
+- Network connection errors
+- Fetch/API request failures
+- Cache-related issues
+- CORS errors
+- Timeout errors
+- Unknown client-side errors
+
+### Usage
+When a client-side error occurs:
+1. User sees a dialog explaining the issue
+2. System offers to clear cache and retry
+3. If accepted, all client-side cache is cleared
+4. Page refreshes with fresh data
+5. User can retry the submission
 
 ## Installation
 
-1. **Clone and Install:**
-
-   ```bash
-   git clone https://github.com/yourusername/namo-amituofo-register.git
-   cd namo-amituofo-register
-   npm install
-   ```
-
-2. **Environment Setup:**
-Create a `.env.local` file:
-```env
-MONGODB_URI=your_mongodb_connection_string
-NEXT_PUBLIC_CLERK_FRONTEND_API=your_clerk_frontend_api
-CLERK_API_KEY=your_clerk_api_key
-UPLOADTHING_API_KEY=your_uploadthing_api_key
+```bash
+npm install
+# or
+pnpm install
 ```
 
-3. **Development Server:**
+## Development
+
 ```bash
 npm run dev
+# or
+pnpm dev
 ```
 
-## Usage
+## Environment Variables
 
-### Admin Dashboard
+Create a `.env.local` file with the following variables:
 
-1. **Attendance Tracking:**
-   - Scan QR codes for instant check-in
-   - View real-time attendance statistics
-   - Filter and search registrations
-   - Add remarks to specific registrations
+```env
+# Database
+MONGODB_URI=your_mongodb_connection_string
 
-2. **User Management:**
-   - Track new vs returning users
-   - Add and manage user remarks
-   - View participation history
-   - Handle bulk user imports
+# Authentication (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
 
-3. **Data Export:**
-   - Export attendance data in multiple formats
-   - Generate QR codes for registrations
-   - Create detailed event reports
+# Sentry (Error Tracking)
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
 
-### Event Management
-
-1. **Create Events:**
-   - Set event details and capacity
-   - Configure custom registration fields
-   - Define event categories
-
-2. **Registration Management:**
-   - Process walk-in registrations
-   - Handle queue number assignments
-   - Manage cancellations and updates
-
-## Folder Structure
+# UploadThing (File Upload)
+UPLOADTHING_SECRET=your_uploadthing_secret
+UPLOADTHING_APP_ID=your_uploadthing_app_id
 ```
-namo-amituofo-register/
-├── app/
-│   ├── api/           # API routes
-│   ├── (auth)/        # Authentication pages
-│   ├── (root)/        # Main application pages
-│   ├── components/    # Reusable components
-│   └── lib/          # Utilities and helpers
-├── public/           # Static assets
-└── types/           # TypeScript definitions
-```
+
+## API Endpoints
+
+### Events
+- `GET /api/events` - List all events
+- `POST /api/events` - Create new event
+- `GET /api/events/[id]` - Get event details
+- `PUT /api/events/[id]` - Update event
+- `DELETE /api/events/[id]` - Delete event
+
+### Registrations
+- `POST /api/createOrder` - Create registration
+- `GET /api/reg/[id]` - Get registration details
+- `PUT /api/update-registration` - Update registration status/fields
+- `GET /api/reg` - Lookup registrations by phone number
+
+### Analytics
+- `GET /api/analytics` - Get analytics data
+- `GET /api/events/[id]/counts` - Get event registration counts
+- `GET /api/events/[id]/attendees` - Get event attendees
+
+## Database Schema
+
+### Events
+- Basic event information (title, description, date, location)
+- Custom fields configuration
+- Capacity and registration limits
+- Category and country settings
+
+### Orders (Registrations)
+- Event reference
+- Custom field values
+- Queue numbers
+- Attendance status
+- QR code data
+
+### Users
+- Clerk user integration
+- Role-based access control
+- Country preferences
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-1. **Fork the Repository**
-2. **Create a Feature Branch**
+## License
 
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **Commit Your Changes**
-
-   ```bash
-   git commit -m "Add your feature"
-   ```
-
-4. **Push to the Branch**
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **Create a Pull Request**
-
-Please ensure your code follows the project's coding standards and includes relevant tests.
+This project is licensed under the MIT License.
 
 
