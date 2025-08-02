@@ -138,7 +138,26 @@ const SelectEventPage = () => {
       new Date(b.endDateTime).getTime() - new Date(a.endDateTime).getTime()
     );
 
-    // Group active events by category
+    // For superadmins, sort all events by non-expired first, then expired
+    if (isSuperAdmin) {
+      const allEvents = [...sortedActive, ...sortedExpired];
+      const groupedEvents: Record<string, Event[]> = {};
+
+      allEvents.forEach(event => {
+        const endDate = parseISO(event.endDateTime);
+        const isExpired = isBefore(endDate, currentDate);
+        const category = isExpired ? '已过期活动 / Expired Events' : event.category.name;
+        
+        if (!groupedEvents[category]) {
+          groupedEvents[category] = [];
+        }
+        groupedEvents[category].push(event);
+      });
+
+      return groupedEvents;
+    }
+
+    // For non-superadmins, keep the original logic
     const groupedEvents: Record<string, Event[]> = {};
 
     // First add all active events
@@ -149,11 +168,6 @@ const SelectEventPage = () => {
       }
       groupedEvents[category].push(event);
     });
-
-    // Then add expired events at the end if user is superadmin
-    if (isSuperAdmin && sortedExpired.length > 0) {
-      groupedEvents['已过期活动 / Expired Events'] = sortedExpired;
-    }
 
     return groupedEvents;
   };
