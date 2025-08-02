@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getAllCategories } from "@/lib/actions/category.actions";
+import { getCategoriesWithNonExpiredEvents } from "@/lib/actions/category.actions";
 import { ICategory } from "@/lib/database/models/category.model";
 import { formUrlQuery, removeKeysFromQuery } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,7 +34,11 @@ const CategoryFilter = () => {
   }), []);
 
   // Define the desired category order using useMemo
-  const categoryOrder = useMemo(() => ['念佛超荐法会', '念佛共修', '外出结缘法会'], []);
+  const categoryOrder = useMemo(() => [
+    '念佛超荐暨法师开示法会', 
+    '念佛超荐法会', 
+    '特别节日法会'
+  ], []);
 
   // Function to get category color with fallback
   const getCategoryColor = useCallback((category: ICategory) => {
@@ -52,7 +56,7 @@ const CategoryFilter = () => {
   const getCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      const categoryList = await getAllCategories(isSuperAdmin);
+      const categoryList = await getCategoriesWithNonExpiredEvents(isSuperAdmin);
 
       if (categoryList && categoryList.length > 0) {
         // Sort categories according to the defined order

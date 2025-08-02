@@ -32,7 +32,7 @@ const getCategoryByName = async (name: string) => {
 const populateEvent = (query: any) => {
   return query
     .populate({ path: 'organizer', model: User, select: '_id' })
-    .populate({ path: 'category', model: Category, select: '_id name' })
+    .populate({ path: 'category', model: Category, select: '_id name color' })
 }
 
 // CREATE
@@ -87,7 +87,7 @@ export const getEventById = async (eventId: string) => {
 
       const event = await Event.findOne({ _id: eventId, isDeleted: { $ne: true } })
         .populate({ path: 'organizer', model: User, select: '_id' })
-        .populate({ path: 'category', model: Category, select: '_id name' });
+        .populate({ path: 'category', model: Category, select: '_id name color' });
 
       if (!event) {
         // Event not found, return null to be handled by the caller
@@ -213,7 +213,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
             .populate({ 
               path: 'category', 
               model: Category,
-              select: '_id name'
+              select: '_id name color'
             })
             .lean()
             .exec(),
@@ -288,7 +288,7 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
         .populate({ 
           path: 'category', 
           model: Category,
-          select: '_id name'
+          select: '_id name color'
         })
         .lean()
         .exec(),
@@ -402,7 +402,7 @@ export const getEventCategory = async (eventId: string): Promise<string | null> 
   try {
     await connectToDatabase();
 
-    const event = await Event.findById(eventId).populate('category', 'name');
+    const event = await Event.findById(eventId).populate('category', 'name color');
     
     if (!event) {
       // Event not found, return null
