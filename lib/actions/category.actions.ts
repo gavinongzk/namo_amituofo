@@ -65,6 +65,77 @@ export const getAllCategories = async (includeHidden: boolean = false) => {
   )();
 }
 
+export const getCategoriesWithNonExpiredEvents = async (includeHidden: boolean = false) => {
+  const cacheKey = `categories-non-expired-${includeHidden}`;
+  
+  return unstable_cache(
+    async () => {
+      try {
+        await connectToDatabase();
+
+        const now = new Date();
+        
+        // First, get all categories
+        const query = includeHidden 
+          ? {} 
+          : { 
+              $or: [
+                { isHidden: false },
+                { isHidden: { $exists: false } },
+                { isHidden: null }
+              ] 
+            };
+
+        const categories = await Category.find(query)
+          .select('_id name isHidden color')
+          .lean()
+          .exec();
+
+        // Then, get categories that have non-expired events
+        const categoriesWithNonExpiredEvents = await Category.aggregate([
+          { $match: query },
+          {
+            $lookup: {
+              from: 'events',
+              localField: '_id',
+              foreignField: 'category',
+              as: 'events'
+            }
+          },
+          {
+            $match: {
+              'events': {
+                $elemMatch: {
+                  endDateTime: { $gt: now },
+                  isDeleted: { $ne: true }
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              isHidden: 1,
+              color: 1
+            }
+          }
+        ]);
+
+        return JSON.parse(JSON.stringify(categoriesWithNonExpiredEvents));
+      } catch (error) {
+        handleError(error);
+        return [];
+      }
+    },
+    ['categories-non-expired'],
+    {
+      revalidate: 60, // Cache for 1 minute
+      tags: ['categories-non-expired']
+    }
+  )();
+}
+
 export const deleteCategory = async (categoryId: string) => {
   try {
     await connectToDatabase();
