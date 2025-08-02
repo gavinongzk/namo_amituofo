@@ -16,6 +16,11 @@ const EventInfo = ({ event }: { event: any }) => {
   const categoryColor = event.category.color 
     ? event.category.color 
     : getCategoryColor(event.category.name);
+    
+  // Safely extract background and text colors
+  const colorParts = categoryColor.split(' ');
+  const bgColor = colorParts[0] || 'bg-gray-200';
+  const textColor = colorParts[1] || 'text-gray-700';
 
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
@@ -24,7 +29,7 @@ const EventInfo = ({ event }: { event: any }) => {
         {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
           <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
-          <p className={`text-base font-semibold rounded-full px-6 py-2.5 w-fit ${categoryColor.split(' ')[0]} ${categoryColor.split(' ')[1]}`}>
+          <p className={`text-base font-semibold rounded-full px-6 py-2.5 w-fit ${bgColor} ${textColor}`}>
             {event.category.name}
           </p>
           <div className="flex justify-start">

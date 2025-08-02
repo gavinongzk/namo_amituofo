@@ -46,6 +46,11 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     ? event.category.color 
     : categoryColors[event.category.name] || getCategoryColor(event.category.name);
     
+  // Safely extract background and text colors
+  const colorParts = categoryColor.split(' ');
+  const bgColor = colorParts[0] || 'bg-gray-200';
+  const textColor = colorParts[1] || 'text-gray-700';
+    
   const isExpired = new Date(event.endDateTime) < new Date();
 
   useEffect(() => {
@@ -186,10 +191,10 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span 
-              className={`w-3 h-3 rounded-full ${categoryColor.split(' ')[0]}`} 
+              className={`w-3 h-3 rounded-full ${bgColor}`} 
               role="presentation" 
             />
-            <p className={`text-sm font-medium ${categoryColor.split(' ')[1]}`}>
+            <p className={`text-sm font-medium ${textColor}`}>
               {event.category.name}
             </p>
           </div>

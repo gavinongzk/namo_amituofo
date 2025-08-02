@@ -259,7 +259,8 @@ const SelectEventPage = () => {
                 const categoryColor = selectedEvent.category.color 
                   ? selectedEvent.category.color 
                   : getCategoryColor(selectedEvent.category.name);
-                return categoryColor.split(' ')[1];
+                const colorParts = categoryColor.split(' ');
+                return colorParts[1] || 'text-gray-700';
               })()}`}>
                 {selectedEvent.category.name}
               </CardDescription>
@@ -330,7 +331,10 @@ const SelectEventPage = () => {
                 const categoryColor = selectedEvent.category.color 
                   ? selectedEvent.category.color 
                   : getCategoryColor(selectedEvent.category.name);
-                return `${categoryColor.split(' ')[0]} ${categoryColor.split(' ')[1]} border-current`;
+                const colorParts = categoryColor.split(' ');
+                const bgColor = colorParts[0] || 'bg-gray-200';
+                const textColor = colorParts[1] || 'text-gray-700';
+                return `${bgColor} ${textColor} border-current`;
               })()}`}>
                 {selectedEvent.category.name}
               </Badge>

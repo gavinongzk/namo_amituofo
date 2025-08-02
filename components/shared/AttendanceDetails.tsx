@@ -43,6 +43,11 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
   const categoryColor = event.category.color 
     ? event.category.color 
     : getCategoryColor(event.category.name);
+    
+  // Safely extract background and text colors
+  const colorParts = categoryColor.split(' ');
+  const bgColor = colorParts[0] || 'bg-gray-200';
+  const textColor = colorParts[1] || 'text-gray-700';
 
   const handleSave = async () => {
     if (onUpdateMaxSeats) {
@@ -81,7 +86,7 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
           </div>
           <div>
             <p className="text-sm text-gray-600">Category 类别</p>
-            <p className={`font-semibold ${categoryColor.split(' ')[1]}`}>
+            <p className={`font-semibold ${textColor}`}>
               {event.category.name}
             </p>
           </div>
