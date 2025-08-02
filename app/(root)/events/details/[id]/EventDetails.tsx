@@ -9,8 +9,14 @@ import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
 import Link from 'next/link';
 import { useState } from 'react';
+import { getCategoryColor } from '@/lib/utils/colorUtils';
 
 const EventInfo = ({ event }: { event: any }) => {
+  // Get category color
+  const categoryColor = event.category.color 
+    ? event.category.color 
+    : getCategoryColor(event.category.name);
+
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
       {/* Event Details Card */}
@@ -18,7 +24,7 @@ const EventInfo = ({ event }: { event: any }) => {
         {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
           <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
-          <p className="text-base font-semibold rounded-full bg-green-50 px-6 py-2.5 text-green-600 w-fit">
+          <p className={`text-base font-semibold rounded-full px-6 py-2.5 w-fit ${categoryColor.split(' ')[0]} ${categoryColor.split(' ')[1]}`}>
             {event.category.name}
           </p>
           <div className="flex justify-start">

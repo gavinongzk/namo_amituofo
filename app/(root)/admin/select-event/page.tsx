@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react"
 import { isAfter, isBefore, parseISO } from 'date-fns';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
 import { Separator } from "@/components/ui/separator"
+import { getCategoryColor } from '@/lib/utils/colorUtils';
 
 type Event = {
   _id: string;
@@ -23,6 +24,7 @@ type Event = {
   location: string;
   category: {
     name: string;
+    color?: string;
   };
   maxSeats: number;
   totalRegistrations: number;
@@ -239,7 +241,14 @@ const SelectEventPage = () => {
           <Card className="mb-6 md:mb-8 shadow-md hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="pb-3">
               <CardTitle className="text-xl md:text-2xl">{selectedEvent.title}</CardTitle>
-              <CardDescription className="text-base md:text-lg">{selectedEvent.category.name}</CardDescription>
+              <CardDescription className={`text-base md:text-lg ${(() => {
+                const categoryColor = selectedEvent.category.color 
+                  ? selectedEvent.category.color 
+                  : getCategoryColor(selectedEvent.category.name);
+                return categoryColor.split(' ')[1];
+              })()}`}>
+                {selectedEvent.category.name}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 md:space-y-5">
@@ -303,7 +312,12 @@ const SelectEventPage = () => {
               </div>
             </CardContent>
             <CardFooter className="flex flex-wrap gap-2 pt-2">
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className={`text-sm ${(() => {
+                const categoryColor = selectedEvent.category.color 
+                  ? selectedEvent.category.color 
+                  : getCategoryColor(selectedEvent.category.name);
+                return `${categoryColor.split(' ')[0]} ${categoryColor.split(' ')[1]} border-current`;
+              })()}`}>
                 {selectedEvent.category.name}
               </Badge>
               <Badge variant="outline" className={`text-sm ${new Date(selectedEvent.startDateTime) > new Date() ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>

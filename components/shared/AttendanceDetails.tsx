@@ -3,6 +3,7 @@ import { formatBilingualDateTime } from '@/lib/utils';
 import { Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { getCategoryColor } from '@/lib/utils/colorUtils';
 
 interface AttendanceDetailsCardProps {
   event: {
@@ -13,6 +14,7 @@ interface AttendanceDetailsCardProps {
     location: string;
     category: {
       name: string;
+      color?: string;
     };
     maxSeats: number;
   };
@@ -37,6 +39,11 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
   const [maxSeats, setMaxSeats] = useState(event.maxSeats);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Get category color
+  const categoryColor = event.category.color 
+    ? event.category.color 
+    : getCategoryColor(event.category.name);
+
   const handleSave = async () => {
     if (onUpdateMaxSeats) {
       setIsUpdating(true);
@@ -44,7 +51,7 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
         await onUpdateMaxSeats(maxSeats);
         setIsEditing(false);
       } catch (error) {
-        console.error('Error updating max seats:', error);
+        console.error('Failed to update max seats:', error);
       } finally {
         setIsUpdating(false);
       }
@@ -74,7 +81,9 @@ const AttendanceDetailsCard: React.FC<AttendanceDetailsCardProps> = ({
           </div>
           <div>
             <p className="text-sm text-gray-600">Category 类别</p>
-            <p className="font-semibold">{event.category.name}</p>
+            <p className={`font-semibold ${categoryColor.split(' ')[1]}`}>
+              {event.category.name}
+            </p>
           </div>
         </div>
         <div className="border-t pt-4 mt-4">
