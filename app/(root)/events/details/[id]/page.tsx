@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
 import { notFound } from 'next/navigation'; // Added for handling not found pages
 import { getEventById } from '@/lib/actions/event.actions';
+import { currentUser } from '@clerk/nextjs';
 import EventDetails from './EventDetails';
 
 // Generate metadata for social sharing
@@ -113,6 +114,14 @@ export default async function EventDetailsPage({ params }: { params: { id: strin
   if (!event) {
     // This case handles if getEventById returns null for a valid ID (event genuinely not found)
     notFound();
+  }
+  // If event is a draft, only superadmins can view it
+  if ((event as any).isDraft) {
+    const user = await currentUser();
+    const role = user?.publicMetadata?.role as string | undefined;
+    if (role !== 'superadmin') {
+      notFound();
+    }
   }
   
   return <EventDetails event={event} />;

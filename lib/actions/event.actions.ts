@@ -54,11 +54,14 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       customFields: event.customFields
     });
 
+    const isSuperAdmin = organizer.role === 'superadmin';
+
     const newEvent = await Event.create({ 
       ...event, 
       category: event.categoryId, 
       organizer: userId,
-      customFields: event.customFields
+      customFields: event.customFields,
+      isDraft: isSuperAdmin ? (event.isDraft !== undefined ? event.isDraft : false) : false
     });
 
     console.log("New event created successfully:", newEvent);
@@ -66,6 +69,7 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     revalidatePath(path);
     revalidatePath('/');
     revalidateTag('events');
+    revalidateTag('admin-events');
 
     return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
@@ -117,13 +121,21 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       throw new Error('Unauthorized or event not found');
     }
 
+    const organizer = await User.findById(userId);
+    const isSuperAdmin = organizer?.role === 'superadmin';
+
+    const updateData: any = { 
+      ...event, 
+      category: event.categoryId,
+      customFields: event.customFields
+    };
+    if (typeof event.isDraft !== 'undefined' && isSuperAdmin) {
+      updateData.isDraft = event.isDraft;
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
-      { 
-        ...event, 
-        category: event.categoryId,
-        customFields: event.customFields
-      },
+      updateData,
       { new: true }
     );
     
@@ -131,6 +143,7 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
     revalidatePath(path);
     revalidatePath('/');
     revalidateTag('events');
+    revalidateTag('admin-events');
     revalidateTag('event-images');
 
     return JSON.parse(JSON.stringify(updatedEvent));
@@ -193,6 +206,7 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
             categoryCondition ? { category: categoryCondition._id } : {},
             { country: country },
             { isDeleted: { $ne: true } },
+            { isDraft: { $ne: true } },
             dateCondition
           ]
         }
@@ -380,7 +394,8 @@ export async function getRelatedEventsByCategory({
       $and: [
         { category: categoryId }, 
         { _id: { $ne: eventId } },
-        { isDeleted: { $ne: true } }
+        { isDeleted: { $ne: true } },
+        { isDraft: { $ne: true } }
       ] 
     }
 

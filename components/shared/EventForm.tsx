@@ -52,6 +52,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
+  const [submitAsDraft, setSubmitAsDraft] = useState<boolean>(false);
 
   useEffect(() => {
     const getCategories = async () => {
@@ -146,7 +147,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             ...values, 
             imageUrl: uploadedImageUrl,
             customFields: values.customFields,
-            country: values.country // Explicitly include country
+            country: values.country, // Explicitly include country
+            isDraft: submitAsDraft
           },
           userId,
           path: '/profile'
@@ -159,7 +161,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             customFields: values.customFields.map(field => ({
               ...field,
               value: field.value || '' // Ensure value is never undefined
-            })) as CustomField[]
+            })) as CustomField[],
+            isDraft: submitAsDraft
           },
           userId,
           path: '/profile'
@@ -194,7 +197,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             customFields: values.customFields.map(field => ({
               ...field,
               value: field.value || '' // Ensure value is never undefined
-            })) as CustomField[]
+            })) as CustomField[],
+            isDraft: submitAsDraft
           },
           path: `/events/details/${eventId}`
         })
@@ -556,15 +560,48 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           </Button>
         </div>
 
-        <Button 
-          type="submit"
-          size="lg"
-          disabled={form.formState.isSubmitting}
-          className="button col-span-2 w-full"
-        >
-          {form.formState.isSubmitting ? (
-            'Submitting...'
-          ): `${type} Event `}</Button>
+        {isSuperAdmin ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button 
+              type="button"
+              size="lg"
+              disabled={form.formState.isSubmitting}
+              className="button w-full bg-gray-600 hover:bg-gray-700"
+              onClick={() => {
+                setSubmitAsDraft(true);
+                void form.handleSubmit(async (vals) => {
+                  await onSubmit(vals);
+                  setSubmitAsDraft(false);
+                })();
+              }}
+            >
+              {form.formState.isSubmitting && submitAsDraft ? 'Saving Draft...' : 'Save as Draft'}
+            </Button>
+            <Button 
+              type="button"
+              size="lg"
+              disabled={form.formState.isSubmitting}
+              className="button w-full"
+              onClick={() => {
+                setSubmitAsDraft(false);
+                void form.handleSubmit(onSubmit)();
+              }}
+            >
+              {form.formState.isSubmitting && !submitAsDraft ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Save Changes')}
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            type="submit"
+            size="lg"
+            disabled={form.formState.isSubmitting}
+            className="button col-span-2 w-full"
+          >
+            {form.formState.isSubmitting ? (
+              'Submitting...'
+            ): `${type} Event `}
+          </Button>
+        )}
       </form>
     </Form>
   )

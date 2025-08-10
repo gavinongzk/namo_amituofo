@@ -23,6 +23,7 @@ export type CreateEventParams = {
     categoryId: string
     customFields: CustomField[]
     country: string
+    isDraft?: boolean
   }
   path: string
 }
@@ -40,6 +41,7 @@ export type UpdateEventParams = {
     categoryId: string
     customFields: CustomField[]
     country: string
+    isDraft?: boolean
   }
   path: string
 }
@@ -87,6 +89,7 @@ export type Event = {
     name: string
   }
   customFields: CustomField[]
+  isDraft?: boolean
 }
 
 // ====== CATEGORY PARAMS
