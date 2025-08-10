@@ -45,9 +45,12 @@ async function EventList({ page, searchText, category, country, role, userId }: 
       totalPages: events.totalPages
     });
 
+    // Hide drafts from public listing as an extra safeguard
+    const visibleData = (events.data || []).filter((e: any) => e && e.isDraft !== true);
+
     return (
       <Collection
-        data={events.data as (IEvent & { 
+        data={visibleData as (IEvent & { 
           orderId?: string;
           customFieldValues?: CustomField[];
           queueNumber?: string;
