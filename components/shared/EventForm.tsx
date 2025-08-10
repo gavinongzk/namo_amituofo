@@ -52,7 +52,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
-  const [submitAsDraft, setSubmitAsDraft] = useState<boolean>(false);
 
   useEffect(() => {
     const getCategories = async () => {
@@ -114,7 +113,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     name: "customFields",
   });
 
-  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+  async function onSubmit(values: z.infer<typeof eventFormSchema>, asDraft = false) {
     console.log("Form submitted with values:", values);
     
     // Ensure country is set
@@ -148,7 +147,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             imageUrl: uploadedImageUrl,
             customFields: values.customFields,
             country: values.country, // Explicitly include country
-            isDraft: submitAsDraft
+            isDraft: asDraft
           },
           userId,
           path: '/profile'
@@ -162,7 +161,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               ...field,
               value: field.value || '' // Ensure value is never undefined
             })) as CustomField[],
-            isDraft: submitAsDraft
+            isDraft: asDraft
           },
           userId,
           path: '/profile'
@@ -198,7 +197,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               ...field,
               value: field.value || '' // Ensure value is never undefined
             })) as CustomField[],
-            isDraft: submitAsDraft
+            isDraft: asDraft
           },
           path: `/events/details/${eventId}`
         })
@@ -568,14 +567,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               disabled={form.formState.isSubmitting}
               className="button w-full bg-gray-600 hover:bg-gray-700"
               onClick={() => {
-                setSubmitAsDraft(true);
                 void form.handleSubmit(async (vals) => {
-                  await onSubmit(vals);
-                  setSubmitAsDraft(false);
+                  await onSubmit(vals, true);
                 })();
               }}
             >
-              {form.formState.isSubmitting && submitAsDraft ? 'Saving Draft...' : 'Save as Draft'}
+              {form.formState.isSubmitting ? 'Saving Draft...' : 'Save as Draft'}
             </Button>
             <Button 
               type="button"
@@ -583,11 +580,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               disabled={form.formState.isSubmitting}
               className="button w-full"
               onClick={() => {
-                setSubmitAsDraft(false);
-                void form.handleSubmit(onSubmit)();
+                void form.handleSubmit((vals) => onSubmit(vals, false))();
               }}
             >
-              {form.formState.isSubmitting && !submitAsDraft ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Save Changes')}
+              {form.formState.isSubmitting ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Save Changes')}
             </Button>
           </div>
         ) : (
