@@ -113,7 +113,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     name: "customFields",
   });
 
-  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+  async function onSubmit(values: z.infer<typeof eventFormSchema>, asDraft = false) {
     console.log("Form submitted with values:", values);
     
     // Ensure country is set
@@ -146,7 +146,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             ...values, 
             imageUrl: uploadedImageUrl,
             customFields: values.customFields,
-            country: values.country // Explicitly include country
+            country: values.country, // Explicitly include country
+            isDraft: asDraft
           },
           userId,
           path: '/profile'
@@ -159,7 +160,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             customFields: values.customFields.map(field => ({
               ...field,
               value: field.value || '' // Ensure value is never undefined
-            })) as CustomField[]
+            })) as CustomField[],
+            isDraft: asDraft
           },
           userId,
           path: '/profile'
@@ -194,7 +196,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             customFields: values.customFields.map(field => ({
               ...field,
               value: field.value || '' // Ensure value is never undefined
-            })) as CustomField[]
+            })) as CustomField[],
+            isDraft: asDraft
           },
           path: `/events/details/${eventId}`
         })
@@ -211,7 +214,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form onSubmit={form.handleSubmit((vals) => onSubmit(vals, false))} className="flex flex-col gap-5">
         <div className="flex flex-col gap-5 md:flex-row">
           <FormField
             control={form.control}
@@ -556,15 +559,45 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           </Button>
         </div>
 
-        <Button 
-          type="submit"
-          size="lg"
-          disabled={form.formState.isSubmitting}
-          className="button col-span-2 w-full"
-        >
-          {form.formState.isSubmitting ? (
-            'Submitting...'
-          ): `${type} Event `}</Button>
+        {isSuperAdmin ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button 
+              type="button"
+              size="lg"
+              disabled={form.formState.isSubmitting}
+              className="button w-full bg-gray-600 hover:bg-gray-700"
+              onClick={() => {
+                void form.handleSubmit(async (vals) => {
+                  await onSubmit(vals, true);
+                })();
+              }}
+            >
+              {form.formState.isSubmitting ? 'Saving Draft...' : 'Save as Draft'}
+            </Button>
+            <Button 
+              type="button"
+              size="lg"
+              disabled={form.formState.isSubmitting}
+              className="button w-full"
+              onClick={() => {
+                void form.handleSubmit((vals) => onSubmit(vals, false))();
+              }}
+            >
+              {form.formState.isSubmitting ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Publish Event')}
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            type="submit"
+            size="lg"
+            disabled={form.formState.isSubmitting}
+            className="button col-span-2 w-full"
+          >
+            {form.formState.isSubmitting ? (
+              'Submitting...'
+            ): `${type} Event `}
+          </Button>
+        )}
       </form>
     </Form>
   )

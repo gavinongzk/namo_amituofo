@@ -26,15 +26,22 @@ const EventInfo = ({ event }: { event: any }) => {
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
       {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+        {event.isDraft && (
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-800">
+            This event is a draft. It is not visible to the public and registration is disabled.
+          </div>
+        )}
         {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
           <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
           <p className={`text-base font-semibold rounded-full px-6 py-2.5 w-fit ${bgColor} ${textColor}`}>
             {event.category.name}
           </p>
-          <div className="flex justify-start">
-            <CheckoutButton event={event} />
-          </div>
+          {!event.isDraft && (
+            <div className="flex justify-start">
+              <CheckoutButton event={event} />
+            </div>
+          )}
         </div>
 
         <div className="h-px bg-gray-200" />

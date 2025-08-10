@@ -62,7 +62,9 @@ const SelectEventPage = () => {
         console.log('Fetched events:', result);
 
         if (Array.isArray(result.data)) {
-          const recentAndUpcomingEvents = await Promise.all(result.data
+          // Superadmins see all (including drafts). Others should not see drafts, but this page is admin-only anyway
+          const source = (role === 'superadmin') ? result.data : (result.data || []).filter((e: any) => e && e.isDraft !== true);
+          const recentAndUpcomingEvents = await Promise.all(source
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
               const countsResponse = await fetch(`/api/events/${event._id}/counts`);

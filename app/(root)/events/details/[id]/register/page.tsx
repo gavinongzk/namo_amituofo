@@ -7,6 +7,7 @@ import { headers } from 'next/headers'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
+import { currentUser } from '@clerk/nextjs'
 
 
 // Dynamically import heavy components
@@ -70,7 +71,7 @@ async function AsyncRegisterForm({
 }: { 
   eventPromise: Promise<any> 
 }) {
-  const event = await eventPromise
+  const [event, user] = await Promise.all([eventPromise, currentUser()]);
 
   if (!event) {
     return (
@@ -83,6 +84,19 @@ async function AsyncRegisterForm({
         </p>
       </div>
     )
+  }
+
+  // Block registration for draft events unless viewer is superadmin
+  if (event.isDraft) {
+    const role = user?.publicMetadata?.role as string | undefined;
+    if (role !== 'superadmin') {
+      return (
+        <div className="text-center py-10">
+          <h3 className="text-2xl font-bold text-gray-900">暂未开放 / Not Available</h3>
+          <p className="mt-2 text-gray-600">此活动尚未发布。/ This event has not been published yet.</p>
+        </div>
+      )
+    }
   }
 
   return <RegisterFormWrapper event={event} />

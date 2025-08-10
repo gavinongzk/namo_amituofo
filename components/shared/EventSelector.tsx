@@ -20,11 +20,13 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}`);
+        const role = user?.publicMetadata.role as string | undefined;
+        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}${role ? `&role=${role}` : ''}`);
         const result = await response.json();
 
         if (Array.isArray(result.data)) {
-          const recentAndUpcomingEvents = await Promise.all(result.data
+          const source = (role === 'superadmin') ? result.data : (result.data || []).filter((e: any) => e && e.isDraft !== true);
+          const recentAndUpcomingEvents = await Promise.all(source
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
               const countsResponse = await fetch(`/api/events/${event._id}/counts`);
