@@ -583,7 +583,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                 void form.handleSubmit((vals) => onSubmit(vals, false))();
               }}
             >
-              {form.formState.isSubmitting ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Save Changes')}
+              {form.formState.isSubmitting ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Publish Event')}
             </Button>
           </div>
         ) : (
