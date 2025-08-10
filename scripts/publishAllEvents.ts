@@ -17,7 +17,7 @@ async function publishAllEvents() {
     const update = { $set: { isDraft: false } } as any;
 
     const result = await Event.updateMany(filter, update, { strict: false });
-    console.log(`Updated ${result.modifiedCount ?? result.nModified ?? 0} event(s) to isDraft=false.`);
+    console.log(`Updated ${result.modifiedCount ?? 0} event(s) to isDraft=false.`);
 
     // Optional: report totals
     const totals = await Event.aggregate([
