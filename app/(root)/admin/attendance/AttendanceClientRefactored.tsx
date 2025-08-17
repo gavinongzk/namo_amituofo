@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
 import Modal from '@/components/ui/modal';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
@@ -67,6 +67,24 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
   // User permissions
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+
+  // Scanner toggle handler with proper cleanup
+  const handleToggleScanner = useCallback(() => {
+    setShowScanner(prev => !prev);
+  }, []);
+
+  // Scanner close handler
+  const handleScannerClose = useCallback(() => {
+    setShowScanner(false);
+  }, []);
+
+  // Cleanup scanner when component unmounts
+  useEffect(() => {
+    return () => {
+      // Ensure scanner is closed when component unmounts
+      setShowScanner(false);
+    };
+  }, []);
 
   // Helper function for showing modals
   const showModalWithMessage = useCallback((title: string, message: string, type: ModalType) => {
@@ -415,7 +433,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           onQueueNumberSubmit={handleQueueNumberSubmit}
           message={message}
           showScanner={showScanner}
-          onToggleScanner={() => setShowScanner(!showScanner)}
+          onToggleScanner={handleToggleScanner}
           onRefresh={fetchRegistrations}
           onDownloadCsv={isSuperAdmin ? handleDownloadCsv : undefined}
           onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
@@ -427,7 +445,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+                <QrCodeScanner onScan={handleScan} onClose={handleScannerClose} />
               </div>
               <div>
                 <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">

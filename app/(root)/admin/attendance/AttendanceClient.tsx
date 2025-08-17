@@ -89,6 +89,24 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
     }
   }, []);
 
+  // Scanner toggle handler with proper cleanup
+  const handleToggleScanner = useCallback(() => {
+    setShowScanner(prev => !prev);
+  }, []);
+
+  // Scanner close handler
+  const handleScannerClose = useCallback(() => {
+    setShowScanner(false);
+  }, []);
+
+  // Cleanup scanner when component unmounts
+  useEffect(() => {
+    return () => {
+      // Ensure scanner is closed when component unmounts
+      setShowScanner(false);
+    };
+  }, []);
+
   // Queue number handling
   const handleQueueNumberChange = useCallback((value: string) => {
     setQueueNumber(value);
@@ -429,7 +447,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           onQueueNumberSubmit={handleQueueNumberSubmit}
           message={message}
           showScanner={showScanner}
-          onToggleScanner={() => setShowScanner(!showScanner)}
+          onToggleScanner={handleToggleScanner}
           onRefresh={fetchRegistrations}
           onDownloadCsv={isSuperAdmin ? handleDownloadCsv : undefined}
           onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
@@ -441,7 +459,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+                <QrCodeScanner onScan={handleScan} onClose={handleScannerClose} />
               </div>
               <div>
                 <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -593,7 +611,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          onToggleScanner={() => setShowScanner(!showScanner)}
+          onToggleScanner={handleToggleScanner}
           onRefresh={fetchRegistrations}
           onExport={isSuperAdmin ? handleDownloadCsv : undefined}
           showScanner={showScanner}

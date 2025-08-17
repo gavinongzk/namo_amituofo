@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
 import { Flashlight, FlashlightOff, Loader2 as Loader2Icon } from 'lucide-react';
@@ -18,12 +18,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const [error, setError] = useState<string>();
   const [isRetrying, setIsRetrying] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
-  const scannerRef = useRef<{ stop: () => void }>();
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isActive, setIsActive] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [retryDelay, setRetryDelay] = useState(3); // seconds
   const maxRetries = 3;
+  
+  // Refs for cleanup
+  const scannerRef = useRef<{ stop: () => void }>();
+  const streamRef = useRef<MediaStream | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // Check if running on Safari
@@ -42,31 +47,87 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
   };
 
-  const initializeScanner = async () => {
+  // Cleanup function to properly stop camera and scanner
+  const cleanupCamera = useCallback(() => {
+    console.log('Cleaning up camera resources...');
+    
+    // Clear any pending retry timeouts
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
+    // Stop the QR scanner
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.stop();
+        scannerRef.current = undefined;
+      } catch (err) {
+        console.warn('Error stopping scanner:', err);
+      }
+    }
+
+    // Stop all media tracks
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        streamRef.current = null;
+      } catch (err) {
+        console.warn('Error stopping media tracks:', err);
+      }
+    }
+
+    // Clear video element
+    if (videoRef.current) {
+      try {
+        videoRef.current.srcObject = null;
+        videoRef.current.load(); // Reset video element
+      } catch (err) {
+        console.warn('Error clearing video element:', err);
+      }
+    }
+
+    // Reset state
+    setIsActive(false);
+    setIsInitializing(false);
+    setError(undefined);
+    setRetryCount(0);
+    setRetryDelay(3);
+  }, []);
+
+  // Enhanced error handling for camera access
+  const handleCameraError = useCallback((err: Error) => {
+    console.error('Camera access error:', err);
+    
+    // Check for specific error types and provide helpful messages
+    if (err.name === 'NotAllowedError') {
+      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.\n请在浏览器设置中启用摄像头权限并刷新页面。');
+    } else if (err.name === 'NotFoundError') {
+      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.\n未找到摄像头。请确保您的设备有摄像头且未被其他应用使用。');
+    } else if (err.name === 'NotReadableError') {
+      setError('Camera is in use by another application. Please close other apps using the camera and try again.\n摄像头被其他应用占用。请关闭其他使用摄像头的应用后重试。');
+    } else if (err.name === 'NotSupportedError') {
+      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.\n您的浏览器不完全支持摄像头访问。请尝试使用 Chrome、Firefox 或 Safari。');
+    } else if (err.message.includes('Permission denied')) {
+      setError('Camera permission denied. Please allow camera access and refresh the page.\n摄像头权限被拒绝。请允许摄像头访问并刷新页面。');
+    } else {
+      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.\n摄像头错误：${err.message}。请刷新页面或尝试其他浏览器。`);
+    }
+  }, []);
+
+  const initializeScanner = useCallback(async () => {
+    if (!isActive) return;
+
     try {
+      setIsInitializing(true);
+      setError(undefined);
+      
       checkBrowserCompatibility();
 
-      // First explicitly request camera permission with more specific constraints
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-
-      // Immediately set the stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Ensure video plays
-        try {
-          await videoRef.current.play();
-        } catch (playError) {
-          console.error('Error playing video:', playError);
-          throw new Error('Failed to start video stream');
-        }
-      }
-      
+      // Get available cameras first
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
       
@@ -89,6 +150,33 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         throw new Error('Failed to select a camera.');
       }
 
+      // Request camera access with specific constraints
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: {
+          deviceId: { exact: selectedCamera },
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+
+      // Store stream reference for cleanup
+      streamRef.current = stream;
+
+      // Set stream to video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        
+        // Ensure video plays
+        try {
+          await videoRef.current.play();
+        } catch (playError) {
+          console.error('Error playing video:', playError);
+          throw new Error('Failed to start video stream');
+        }
+      }
+
+      // Initialize QR code reader
       const codeReader = new BrowserQRCodeReader(undefined, {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
@@ -96,39 +184,37 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       let active = true;
 
-      // Stop the initial stream before starting the code reader
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-
       const controls = await codeReader.decodeFromVideoDevice(
         selectedCamera,
         videoRef.current!,
         (result) => {
-          if (result && active) {
+          if (result && active && isActive) {
             handleSuccessfulScan(result.getText());
           }
         }
       );
 
       scannerRef.current = controls;
+      setIsInitializing(false);
 
+      // Return cleanup function
       return () => {
         active = false;
         if (controls) {
-          controls.stop();
-        }
-        // Clean up any remaining video tracks
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
+          try {
+            controls.stop();
+          } catch (err) {
+            console.warn('Error stopping controls:', err);
+          }
         }
       };
+
     } catch (err: any) {
-      handleError(err);
+      setIsInitializing(false);
+      handleCameraError(err);
       return () => {};
     }
-  };
+  }, [isActive, handleCameraError]);
 
   const handleSuccessfulScan = (text: string) => {
     // Vibrate if supported
@@ -136,13 +222,12 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       navigator.vibrate(200);
     }
     
-    // Don't play sound here as it's handled by the parent component
-    
     onScan(text);
   };
 
   const handleError = (err: Error) => {
     console.error('QR Scanner Error:', err);
+    
     if (
       err.name === 'NotReadableError' ||
       err.message.includes('hardware') ||
@@ -153,42 +238,28 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           `Camera is in use by another application or not accessible. Retrying in ${retryDelay} seconds... (${retryCount + 1}/${maxRetries})` +
           '\n请关闭其他使用摄像头的应用，系统将自动重试。'
         );
+        
         // Start countdown
-        let seconds = retryDelay;
-        retryTimeoutRef.current && clearInterval(retryTimeoutRef.current);
-        retryTimeoutRef.current = setInterval(() => {
-          seconds -= 1;
-          setRetryDelay(seconds);
-          setError(
-            `Camera is in use by another application or not accessible. Retrying in ${seconds} seconds... (${retryCount + 1}/${maxRetries})` +
-            '\n请关闭其他使用摄像头的应用，系统将自动重试。'
-          );
-          if (seconds <= 0) {
-            clearInterval(retryTimeoutRef.current!);
-            setRetryCount(c => c + 1);
-            setRetryDelay(3);
-            setError(undefined);
-            retry();
-          }
-        }, 1000);
+        retryTimeoutRef.current && clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = setTimeout(() => {
+          setRetryCount(c => c + 1);
+          setRetryDelay(3);
+          setError(undefined);
+          retry();
+        }, retryDelay * 1000);
       } else {
         setError(
           'Camera is in use by another application or not accessible. Please close other apps using the camera and try again.\n摄像头被其他应用占用，请关闭其他应用后重试，或刷新页面。'
         );
       }
-    } else if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
-      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.');
-    } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
-      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.');
-    } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
-      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.');
     } else {
-      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.`);
+      // Use enhanced error handler for other errors
+      handleCameraError(err);
     }
   };
 
   const toggleTorch = async () => {
-    const stream = videoRef.current?.srcObject as MediaStream;
+    const stream = streamRef.current;
     const track = stream?.getTracks().find(track => track.kind === 'video');
       
     if (track && 'getCapabilities' in track) {
@@ -207,60 +278,64 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   };
 
   const retry = async () => {
+    if (!isActive) return;
+    
     setIsRetrying(true);
     setError(undefined);
+    
     try {
-      await initializeScanner();
+      // Clean up existing resources first
+      cleanupCamera();
+      
+      // Reset state for retry
+      setIsActive(true);
+      setIsInitializing(true);
+      
+      // Initialize scanner
+      const cleanupFn = await initializeScanner();
+      if (cleanupFn) {
+        cleanupRef.current = cleanupFn;
+      }
     } finally {
       setIsRetrying(false);
     }
   };
 
-  const stopCamera = () => {
-    setIsActive(false);
-    if (scannerRef.current) {
-      scannerRef.current.stop();
-      scannerRef.current = undefined;
-    }
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
-      videoRef.current.srcObject = null;
-    }
+  const stopCamera = useCallback(() => {
+    console.log('Stopping camera...');
+    cleanupCamera();
     if (onClose) onClose();
-  };
+  }, [cleanupCamera, onClose]);
 
+  // Initialize scanner when component mounts or camera changes
   useEffect(() => {
     if (!isActive) return;
     
-    // Reset error state when reactivating
-    setError(undefined);
-    setRetryCount(0);
-    setRetryDelay(3);
+    let cleanupFn: (() => void) | null = null;
     
-    const cleanup = initializeScanner();
-    return () => {
-      cleanup?.then(cleanupFn => {
-        if (cleanupFn) {
-          cleanupFn();
+    const init = async () => {
+      try {
+        const fn = await initializeScanner();
+        if (fn) {
+          cleanupFn = fn;
+          cleanupRef.current = fn;
         }
-        // Ensure all tracks are stopped
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            track.enabled = false;
-          });
-          videoRef.current.srcObject = null;
-        }
-      });
+      } catch (err) {
+        console.error('Failed to initialize scanner:', err);
+      }
     };
-  }, [activeCamera, isActive]);
 
-  // Add a new effect to handle video element attributes
+    init();
+
+    return () => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+      cleanupCamera();
+    };
+  }, [activeCamera, isActive, initializeScanner, cleanupCamera]);
+
+  // Add video element attributes
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.setAttribute('autoplay', 'true');
@@ -269,12 +344,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
   }, []);
 
-  // Clean up retry timer on unmount
+  // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (retryTimeoutRef.current) clearInterval(retryTimeoutRef.current);
+      console.log('QrCodeScanner unmounting, cleaning up...');
+      cleanupCamera();
     };
-  }, []);
+  }, [cleanupCamera]);
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto">
@@ -322,11 +398,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             variant="outline" 
             size="icon"
             className="bg-background/80"
+            disabled={isInitializing}
           >
             {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
           </Button>
+          
           {/* Turn Off Camera Button */}
-          {!error && isActive && (
+          {!error && isActive && !isInitializing && (
             <Button 
               onClick={stopCamera}
               variant="destructive"
@@ -337,6 +415,16 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             </Button>
           )}
         </div>
+
+        {/* Loading State */}
+        {isInitializing && !error && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+            <div className="text-center p-4">
+              <Loader2Icon className="animate-spin h-8 w-8 mx-auto mb-2" />
+              <p className="text-sm">Initializing camera...</p>
+            </div>
+          </div>
+        )}
 
         {/* Error State */}
         {error && (
