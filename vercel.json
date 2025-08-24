@@ -6,6 +6,32 @@
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "framework": "nextjs",
+  "functions": {
+    "app/api/events/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/events/[id]/counts/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/events/[id]/attendees/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/reg/route.ts": {
+      "maxDuration": 20
+    },
+    "app/api/reg/[id]/route.ts": {
+      "maxDuration": 20
+    },
+    "app/api/analytics/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/users/route.ts": {
+      "maxDuration": 20
+    },
+    "app/api/createOrder/route.ts": {
+      "maxDuration": 25
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

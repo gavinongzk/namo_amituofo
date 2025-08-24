@@ -5,6 +5,8 @@
   "packageManager": "pnpm@9.11.0",
   "scripts": {
     "optimize-costs": "node scripts/optimize-vercel-costs.js",
+    "optimize-db": "node scripts/optimize-database.js",
+    "test-timeout-fixes": "node scripts/test-timeout-fixes.js",
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
     "build": "next build",

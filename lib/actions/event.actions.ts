@@ -177,95 +177,124 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
 
 // GET ALL EVENTS (Regular users - with date filtering)
 export async function getAllEvents({ query, limit = 6, page, category, country, role }: GetAllEventsParams & { role?: string }) {
-      try {
-        // Connect to database first and handle connection errors explicitly
-        try {
-          await connectToDatabase();
-        } catch (dbError) {
-          console.error('Database connection error:', dbError);
-          throw new Error('Failed to connect to database. Please try again later.');
-        }
+  try {
+    // Connect to database first and handle connection errors explicitly
+    try {
+      await connectToDatabase();
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      throw new Error('Failed to connect to database. Please try again later.');
+    }
 
-        const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
-        let categoryCondition = null;
-        
-        try {
-          categoryCondition = category ? await getCategoryByName(category) : null;
-        } catch (categoryError) {
-          console.error('Error fetching category:', categoryError);
-          // Continue without category filter if there's an error
-        }
-        
-        // Add date filtering condition
-        const expirationDate = EVENT_CONFIG.getExpirationDate(role);
-        const dateCondition = { endDateTime: { $gte: expirationDate } };
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {}
+    let categoryCondition = null;
+    
+    try {
+      categoryCondition = category ? await getCategoryByName(category) : null;
+    } catch (categoryError) {
+      console.error('Error fetching category:', categoryError);
+      // Continue without category filter if there's an error
+    }
+    
+    // Add date filtering condition
+    const expirationDate = EVENT_CONFIG.getExpirationDate(role);
+    const dateCondition = { endDateTime: { $gte: expirationDate } };
 
-        const conditions = {
-          $and: [
-            titleCondition,
-            categoryCondition ? { category: categoryCondition._id } : {},
-            { country: country },
-            { isDeleted: { $ne: true } },
-            { isDraft: { $ne: true } },
-            dateCondition
+    const conditions = {
+      $and: [
+        titleCondition,
+        categoryCondition ? { category: categoryCondition._id } : {},
+        { country: country },
+        { isDeleted: { $ne: true } },
+        { isDraft: { $ne: true } },
+        dateCondition
+      ]
+    }
+
+    const skipAmount = (Number(page) - 1) * limit
+    
+    // Optimize: Use aggregation pipeline for better performance
+    const pipeline = [
+      { $match: conditions },
+      { $sort: { startDateTime: -1 as const, createdAt: -1 as const } },
+      { $skip: skipAmount },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'organizer',
+          foreignField: '_id',
+          as: 'organizer',
+          pipeline: [
+            { $project: { _id: 1, firstName: 1, lastName: 1 } }
           ]
         }
-
-        const skipAmount = (Number(page) - 1) * limit
-        
-        // Parallel queries without field projection to get all fields
-        const [events, eventsCount] = await Promise.all([
-          Event.find(conditions)
-            .sort({ startDateTime: 'desc', createdAt: 'desc' })
-            .skip(skipAmount)
-            .limit(limit)
-            .populate({ 
-              path: 'organizer', 
-              model: User,
-              select: '_id firstName lastName'
-            })
-            .populate({ 
-              path: 'category', 
-              model: Category,
-              select: '_id name color'
-            })
-            .lean()
-            .exec(),
-          Event.countDocuments(conditions)
-        ]);
-
-        // Batch fetch registration counts
-        const eventIds = events.map(event => event._id);
-        const orders = await Order.find({ 
-          event: { $in: eventIds } 
-        })
-        .select('event customFieldValues')
-        .lean()
-        .exec();
-
-        // Create a map for faster lookup using Set for O(1) lookups
-        const registrationCountMap = new Map();
-        orders.forEach(order => {
-          const eventId = order.event.toString();
-          registrationCountMap.set(
-            eventId, 
-            (registrationCountMap.get(eventId) || 0) + order.customFieldValues.length
-          );
-        });
-
-        const eventsWithCount = events.map((event: any) => ({
-          ...event,
-          registrationCount: registrationCountMap.get(event._id.toString()) || 0
-        }));
-
-        return { 
-          data: eventsWithCount, 
-          totalPages: Math.ceil(eventsCount / limit) 
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category',
+          pipeline: [
+            { $project: { _id: 1, name: 1, color: 1 } }
+          ]
         }
-      } catch (error) {
-        handleError(error)
-        return { data: [], totalPages: 0 }
+      },
+      {
+        $addFields: {
+          organizer: { $arrayElemAt: ['$organizer', 0] },
+          category: { $arrayElemAt: ['$category', 0] }
+        }
       }
+    ];
+
+    // Parallel queries with optimized aggregation
+    const [events, eventsCount] = await Promise.all([
+      Event.aggregate(pipeline).exec(),
+      Event.countDocuments(conditions)
+    ]);
+
+    // Only fetch registration counts if we have events
+    if (events.length === 0) {
+      return { 
+        data: [], 
+        totalPages: 0 
+      };
+    }
+
+    // Optimize: Batch fetch registration counts with projection
+    const eventIds = events.map(event => event._id);
+    const orders = await Order.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $project: { event: 1, customFieldValues: 1 } },
+      {
+        $group: {
+          _id: '$event',
+          count: { $sum: { $size: '$customFieldValues' } }
+        }
+      }
+    ]).exec();
+
+    // Create a map for faster lookup
+    const registrationCountMap = new Map();
+    orders.forEach(order => {
+      registrationCountMap.set(order._id.toString(), order.count);
+    });
+
+    const eventsWithCount = events.map((event: any) => ({
+      ...event,
+      registrationCount: registrationCountMap.get(event._id.toString()) || 0
+    }));
+
+    return { 
+      data: eventsWithCount, 
+      totalPages: Math.ceil(eventsCount / limit) 
+    }
+  } catch (error) {
+    console.error('Error in getAllEvents:', error);
+    return { data: [], totalPages: 0 }
+  }
 }
 
 // GET ALL EVENTS (Superadmin - without date filtering)
@@ -285,47 +314,75 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
       ]
     }
 
-    // Remove skip for getting all events
     const skipAmount = page ? (Number(page) - 1) * limit : 0;
     
-    // Parallel queries without field projection to get all fields
+    // Optimize: Use aggregation pipeline for better performance
+    const pipeline = [
+      { $match: conditions },
+      { $sort: { startDateTime: -1 as const, createdAt: -1 as const } },
+      { $skip: skipAmount },
+      { $limit: Number(limit) },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'organizer',
+          foreignField: '_id',
+          as: 'organizer',
+          pipeline: [
+            { $project: { _id: 1, firstName: 1, lastName: 1 } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category',
+          pipeline: [
+            { $project: { _id: 1, name: 1, color: 1 } }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          organizer: { $arrayElemAt: ['$organizer', 0] },
+          category: { $arrayElemAt: ['$category', 0] }
+        }
+      }
+    ];
+
+    // Parallel queries with optimized aggregation
     const [events, eventsCount] = await Promise.all([
-      Event.find(conditions)
-        .sort({ startDateTime: 'desc', createdAt: 'desc' })
-        .skip(skipAmount)
-        .limit(Number(limit)) // Ensure limit is treated as a number
-        .populate({ 
-          path: 'organizer', 
-          model: User,
-          select: '_id firstName lastName'
-        })
-        .populate({ 
-          path: 'category', 
-          model: Category,
-          select: '_id name color'
-        })
-        .lean()
-        .exec(),
+      Event.aggregate(pipeline).exec(),
       Event.countDocuments(conditions)
     ]);
 
-    // Batch fetch registration counts
-    const eventIds = events.map(event => event._id);
-    const orders = await Order.find({ 
-      event: { $in: eventIds } 
-    })
-    .select('event customFieldValues')
-    .lean()
-    .exec();
+    // Only fetch registration counts if we have events
+    if (events.length === 0) {
+      return { 
+        data: [], 
+        totalPages: 0 
+      };
+    }
 
-    // Create a map for faster lookup using Set for O(1) lookups
+    // Optimize: Batch fetch registration counts with aggregation
+    const eventIds = events.map(event => event._id);
+    const orders = await Order.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $project: { event: 1, customFieldValues: 1 } },
+      {
+        $group: {
+          _id: '$event',
+          count: { $sum: { $size: '$customFieldValues' } }
+        }
+      }
+    ]).exec();
+
+    // Create a map for faster lookup
     const registrationCountMap = new Map();
     orders.forEach(order => {
-      const eventId = order.event.toString();
-      registrationCountMap.set(
-        eventId, 
-        (registrationCountMap.get(eventId) || 0) + order.customFieldValues.length
-      );
+      registrationCountMap.set(order._id.toString(), order.count);
     });
 
     const eventsWithCount = events.map((event: any) => ({
@@ -338,7 +395,7 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
       totalPages: Math.ceil(eventsCount / limit) 
     }
   } catch (error) {
-    handleError(error)
+    console.error('Error in getAllEventsForSuperAdmin:', error);
     return { data: [], totalPages: 0 }
   }
 }

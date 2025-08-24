@@ -67,14 +67,13 @@ const OrderSchema = new Schema({
   ],
 });
 
-// Add this index
-OrderSchema.index({ 'customFieldValues.fields.value': 1 });
+// Add indexes for better query performance
+OrderSchema.index({ event: 1 }); // Primary lookup for event-based queries
+OrderSchema.index({ 'customFieldValues.fields.value': 1 }); // Phone number lookup
+OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Queue number lookup
+OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Group ID lookup
 
-// Add indexes for queueNumber and groupId for better lookup performance
-OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Primary lookup key
-OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Secondary lookup key
-
-// Compound index for event+queueNumber lookups with uniqueness constraint
+// Compound indexes for complex queries
 OrderSchema.index(
   { 'event': 1, 'customFieldValues.queueNumber': 1 },
   { 
@@ -83,15 +82,12 @@ OrderSchema.index(
   }
 );
 
-// Compound index for event+phone+queueNumber lookups
 OrderSchema.index({ 
   'event': 1, 
   'customFieldValues.fields.value': 1, 
   'customFieldValues.queueNumber': 1 
 });
 
-// Add indexes for better query performance
-OrderSchema.index({ event: 1, 'customFieldValues.queueNumber': 1 }, { unique: true });
 OrderSchema.index({ 'customFieldValues.fields.type': 1, 'customFieldValues.fields.value': 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ 'customFieldValues.cancelled': 1 });
