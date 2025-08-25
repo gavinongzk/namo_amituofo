@@ -1,7 +1,5 @@
 import { Schema, model, models, Document } from 'mongoose';
 import { CustomFieldGroup, CustomField } from '@/types';
-import Event from '@/lib/database/models/event.model';
-import User from '@/lib/database/models/user.model';
 
 export interface IOrder extends Document {
   _id: string;
@@ -40,11 +38,11 @@ const OrderSchema = new Schema({
   },
   event: {
     type: Schema.Types.ObjectId,
-    ref: Event,
+    ref: 'Event',
   },
   buyer: {
     type: Schema.Types.ObjectId,
-    ref: User,
+    ref: 'User',
   },
   customFieldValues: [
     {
@@ -67,14 +65,13 @@ const OrderSchema = new Schema({
   ],
 });
 
-// Add this index
-OrderSchema.index({ 'customFieldValues.fields.value': 1 });
+// Add indexes for better query performance
+OrderSchema.index({ event: 1 }); // Primary lookup for event-based queries
+OrderSchema.index({ 'customFieldValues.fields.value': 1 }); // Phone number lookup
+OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Queue number lookup
+OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Group ID lookup
 
-// Add indexes for queueNumber and groupId for better lookup performance
-OrderSchema.index({ 'customFieldValues.queueNumber': 1 }); // Primary lookup key
-OrderSchema.index({ 'customFieldValues.groupId': 1 }); // Secondary lookup key
-
-// Compound index for event+queueNumber lookups with uniqueness constraint
+// Compound indexes for complex queries
 OrderSchema.index(
   { 'event': 1, 'customFieldValues.queueNumber': 1 },
   { 
@@ -83,15 +80,12 @@ OrderSchema.index(
   }
 );
 
-// Compound index for event+phone+queueNumber lookups
 OrderSchema.index({ 
   'event': 1, 
   'customFieldValues.fields.value': 1, 
   'customFieldValues.queueNumber': 1 
 });
 
-// Add indexes for better query performance
-OrderSchema.index({ event: 1, 'customFieldValues.queueNumber': 1 }, { unique: true });
 OrderSchema.index({ 'customFieldValues.fields.type': 1, 'customFieldValues.fields.value': 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ 'customFieldValues.cancelled': 1 });
@@ -105,7 +99,7 @@ OrderSchema.pre('save', async function(next) {
       return next();
     }
 
-    // Check for duplicate queue numbers within the same event
+    // Check for duplicate queue numbers within the same order
     const queueNumbers = order.customFieldValues.map(g => g.queueNumber);
     const uniqueQueueNumbers = new Set(queueNumbers);
     
@@ -114,8 +108,10 @@ OrderSchema.pre('save', async function(next) {
     }
 
     // Check for duplicate queue numbers across other orders in the same event
+    // Use the model directly instead of models.Order to avoid build-time issues
+    const OrderModel = model<IOrder>('Order', OrderSchema);
     for (const group of order.customFieldValues) {
-      const existingOrder = await models.Order.findOne({
+      const existingOrder = await OrderModel.findOne({
         _id: { $ne: order._id },
         event: order.event,
         'customFieldValues.queueNumber': group.queueNumber
@@ -132,4 +128,6 @@ OrderSchema.pre('save', async function(next) {
   }
 });
 
-export default models.Order || model<IOrder>('Order', OrderSchema);
+// Use a more robust export that handles build-time scenarios
+const Order = models.Order || model<IOrder>('Order', OrderSchema);
+export default Order;

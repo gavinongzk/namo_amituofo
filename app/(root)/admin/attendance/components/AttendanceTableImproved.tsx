@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import Image from 'next/image';
+
 import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, Save, Trash2, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { AttendanceItem, SortConfig } from '../types/attendance';

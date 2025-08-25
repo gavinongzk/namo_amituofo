@@ -17,7 +17,6 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [error, setError] = useState<string>();
   const [isRetrying, setIsRetrying] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
   const scannerRef = useRef<{ stop: () => void }>();
   const [isActive, setIsActive] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -26,9 +25,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Check if running on Safari
+    // Check if running on Safari - keeping for future use
     const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    setIsSafari(isSafariBrowser);
+    // setIsSafari(isSafariBrowser); // Commented out as not currently used
   }, []);
 
   const checkBrowserCompatibility = () => {
@@ -258,7 +257,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         }
       });
     };
-  }, [activeCamera, isActive]);
+  }, [activeCamera, isActive, initializeScanner]);
 
   // Add a new effect to handle video element attributes
   useEffect(() => {

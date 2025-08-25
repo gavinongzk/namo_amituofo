@@ -54,7 +54,7 @@ export function PdpaConsentCheckbox({ name, disabled, className }: PdpaConsentCh
                 </Link>
               </div>
               <div>
-                <span>I have read and agree to the site's</span>
+                <span>I have read and agree to the site&apos;s</span>
                 <Link
                   href="/privacy-policy"
                   target="_blank"

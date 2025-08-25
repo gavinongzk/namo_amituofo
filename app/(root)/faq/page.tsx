@@ -14,7 +14,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 在首页选择想要参加的活动
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"报名Register"
+                <span className="font-medium text-gray-900">2.</span> 点击&quot;报名Register&quot;
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 填写所需资料（名字、电话等）
@@ -32,7 +32,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> Select the event you want to attend from the homepage
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> Click the "Register" button
+                <span className="font-medium text-gray-900">2.</span> Click the &quot;Register&quot; button
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> Fill in required information (name, phone number, etc.)
@@ -56,7 +56,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 报名成功后会显示专属二维码
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 您可以在"活动查询"页面，输入电话号码查询所有报名记录
+                <span className="font-medium text-gray-900">2.</span> 您可以在&quot;活动查询&quot;页面，输入电话号码查询所有报名记录
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 查看您的报名详情和二维码
@@ -71,7 +71,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> A unique QR code will be displayed after successful registration
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> You can check all your registrations in the "Event Lookup" page by entering your phone number
+                <span className="font-medium text-gray-900">2.</span> You can check all your registrations in the &quot;Event Lookup&quot; page by entering your phone number
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> View your registration details and QR codes
@@ -89,13 +89,13 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">更改步骤：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面，输入您的电话号码
+                <span className="font-medium text-gray-900">1.</span> 在&quot;活动查询&quot;页面，输入您的电话号码
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> 找到需要更改的报名记录
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 点击"View Registration Details"查看报名记录
+                <span className="font-medium text-gray-900">3.</span> 点击&quot;View Registration Details&quot;查看报名记录
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> 在详情页面可以更改名字或电话号码
@@ -107,13 +107,13 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">To make corrections:</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> Enter your phone number in the "Event Lookup" page
+                <span className="font-medium text-gray-900">1.</span> Enter your phone number in the &quot;Event Lookup&quot; page
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> Find the registration you want to modify
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> Click "View Registration Details"
+                <span className="font-medium text-gray-900">3.</span> Click &quot;View Registration Details&quot;
               </li>
               <li>
                 <span className="font-medium text-gray-900">4.</span> You can edit your name or phone number on the details page
@@ -131,16 +131,16 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">取消步骤：</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> 在"活动查询"页面，输入您的电话号码
+                <span className="font-medium text-gray-900">1.</span> 在&quot;活动查询&quot;页面，输入您的电话号码
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> 找到需要取消的报名记录
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> 点击"View Details"
+                <span className="font-medium text-gray-900">3.</span> 点击&quot;View Details&quot;
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> 在详情页面点击"Cancel Registration"取消报名
+                <span className="font-medium text-gray-900">4.</span> 在详情页面点击&quot;Cancel Registration&quot;取消报名
               </li>
             </ol>
           </div>
@@ -149,16 +149,16 @@ export default function FAQPage() {
             <p className="font-semibold text-gray-900">Cancellation steps:</p>
             <ol className="list-none space-y-1.5 text-gray-600">
               <li>
-                <span className="font-medium text-gray-900">1.</span> Enter your phone number in the "Event Lookup" page
+                <span className="font-medium text-gray-900">1.</span> Enter your phone number in the &quot;Event Lookup&quot; page
               </li>
               <li>
                 <span className="font-medium text-gray-900">2.</span> Find the registration you want to cancel
               </li>
               <li>
-                <span className="font-medium text-gray-900">3.</span> Click "View Details"
+                <span className="font-medium text-gray-900">3.</span> Click &quot;View Details&quot;
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> Click "Cancel Registration" on the details page
+                <span className="font-medium text-gray-900">4.</span> Click &quot;Cancel Registration&quot; on the details page
               </li>
             </ol>
           </div>
@@ -176,7 +176,7 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> 在报名表格中，您可以使用同一个电话号码为多人报名
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> 点击"添加参加者"来添加更多参与者
+                <span className="font-medium text-gray-900">2.</span> 点击&quot;添加参加者&quot;来添加更多参与者
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> 每个参加者都会获得独立的二维码
@@ -191,16 +191,16 @@ export default function FAQPage() {
                 <span className="font-medium text-gray-900">1.</span> On the registration form, you can use the same phone number for multiple people
               </li>
               <li>
-                <span className="font-medium text-gray-900">2.</span> Click "Add Participant" to add more participants
+                <span className="font-medium text-gray-900">2.</span> Click &quot;Add Participant&quot; to add more participants
               </li>
               <li>
                 <span className="font-medium text-gray-900">3.</span> Each participant will receive their own QR code
               </li>
               <li>
-                <span className="font-medium text-gray-900">4.</span> Use the registration phone number in the "Event Lookup" page to see a list of all registered people
+                <span className="font-medium text-gray-900">4.</span> Use the registration phone number in the &quot;Event Lookup&quot; page to see a list of all registered people
               </li>
               <li>
-                <span className="font-medium text-gray-900">5.</span> Click the "View QR Code" link next to each participant to see their individual QR code
+                <span className="font-medium text-gray-900">5.</span> Click the &quot;View QR Code&quot; link next to each participant to see their individual QR code
               </li>
             </ol>
           </div>

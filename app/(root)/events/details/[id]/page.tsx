@@ -5,6 +5,9 @@ import { getEventById } from '@/lib/actions/event.actions';
 import { currentUser } from '@clerk/nextjs';
 import EventDetails from './EventDetails';
 
+// Implement ISR (Incremental Static Regeneration)
+export const revalidate = 300; // Revalidate every 5 minutes
+
 // Generate metadata for social sharing
 export async function generateMetadata({
   params
@@ -96,33 +99,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventDetailsPage({ params }: { params: { id: string } }) { // Changed to destructure params directly
-  console.log('[page.tsx EventDetailsPage] Received params:', params); // Added log
-  const { id } = params; // Destructure id from params
+export default async function EventDetailsPage({ params }: { params: { id: string } }) {
+  console.log('[page.tsx] Received params:', params); // Added log
 
-  // Validate ObjectId format before calling getEventById
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    notFound(); // Render a 404 page if the ID format is invalid
-  }
-
-  const event = await getEventById(id);
-
-  // If event is still null here (e.g., valid ID format but event doesn't exist),
-  // EventDetails component should handle rendering a "not found" state.
-  // If getEventById itself throws or returns an unhandled error for a valid ID,
-  // Next.js error handling would take over.
-  if (!event) {
-    // This case handles if getEventById returns null for a valid ID (event genuinely not found)
+  // Validate ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
     notFound();
   }
-  // If event is a draft, only superadmins can view it
-  if ((event as any).isDraft) {
-    const user = await currentUser();
-    const role = user?.publicMetadata?.role as string | undefined;
-    if (role !== 'superadmin') {
-      notFound();
-    }
+
+  const event = await getEventById(params.id);
+
+  if (!event) {
+    notFound();
   }
-  
+
+  const user = await currentUser();
+
   return <EventDetails event={event} />;
 }

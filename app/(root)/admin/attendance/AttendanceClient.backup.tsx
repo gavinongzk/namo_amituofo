@@ -87,7 +87,7 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
-const AttendanceClient = React.memo(({ event }: { event: Event }) => {
+const AttendanceClient = React.memo(function AttendanceClient({ event }: { event: Event }) {
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   // State for basic UI controls
   const [queueNumber, setQueueNumber] = useState<string>('');

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
-import Order from '@/lib/database/models/order.model';
+import { Order } from '@/lib/database/models';
 import { revalidateTag } from 'next/cache';
 
 export async function POST(req: NextRequest) {

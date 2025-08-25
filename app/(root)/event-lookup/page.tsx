@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import dynamic from 'next/dynamic';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
-import { IOrderItem } from '@/lib/database/models/order.model';
-import { formatBilingualDateTime } from '@/lib/utils';
-import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumber } from '@/lib/actions/order.actions';
+
 import { useSearchParams } from 'next/navigation';
 
 // Dynamic imports for heavy components
@@ -20,10 +17,7 @@ const RegistrationCollection = dynamic(() => import('@/components/shared/Registr
     loading: () => <div className="flex-center min-h-[200px]"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>
 });
 
-const EventLookupAnalytics = dynamic(() => import('@/components/shared/EventLookupAnalytics'), {
-    loading: () => <div className="flex-center min-h-[200px]"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>,
-    ssr: false
-});
+
 
 const EventLookupPage = () => {
     const searchParams = useSearchParams();
@@ -35,8 +29,8 @@ const EventLookupPage = () => {
     const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
-    const [isReady, setIsReady] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [isReady, setIsReady] = useState(false);
     const [initialSearchComplete, setInitialSearchComplete] = useState(false);
     const [isRestoringFromSession, setIsRestoringFromSession] = useState(false);
 

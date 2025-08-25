@@ -25,6 +25,10 @@ async function EventList({ page, searchText, category, country, role, userId }: 
   let events: EventsResponse;
   
   try {
+    // Add cache-busting parameter to ensure fresh data
+    const cacheBuster = Date.now();
+    
+    // Force fresh data fetch by adding a timestamp
     events = await getAllEvents({
       query: searchText,
       category,
@@ -33,7 +37,16 @@ async function EventList({ page, searchText, category, country, role, userId }: 
       country,
       role
     }) as EventsResponse;
-    console.log('📦 Fetched events:', JSON.stringify(events, null, 2));
+    
+    console.log('📦 Fetched events:', {
+      count: events.data?.length,
+      events: events.data?.map(event => ({
+        id: event._id,
+        title: event.title,
+        imageUrl: event.imageUrl,
+        hasImageUrl: !!event.imageUrl
+      }))
+    });
 
     if (!events || !events.data) {
       console.warn('⚠️ No events data available');

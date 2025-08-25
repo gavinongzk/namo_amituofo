@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">1. Introduction</h2>
             <p>
-              Namo Amituofo Organization Ltd. ("we", "us") is committed to protecting your personal data. This policy outlines how we collect, use, and safeguard your information in accordance with Singapore's Personal Data Protection Act 2012 (PDPA).
+              Namo Amituofo Organization Ltd. (&quot;we&quot;, &quot;us&quot;) is committed to protecting your personal data. This policy outlines how we collect, use, and safeguard your information in accordance with Singapore&apos;s Personal Data Protection Act 2012 (PDPA).
             </p>
           </section>
 

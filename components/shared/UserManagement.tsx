@@ -334,12 +334,12 @@ const UserManagement = ({ country }: { country: string }) => {
                 <li>
                   <strong>Phone Number</strong> (required) - Any of these:
                   <br />
-                  "Phone Number", "PhoneNumber", "Contact Number", "Phone", "Contact"
+                  &quot;Phone Number&quot;, &quot;PhoneNumber&quot;, &quot;Contact Number&quot;, &quot;Phone&quot;, &quot;Contact&quot;
                 </li>
                 <li>
                   <strong>Name</strong> (optional) - Any of these:
                   <br />
-                  "Name", "Full Name", "Customer Name"
+                  &quot;Name&quot;, &quot;Full Name&quot;, &quot;Customer Name&quot;
                 </li>
               </ul>
               <p className="mt-1">Supports .xlsx, .xls, and .csv files</p>

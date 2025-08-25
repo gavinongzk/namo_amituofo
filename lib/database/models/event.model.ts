@@ -43,6 +43,16 @@ const EventSchema = new Schema({
   isDraft: { type: Boolean, default: true }
 })
 
+// Add indexes for better query performance
+EventSchema.index({ country: 1, isDeleted: 1, isDraft: 1, endDateTime: 1 });
+EventSchema.index({ country: 1, category: 1, isDeleted: 1, isDraft: 1, endDateTime: 1 });
+EventSchema.index({ title: 'text' }); // Text search index
+EventSchema.index({ startDateTime: -1, createdAt: -1 }); // Sort index
+EventSchema.index({ organizer: 1 }); // Organizer lookup
+EventSchema.index({ isDeleted: 1 }); // Soft delete filter
+EventSchema.index({ isDraft: 1 }); // Draft filter
+EventSchema.index({ endDateTime: 1 }); // Date filtering
+
 const Event = mongoose.models.Event || mongoose.model('Event', EventSchema);
 
 export default Event;

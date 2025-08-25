@@ -9,6 +9,8 @@ import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
 import { currentUser } from '@clerk/nextjs'
 
+// Implement ISR (Incremental Static Regeneration)
+export const revalidate = 300; // Revalidate every 5 minutes
 
 // Dynamically import heavy components
 const RegisterFormWrapper = dynamic(() => 
@@ -19,13 +21,18 @@ const RegisterFormWrapper = dynamic(() =>
   }
 )
 
-// Cache event data
+// Cache event data with better optimization
 const getCachedEvent = unstable_cache(
-  async (id: string) => getEventById(id),
+  async (id: string) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return null;
+    }
+    return getEventById(id);
+  },
   ['event-registration'],
   { 
     revalidate: 300,
-    tags: ['event-details']
+    tags: ['event-details', 'registration']
   }
 )
 
@@ -41,47 +48,38 @@ const RegisterPageSkeleton = () => (
 )
 
 export default async function RegisterPage({ 
-  params: { id } 
+  params 
 }: { 
   params: { id: string } 
 }) {
-  // Start data fetch immediately
-  const eventPromise = getCachedEvent(id)
+  const user = await currentUser();
+  
+  // Create a promise for the event data
+  const eventPromise = getCachedEvent(params.id);
 
   return (
-    <>
-      <section className="bg-primary-50 bg-dotted-pattern md:bg-dotted-pattern bg-cover bg-center py-1 md:py-4">
-        <h3 className="wrapper h3-bold text-center sm:text-left text-lg md:text-2xl px-2 md:px-4">
-          活动报名 / Event Registration
-        </h3>
-      </section>
-
-      <div className="wrapper my-1 md:my-4">
-        <Suspense fallback={<RegisterPageSkeleton />}>
-          <AsyncRegisterForm eventPromise={eventPromise} />
-        </Suspense>
-      </div>
-    </>
+    <div className="wrapper my-8">
+      <Suspense fallback={<Loading />}>
+        <AsyncRegisterForm eventPromise={eventPromise} user={user} />
+      </Suspense>
+    </div>
   )
 }
 
-// Separate async component to handle event data
 async function AsyncRegisterForm({ 
-  eventPromise 
+  eventPromise,
+  user
 }: { 
-  eventPromise: Promise<any> 
+  eventPromise: Promise<any>
+  user: any
 }) {
-  const [event, user] = await Promise.all([eventPromise, currentUser()]);
+  const event = await eventPromise;
 
   if (!event) {
     return (
       <div className="text-center py-10">
-        <h3 className="text-2xl font-bold text-gray-900">
-          未找到活动 / Event not found
-        </h3>
-        <p className="mt-2 text-gray-600">
-          您要查找的活动不存在或已被删除。/ The event you're looking for doesn't exist or has been removed.
-        </p>
+        <h3 className="text-2xl font-bold text-gray-900">活动未找到 / Event Not Found</h3>
+        <p className="mt-2 text-gray-600">抱歉，找不到该活动。/ Sorry, this event could not be found.</p>
       </div>
     )
   }
@@ -150,16 +148,26 @@ export async function generateMetadata({
     openGraph: {
       title: event.title,
       description: event.description || 'Join us for this special event',
+      url: `${siteUrl}/events/details/${params.id}/register`,
+      siteName: 'Namo Amituofo',
+      locale: 'en_US',
+      type: 'website',
       images: [
         {
           url: finalImageUrl,
+          secureUrl: finalImageUrl,
+          type: 'image/jpeg',
           alt: event.title,
-          // For optimal display, WhatsApp and other platforms prefer images around 1200x630 pixels.
-          // Consider adding width and height if your images (including the placeholder) have consistent dimensions:
           width: 1200,
           height: 630,
         }
       ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: event.description || 'Join us for this special event',
+      images: [finalImageUrl],
     },
   };
 }

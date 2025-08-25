@@ -3,10 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { connectToDatabase } from '@/lib/database'
-import User from '@/lib/database/models/user.model'
-import Order from '@/lib/database/models/order.model'
-import Event from '@/lib/database/models/event.model'
-import TaggedUser from '@/lib/database/models/taggedUser.model'
+import { User, Order, Event, TaggedUser } from '@/lib/database/models'
 import { handleError } from '@/lib/utils'
 
 import { CreateUserParams, UpdateUserParams, CustomFieldGroup, UniquePhoneNumber } from '@/types'
