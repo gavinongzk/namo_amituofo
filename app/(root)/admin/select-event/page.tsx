@@ -49,7 +49,7 @@ const SelectEventPage = () => {
         const country = user?.publicMetadata.country as string | undefined;
         const role = user?.publicMetadata.role as string | undefined;
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/events${country ? `?country=${country}` : ''}${role ? `&role=${role}` : ''}&bustCache=true&_=${timestamp}`);
+        const response = await fetch(`/api/events/selection${country ? `?country=${country}` : ''}&_=${timestamp}`);
         
         if (!response.ok) {
           console.error('Failed to fetch events:', response.status, response.statusText);
