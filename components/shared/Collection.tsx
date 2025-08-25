@@ -74,7 +74,7 @@ const Collection = ({
               const isMyTicket = collectionType === 'My_Tickets';
 
               return (
-                <li key={event._id} className="flex justify-center">
+                <li key={`${event._id}-${event.imageUrl || 'no-image'}`} className="flex justify-center">
                   <Card 
                     event={event} 
                     hasOrderLink={hasOrderLink} 

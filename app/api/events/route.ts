@@ -26,10 +26,19 @@ const getCachedEvents = unstable_cache(
       // Ensure all fields are present in the response
       const eventsWithAllFields = {
         ...events,
-        data: events.data?.map((event: IEvent) => ({
-          ...event,
-          location: event.location || '',  // Explicitly include location
-        }))
+        data: events.data?.map((event: IEvent) => {
+          console.log('📸 Caching event with imageUrl:', {
+            id: event._id,
+            title: event.title,
+            imageUrl: event.imageUrl,
+            hasImageUrl: !!event.imageUrl
+          });
+          return {
+            ...event,
+            location: event.location || '',  // Explicitly include location
+            imageUrl: event.imageUrl || '',  // Explicitly include imageUrl
+          };
+        })
       };
 
       return eventsWithAllFields;
@@ -40,7 +49,7 @@ const getCachedEvents = unstable_cache(
   },
   ['api-events-list', 'country'],  // Include country in cache key
   {
-    revalidate: 600, // Cache for 10 minutes (increased from 5)
+    revalidate: 300, // Reduced cache time to 5 minutes for better image updates
     tags: ['events']
   }
 );

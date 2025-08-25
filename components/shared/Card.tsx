@@ -41,6 +41,16 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
   const [imageError, setImageError] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   
+  // Debug logging for imageUrl
+  console.log('🎨 Card rendering for event:', {
+    id: event._id,
+    title: event.title,
+    imageUrl: event.imageUrl,
+    hasImageUrl: !!event.imageUrl,
+    imageUrlType: typeof event.imageUrl,
+    imageUrlLength: event.imageUrl?.length
+  });
+  
   // Use dynamic color assignment with fallback to legacy colors
   const categoryColor = event.category.color 
     ? event.category.color 
@@ -69,6 +79,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
 
   // Reset image error state when imageUrl changes
   useEffect(() => {
+    console.log('🔄 Image URL changed:', event.imageUrl);
     setImageError(false);
     setImageLoading(true);
   }, [event.imageUrl]);
@@ -100,7 +111,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
         className="relative flex-center aspect-square w-full bg-gray-50 overflow-hidden rounded-[10px]"
         onClick={handleCardClick}
       >
-        {event.imageUrl && !imageError ? (
+        {event.imageUrl && event.imageUrl.trim() !== '' && !imageError ? (
           <Image 
             src={event.imageUrl} 
             alt={event.title}
@@ -111,11 +122,12 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             )}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onLoadingComplete={() => {
+              console.log('✅ Image loaded successfully:', event.imageUrl);
               setImageLoading(false);
               setImageError(false);
             }}
-            onError={() => {
-              console.error(`Failed to load image: ${event.imageUrl}`);
+            onError={(e) => {
+              console.error(`❌ Failed to load image: ${event.imageUrl}`, e);
               setImageLoading(false);
               setImageError(true);
               // Attempt to reload the image if it's a network error
@@ -131,8 +143,6 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             priority={priority}
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
-            placeholder="blur"
-            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
             quality={priority ? 90 : 75}
           />
         ) : (
@@ -149,8 +159,10 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               <p className="p-medium-14 text-gray-600">
                 {imageError ? (
                   <span className="text-red-500">Failed to load image</span>
-                ) : (
+                ) : !event.imageUrl || event.imageUrl.trim() === '' ? (
                   "No image available"
+                ) : (
+                  "Loading image..."
                 )}
               </p>
               {imageError && isOnline && (
@@ -168,7 +180,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
             </div>
           </div>
         )}
-        {imageLoading && event.imageUrl && !imageError && (
+        {imageLoading && event.imageUrl && event.imageUrl.trim() !== '' && !imageError && (
           <div className="absolute inset-0 bg-gray-100 animate-pulse" />
         )}
       </Link>

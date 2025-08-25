@@ -63,8 +63,11 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 
     revalidatePath(path);
     revalidatePath('/');
+    revalidatePath('/events');
     revalidateTag('events');
     revalidateTag('admin-events');
+    revalidateTag('api-events-list');
+    revalidateTag('superadmin-events-list');
 
     return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
@@ -137,9 +140,12 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
     // Revalidate all relevant caches
     revalidatePath(path);
     revalidatePath('/');
+    revalidatePath('/events');
     revalidateTag('events');
     revalidateTag('admin-events');
     revalidateTag('event-images');
+    revalidateTag('api-events-list');
+    revalidateTag('superadmin-events-list');
 
     return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {

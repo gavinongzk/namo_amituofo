@@ -1,17 +1,20 @@
 import { Suspense } from 'react';
 import Error from 'next/error';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { cookies } from 'next/headers';
 import { SearchParamProps } from '@/types';
 import { currentUser } from '@clerk/nextjs';
 
+// Force dynamic rendering for better image updates
+export const dynamic = 'force-dynamic';
+
 // Dynamically import components
-const CategoryFilter = dynamic(() => 
+const CategoryFilter = dynamicImport(() => 
   import('@/components/shared/CategoryFilter'),
   { ssr: true }
 );
 
-const EventList = dynamic(() => 
+const EventList = dynamicImport(() => 
   import('@/components/shared/EventList'),
   { ssr: true }
 );
@@ -32,7 +35,7 @@ const EventSkeleton = () => (
 );
 
 // Implement ISR (Incremental Static Regeneration)
-export const revalidate = 300; // Revalidate every 5 minutes
+export const revalidate = 30; // Revalidate every 30 seconds for better image updates
 
 export default async function Home({ searchParams }: SearchParamProps) {
   const cookieStore = cookies();
@@ -49,7 +52,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
   return (
     <section id="events" className="wrapper my-8 flex flex-col gap-8 md:gap-12">
       <h2 className="h2-bold">
-        {country === 'Singapore' ? '活动列表' : 'Events'}
+        {country === 'Singapore' ? '活动列表 / Latest Events' : 'Events'}
       </h2>
 
       <Suspense fallback={<EventSkeleton />}>
