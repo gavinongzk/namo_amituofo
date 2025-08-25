@@ -59,6 +59,42 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.20.5
         version: 8.20.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@testing-library/jest-dom':
+        specifier: ^6.5.0
+        version: 6.5.0
+      '@testing-library/react':
+        specifier: ^16.0.1
+        version: 16.0.1(@testing-library/dom@10.4.0)(@types/react-dom@18.3.0)(@types/react@18.3.9)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/body-parser':
+        specifier: ^1.19.5
+        version: 1.19.5
+      '@types/jest':
+        specifier: ^29.5.13
+        version: 29.5.13
+      '@types/lodash':
+        specifier: ^4.17.9
+        version: 4.17.9
+      '@types/node':
+        specifier: ^20
+        version: 20.16.9
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.5
+      '@types/react':
+        specifier: ^18
+        version: 18.3.9
+      '@types/react-datepicker':
+        specifier: ^4.19.3
+        version: 4.19.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.3.0
+      '@typescript-eslint/eslint-plugin':
+        specifier: 6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)(typescript@5.6.2)
+      '@typescript-eslint/parser':
+        specifier: 6.21.0
+        version: 6.21.0(eslint@8.57.0)(typescript@5.6.2)
       '@uploadthing/react':
         specifier: ^6.8.0
         version: 6.8.0(next@14.2.21(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(uploadthing@6.13.3(express@5.1.0)(next@14.2.21(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(tailwindcss@3.4.13(ts-node@10.9.2(@types/node@20.16.9)(typescript@5.6.2))))
@@ -89,15 +125,30 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      dotenv-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      eslint:
+        specifier: 8.57.0
+        version: 8.57.0
+      eslint-config-next:
+        specifier: 14.2.13
+        version: 14.2.13(eslint@8.57.0)(typescript@5.6.2)
       framer-motion:
         specifier: ^11.17.0
         version: 11.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      glob:
+        specifier: ^11.0.3
+        version: 11.0.3
       google-auth-library:
         specifier: ^9.15.1
         version: 9.15.1
       googleapis:
         specifier: ^149.0.0
         version: 149.0.0
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@20.16.9)(ts-node@10.9.2(@types/node@20.16.9)(typescript@5.6.2))
       jspdf:
         specifier: ^2.5.2
         version: 2.5.2
@@ -125,6 +176,9 @@ importers:
       postcss:
         specifier: ^8.4.47
         version: 8.4.47
+      postcss-cli:
+        specifier: ^10.1.0
+        version: 10.1.0(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.16.9)(typescript@5.6.2))
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -185,6 +239,12 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.16.9)(typescript@5.6.2)
+      tsconfig-paths:
+        specifier: ^4.2.0
+        version: 4.2.0
+      tsx:
+        specifier: ^4.19.4
+        version: 4.19.4
       typescript:
         specifier: ^5
         version: 5.6.2
@@ -200,67 +260,6 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.23.8
-    devDependencies:
-      '@testing-library/jest-dom':
-        specifier: ^6.5.0
-        version: 6.5.0
-      '@testing-library/react':
-        specifier: ^16.0.1
-        version: 16.0.1(@testing-library/dom@10.4.0)(@types/react-dom@18.3.0)(@types/react@18.3.9)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/body-parser':
-        specifier: ^1.19.5
-        version: 1.19.5
-      '@types/jest':
-        specifier: ^29.5.13
-        version: 29.5.13
-      '@types/lodash':
-        specifier: ^4.17.9
-        version: 4.17.9
-      '@types/node':
-        specifier: ^20
-        version: 20.16.9
-      '@types/qrcode':
-        specifier: ^1.5.5
-        version: 1.5.5
-      '@types/react':
-        specifier: ^18
-        version: 18.3.9
-      '@types/react-datepicker':
-        specifier: ^4.19.3
-        version: 4.19.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/react-dom':
-        specifier: ^18
-        version: 18.3.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)(typescript@5.6.2)
-      '@typescript-eslint/parser':
-        specifier: 6.21.0
-        version: 6.21.0(eslint@8.57.0)(typescript@5.6.2)
-      dotenv-cli:
-        specifier: ^8.0.0
-        version: 8.0.0
-      eslint:
-        specifier: 8.57.0
-        version: 8.57.0
-      eslint-config-next:
-        specifier: 14.2.13
-        version: 14.2.13(eslint@8.57.0)(typescript@5.6.2)
-      glob:
-        specifier: ^11.0.3
-        version: 11.0.3
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@20.16.9)(ts-node@10.9.2(@types/node@20.16.9)(typescript@5.6.2))
-      postcss-cli:
-        specifier: ^10.1.0
-        version: 10.1.0(postcss@8.4.47)(ts-node@10.9.2(@types/node@20.16.9)(typescript@5.6.2))
-      tsconfig-paths:
-        specifier: ^4.2.0
-        version: 4.2.0
-      tsx:
-        specifier: ^4.19.4
-        version: 4.19.4
 
 packages:
 

@@ -80,9 +80,7 @@
     "vibe-tools": "^0.61.5",
     "xlsx": "^0.18.5",
     "zod": "^3.22.4",
-    "typescript": "^5"
-  },
-  "devDependencies": {
+    "typescript": "^5",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
     "@types/body-parser": "^1.19.5",
