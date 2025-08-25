@@ -25,9 +25,12 @@ const EventLookupPage = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [useManualInput, setUseManualInput] = useState(false);
     const [registrations, setRegistrations] = useState<IRegistration[]>([]);
+    const [allRegistrations, setAllRegistrations] = useState<IRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [error, setError] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [initialSearchComplete, setInitialSearchComplete] = useState(false);
     const [isRestoringFromSession, setIsRestoringFromSession] = useState(false);

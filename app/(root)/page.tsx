@@ -80,16 +80,17 @@ export default async function Home({ searchParams }: SearchParamProps) {
         </h2>
 
         <Suspense fallback={<EventSkeleton />}>
-          <CategoryFilter country={country} />
+          <CategoryFilter />
         </Suspense>
 
         <Suspense fallback={<EventSkeleton />}>
           <EventList 
-            query={query}
+            searchText={query}
             category={category}
             page={page}
             country={country}
-            user={user}
+            role={user?.publicMetadata?.role as string}
+            userId={user?.id}
           />
         </Suspense>
       </section>

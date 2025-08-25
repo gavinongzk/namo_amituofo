@@ -122,7 +122,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
         return acc;
     }, {} as Record<string, number>);
 
-    const chartOptions: ChartOptions<'bar'> = {
+    const chartOptions = {
         responsive: true,
         plugins: {
             legend: {

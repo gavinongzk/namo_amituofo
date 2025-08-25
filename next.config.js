@@ -21,7 +21,7 @@ const nextConfig = {
     ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true, // Ignore TypeScript errors during build to speed up deployment
+    ignoreBuildErrors: false, // Ignore TypeScript errors during build to speed up deployment
   },
   // Optimize build performance
   experimental: {
