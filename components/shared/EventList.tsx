@@ -1,4 +1,4 @@
-import { getAllEvents } from '@/lib/actions/event.actions';
+import { getEventsForMainPage } from '@/lib/actions/event.actions';
 import Collection from './Collection';
 import { IEvent } from '@/lib/database/models/event.model';
 import { CustomField } from '@/types';
@@ -29,7 +29,7 @@ async function EventList({ page, searchText, category, country, role, userId }: 
     const cacheBuster = Date.now();
     
     // Force fresh data fetch by adding a timestamp
-    events = await getAllEvents({
+    events = await getEventsForMainPage({
       query: searchText,
       category,
       page,

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { smartInvalidation } from '@/lib/cache/smart-invalidation';
 import { unstable_cache } from 'next/cache';
 
 import mongoose from 'mongoose'; // Added for ObjectId validation
@@ -61,13 +62,9 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 
     console.log("New event created successfully:", newEvent);
 
+    // Use smart cache invalidation for better performance
+    await smartInvalidation.invalidateAllEvents();
     revalidatePath(path);
-    revalidatePath('/');
-    revalidatePath('/events');
-    revalidateTag('events');
-    revalidateTag('admin-events');
-    revalidateTag('api-events-list');
-    revalidateTag('superadmin-events-list');
 
     return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
@@ -137,15 +134,10 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { new: true }
     );
     
-    // Revalidate all relevant caches
-    revalidatePath(path);
-    revalidatePath('/');
-    revalidatePath('/events');
-    revalidateTag('events');
-    revalidateTag('admin-events');
+    // Use smart cache invalidation for better performance
+    await smartInvalidation.invalidateAllEvents();
     revalidateTag('event-images');
-    revalidateTag('api-events-list');
-    revalidateTag('superadmin-events-list');
+    revalidatePath(path);
 
     return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
@@ -164,12 +156,11 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
       { new: true }
     )
     
-    // Revalidate all relevant caches
+    // Use smart cache invalidation for better performance
     if (deletedEvent) {
-      revalidatePath(path);
-      revalidatePath('/');
-      revalidateTag('events');
+      await smartInvalidation.invalidateAllEvents();
       revalidateTag('event-images');
+      revalidatePath(path);
     }
   } catch (error) {
     handleError(error)
@@ -491,3 +482,138 @@ export const getEventCategory = async (eventId: string): Promise<string | null> 
     return null; // Return null in case of an error
   }
 };
+
+// GET EVENTS FOR SELECTION (Lightweight - no registration counts)
+export async function getEventsForSelection({ country, role }: { country: string; role?: string }) {
+  try {
+    await connectToDatabase();
+
+    // Add date filtering condition for non-superadmins
+    const expirationDate = EVENT_CONFIG.getExpirationDate(role);
+    const dateCondition = role !== 'superadmin' ? { endDateTime: { $gte: expirationDate } } : {};
+
+    const conditions = {
+      $and: [
+        { country: country },
+        { isDeleted: { $ne: true } },
+        { isDraft: { $ne: true } },
+        dateCondition
+      ]
+    };
+
+    // Lightweight query - no registration counts, minimal fields
+    const events = await Event.find(conditions)
+      .select('_id title startDateTime endDateTime location maxSeats category')
+      .populate({ path: 'category', model: Category, select: '_id name color' })
+      .sort({ startDateTime: -1, createdAt: -1 })
+      .limit(50) // Reasonable limit for selection
+      .lean();
+
+    return events;
+  } catch (error) {
+    console.error('Error in getEventsForSelection:', error);
+    return [];
+  }
+}
+
+// GET EVENTS FOR MAIN PAGE (Optimized with caching)
+export async function getEventsForMainPage({ query, limit = 6, page, category, country, role }: GetAllEventsParams & { role?: string }) {
+  try {
+    await connectToDatabase();
+
+    const titleCondition = query ? { title: { $regex: query, $options: 'i' } } : {};
+    let categoryCondition = null;
+    
+    try {
+      categoryCondition = category ? await getCategoryByName(category) : null;
+    } catch (categoryError) {
+      console.error('Error fetching category:', categoryError);
+    }
+    
+    // Add date filtering condition
+    const expirationDate = EVENT_CONFIG.getExpirationDate(role);
+    const dateCondition = { endDateTime: { $gte: expirationDate } };
+
+    const conditions = {
+      $and: [
+        titleCondition,
+        categoryCondition ? { category: categoryCondition._id } : {},
+        { country: country },
+        { isDeleted: { $ne: true } },
+        { isDraft: { $ne: true } },
+        dateCondition
+      ]
+    };
+
+    const skipAmount = (Number(page) - 1) * limit;
+    
+    // Optimized pipeline - only fetch registration counts if needed
+    const pipeline = [
+      { $match: conditions },
+      { $sort: { startDateTime: -1 as const, createdAt: -1 as const } },
+      { $skip: skipAmount },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'organizer',
+          foreignField: '_id',
+          as: 'organizer',
+          pipeline: [{ $project: { _id: 1, firstName: 1, lastName: 1 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category',
+          pipeline: [{ $project: { _id: 1, name: 1, color: 1 } }]
+        }
+      },
+      {
+        $addFields: {
+          organizer: { $arrayElemAt: ['$organizer', 0] },
+          category: { $arrayElemAt: ['$category', 0] }
+        }
+      }
+    ];
+
+    const [events, eventsCount] = await Promise.all([
+      Event.aggregate(pipeline).exec(),
+      Event.countDocuments(conditions)
+    ]);
+
+    // Only fetch registration counts for main page if explicitly requested
+    if (events.length === 0) {
+      return { data: [], totalPages: 0 };
+    }
+
+    // Lightweight registration count - only if events exist
+    const eventIds = events.map(event => event._id);
+    const registrationCounts = await Order.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      {
+        $group: {
+          _id: '$event',
+          count: { $sum: 1 }
+        }
+      }
+    ]).exec();
+
+    const countMap = new Map(registrationCounts.map(item => [item._id.toString(), item.count]));
+
+    const eventsWithCount = events.map((event: any) => ({
+      ...event,
+      registrationCount: countMap.get(event._id.toString()) || 0
+    }));
+
+    return { 
+      data: eventsWithCount, 
+      totalPages: Math.ceil(eventsCount / limit) 
+    };
+  } catch (error) {
+    console.error('Error in getEventsForMainPage:', error);
+    return { data: [], totalPages: 0 };
+  }
+}
