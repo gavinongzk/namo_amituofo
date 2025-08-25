@@ -50,6 +50,8 @@ const nextConfig = {
       '@/constants': require('path').resolve(__dirname, 'constants'),
     };
 
+
+
     // Optimize for production builds
     if (!dev && !isServer) {
       config.optimization.splitChunks = {

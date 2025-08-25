@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import RegistrationCollection from '@/components/shared/RegistrationCollection';
 import { getOrdersByPhoneNumber } from '@/lib/actions/order.actions';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
 
 interface RegistrationLookupProps {

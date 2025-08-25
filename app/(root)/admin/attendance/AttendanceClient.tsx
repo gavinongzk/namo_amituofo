@@ -32,7 +32,6 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
   const {
     registrations,
     isLoading,
-    error,
     stats,
     fetchRegistrations,
     markAttendance,

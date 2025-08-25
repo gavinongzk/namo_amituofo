@@ -12,7 +12,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
 import { categoryCustomFields, CategoryName } from '@/constants'
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';

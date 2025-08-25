@@ -4,6 +4,30 @@
 
 @import "react-datepicker/dist/react-datepicker.css";
 
+/* Import react-phone-number-input styles globally to avoid webpack issues */
+@import 'react-phone-number-input/style.css';
+
+/* Custom styles for react-phone-number-input */
+.PhoneInput {
+  @apply relative;
+}
+
+.PhoneInputCountry {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 z-10;
+}
+
+.PhoneInputCountrySelect {
+  @apply absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer;
+}
+
+.PhoneInputCountryIcon {
+  @apply w-6 h-4 object-cover;
+}
+
+.PhoneInputInput {
+  @apply w-full px-4 py-2 pl-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

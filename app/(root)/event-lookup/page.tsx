@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import dynamic from 'next/dynamic';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 import { IRegistration } from '@/types';
 
 import { useSearchParams } from 'next/navigation';
