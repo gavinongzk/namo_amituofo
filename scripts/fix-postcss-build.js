@@ -29,11 +29,19 @@ function checkPostCSSConfig() {
     const config = fs.readFileSync(postcssConfigPath, 'utf8');
     console.log('✅ PostCSS config file exists');
     
-    // Check if using array format
-    if (config.includes('plugins: [')) {
-      console.log('✅ Using array format for plugins');
+    // Check if using object format (correct for Next.js)
+    if (config.includes('plugins: {')) {
+      console.log('✅ Using object format for plugins (correct for Next.js)');
+    } else if (config.includes('plugins: [')) {
+      console.log('⚠️  Using array format - consider switching to object format for Next.js compatibility');
     } else {
-      console.log('⚠️  Consider using array format for better compatibility');
+      console.log('⚠️  Unknown plugin format detected');
+    }
+    
+    // Check for require() functions (incorrect)
+    if (config.includes('require(')) {
+      console.log('❌ Using require() functions - this causes build failures');
+      return false;
     }
     
     return true;
@@ -100,8 +108,9 @@ function generateFixRecommendations() {
   console.log('======================');
   
   console.log('\n1. ✅ Update PostCSS Configuration:');
-  console.log('   - Use array format for plugins');
-  console.log('   - Ensure explicit plugin requires');
+  console.log('   - Use object format for plugins (not array with require())');
+  console.log('   - Specify plugins as strings in object format');
+  console.log('   - Example: { plugins: { tailwindcss: {}, autoprefixer: {} } }');
   
   console.log('\n2. ✅ Dependency Management:');
   console.log('   - Move PostCSS to devDependencies');
