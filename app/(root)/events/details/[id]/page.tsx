@@ -115,5 +115,5 @@ export default async function EventDetailsPage({ params }: { params: { id: strin
 
   const user = await currentUser();
 
-  return <EventDetails event={event} user={user} />;
+  return <EventDetails event={event} />;
 }

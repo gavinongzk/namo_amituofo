@@ -984,7 +984,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">1</div>
             <div className="space-y-1">
               <div className="text-blue-900 font-medium">点击顶部"目录"按钮</div>
-              <div className="text-blue-600">Click on the "目录" menu button at the top</div>
+              <div className="text-blue-600">Click on the &quot;目录&quot; menu button at the top</div>
             </div>
           </div>
 
@@ -992,7 +992,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">2</div>
             <div className="space-y-1">
               <div className="text-blue-900 font-medium">在目录中选择"活动查询 Event Lookup"</div>
-              <div className="text-blue-600">Select "活动查询 Event Lookup" from the menu</div>
+              <div className="text-blue-600">Select &quot;活动查询 Event Lookup&quot; from the menu</div>
             </div>
           </div>
 

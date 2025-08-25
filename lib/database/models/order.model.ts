@@ -101,7 +101,7 @@ OrderSchema.pre('save', async function(next) {
       return next();
     }
 
-    // Check for duplicate queue numbers within the same event
+    // Check for duplicate queue numbers within the same order
     const queueNumbers = order.customFieldValues.map(g => g.queueNumber);
     const uniqueQueueNumbers = new Set(queueNumbers);
     
@@ -110,8 +110,10 @@ OrderSchema.pre('save', async function(next) {
     }
 
     // Check for duplicate queue numbers across other orders in the same event
+    // Use the model directly instead of models.Order to avoid build-time issues
+    const OrderModel = model<IOrder>('Order', OrderSchema);
     for (const group of order.customFieldValues) {
-      const existingOrder = await models.Order.findOne({
+      const existingOrder = await OrderModel.findOne({
         _id: { $ne: order._id },
         event: order.event,
         'customFieldValues.queueNumber': group.queueNumber
@@ -128,4 +130,6 @@ OrderSchema.pre('save', async function(next) {
   }
 });
 
-export default models.Order || model<IOrder>('Order', OrderSchema);
+// Use a more robust export that handles build-time scenarios
+const Order = models.Order || model<IOrder>('Order', OrderSchema);
+export default Order;

@@ -90,7 +90,7 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
-const AttendanceClientLegacy = React.memo(({ event }: { event: Event }) => {
+const AttendanceClientLegacy = React.memo(function AttendanceClientLegacy({ event }: { event: Event }) {
   // All your existing code goes here...
   // This is just a placeholder - copy all the content from your current AttendanceClient.tsx
   
