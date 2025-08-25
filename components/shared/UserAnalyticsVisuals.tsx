@@ -43,166 +43,109 @@ interface UserAnalyticsVisualsProps {
 }
 
 const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, allEvents }) => {
-  // Sort events chronologically
-  const sortedEvents = [...attendee.events].sort((a, b) => 
-    parseISO(a.eventDate).getTime() - parseISO(b.eventDate).getTime()
-  );
-
-  const firstEvent = sortedEvents[0];
-  const lastEvent = sortedEvents[sortedEvents.length - 1];
-
-  // Process data for visualizations
-  const monthlyAttendance = attendee.events.reduce((acc, event) => {
+  // Prepare data for charts
+  const monthlyData = attendee.events.reduce((acc, event) => {
     const month = format(parseISO(event.eventDate), 'MMM yyyy');
     acc[month] = (acc[month] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const attendanceData = Object.entries(monthlyAttendance).map(([month, count]) => ({
-    month,
-    count,
-  }));
-
-  // Updated category distribution calculation
-  const eventCategoryData = attendee.events.reduce((acc, event) => {
+  const categoryData = attendee.events.reduce((acc, event) => {
     const category = event.category.name;
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // Generate colors for categories dynamically
-  const categoryColors = Object.keys(eventCategoryData).map(categoryName => {
-    const fullColor = getCategoryColor(categoryName, undefined);
-    // Extract hex color from Tailwind class (simplified approach)
-    const colorMap: { [key: string]: string } = {
-      'bg-blue-200': '#93c5fd',
-      'bg-orange-200': '#fed7aa',
-      'bg-green-200': '#bbf7d0',
-      'bg-purple-200': '#c4b5fd',
-      'bg-pink-200': '#fbcfe8',
-      'bg-indigo-200': '#c7d2fe',
-      'bg-teal-200': '#99f6e4',
-      'bg-red-200': '#fecaca',
-      'bg-yellow-200': '#fef3c7',
-      'bg-cyan-200': '#a5f3fc',
-      'bg-lime-200': '#d9f99d',
-      'bg-emerald-200': '#a7f3d0',
-      'bg-violet-200': '#ddd6fe',
-      'bg-rose-200': '#fecdd3',
-      'bg-amber-200': '#fde68a',
-      'bg-sky-200': '#bae6fd',
-      'bg-fuchsia-200': '#e9d5ff',
-      'bg-slate-200': '#e2e8f0',
-      'bg-gray-200': '#e5e7eb',
-      'bg-zinc-200': '#e4e4e7',
-    };
+  const yearlyComparison = (() => {
+    const currentYear = new Date().getFullYear();
+    const lastYear = currentYear - 1;
     
-    // Extract background class and convert to hex
-    const bgMatch = fullColor.match(/bg-(\w+)-200/);
-    if (bgMatch && colorMap[fullColor]) {
-      return colorMap[fullColor];
-    }
-    return '#93c5fd'; // Default blue
-  });
+    const currentYearEvents = attendee.events.filter(event => 
+      new Date(event.eventDate).getFullYear() === currentYear
+    ).length;
+    
+    const lastYearEvents = attendee.events.filter(event => 
+      new Date(event.eventDate).getFullYear() === lastYear
+    ).length;
 
-  // Group events by category and sort by date
-  const eventsByCategory = attendee.events.reduce((acc, event) => {
-    const category = event.category.name;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(event);
-    return acc;
-  }, {} as Record<string, typeof attendee.events>);
+    return [
+      { year: lastYear.toString(), events: lastYearEvents },
+      { year: currentYear.toString(), events: currentYearEvents }
+    ];
+  })();
 
-  // Sort events within each category by date (newest first)
-  Object.keys(eventsByCategory).forEach(category => {
-    eventsByCategory[category].sort((a, b) => 
-      new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
-    );
-  });
+  const monthlyChartData = Object.entries(monthlyData).map(([month, count]) => ({
+    month,
+    events: count
+  }));
 
-  // Sort categories by their most recent event date
-  const sortedCategories = Object.entries(eventsByCategory).sort(([, eventsA], [, eventsB]) => {
-    const latestA = new Date(eventsA[0].eventDate).getTime();
-    const latestB = new Date(eventsB[0].eventDate).getTime();
-    return latestB - latestA;
-  });
+  const categoryChartData = Object.entries(categoryData).map(([category, count]) => ({
+    name: category,
+    value: count,
+    fill: getCategoryColor(category)
+  }));
 
   return (
-    <div className="space-y-8">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">Total Events</h5>
-          <p className="mt-1 text-2xl font-semibold">{attendee.eventCount}</p>
-        </Card>
-        <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">First Event</h5>
-          <p className="mt-1 text-sm font-medium">
-            {firstEvent ? format(parseISO(firstEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">Last Event</h5>
-          <p className="mt-1 text-sm font-medium">
-            {lastEvent ? format(parseISO(lastEvent.eventDate), 'MMM d, yyyy') : 'N/A'}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">Region</h5>
-          <p className="mt-1 text-sm font-medium">
-            {attendee.region === 'Unknown' ? 'Not specified' : attendee.region}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">Town</h5>
-          <p className="mt-1 text-sm font-medium">
-            {attendee.town === 'Unknown' ? 'Not specified' : attendee.town}
-          </p>
-        </Card>
-      </div>
-
-      {/* Attendance Timeline */}
+    <div className="space-y-6">
+      {/* User Info */}
       <Card className="p-6">
-        <h4 className="text-lg font-semibold mb-4">Attendance Timeline</h4>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={attendanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Area 
-                type="monotone" 
-                dataKey="count" 
-                stroke="#8884d8" 
-                fill="#8884d8" 
-                fillOpacity={0.3} 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <h3 className="text-lg font-semibold mb-4">User Information</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Name</p>
+            <p className="font-medium">{attendee.name}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Phone</p>
+            <p className="font-medium">{attendee.phoneNumber}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Region</p>
+            <p className="font-medium">{attendee.region || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Total Events</p>
+            <p className="font-medium">{attendee.eventCount}</p>
+          </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Event Category Distribution */}
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Monthly Activity */}
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Event Category Distribution</h4>
-          <div className="h-[300px]">
+          <h3 className="text-lg font-semibold mb-4">Monthly Activity</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="events" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Category Distribution */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Event Categories</h3>
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={Object.entries(eventCategoryData).map(([name, value]) => ({ name, value }))}
+                  data={categoryChartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
-                  paddingAngle={5}
+                  fill="#8884d8"
                   dataKey="value"
                 >
-                  {Object.entries(eventCategoryData).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={categoryColors[index]} />
+                  {categoryChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -212,26 +155,40 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
           </div>
         </Card>
 
-        {/* Updated Event History with sorting */}
+        {/* Yearly Comparison */}
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Event History</h4>
-          <div className="max-h-[300px] overflow-y-auto">
-            {sortedCategories.map(([category, events]) => (
-              <div key={category} className="mb-4">
-                <h5 className="font-medium text-base mb-2">{category} ({events.length})</h5>
-                <ul className="space-y-2 pl-4">
-                  {events.map((event, idx) => (
-                    <li key={idx} className="text-sm border-b pb-2">
-                      <span className="font-medium">
-                        {format(parseISO(event.eventDate), 'MMM dd, yyyy')}
-                      </span>
-                      {' - '}
-                      <span className="text-gray-600">{event.eventTitle}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <h3 className="text-lg font-semibold mb-4">Yearly Comparison</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={yearlyComparison}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="events" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Recent Events */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Events</h3>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {attendee.events
+              .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime())
+              .slice(0, 10)
+              .map((event, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div>
+                    <p className="font-medium text-sm">{event.eventTitle}</p>
+                    <p className="text-xs text-gray-600">{format(parseISO(event.eventDate), 'MMM dd, yyyy')}</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                    {event.category.name}
+                  </span>
+                </div>
+              ))}
           </div>
         </Card>
       </div>
