@@ -18,7 +18,7 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256]
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     ignoreBuildErrors: true, // Ignore TypeScript errors during build to speed up deployment
