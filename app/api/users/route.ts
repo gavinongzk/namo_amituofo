@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserForAdmin } from '@/lib/actions/user.actions';
-import { connectToDatabase } from '@/lib/database';
+import { connectToDatabase } from '@/lib/database/index';
 import User from '@/lib/database/models/user.model';
 import Order from '@/lib/database/models/order.model';
 

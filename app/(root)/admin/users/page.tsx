@@ -7,7 +7,7 @@ import UserManagement from '@/components/shared/UserManagement';
 
 const AdminUsersPage = () => {
   const { user, isLoaded } = useUser();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (isLoaded) {

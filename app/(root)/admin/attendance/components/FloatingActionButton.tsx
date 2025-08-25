@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, QrCode, RefreshCw, Download, X, Zap, Edit2 } from 'lucide-react';
+import { QrCode, RefreshCw, Download, X, Zap, Edit2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 interface FloatingActionButtonProps {

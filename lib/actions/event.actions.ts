@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { unstable_cache } from 'next/cache';
 
 import mongoose from 'mongoose'; // Added for ObjectId validation
-import { connectToDatabase } from '@/lib/database'
+import { connectToDatabase } from '@/lib/database/index'
 import Event from '@/lib/database/models/event.model'
 import User from '@/lib/database/models/user.model'
 import Category from '@/lib/database/models/category.model'

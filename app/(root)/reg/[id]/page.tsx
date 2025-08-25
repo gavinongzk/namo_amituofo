@@ -81,12 +81,12 @@ const isPostalCodeField = (field: CustomField): boolean => {
          label.includes('邮政编码');
 };
 
-const QRCodeDisplay = React.memo(({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
+const QRCodeDisplay = React.memo(function QRCodeDisplay({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
   qrCode: string, 
   isAttended: boolean,
   isNewlyMarked?: boolean,
   queueNumber?: string
-}) => {
+}) {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <QrCodeWithLogo 
@@ -125,12 +125,12 @@ const CancelButton: React.FC<CancelButtonProps> = ({ groupId, onCancel, particip
   );
 };
 
-const UncancelButton = React.memo(({ groupId, onUncancel, participantInfo, queueNumber }: { 
+const UncancelButton = React.memo(function UncancelButton({ groupId, onUncancel, participantInfo, queueNumber }: { 
   groupId: string;
   onUncancel: (groupId: string, queueNumber: string) => void;
   participantInfo?: string;
   queueNumber?: string;
-}) => {
+}) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -368,7 +368,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     } finally {
       setIsLoading(false);
     }
-  }, [id, user?.publicMetadata.role, getOrderDetailsWithoutExpirationCheck]);
+  }, [id, user?.publicMetadata.role]);
 
   // Initial fetch
   useEffect(() => {
@@ -983,7 +983,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <div className="bg-white rounded-xl p-4 flex items-start gap-4">
             <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">1</div>
             <div className="space-y-1">
-              <div className="text-blue-900 font-medium">点击顶部"目录"按钮</div>
+              <div className="text-blue-900 font-medium">点击顶部&quot;目录&quot;按钮</div>
               <div className="text-blue-600">Click on the &quot;目录&quot; menu button at the top</div>
             </div>
           </div>
@@ -991,7 +991,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
           <div className="bg-white rounded-xl p-4 flex items-start gap-4">
             <div className="bg-blue-100 rounded-xl w-12 h-12 flex items-center justify-center text-2xl font-bold text-blue-600">2</div>
             <div className="space-y-1">
-              <div className="text-blue-900 font-medium">在目录中选择"活动查询 Event Lookup"</div>
+              <div className="text-blue-900 font-medium">在目录中选择&quot;活动查询 Event Lookup&quot;</div>
               <div className="text-blue-600">Select &quot;活动查询 Event Lookup&quot; from the menu</div>
             </div>
           </div>

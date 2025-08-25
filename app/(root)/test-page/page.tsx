@@ -1,4 +1,4 @@
-import { connectToDatabase } from '@/lib/database';
+import { connectToDatabase } from '@/lib/database/index';
 import Event from '@/lib/database/models/event.model';
 
 export default async function TestPage() {

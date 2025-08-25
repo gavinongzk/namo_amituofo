@@ -7,7 +7,7 @@ import AnalyticsDashboard from '@/components/shared/AnalyticsDashboard';
 
 const AdminAnalyticsPage = () => {
   const { user, isLoaded } = useUser();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (isLoaded) {
