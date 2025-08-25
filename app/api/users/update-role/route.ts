@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database/index';
+import { connectToDatabase } from '@/lib/database';
 import User from '@/lib/database/models/user.model';
 import { clerkClient } from '@clerk/nextjs';
 import { ObjectId } from 'mongodb';

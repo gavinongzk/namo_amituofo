@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database/index';
+import { connectToDatabase } from '@/lib/database';
 import TaggedUser from '@/lib/database/models/taggedUser.model';
 import { CustomFieldGroup, CustomField } from '@/types';
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database/index';
+import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
 import { getOrdersByPhoneNumber, getAllOrdersByPhoneNumberIncludingCancelled } from '@/lib/actions/order.actions';
 import { auth } from '@clerk/nextjs';

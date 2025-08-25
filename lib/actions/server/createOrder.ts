@@ -1,4 +1,4 @@
-// import { connectToDatabase } from '@/lib/database/index';
+// import { connectToDatabase } from '@/lib/database';
 // import Order from '@/lib/database/models/order.model';
 // import { CreateOrderParams } from '@/types';
 // import { ObjectId } from 'mongodb';

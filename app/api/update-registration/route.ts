@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database/index';
+import { connectToDatabase } from '@/lib/database';
 import { Order, Event } from '@/lib/database/models';
 import { isValidPhoneNumber, formatPhoneNumber } from '@/lib/utils';
 import { revalidateTag } from 'next/cache';

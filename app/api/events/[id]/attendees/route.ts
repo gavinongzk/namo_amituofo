@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/database/index';
+import { connectToDatabase } from '@/lib/database';
 import { getOrdersByEvent } from '@/lib/actions/order.actions';
 import { CustomFieldGroup, CustomField } from '@/types';
 
