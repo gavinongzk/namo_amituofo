@@ -1,7 +1,16 @@
 /** @type {import('tailwindcss').Config} */
-// const { withUt } = require('uploadthing/tw');
+import type { Config } from 'tailwindcss';
 
-module.exports = {
+// Try to import uploadthing/tw, but fallback gracefully if it fails
+let withUt: any;
+try {
+  withUt = require('uploadthing/tw');
+} catch (error) {
+  console.warn('uploadthing/tw not available, using default TailwindCSS config');
+  withUt = (config: Config) => config;
+}
+
+const config: Config = {
   darkMode: ['class'],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -157,4 +166,6 @@ module.exports = {
       strategy: 'class',
     }),
   ],
-}
+};
+
+export default withUt(config);
