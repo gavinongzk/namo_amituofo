@@ -22,7 +22,7 @@ import { formatBilingualDateTime } from '@/lib/utils';
 import { getAllCategories } from "@/lib/actions/category.actions"
 import { ICategory } from "@/lib/database/models/category.model"
 
-import "react-datepicker/dist/react-datepicker.css";
+
 import { Checkbox } from "../ui/checkbox"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
