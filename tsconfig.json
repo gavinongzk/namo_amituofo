@@ -20,7 +20,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/types/*": ["./types/*"],
+      "@/constants/*": ["./constants/*"]
     },
     "typeRoots": ["node_modules/@types"],
     "types": ["jest", "body-parser"]

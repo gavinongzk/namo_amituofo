@@ -40,6 +40,16 @@ const nextConfig = {
   },
   // Optimize webpack
   webpack: (config, { dev, isServer }) => {
+    // Add path aliases for webpack
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname),
+      '@/components': require('path').resolve(__dirname, 'components'),
+      '@/lib': require('path').resolve(__dirname, 'lib'),
+      '@/types': require('path').resolve(__dirname, 'types'),
+      '@/constants': require('path').resolve(__dirname, 'constants'),
+    };
+
     // Optimize for production builds
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
