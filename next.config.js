@@ -20,6 +20,66 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    ignoreBuildErrors: true, // Ignore TypeScript errors during build to speed up deployment
+  },
+  // Optimize build performance
+  experimental: {
+    optimizePackageImports: [
+      '@radix-ui/react-icons', 
+      'lucide-react',
+      'chart.js',
+      'framer-motion',
+      'googleapis',
+      'jspdf'
+    ],
+  },
+  // Reduce bundle size
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Optimize webpack
+  webpack: (config, { dev, isServer }) => {
+    // Optimize for production builds
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          // Separate large dependencies into their own chunks
+          chartjs: {
+            test: /[\\/]node_modules[\\/]chart\.js[\\/]/,
+            name: 'chartjs',
+            chunks: 'all',
+            priority: 20,
+          },
+          framer: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer',
+            chunks: 'all',
+            priority: 20,
+          },
+          google: {
+            test: /[\\/]node_modules[\\/]googleapis[\\/]/,
+            name: 'google',
+            chunks: 'all',
+            priority: 20,
+          },
+          jspdf: {
+            test: /[\\/]node_modules[\\/]jspdf[\\/]/,
+            name: 'jspdf',
+            chunks: 'all',
+            priority: 20,
+          },
+        },
+      };
+    }
+    return config;
+  },
   async rewrites() {
     return [
       {

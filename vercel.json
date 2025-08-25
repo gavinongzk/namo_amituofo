@@ -6,6 +6,11 @@
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "framework": "nextjs",
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
   "functions": {
     "app/api/events/route.ts": {
       "maxDuration": 30

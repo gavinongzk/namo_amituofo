@@ -6,7 +6,12 @@
   "scripts": {
     "optimize-costs": "node scripts/optimize-vercel-costs.js",
     "optimize-db": "node scripts/optimize-database.js",
+    "optimize-build": "node scripts/optimize-build.js",
     "test-timeout-fixes": "node scripts/test-timeout-fixes.js",
+    "test-performance": "node scripts/test-eventlist-performance.js",
+    "test-scenarios": "node scripts/test-eventlist-performance.js --scenarios",
+    "test-direct": "node scripts/test-eventlist-direct.js",
+    "test-simple": "node scripts/test-eventlist-simple.js",
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
     "build": "next build",
