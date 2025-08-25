@@ -5,9 +5,7 @@ import { unstable_cache } from 'next/cache';
 
 import mongoose from 'mongoose'; // Added for ObjectId validation
 import { connectToDatabase } from '@/lib/database/index'
-import Event from '@/lib/database/models/event.model'
-import User from '@/lib/database/models/user.model'
-import Category from '@/lib/database/models/category.model'
+import { Event, User, Category, Order, IEvent } from '@/lib/database/models'
 import { handleError } from '@/lib/utils'
 
 import {
@@ -18,9 +16,6 @@ import {
   GetEventsByUserParams,
   GetRelatedEventsByCategoryParams,
 } from '@/types'
-
-import { IEvent } from '@/lib/database/models/event.model';
-import Order from '@/lib/database/models/order.model';
 import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 import type { Document } from 'mongoose';
 import { EVENT_CONFIG } from '@/lib/config/event.config';

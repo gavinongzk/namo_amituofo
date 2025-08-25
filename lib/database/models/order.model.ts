@@ -1,7 +1,5 @@
 import { Schema, model, models, Document } from 'mongoose';
 import { CustomFieldGroup, CustomField } from '@/types';
-import Event from '@/lib/database/models/event.model';
-import User from '@/lib/database/models/user.model';
 
 export interface IOrder extends Document {
   _id: string;
@@ -40,11 +38,11 @@ const OrderSchema = new Schema({
   },
   event: {
     type: Schema.Types.ObjectId,
-    ref: Event,
+    ref: 'Event',
   },
   buyer: {
     type: Schema.Types.ObjectId,
-    ref: User,
+    ref: 'User',
   },
   customFieldValues: [
     {

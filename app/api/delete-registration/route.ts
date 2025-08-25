@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database/index';
-import Order from '@/lib/database/models/order.model';
-import Event from '@/lib/database/models/event.model';
+import { Order, Event } from '@/lib/database/models';
 import { auth } from '@clerk/nextjs';
 
 export async function POST(req: NextRequest) {
