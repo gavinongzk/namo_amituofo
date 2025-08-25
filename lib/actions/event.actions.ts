@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { smartInvalidation } from '@/lib/cache/smart-invalidation';
 import { unstable_cache } from 'next/cache';
 
 import mongoose from 'mongoose'; // Added for ObjectId validation
@@ -62,9 +61,13 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 
     console.log("New event created successfully:", newEvent);
 
-    // Use smart cache invalidation for better performance
-    await smartInvalidation.invalidateAllEvents();
     revalidatePath(path);
+    revalidatePath('/');
+    revalidatePath('/events');
+    revalidateTag('events');
+    revalidateTag('admin-events');
+    revalidateTag('api-events-list');
+    revalidateTag('superadmin-events-list');
 
     return JSON.parse(JSON.stringify(newEvent));
   } catch (error) {
@@ -134,10 +137,15 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { new: true }
     );
     
-    // Use smart cache invalidation for better performance
-    await smartInvalidation.invalidateAllEvents();
-    revalidateTag('event-images');
+    // Revalidate all relevant caches
     revalidatePath(path);
+    revalidatePath('/');
+    revalidatePath('/events');
+    revalidateTag('events');
+    revalidateTag('admin-events');
+    revalidateTag('event-images');
+    revalidateTag('api-events-list');
+    revalidateTag('superadmin-events-list');
 
     return JSON.parse(JSON.stringify(updatedEvent));
   } catch (error) {
@@ -156,11 +164,12 @@ export async function deleteEvent({ eventId, path }: DeleteEventParams) {
       { new: true }
     )
     
-    // Use smart cache invalidation for better performance
+    // Revalidate all relevant caches
     if (deletedEvent) {
-      await smartInvalidation.invalidateAllEvents();
-      revalidateTag('event-images');
       revalidatePath(path);
+      revalidatePath('/');
+      revalidateTag('events');
+      revalidateTag('event-images');
     }
   } catch (error) {
     handleError(error)
