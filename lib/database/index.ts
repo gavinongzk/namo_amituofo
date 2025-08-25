@@ -42,9 +42,24 @@ export const connectToDatabase = async () => {
     return null;
   }
 
+  // Also skip during build process
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    console.log('Skipping database connection during build process');
+    return null;
+  }
+
+  // Skip during Vercel build
+  if (process.env.VERCEL_ENV && !process.env.MONGODB_URI) {
+    console.log('Skipping database connection during Vercel build');
+    return null;
+  }
+
   if (cached.conn) return cached.conn;
 
-  if(!MONGODB_URI) throw new Error('MONGODB_URI is missing');
+  if(!MONGODB_URI) {
+    console.log('MONGODB_URI is missing, skipping database connection');
+    return null;
+  }
 
   cached.promise = cached.promise || connectWithRetry(MONGODB_URI, {
     dbName: 'evently',
