@@ -8,7 +8,6 @@
     "optimize-db": "node scripts/optimize-database.js",
     "optimize-build": "node scripts/optimize-build.js",
     "check-aliases": "node scripts/check-path-aliases.js",
-    "create-indexes": "dotenv -e .env.local -- ts-node scripts/create-optimized-indexes-simple.ts",
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
     "build": "next build",
