@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const cacheKey = `event-counts-${eventId}`;
     
-    return unstable_cache(
+    const result = await unstable_cache(
       async () => {
         await connectToDatabase();
         
@@ -52,6 +52,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         tags: [`event-${eventId}`, 'event-counts']
       }
     )();
+    
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching registration counts:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

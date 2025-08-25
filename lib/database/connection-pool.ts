@@ -79,7 +79,7 @@ class DatabaseConnectionPool {
         family: 4,
         maxIdleTimeMS: 30000,
         retryWrites: true,
-        w: 'majority'
+        w: 'majority' as const
       };
 
       const connection = await mongoose.connect(MONGODB_URI, options);
