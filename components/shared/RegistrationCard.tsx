@@ -2,12 +2,15 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { IRegistration } from '@/types'
+import { CustomField } from '@/types'
 
 type Props = {
-  event: IRegistration['event'] & {
-    orderIds?: string[]
+  event: IEvent & {
+    orderId?: string
+    customFieldValues?: CustomField[]
+    queueNumber?: string
   }
   registrations: (IRegistration['registrations'][0] & {
     orderId?: string
@@ -18,12 +21,27 @@ const RegistrationCard = ({ event, registrations }: Props) => {
   const primaryOrderId = event.orderIds?.[0] || event.orderId;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const imageUrlRef = useRef(event.imageUrl);
 
-  // Reset image error state when imageUrl changes
+  // Reset image state only when imageUrl actually changes
   useEffect(() => {
-    setImageError(false);
-    setImageLoading(true);
+    if (imageUrlRef.current !== event.imageUrl) {
+      imageUrlRef.current = event.imageUrl;
+      setImageError(false);
+      setImageLoading(true);
+    }
   }, [event.imageUrl]);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${event.imageUrl}`);
+    setImageLoading(false);
+    setImageError(true);
+  };
 
   // Sort registrations by queue number
   const sortedRegistrations = [...registrations].sort((a, b) => {
@@ -55,15 +73,8 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                 imageLoading ? "opacity-0" : "opacity-100"
               }`}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              onLoadingComplete={() => {
-                setImageLoading(false);
-                setImageError(false);
-              }}
-              onError={() => {
-                console.error(`Failed to load image: ${event.imageUrl}`);
-                setImageLoading(false);
-                setImageError(true);
-              }}
+              onLoadingComplete={handleImageLoad}
+              onError={handleImageError}
               loading="lazy"
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
@@ -95,6 +106,7 @@ const RegistrationCard = ({ event, registrations }: Props) => {
                 <button 
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     setImageError(false);
                     setImageLoading(true);
                   }}
