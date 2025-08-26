@@ -445,18 +445,6 @@ const UserManagement = ({ country }: { country: string }) => {
                   )}
                 </Button>
               </th>
-              <th className="py-2 px-4 border-b text-left">
-                <Button
-                  variant="ghost"
-                  onClick={() => requestSort('updatedAt')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
-                >
-                  Updated At
-                  {sortConfig.key === 'updatedAt' && (
-                    <span className="ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </Button>
-              </th>
               <th className="py-2 px-4 border-b text-left">Remarks</th>
               <th className="py-2 px-4 border-b text-left">Actions</th>
             </tr>
@@ -469,7 +457,6 @@ const UserManagement = ({ country }: { country: string }) => {
                 <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
                 <td className="py-2 px-4 border-b text-left">{user.isNewUser ? 'New' : 'Existing'}</td>
                 <td className="py-2 px-4 border-b text-left">{formatDateTime(user.createdAt)}</td>
-                <td className="py-2 px-4 border-b text-left">{formatDateTime(user.updatedAt)}</td>
                 <td className="py-2 px-4 border-b text-left">
                   {editingUser === user.phoneNumber ? (
                     <div className="flex items-center gap-2">
