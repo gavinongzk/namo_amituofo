@@ -752,26 +752,26 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
               {isFullyBooked ? (
                 <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
                   <p className="text-red-600 font-medium text-lg">
-                    此活动名额已满。若有需要，请联系本寺{' '}
+                    此活动名额已满。若有需要，请联系本寺 Whatsapp: {' '}
                     <a 
                       href="https://wa.me/6588184848" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
-                      Whatsapp: +65-8818 4848
+                      +65-8818 4848
                     </a>
                     。
                   </p>
                   <p className="text-red-600 font-medium text-lg mt-2">
-                    This event is fully booked. If you need assistance, please contact the temple via{' '}
+                    This event is fully booked. If you need assistance, please contact the temple via Whatsapp: {' '}
                     <a 
                       href="https://wa.me/6588184848" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
-                      Whatsapp: +65-8818 4848
+                      +65-8818 4848
                     </a>
                     .
                   </p>

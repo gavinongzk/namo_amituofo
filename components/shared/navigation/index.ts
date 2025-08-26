@@ -1,7 +1,6 @@
 // Navigation Components
 export { default as BreadcrumbNavigation } from '../BreadcrumbNavigation';
 export { default as BackToTopButton } from '../BackToTopButton';
-export { default as QuickNavigation } from '../QuickNavigation';
 export { default as AdminNavigation } from '../AdminNavigation';
 export { default as FloatingQuickActions } from '../FloatingQuickActions';
 export { default as SmartBackButton } from '../SmartBackButton';

@@ -3,7 +3,6 @@ import Header from "@/components/shared/Header"
 import NavigationProvider from "@/components/shared/NavigationProvider"
 import BackToTopButton from "@/components/shared/BackToTopButton"
 import BreadcrumbNavigation from "@/components/shared/BreadcrumbNavigation"
-import QuickNavigation from "@/components/shared/QuickNavigation"
 import AdminNavigation from "@/components/shared/AdminNavigation"
 import FloatingQuickActions from "@/components/shared/FloatingQuickActions"
 import KeyboardNavigation from "@/components/shared/KeyboardNavigation"
@@ -28,9 +27,6 @@ export default function RootLayout({
             
             {/* Admin Navigation (only shows on admin pages) */}
             <AdminNavigation />
-            
-            {/* Quick Navigation (shows on main pages) */}
-            <QuickNavigation />
             
             {children}
           </div>
