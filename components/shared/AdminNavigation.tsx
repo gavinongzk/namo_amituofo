@@ -147,7 +147,7 @@ const AdminNavigation = () => {
                 {user?.firstName} {user?.lastName}
               </span>
               <span className="text-gray-500">
-                ({user?.publicMetadata?.role || 'user'})
+                ({(user?.publicMetadata?.role as string) || 'user'})
               </span>
             </div>
             <Link href="/profile">

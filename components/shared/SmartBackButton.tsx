@@ -39,12 +39,15 @@ const SmartBackButton = ({
     }
   };
 
+  // Map size to Button component compatible size
+  const buttonSize = size === 'md' ? 'default' : size;
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Button
         onClick={handleBack}
         variant={variant}
-        size={size}
+        size={buttonSize}
         className="flex items-center gap-2"
         title={canGoBack ? '返回上一页' : '返回首页'}
       >
@@ -56,7 +59,7 @@ const SmartBackButton = ({
         <Link href="/">
           <Button
             variant="outline"
-            size={size}
+            size={buttonSize}
             className="flex items-center gap-2"
             title="返回首页"
           >
