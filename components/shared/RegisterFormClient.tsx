@@ -1032,33 +1032,35 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                 </>
               )}
 
-              {/* Add PDPA consent checkbox before the submit button */}
-              <PdpaConsentCheckbox 
-                name="pdpaConsent"
-                disabled={isSubmitting}
-                className="mt-6"
-              />
+              {/* Add PDPA consent checkbox before the submit button - only show when event is not full */}
+              {!isFullyBooked && (
+                <>
+                  <PdpaConsentCheckbox 
+                    name="pdpaConsent"
+                    disabled={isSubmitting}
+                    className="mt-6"
+                  />
 
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              </div>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || isFullyBooked} 
-                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                    处理中... / Processing...
-                  </>
-                ) : isFullyBooked ? (
-                  '名额已满 / Fully Booked'
-                ) : (
-                  '提交 / Submit'
-                )}
-              </Button>
-            </div>
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          处理中... / Processing...
+                        </>
+                      ) : (
+                        '提交 / Submit'
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
             </form>
           </Form>
         )}
