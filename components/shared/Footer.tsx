@@ -1,3 +1,5 @@
+'use client';
+
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -9,9 +11,14 @@ import {
   Users,
   BarChart3
 } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { user } = useUser();
+  const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
+  const isNormalAdmin = user?.publicMetadata?.role === 'admin';
+  const isAdmin = isSuperAdmin || isNormalAdmin;
 
   const footerSections = [
     {
@@ -19,9 +26,12 @@ const Footer = () => {
       links: [
         { label: "首页", href: "/", icon: <Home className="h-4 w-4" /> },
         { label: "活动查询", href: "/event-lookup", icon: <Search className="h-4 w-4" /> },
-        { label: "活动管理", href: "/admin/dashboard", icon: <Calendar className="h-4 w-4" /> },
-        { label: "用户管理", href: "/admin/users", icon: <Users className="h-4 w-4" /> },
-        { label: "数据分析", href: "/admin/analytics", icon: <BarChart3 className="h-4 w-4" /> },
+        // Only show admin links to admin users
+        ...(isAdmin ? [
+          { label: "活动管理", href: "/admin/dashboard", icon: <Calendar className="h-4 w-4" /> },
+          { label: "用户管理", href: "/admin/users", icon: <Users className="h-4 w-4" /> },
+          { label: "数据分析", href: "/admin/analytics", icon: <BarChart3 className="h-4 w-4" /> },
+        ] : []),
       ]
     },
     {
