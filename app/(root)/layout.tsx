@@ -1,5 +1,13 @@
 import Footer from "@/components/shared/Footer"
 import Header from "@/components/shared/Header"
+import NavigationProvider from "@/components/shared/NavigationProvider"
+import BackToTopButton from "@/components/shared/BackToTopButton"
+import BreadcrumbNavigation from "@/components/shared/BreadcrumbNavigation"
+import QuickNavigation from "@/components/shared/QuickNavigation"
+import AdminNavigation from "@/components/shared/AdminNavigation"
+import FloatingQuickActions from "@/components/shared/FloatingQuickActions"
+import KeyboardNavigation from "@/components/shared/KeyboardNavigation"
+import NavigationProgress from "@/components/shared/NavigationProgress"
 
 export default function RootLayout({
   children,
@@ -7,14 +15,37 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <div className="content-container">
-          {children}
-        </div>
+    <NavigationProvider>
+      <div className="flex h-screen flex-col">
+        {/* Navigation Progress Bar */}
+        <NavigationProgress />
+        
+        <Header />
+        <main className="flex-1">
+          <div className="content-container">
+            {/* Breadcrumb Navigation */}
+            <BreadcrumbNavigation />
+            
+            {/* Admin Navigation (only shows on admin pages) */}
+            <AdminNavigation />
+            
+            {/* Quick Navigation (shows on main pages) */}
+            <QuickNavigation />
+            
+            {children}
+          </div>
         </main>
-      <Footer />
-    </div>
+        <Footer />
+        
+        {/* Back to Top Button */}
+        <BackToTopButton />
+        
+        {/* Floating Quick Actions (mobile) */}
+        <FloatingQuickActions />
+        
+        {/* Keyboard Navigation */}
+        <KeyboardNavigation />
+      </div>
+    </NavigationProvider>
   )
 }
