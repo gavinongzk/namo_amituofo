@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { 
-  Dashboard, 
+  LayoutDashboard, 
   Users, 
   Calendar, 
   BarChart3, 
@@ -39,7 +39,7 @@ const AdminNavigation = () => {
     {
       label: '仪表板',
       href: '/admin/dashboard',
-      icon: <Dashboard className="h-5 w-5" />,
+      icon: <LayoutDashboard className="h-5 w-5" />,
       description: '系统概览和统计'
     },
     {
