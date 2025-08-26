@@ -11,11 +11,17 @@ export async function POST(req: Request) {
   try {
     await connectToDatabase();
     const { date } = await req.json();
-    const sinceDate = date ? new Date(date) : undefined;
 
     // 1. Get users from Orders (select only required fields and avoid hydration)
-    // NOTE: Order does not have isDeleted. Previous filter forced a full collection scan.
-    const orders = await Order.find({}, {
+    // Preserve original filter shape (matches all docs when field absent)
+    const query = {
+      $or: [
+        { isDeleted: false },
+        { isDeleted: { $exists: false } }
+      ]
+    } as unknown as Record<string, unknown>;
+
+    const orders = await Order.find(query, {
       createdAt: 1,
       'customFieldValues.fields.label': 1,
       'customFieldValues.fields.value': 1,
@@ -50,7 +56,8 @@ export async function POST(req: Request) {
           uniqueUsers.set(phoneValue, {
             phoneNumber: phoneValue,
             name: nameValue || existingUser?.name || 'Unknown',
-            isNewUser: sinceDate ? (!createdAt || new Date(createdAt) >= sinceDate) : false,
+            // Keep original logic shape
+            isNewUser: !createdAt || new Date(createdAt) >= new Date(date),
             createdAt
           });
         }
@@ -78,7 +85,8 @@ export async function POST(req: Request) {
         uniqueUsers.set(user.phoneNumber, {
           phoneNumber: user.phoneNumber,
           name: user.name,
-          isNewUser: sinceDate ? (!user.createdAt || new Date(user.createdAt) >= sinceDate) : false,
+          // Keep original logic shape
+          isNewUser: !user.createdAt || new Date(user.createdAt) >= new Date(date),
           remarks: user.remarks,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt
@@ -95,7 +103,8 @@ export async function POST(req: Request) {
           remarks: user.remarks,
           createdAt: earliestCreatedAt,
           updatedAt: user.updatedAt,
-          isNewUser: sinceDate ? (!earliestCreatedAt || new Date(earliestCreatedAt) >= sinceDate) : false
+          // Keep original logic shape
+          isNewUser: !earliestCreatedAt || new Date(earliestCreatedAt) >= new Date(date)
         });
       }
     });
