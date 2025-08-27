@@ -1,15 +1,12 @@
-import { IEvent } from '@/lib/database/models/event.model'
 import { formatBilingualDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { IRegistration } from '@/types'
-import { CustomField } from '@/types'
 
 type Props = {
-  event: IEvent & {
+  event: IRegistration['event'] & {
     orderId?: string
-    customFieldValues?: CustomField[]
     queueNumber?: string
   }
   registrations: (IRegistration['registrations'][0] & {
@@ -18,7 +15,7 @@ type Props = {
 }
 
 const RegistrationCard = ({ event, registrations }: Props) => {
-  const primaryOrderId = event.orderIds?.[0] || event.orderId;
+  const primaryOrderId = event.orderId;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const imageUrlRef = useRef(event.imageUrl);
