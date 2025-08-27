@@ -31,8 +31,7 @@ const RegistrationCollection: React.FC<CollectionProps> = ({
                 <RegistrationCard 
                   event={{
                     ...registration.event,
-                    orderId: registration.event.orderId,
-                    orderIds: registration.orderIds
+                    orderId: registration.event.orderId
                   }}
                   registrations={registration.registrations.map(r => ({
                     queueNumber: r.queueNumber ?? '',

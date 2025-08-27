@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { DeleteConfirmation } from './DeleteConfirmation'
 import { CustomField } from '@/types'
 import { cn } from '@/lib/utils'
@@ -39,7 +39,7 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
   const [imageLoading, setImageLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const imageUrlRef = useRef(event.imageUrl);
   
   // Debug logging for imageUrl
   console.log('🎨 Card rendering for event:', {
@@ -63,37 +63,40 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     
   const isExpired = new Date(event.endDateTime) < new Date();
 
+  // Reset image state only when imageUrl actually changes
   useEffect(() => {
-    setIsOnline(navigator.onLine)
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
+    if (imageUrlRef.current !== event.imageUrl) {
+      console.log('🔄 Image URL changed:', event.imageUrl);
+      imageUrlRef.current = event.imageUrl;
+      setImageError(false);
+      setImageLoading(true);
     }
-  }, [])
-
-  // Reset image error state when imageUrl changes
-  useEffect(() => {
-    console.log('🔄 Image URL changed:', event.imageUrl);
-    setImageError(false);
-    setImageLoading(true);
   }, [event.imageUrl]);
 
   const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!isOnline) {
-      e.preventDefault();
-      alert('This action requires an internet connection. Please check your connection and try again.');
-      return;
-    }
     e.preventDefault();
     setIsNavigating(true);
     const href = isMyTicket ? `/reg/${event.orderId}` : `/events/details/${event._id}`;
     router.push(href);
+  };
+
+  const handleImageLoad = () => {
+    console.log('✅ Image loaded successfully:', event.imageUrl);
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = (e: any) => {
+    console.error(`❌ Failed to load image: ${event.imageUrl}`, e);
+    setImageLoading(false);
+    setImageError(true);
+  };
+
+  const handleRetryImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageError(false);
+    setImageLoading(true);
   };
 
   return (
@@ -121,25 +124,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
               imageLoading ? "opacity-0" : "opacity-100"
             )}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            onLoadingComplete={() => {
-              console.log('✅ Image loaded successfully:', event.imageUrl);
-              setImageLoading(false);
-              setImageError(false);
-            }}
-            onError={(e) => {
-              console.error(`❌ Failed to load image: ${event.imageUrl}`, e);
-              setImageLoading(false);
-              setImageError(true);
-              // Attempt to reload the image if it's a network error
-              if (!navigator.onLine && event.imageUrl) {
-                const img = new window.Image();
-                img.src = event.imageUrl;
-                img.onload = () => {
-                  setImageError(false);
-                  setImageLoading(false);
-                };
-              }
-            }}
+            onLoadingComplete={handleImageLoad}
+            onError={handleImageError}
             priority={priority}
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
@@ -165,13 +151,9 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
                   "Loading image..."
                 )}
               </p>
-              {imageError && isOnline && (
+              {imageError && (
                 <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setImageError(false);
-                    setImageLoading(true);
-                  }}
+                  onClick={handleRetryImage}
                   className="mt-1 text-sm text-primary-500 hover:text-primary-600 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm px-2 py-1"
                 >
                   Retry loading

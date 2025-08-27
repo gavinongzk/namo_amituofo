@@ -13,7 +13,7 @@ export default function RootLayout({
         <div className="content-container">
           {children}
         </div>
-        </main>
+      </main>
       <Footer />
     </div>
   )

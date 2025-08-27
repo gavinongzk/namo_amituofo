@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import CheckoutButton from '@/components/shared/CheckoutButton';
 import Collection from '@/components/shared/Collection';
 import { formatBilingualDateTime } from '@/lib/utils';
@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { convertPhoneNumbersToLinks } from '@/lib/utils';
 import Loading from '@/components/shared/Loader';
 import Link from 'next/link';
-import { useState } from 'react';
+
 import { getCategoryColor } from '@/lib/utils/colorUtils';
 
 const EventInfo = ({ event }: { event: any }) => {
@@ -111,6 +111,32 @@ const EventInfo = ({ event }: { event: any }) => {
 const EventImage = ({ event }: { event: any }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const imageUrlRef = useRef(event.imageUrl);
+
+  // Reset image state only when imageUrl actually changes
+  useEffect(() => {
+    if (imageUrlRef.current !== event.imageUrl) {
+      imageUrlRef.current = event.imageUrl;
+      setImageError(false);
+      setImageLoading(true);
+    }
+  }, [event.imageUrl]);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${event.imageUrl}`);
+    setImageLoading(false);
+    setImageError(true);
+  };
+
+  const handleRetryImage = () => {
+    setImageError(false);
+    setImageLoading(true);
+  };
 
   return (
     <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-5">
@@ -127,15 +153,8 @@ const EventImage = ({ event }: { event: any }) => {
               }`}
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              onLoadingComplete={() => {
-                setImageLoading(false);
-                setImageError(false);
-              }}
-              onError={() => {
-                console.error(`Failed to load image: ${event.imageUrl}`);
-                setImageLoading(false);
-                setImageError(true);
-              }}
+              onLoadingComplete={handleImageLoad}
+              onError={handleImageError}
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
             />
@@ -163,10 +182,7 @@ const EventImage = ({ event }: { event: any }) => {
               </p>
               {imageError && (
                 <button 
-                  onClick={() => {
-                    setImageError(false);
-                    setImageLoading(true);
-                  }}
+                  onClick={handleRetryImage}
                   className="mt-1 text-sm text-primary-500 hover:text-primary-600 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm px-2 py-1"
                 >
                   Retry loading

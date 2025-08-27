@@ -751,7 +751,30 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
                 <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
-                  <p className="text-red-600 font-medium text-lg">此活动已满员。/ This event is fully booked.</p>
+                  <p className="text-red-600 font-medium text-lg">
+                    此活动名额已满。若有需要，请联系本寺 Whatsapp: {' '}
+                    <a 
+                      href="https://wa.me/6588184848" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      +65-8818 4848
+                    </a>
+                    。
+                  </p>
+                  <p className="text-red-600 font-medium text-lg mt-2">
+                    This event is fully booked. If you need assistance, please contact the temple via Whatsapp: {' '}
+                    <a 
+                      href="https://wa.me/6588184848" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      +65-8818 4848
+                    </a>
+                    .
+                  </p>
                 </div>
               ) : (
                 <>
@@ -1032,33 +1055,35 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                 </>
               )}
 
-              {/* Add PDPA consent checkbox before the submit button */}
-              <PdpaConsentCheckbox 
-                name="pdpaConsent"
-                disabled={isSubmitting}
-                className="mt-6"
-              />
+              {/* Add PDPA consent checkbox before the submit button - only show when event is not full */}
+              {!isFullyBooked && (
+                <>
+                  <PdpaConsentCheckbox 
+                    name="pdpaConsent"
+                    disabled={isSubmitting}
+                    className="mt-6"
+                  />
 
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              </div>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || isFullyBooked} 
-                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                    处理中... / Processing...
-                  </>
-                ) : isFullyBooked ? (
-                  '名额已满 / Fully Booked'
-                ) : (
-                  '提交 / Submit'
-                )}
-              </Button>
-            </div>
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2Icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          处理中... / Processing...
+                        </>
+                      ) : (
+                        '提交 / Submit'
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
             </form>
           </Form>
         )}
