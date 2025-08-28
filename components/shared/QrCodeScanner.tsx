@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
 import { Flashlight, FlashlightOff, Loader2 as Loader2Icon } from 'lucide-react';
@@ -41,7 +41,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
   };
 
-  const initializeScanner = async () => {
+  const initializeScanner = useCallback(async () => {
     try {
       checkBrowserCompatibility();
 
@@ -127,7 +127,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       handleError(err);
       return () => {};
     }
-  };
+  }, [onScan]);
 
   const handleSuccessfulScan = (text: string) => {
     // Vibrate if supported
@@ -258,6 +258,28 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       });
     };
   }, [activeCamera, isActive, initializeScanner]);
+
+  // Pause camera when tab is hidden; resume when visible
+  const pausedByVisibilityRef = useRef(false);
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (isActive) {
+          pausedByVisibilityRef.current = true;
+          stopCamera();
+        }
+      } else {
+        if (pausedByVisibilityRef.current) {
+          pausedByVisibilityRef.current = false;
+          setIsActive(true);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [isActive]);
 
   // Add a new effect to handle video element attributes
   useEffect(() => {
