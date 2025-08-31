@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEventsForSelection } from '@/lib/actions/event.actions';
-import { auth } from '@clerk/nextjs';
+import { auth, currentUser } from '@clerk/nextjs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,8 +8,12 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get('country') || 'Singapore';
     const { userId } = await auth();
     
-    // Get user role from metadata if available
-    const role = userId ? 'admin' : undefined; // Simplified for now
+    // Get user and their role from metadata
+    let role: string | undefined;
+    if (userId) {
+      const user = await currentUser();
+      role = user?.publicMetadata?.role as string;
+    }
     
     const events = await getEventsForSelection({ country, role });
     
