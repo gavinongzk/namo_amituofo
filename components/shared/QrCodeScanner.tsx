@@ -47,11 +47,29 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   // Get available cameras
   const getAvailableCameras = useCallback(async () => {
     try {
-      // Request permission first
-      await navigator.mediaDevices.getUserMedia({ video: true });
+      // First try to enumerate devices without permission (works on some browsers)
+      let devices = await navigator.mediaDevices.enumerateDevices();
+      let videoDevices = devices.filter(d => d.kind === 'videoinput');
       
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      // If no devices found or no labels, request permission first
+      if (videoDevices.length === 0 || videoDevices.every(d => !d.label)) {
+        try {
+          // Request permission with minimal constraints
+          await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            } 
+          });
+          
+          // Re-enumerate after permission
+          devices = await navigator.mediaDevices.enumerateDevices();
+          videoDevices = devices.filter(d => d.kind === 'videoinput');
+        } catch (permissionErr) {
+          console.error('Permission error:', permissionErr);
+          throw new Error('Camera permission denied');
+        }
+      }
       
       if (videoDevices.length === 0) {
         throw new Error('No cameras found on this device.');
@@ -81,6 +99,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       setIsInitializing(true);
       setError(undefined);
       
+      console.log('Initializing QR scanner...');
       checkBrowserCompatibility();
 
       // Stop any existing stream
@@ -91,21 +110,37 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       // Get camera device
       const selectedCamera = await getAvailableCameras();
+      console.log('Selected camera:', selectedCamera);
       
       if (!selectedCamera) {
         throw new Error('Failed to select a camera.');
       }
 
-      // Request camera stream with optimal settings
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: {
-          deviceId: { exact: selectedCamera },
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
-          frameRate: { ideal: 30, min: 15 }
-        }
-      });
+      // Request camera stream with more flexible constraints for better compatibility
+      let stream;
+      try {
+        console.log('Attempting to get camera stream with device ID...');
+        // First try with specific device ID
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: {
+            deviceId: { exact: selectedCamera },
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 },
+            frameRate: { ideal: 30, min: 15 }
+          }
+        });
+        console.log('Successfully got stream with device ID');
+      } catch (deviceErr) {
+        console.warn('Failed with specific device, trying with basic constraints:', deviceErr);
+        // Fallback to basic constraints
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: {
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 }
+          }
+        });
+        console.log('Successfully got stream with basic constraints');
+      }
 
       streamRef.current = stream;
 
@@ -113,12 +148,35 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
+        // Set video attributes for better compatibility
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        videoRef.current.setAttribute('controls', 'false');
+        
+        // Check if macOS for special handling
+        const isMacOS = /Mac/.test(navigator.platform);
+        
         // Ensure video plays
         try {
           await videoRef.current.play();
         } catch (playError) {
           console.error('Error playing video:', playError);
-          throw new Error('Failed to start video stream');
+          
+          // Try alternative approach for macOS
+          if (isMacOS) {
+            try {
+              // Force play with user interaction simulation
+              videoRef.current.muted = true;
+              videoRef.current.autoplay = true;
+              await videoRef.current.play();
+            } catch (macOSError) {
+              console.error('macOS video play error:', macOSError);
+              throw new Error('Failed to start video stream on macOS');
+            }
+          } else {
+            throw new Error('Failed to start video stream');
+          }
         }
       }
 
@@ -174,10 +232,12 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const handleError = useCallback((err: Error) => {
     console.error('QR Scanner Error:', err);
     
-    // Check for specific mobile browser issues
+    // Check for specific browser and OS issues
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMacOS = /Mac/.test(navigator.platform);
+    const isChrome = /Chrome/.test(navigator.userAgent);
     
     if (err.name === 'NotReadableError' || err.message.includes('hardware') || err.message.includes('in use')) {
       if (retryCount < maxRetries) {
@@ -212,6 +272,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     } else if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
       if (isIOS && isSafari) {
         setError('Camera access denied. On iOS Safari, please go to Settings > Safari > Camera and allow access, then refresh the page.\n摄像头权限被拒绝。在iOS Safari上，请前往设置 > Safari > 摄像头并允许访问，然后刷新页面。');
+      } else if (isMacOS && isSafari) {
+        setError('Camera access denied. On macOS Safari, please go to Safari > Preferences > Websites > Camera and allow access, then refresh the page.\n摄像头权限被拒绝。在macOS Safari上，请前往Safari > 偏好设置 > 网站 > 摄像头并允许访问，然后刷新页面。');
+      } else if (isMacOS && isChrome) {
+        setError('Camera access denied. On macOS Chrome, please go to Chrome > Preferences > Privacy and security > Site Settings > Camera and allow access, then refresh the page.\n摄像头权限被拒绝。在macOS Chrome上，请前往Chrome > 偏好设置 > 隐私设置和安全性 > 网站设置 > 摄像头并允许访问，然后刷新页面。');
       } else {
         setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.\n摄像头权限被拒绝，请在浏览器设置中启用摄像头权限并刷新页面。');
       }
@@ -221,6 +285,12 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.\n您的浏览器不完全支持摄像头访问，请尝试使用Chrome、Firefox或Safari。');
     } else if (err.message.includes('secure')) {
       setError('Camera access requires a secure (HTTPS) connection. Please use HTTPS or localhost.\n摄像头访问需要安全连接(HTTPS)，请使用HTTPS或localhost。');
+    } else if (err.message.includes('Failed to start video stream')) {
+      if (isMacOS) {
+        setError('Camera stream failed to start. On macOS, please:\n1. Check System Preferences > Security & Privacy > Camera\n2. Ensure your browser has camera access\n3. Close other apps using the camera\n4. Try refreshing the page\n\n摄像头流启动失败。在macOS上，请：\n1. 检查系统偏好设置 > 安全性与隐私 > 摄像头\n2. 确保浏览器有摄像头访问权限\n3. 关闭其他使用摄像头的应用\n4. 尝试刷新页面');
+      } else {
+        setError('Camera stream failed to start. Please check camera permissions and try refreshing the page.\n摄像头流启动失败。请检查摄像头权限并尝试刷新页面。');
+      }
     } else {
       setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.\n摄像头错误：${err.message}。请刷新页面或尝试其他浏览器。`);
     }
