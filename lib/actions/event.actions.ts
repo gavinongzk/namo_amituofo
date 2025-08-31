@@ -501,22 +501,30 @@ export async function getEventsForSelection({ country, role }: { country: string
     const expirationDate = EVENT_CONFIG.getExpirationDate(role);
     const dateCondition = role !== 'superadmin' ? { endDateTime: { $gte: expirationDate } } : {};
 
+    // Draft filtering condition - superadmins can see drafts
+    const draftCondition = role === 'superadmin' ? {} : { isDraft: { $ne: true } };
+
     const conditions = {
       $and: [
         { country: country },
         { isDeleted: { $ne: true } },
-        { isDraft: { $ne: true } },
+        draftCondition,
         dateCondition
       ]
     };
 
     // Lightweight query - no registration counts, minimal fields
-    const events = await Event.find(conditions)
-      .select('_id title startDateTime endDateTime location maxSeats category')
+    const query = Event.find(conditions)
+      .select('_id title startDateTime endDateTime location maxSeats category isDraft')
       .populate({ path: 'category', model: Category, select: '_id name color' })
-      .sort({ startDateTime: -1, createdAt: -1 })
-      .limit(50) // Reasonable limit for selection
-      .lean();
+      .sort({ startDateTime: -1, createdAt: -1 });
+    
+    // Only apply limit for non-superadmins
+    if (role !== 'superadmin') {
+      query.limit(50);
+    }
+
+    const events = await query.lean();
 
     return events;
   } catch (error) {

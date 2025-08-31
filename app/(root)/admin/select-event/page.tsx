@@ -11,7 +11,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline
 import { formatBilingualDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
-import { isAfter, isBefore, parseISO } from 'date-fns';
+import { isBefore, parseISO } from 'date-fns';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
 import { Separator } from "@/components/ui/separator"
 import { getCategoryColor } from '@/lib/utils/colorUtils';
@@ -30,10 +30,11 @@ type Event = {
   totalRegistrations: number;
   attendedUsers: number;
   cannotReciteAndWalk: number;
+  isDraft?: boolean;
 };
 
 const SelectEventPage = () => {
-  const { user, isLoaded } = useUser();
+  const { user } = useUser();
   const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -47,7 +48,6 @@ const SelectEventPage = () => {
       setIsLoading(true);
       try {
         const country = user?.publicMetadata.country as string | undefined;
-        const role = user?.publicMetadata.role as string | undefined;
         const timestamp = new Date().getTime();
         const response = await fetch(`/api/events/selection${country ? `?country=${country}` : ''}&_=${timestamp}`);
         
@@ -62,8 +62,8 @@ const SelectEventPage = () => {
         console.log('Fetched events:', result);
 
         if (Array.isArray(result.data)) {
-          // Superadmins see all (including drafts). Others should not see drafts, but this page is admin-only anyway
-          const source = (role === 'superadmin') ? result.data : (result.data || []).filter((e: any) => e && e.isDraft !== true);
+          // Superadmins see all events (including drafts and expired). Others see only non-draft, non-expired events
+          const source = result.data;
           const recentAndUpcomingEvents = await Promise.all(source
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
             .map(async (event: Event) => {
@@ -148,7 +148,16 @@ const SelectEventPage = () => {
       allEvents.forEach(event => {
         const endDate = parseISO(event.endDateTime);
         const isExpired = isBefore(endDate, currentDate);
-        const category = isExpired ? '已过期活动 / Expired Events' : event.category.name;
+        let category = event.category.name;
+        
+        // Add draft indicator for superadmins
+        if (event.isDraft) {
+          category = `${category} (草稿/Draft)`;
+        }
+        
+        if (isExpired) {
+          category = '已过期活动 / Expired Events';
+        }
         
         if (!groupedEvents[category]) {
           groupedEvents[category] = [];
@@ -234,6 +243,7 @@ const SelectEventPage = () => {
                             <div className="flex flex-col gap-1.5">
                               <span className="font-medium text-base">
                                 {event.title}
+                                {event.isDraft && <span className="ml-1.5 text-sm text-orange-600">(草稿/Draft)</span>}
                                 {category === '已过期活动 / Expired Events' && <span className="ml-1.5 text-sm">(已过期/Expired)</span>}
                               </span>
                               <div className="flex items-center text-sm text-gray-500 gap-2">
@@ -340,6 +350,11 @@ const SelectEventPage = () => {
               })()}`}>
                 {selectedEvent.category.name}
               </Badge>
+              {selectedEvent.isDraft && (
+                <Badge variant="outline" className="text-sm bg-orange-50 text-orange-700 border-orange-200">
+                  草稿 Draft
+                </Badge>
+              )}
               <Badge variant="outline" className={`text-sm ${new Date(selectedEvent.startDateTime) > new Date() ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
                 {new Date(selectedEvent.startDateTime) > new Date() ? '即将开始 Upcoming' : '进行中 Ongoing'}
               </Badge>
