@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, Save, Trash2, X, ChevronLeft, ChevronRight, First, Last } from 'lucide-react';
+import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, Save, Trash2, X, ChevronLeft, ChevronRight, ChevronFirst, ChevronLast } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { AttendanceItem, SortConfig } from '../types/attendance';
 import {
@@ -509,7 +509,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 className="h-9 w-9 p-0"
                 title="First page"
               >
-                <First className="h-4 w-4" />
+                <ChevronFirst className="h-4 w-4" />
               </Button>
 
               {/* Previous Page */}
@@ -568,7 +568,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 className="h-9 w-9 p-0"
                 title="Last page"
               >
-                <Last className="h-4 w-4" />
+                <ChevronLast className="h-4 w-4" />
               </Button>
             </div>
           </div>
