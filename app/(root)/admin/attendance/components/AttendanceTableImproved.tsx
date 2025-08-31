@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, Save, Trash2, X } from 'lucide-react';
+import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, Save, Trash2, X, ChevronLeft, ChevronRight, First, Last } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { AttendanceItem, SortConfig } from '../types/attendance';
 import {
@@ -185,6 +185,42 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
     setShowBulkActions(false);
   };
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       {/* Enhanced Header */}
@@ -196,7 +232,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               <div>
                 <div>Users / 用户</div>
                 <div className="text-sm font-normal text-gray-600">
-                  {filteredData.length} of {data.length}
+                  {filteredData.length} of {data.length} total registrations
                 </div>
               </div>
             </h4>
@@ -207,15 +243,15 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search..."
+                placeholder="Search by name, phone, or queue number..."
                 value={searchText}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500"
+                className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500 transition-colors"
               />
               {searchText && (
                 <button
                   onClick={() => onSearchChange('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -228,11 +264,11 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 onPageSizeChange(Number(e.target.value));
                 onPageChange(1);
               }}
-              className="border-2 border-gray-200 rounded-md px-3 py-2 h-11 bg-white focus:border-blue-500"
+              className="border-2 border-gray-200 rounded-md px-3 py-2 h-11 bg-white focus:border-blue-500 transition-colors"
             >
-              {[50, 100, 200, 300].map(size => (
+              {[25, 50, 100, 200, 300].map(size => (
                 <option key={size} value={size}>
-                  {size}
+                  {size} per page
                 </option>
               ))}
             </select>
@@ -241,32 +277,39 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
 
         {/* Bulk Actions Bar */}
         {showBulkActions && (
-          <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between p-4 bg-blue-100 rounded-lg border border-blue-200 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-900">
-                {selectedRows.size} selected
+                {selectedRows.size} item{selectedRows.size !== 1 ? 's' : ''} selected
               </span>
               <div className="flex gap-2">
                 <Button 
                   size="sm" 
                   onClick={() => handleBulkAction('mark')}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  Mark
+                  Mark Attendance
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   onClick={() => handleBulkAction('unmark')}
                 >
-                  Unmark
+                  Unmark Attendance
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   onClick={() => handleBulkAction('cancel')}
                 >
-                  Cancel
+                  Cancel Registration
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleBulkAction('uncancel')}
+                >
+                  Restore Registration
                 </Button>
               </div>
             </div>
@@ -277,53 +320,10 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 setSelectedRows(new Set());
                 setShowBulkActions(false);
               }}
+              className="text-gray-500 hover:text-gray-700"
             >
               <X className="h-4 w-4" />
             </Button>
-          </div>
-        )}
-
-        {/* Simplified Pagination */}
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(1)}
-                disabled={currentPage === 1}
-              >
-                First
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                Prev
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                Last
-              </Button>
-            </div>
-
-            <span className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </span>
           </div>
         )}
       </div>
@@ -331,8 +331,10 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
       {/* Table */}
       <div className="overflow-x-auto">
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <div className="flex flex-col justify-center items-center h-64 bg-gray-50">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+            <p className="text-gray-600 text-lg">Loading attendance data...</p>
+            <p className="text-gray-500 text-sm">Please wait while we fetch the latest information</p>
           </div>
         ) : (
           <table className="min-w-full">
@@ -368,108 +370,210 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((row) => {
-                const rowId = `${row.registrationId}_${row.groupId}`;
-                const isSelected = selectedRows.has(rowId);
-                
-                return (
-                  <tr 
-                    key={rowId}
-                    className={cn(
-                      "hover:bg-gray-50 transition-colors duration-150 border-b",
-                      row.cancelled ? 'bg-red-50 text-gray-500' :
-                      (isSuperAdmin && row.isDuplicate) ? 'bg-yellow-50' : '',
-                      isSelected && 'bg-blue-50'
-                    )}
-                  >
-                    {/* Bulk select checkbox */}
-                    {isSuperAdmin && (
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td colSpan={isSuperAdmin ? 8 : 5} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-4xl">📋</div>
+                      <p className="text-gray-500 text-lg">No registrations found</p>
+                      <p className="text-gray-400 text-sm">
+                        {searchText ? 'Try adjusting your search criteria' : 'No data available for this event'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((row) => {
+                  const rowId = `${row.registrationId}_${row.groupId}`;
+                  const isSelected = selectedRows.has(rowId);
+                  
+                  return (
+                    <tr 
+                      key={rowId}
+                      className={cn(
+                        "hover:bg-gray-50 transition-colors duration-150 border-b",
+                        row.cancelled ? 'bg-red-50 text-gray-500' :
+                        (isSuperAdmin && row.isDuplicate) ? 'bg-yellow-50' : '',
+                        isSelected && 'bg-blue-50'
+                      )}
+                    >
+                      {/* Bulk select checkbox */}
+                      {isSuperAdmin && (
+                        <td className="py-3 px-4">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectRow(rowId, checked as boolean)}
+                          />
+                        </td>
+                      )}
+                      
+                      <td className="py-3 px-4 font-mono text-sm font-medium">{row.queueNumber}</td>
+                      <td className="py-3 px-4 font-medium">{row.name}</td>
+                      {isSuperAdmin && <td className="py-3 px-4 text-sm">{row.phoneNumber}</td>}
+                      {isSuperAdmin && <td className="py-3 px-4 text-sm">{row.postalCode}</td>}
+                      
+                      {/* Remarks */}
+                      <td className="py-3 px-4">
+                        {isSuperAdmin && onRemarksUpdate ? (
+                          <div className="flex items-center gap-2 max-w-xs">
+                            <Input
+                              type="text"
+                              value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : (taggedUsers[row.phoneNumber] || '')}
+                              onChange={(e) => handleRemarkChange(row.registrationId, e.target.value)}
+                              className={cn(
+                                "h-8 text-sm transition-colors",
+                                modifiedRemarks.has(row.registrationId) && "border-yellow-400 bg-yellow-50"
+                              )}
+                              placeholder="Add remarks..."
+                            />
+                            {modifiedRemarks.has(row.registrationId) && (
+                              <Button
+                                onClick={() => handleRemarksSubmit(row.registrationId, row.phoneNumber, row.name)}
+                                size="sm"
+                                className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                              >
+                                <Save className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                        )}
+                      </td>
+                      
+                      {/* Attendance */}
                       <td className="py-3 px-4">
                         <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) => handleSelectRow(rowId, checked as boolean)}
+                          checked={row.attendance}
+                          onCheckedChange={(checked) => onAttendanceChange(row.registrationId, row.groupId, checked as boolean)}
                         />
                       </td>
-                    )}
-                    
-                    <td className="py-3 px-4 font-mono text-sm">{row.queueNumber}</td>
-                    <td className="py-3 px-4 font-medium">{row.name}</td>
-                    {isSuperAdmin && <td className="py-3 px-4 text-sm">{row.phoneNumber}</td>}
-                    {isSuperAdmin && <td className="py-3 px-4 text-sm">{row.postalCode}</td>}
-                    
-                    {/* Remarks */}
-                    <td className="py-3 px-4">
-                      {isSuperAdmin && onRemarksUpdate ? (
-                        <div className="flex items-center gap-2 max-w-xs">
-                          <Input
-                            type="text"
-                            value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : (taggedUsers[row.phoneNumber] || '')}
-                            onChange={(e) => handleRemarkChange(row.registrationId, e.target.value)}
-                            className={cn(
-                              "h-8 text-sm",
-                              modifiedRemarks.has(row.registrationId) && "border-yellow-400 bg-yellow-50"
-                            )}
-                            placeholder="Remarks..."
-                          />
-                          {modifiedRemarks.has(row.registrationId) && (
-                            <Button
-                              onClick={() => handleRemarksSubmit(row.registrationId, row.phoneNumber, row.name)}
-                              size="sm"
-                              className="h-8 px-2"
-                            >
-                              <Save className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
-                      )}
-                    </td>
-                    
-                    {/* Attendance */}
-                    <td className="py-3 px-4">
-                      <Checkbox
-                        checked={row.attendance}
-                        onCheckedChange={(checked) => onAttendanceChange(row.registrationId, row.groupId, checked as boolean)}
-                      />
-                    </td>
-                    
-                    {/* Status */}
-                    <td className="py-3 px-4">
-                      <Checkbox
-                        checked={row.cancelled}
-                        onCheckedChange={(checked) => onCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
-                      />
-                    </td>
-                    
-                    {/* Actions */}
-                    {isSuperAdmin && onDeleteRegistration && (
+                      
+                      {/* Status */}
                       <td className="py-3 px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              onClick={() => onDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Registration
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Checkbox
+                          checked={row.cancelled}
+                          onCheckedChange={(checked) => onCancelRegistration(row.registrationId, row.groupId, row.queueNumber, checked as boolean)}
+                        />
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
+                      
+                      {/* Actions */}
+                      {isSuperAdmin && onDeleteRegistration && (
+                        <td className="py-3 px-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => onDeleteRegistration(row.registrationId, row.groupId, row.queueNumber)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Registration
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Enhanced Pagination */}
+      {totalPages > 1 && (
+        <div className="p-6 border-t bg-gray-50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Page Info */}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
+              </span>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-2">
+              {/* First Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(1)}
+                disabled={currentPage === 1}
+                className="h-9 w-9 p-0"
+                title="First page"
+              >
+                <First className="h-4 w-4" />
+              </Button>
+
+              {/* Previous Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1}
+                className="h-9 w-9 p-0"
+                title="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, index) => (
+                  <React.Fragment key={index}>
+                    {page === '...' ? (
+                      <span className="px-2 text-gray-400">...</span>
+                    ) : (
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange(page as number)}
+                        className={cn(
+                          "h-9 w-9 p-0",
+                          currentPage === page && "bg-blue-600 hover:bg-blue-700"
+                        )}
+                      >
+                        {page}
+                      </Button>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Next Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="h-9 w-9 p-0"
+                title="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
+              {/* Last Page */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className="h-9 w-9 p-0"
+                title="Last page"
+              >
+                <Last className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

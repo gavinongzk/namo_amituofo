@@ -5,7 +5,6 @@ import { useUser } from "@clerk/nextjs";
 import Modal from '@/components/ui/modal';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
 import QrCodeScanner from '@/components/shared/QrCodeScanner';
-import FloatingNavigation from '@/components/shared/FloatingNavigation';
 import { cn } from "@/lib/utils";
 import crypto from 'crypto';
 
@@ -410,7 +409,8 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
   }, [confirmationData, handleMarkAttendance]);
 
   return (
-    <div className="wrapper my-8">
+    <div className="wrapper my-8 space-y-6">
+      {/* Event Details Card */}
       <AttendanceDetailsCard 
         event={event}
         totalRegistrations={stats.totalRegistrations}
@@ -421,184 +421,178 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
         onUpdateMaxSeats={handleUpdateMaxSeats}
       />
 
-      <div className="mt-8">
-        <AttendanceHeaderImproved
-          queueNumber={queueNumber}
-          onQueueNumberChange={handleQueueNumberChange}
-          onQueueNumberSubmit={handleQueueNumberSubmit}
-          message={message}
-          showScanner={showScanner}
-          onToggleScanner={() => setShowScanner(!showScanner)}
-          onRefresh={fetchRegistrations}
-          onDownloadCsv={isSuperAdmin ? handleDownloadCsv : undefined}
-          onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
-          isExporting={isExporting}
-          isSuperAdmin={isSuperAdmin}
-        />
+      {/* Header with Controls */}
+      <AttendanceHeaderImproved
+        queueNumber={queueNumber}
+        onQueueNumberChange={handleQueueNumberChange}
+        onQueueNumberSubmit={handleQueueNumberSubmit}
+        message={message}
+        showScanner={showScanner}
+        onToggleScanner={() => setShowScanner(!showScanner)}
+        onRefresh={fetchRegistrations}
+        onDownloadCsv={isSuperAdmin ? handleDownloadCsv : undefined}
+        onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
+        isExporting={isExporting}
+        isSuperAdmin={isSuperAdmin}
+      />
 
-        {showScanner && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <span className="text-lg">📋</span>
-                  Recent Scans
-                </h4>
-                <div className="space-y-2">
-                  {recentScans.length > 0 ? (
-                    recentScans.map((scan, index) => (
-                      <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                        <div className="font-medium">{scan.name}</div>
-                        <div className="text-gray-500">Queue: {scan.queueNumber}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-500 text-sm italic">No recent scans</div>
-                  )}
-                </div>
+      {/* QR Scanner Section */}
+      {showScanner && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                Recent Scans
+              </h4>
+              <div className="space-y-2">
+                {recentScans.length > 0 ? (
+                  recentScans.map((scan, index) => (
+                    <div key={index} className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="font-medium text-green-800">{scan.name}</div>
+                      <div className="text-green-600 text-sm">Queue: {scan.queueNumber}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-lg">
+                    No recent scans
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <AttendanceTableImproved
-          data={tableData}
-          searchText={searchText}
-          onSearchChange={setSearchText}
-          pageSize={pageSize}
-          currentPage={currentPage}
-          onPageSizeChange={setPageSize}
-          onPageChange={setCurrentPage}
-          onAttendanceChange={handleMarkAttendance}
-          onCancelRegistration={handleCancelRegistration}
-          onDeleteRegistration={isSuperAdmin ? handleDeleteRegistration : undefined}
-          onRemarksUpdate={isSuperAdmin ? handleRemarksUpdate : undefined}
-          isSuperAdmin={isSuperAdmin}
-          isLoading={isLoading}
-          taggedUsers={taggedUsers}
-        />
+      {/* Main Table */}
+      <AttendanceTableImproved
+        data={tableData}
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        onPageSizeChange={setPageSize}
+        onPageChange={setCurrentPage}
+        onAttendanceChange={handleMarkAttendance}
+        onCancelRegistration={handleCancelRegistration}
+        onDeleteRegistration={isSuperAdmin ? handleDeleteRegistration : undefined}
+        onRemarksUpdate={isSuperAdmin ? handleRemarksUpdate : undefined}
+        isSuperAdmin={isSuperAdmin}
+        isLoading={isLoading}
+        taggedUsers={taggedUsers}
+      />
 
-        <FloatingNavigation
-          currentPage={currentPage}
-          totalPages={Math.ceil(tableData.length / pageSize)}
-          onPageChange={setCurrentPage}
-          position="bottom-left"
-          showPagination={true}
-          showScrollButtons={true}
-        />
+      {/* Floating Action Button for Quick Access */}
+      <FloatingActionButton
+        onQuickAttendance={() => {
+          // Focus on queue number input for quick access
+          const input = document.querySelector('input[placeholder*="Queue Number"]') as HTMLInputElement;
+          if (input) {
+            input.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onToggleScanner={() => setShowScanner(!showScanner)}
+        onRefresh={fetchRegistrations}
+        onExport={isSuperAdmin ? handleDownloadCsv : undefined}
+        showScanner={showScanner}
+        isSuperAdmin={isSuperAdmin}
+      />
 
-        {/* Modal Components */}
-        {showModal && (
-          <Modal>
-            <div className={cn(
-              "p-6 rounded-lg",
-              modalType === 'success' ? 'bg-green-100' : 
-              modalType === 'error' ? 'bg-red-100' : 'bg-white'
+      {/* Modal Components */}
+      {showModal && (
+        <Modal>
+          <div className={cn(
+            "p-6 rounded-lg shadow-lg",
+            modalType === 'success' ? 'bg-green-100 border border-green-200' : 
+            modalType === 'error' ? 'bg-red-100 border border-red-200' : 'bg-white border border-gray-200'
+          )}>
+            <h3 className={cn(
+              "text-lg font-semibold mb-4",
+              modalType === 'success' ? 'text-green-800' : 
+              modalType === 'error' ? 'text-red-800' : 'text-gray-900'
             )}>
-              <h3 className={cn(
-                "text-lg font-semibold mb-4",
-                modalType === 'success' ? 'text-green-800' : 
-                modalType === 'error' ? 'text-red-800' : 'text-gray-900'
-              )}>
-                {modalTitle}
-              </h3>
-              <p className={cn(
-                "mb-4 whitespace-pre-line",
-                modalType === 'success' ? 'text-green-700' : 
-                modalType === 'error' ? 'text-red-700' : 'text-gray-700'
-              )}>
-                {modalMessage}
-              </p>
-              {modalType === 'loading' && (
-                <div className="flex justify-end">
-                  <button 
-                    onClick={() => setShowModal(false)} 
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Close / 关闭
-                  </button>
-                </div>
-              )}
-            </div>
-          </Modal>
-        )}
-
-        {showDeleteConfirmation && deleteConfirmationData && (
-          <Modal>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Confirm Deletion / 确认删除</h3>
-              <p className="mb-4">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
-              <p className="mb-4">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的报名吗？</p>
-              <div className="flex justify-end space-x-4">
+              {modalTitle}
+            </h3>
+            <p className={cn(
+              "mb-4 whitespace-pre-line",
+              modalType === 'success' ? 'text-green-700' : 
+              modalType === 'error' ? 'text-red-700' : 'text-gray-700'
+            )}>
+              {modalMessage}
+            </p>
+            {modalType === 'loading' && (
+              <div className="flex justify-end">
                 <button 
-                  onClick={() => setShowDeleteConfirmation(false)} 
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  onClick={() => setShowModal(false)} 
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Cancel / 取消
-                </button>
-                <button 
-                  onClick={confirmDeleteRegistration} 
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                >
-                  Delete / 删除
+                  Close / 关闭
                 </button>
               </div>
-            </div>
-          </Modal>
-        )}
+            )}
+          </div>
+        </Modal>
+      )}
 
-        {showConfirmation && confirmationData && (
-          <Modal>
-            <div className="p-6 bg-white rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">Confirm Attendance Change / 确认出席变更</h3>
-              <p className="mb-4">
-                {confirmationData.currentAttendance
-                  ? `Unmark attendance for ${confirmationData.name} | queue number ${confirmationData.queueNumber}?`
-                  : `Mark attendance for ${confirmationData.name} | queue number ${confirmationData.queueNumber}?`}
-              </p>
-              <p className="mb-4">
-                {confirmationData.currentAttendance
-                  ? `您确定要取消标记 ${confirmationData.name} | 队列号 ${confirmationData.queueNumber} 的出席吗？`
-                  : `您确定要标记 ${confirmationData.name} | 队列号 ${confirmationData.queueNumber} 的出席吗？`}
-              </p>
-              <div className="flex justify-end space-x-4">
-                <button 
-                  onClick={() => setShowConfirmation(false)} 
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel / 取消
-                </button>
-                <button 
-                  onClick={handleConfirmAttendance} 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Confirm / 确认
-                </button>
-              </div>
+      {showDeleteConfirmation && deleteConfirmationData && (
+        <Modal>
+          <div className="p-6 bg-white rounded-lg shadow-lg border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-red-800">Confirm Deletion / 确认删除</h3>
+            <p className="mb-4 text-gray-700">Are you sure you want to delete the registration for queue number {deleteConfirmationData.queueNumber}?</p>
+            <p className="mb-4 text-gray-700">您确定要删除队列号 {deleteConfirmationData.queueNumber} 的报名吗？</p>
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={() => setShowDeleteConfirmation(false)} 
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel / 取消
+              </button>
+              <button 
+                onClick={confirmDeleteRegistration} 
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete / 删除
+              </button>
             </div>
-          </Modal>
-        )}
+          </div>
+        </Modal>
+      )}
 
-        {/* Floating Action Button for Quick Access */}
-        <FloatingActionButton
-          onQuickAttendance={() => {
-            // Focus on queue number input for quick access
-            const input = document.querySelector('input[placeholder*="Queue Number"]') as HTMLInputElement;
-            if (input) {
-              input.focus();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-          }}
-          onToggleScanner={() => setShowScanner(!showScanner)}
-          onRefresh={fetchRegistrations}
-          onExport={isSuperAdmin ? handleDownloadCsv : undefined}
-          showScanner={showScanner}
-          isSuperAdmin={isSuperAdmin}
-        />
-      </div>
+      {showConfirmation && confirmationData && (
+        <Modal>
+          <div className="p-6 bg-white rounded-lg shadow-lg border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-blue-800">Confirm Attendance Change / 确认出席变更</h3>
+            <p className="mb-4 text-gray-700">
+              {confirmationData.currentAttendance
+                ? `Unmark attendance for ${confirmationData.name} | queue number ${confirmationData.queueNumber}?`
+                : `Mark attendance for ${confirmationData.name} | queue number ${confirmationData.queueNumber}?`}
+            </p>
+            <p className="mb-4 text-gray-700">
+              {confirmationData.currentAttendance
+                ? `您确定要取消标记 ${confirmationData.name} | 队列号 ${confirmationData.queueNumber} 的出席吗？`
+                : `您确定要标记 ${confirmationData.name} | 队列号 ${confirmationData.queueNumber} 的出席吗？`}
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={() => setShowConfirmation(false)} 
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel / 取消
+              </button>
+              <button 
+                onClick={handleConfirmAttendance} 
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Confirm / 确认
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
