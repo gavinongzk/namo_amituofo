@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, ChevronDown, RotateCcw } from 'lucide-react';
+import { Loader2, QrCode, Download, FileSpreadsheet, ChevronDown, RotateCcw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,17 +91,6 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             {showScanner ? 'Hide QR Scanner' : 'Open QR Scanner'}
           </Button>
           
-          {/* Data Refresh Button */}
-          <Button
-            onClick={onRefresh}
-            variant="outline"
-            className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 transform hover:scale-105"
-            title="Refresh data from server"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Data
-          </Button>
-
           {/* Full Page Refresh Button */}
           <Button
             onClick={handleFullPageRefresh}
@@ -110,7 +99,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
             title="Full page refresh (reloads everything)"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Full Refresh
+            Refresh
           </Button>
         </div>
 
@@ -161,10 +150,10 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
           <div className="text-sm text-yellow-800">
             <p className="font-medium mb-1">Quick Tips:</p>
             <ul className="space-y-1 text-xs">
-              <li>• Use <strong>Refresh Data</strong> to update attendance information</li>
-              <li>• Use <strong>Full Refresh</strong> to reload the entire page</li>
+              <li>• Use <strong>Refresh</strong> to reload the entire page and get the latest data</li>
               <li>• QR Scanner works best in well-lit environments</li>
               <li>• You can search by name, phone number, or queue number</li>
+              <li>• Bulk actions are available for super admins</li>
             </ul>
           </div>
         </div>

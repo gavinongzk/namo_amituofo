@@ -8,7 +8,7 @@ import { Button } from '../ui/button'
 const CheckoutButton = ({ event }: { event: IEvent }) => {
   const router = useRouter()
   const daysAfterEnd = new Date(event.endDateTime)
-  daysAfterEnd.setDate(daysAfterEnd.getDate() + 7)
+  daysAfterEnd.setDate(daysAfterEnd.getDate() + 1)
   const hasEventFinished = new Date() > daysAfterEnd
   const [isLoading, setIsLoading] = useState(false)
 
