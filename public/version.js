@@ -1,6 +1,6 @@
-// Auto-generated on: 2025-08-31T15:29:05.196Z
+// Auto-generated on: 2025-08-31T16:20:56.082Z
 // Application version number for debugging purposes
-window.APP_VERSION = '1756654145196';
+window.APP_VERSION = '1756657256082';
 
 // Deployment timestamp for debugging
-window.LAST_DEPLOY_TIME = '2025-08-31T15:29:05.197Z';
+window.LAST_DEPLOY_TIME = '2025-08-31T16:20:56.082Z';

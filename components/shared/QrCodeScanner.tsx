@@ -180,7 +180,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         }
       }
 
-      // Initialize QR code reader
+      // Initialize QR code reader with proper video stream
       const codeReader = new BrowserQRCodeReader(undefined, {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
@@ -188,11 +188,34 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       let active = true;
 
-      const controls = await codeReader.decodeFromVideoDevice(
+      // Ensure video element is properly set up with stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, starting QR scanner...');
+        };
+        videoRef.current.oncanplay = () => {
+          console.log('Video can play, QR scanner ready');
+        };
+        videoRef.current.onerror = (e) => {
+          console.error('Video error:', e);
+        };
+        
+              // Force video to play for macOS compatibility
+      videoRef.current.play().catch((playError) => {
+        console.warn('Video play failed, but continuing with QR scanner:', playError);
+      });
+    }
+
+    // Wait a bit for video to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const controls = await codeReader.decodeFromVideoDevice(
         selectedCamera,
         videoRef.current!,
         (result) => {
           if (result && active) {
+            console.log('QR Code detected:', result.getText());
             handleSuccessfulScan(result.getText());
           }
         }
