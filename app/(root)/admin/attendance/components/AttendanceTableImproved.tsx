@@ -302,14 +302,14 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                   variant="outline" 
                   onClick={() => handleBulkAction('cancel')}
                 >
-                  Cancel Registration
+                  Mark as Cancelled
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   onClick={() => handleBulkAction('uncancel')}
                 >
-                  Restore Registration
+                  Mark as Active
                 </Button>
               </div>
             </div>
@@ -360,7 +360,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                   <span className="text-sm">Attendance 出席</span>
                 </th>
                 <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
-                  <span className="text-sm">Status 状态</span>
+                  <span className="text-sm">Cancelled 已取消</span>
                 </th>
                 {isSuperAdmin && (
                   <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50 w-16">

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
-import { Flashlight, FlashlightOff, Loader2 as Loader2Icon } from 'lucide-react';
+import { Flashlight, FlashlightOff, Loader2 as Loader2Icon, Camera, CameraOff } from 'lucide-react';
 
 interface QrCodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -17,54 +17,38 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [error, setError] = useState<string>();
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const scannerRef = useRef<{ stop: () => void }>();
   const [isActive, setIsActive] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [retryDelay, setRetryDelay] = useState(3); // seconds
   const maxRetries = 3;
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    // Check if running on Safari - keeping for future use
-    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    // setIsSafari(isSafariBrowser); // Commented out as not currently used
-  }, []);
-
-  const checkBrowserCompatibility = () => {
+  // Check browser compatibility
+  const checkBrowserCompatibility = useCallback(() => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error('Your browser doesn\'t support camera access. Please use a modern browser like Chrome, Firefox, or Safari.');
     }
 
-    // Check if running in insecure context
+    // Check if running in insecure context (except localhost)
     if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
       throw new Error('Camera access requires a secure (HTTPS) connection.');
     }
-  };
 
-  const initializeScanner = useCallback(async () => {
+    // Check for mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile && !navigator.mediaDevices.enumerateDevices) {
+      throw new Error('Your mobile browser doesn\'t support camera enumeration. Please use a modern mobile browser.');
+    }
+  }, []);
+
+  // Get available cameras
+  const getAvailableCameras = useCallback(async () => {
     try {
-      checkBrowserCompatibility();
-
-      // First explicitly request camera permission with more specific constraints
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-
-      // Immediately set the stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Ensure video plays
-        try {
-          await videoRef.current.play();
-        } catch (playError) {
-          console.error('Error playing video:', playError);
-          throw new Error('Failed to start video stream');
-        }
-      }
+      // Request permission first
+      await navigator.mediaDevices.getUserMedia({ video: true });
       
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(d => d.kind === 'videoinput');
@@ -78,27 +62,73 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       // Prefer back camera for mobile devices
       const backCamera = videoDevices.find(device => 
         device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear')
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
       );
       
       const selectedCamera = backCamera?.deviceId || videoDevices[0]?.deviceId;
       setActiveCamera(selectedCamera);
+      
+      return selectedCamera;
+    } catch (err: any) {
+      console.error('Error getting cameras:', err);
+      throw err;
+    }
+  }, []);
 
+  const initializeScanner = useCallback(async () => {
+    try {
+      setIsInitializing(true);
+      setError(undefined);
+      
+      checkBrowserCompatibility();
+
+      // Stop any existing stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+
+      // Get camera device
+      const selectedCamera = await getAvailableCameras();
+      
       if (!selectedCamera) {
         throw new Error('Failed to select a camera.');
       }
 
+      // Request camera stream with optimal settings
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: {
+          deviceId: { exact: selectedCamera },
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
+          frameRate: { ideal: 30, min: 15 }
+        }
+      });
+
+      streamRef.current = stream;
+
+      // Set the stream to video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        
+        // Ensure video plays
+        try {
+          await videoRef.current.play();
+        } catch (playError) {
+          console.error('Error playing video:', playError);
+          throw new Error('Failed to start video stream');
+        }
+      }
+
+      // Initialize QR code reader
       const codeReader = new BrowserQRCodeReader(undefined, {
         delayBetweenScanAttempts: 100,
         delayBetweenScanSuccess: 1500
       });
 
       let active = true;
-
-      // Stop the initial stream before starting the code reader
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
 
       const controls = await codeReader.decodeFromVideoDevice(
         selectedCamera,
@@ -112,46 +142,50 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       scannerRef.current = controls;
 
+      setIsInitializing(false);
+
       return () => {
         active = false;
         if (controls) {
           controls.stop();
         }
-        // Clean up any remaining video tracks
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
+        // Clean up stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
         }
       };
     } catch (err: any) {
+      setIsInitializing(false);
       handleError(err);
       return () => {};
     }
-  }, [onScan]);
+  }, [checkBrowserCompatibility, getAvailableCameras]);
 
-  const handleSuccessfulScan = (text: string) => {
+  const handleSuccessfulScan = useCallback((text: string) => {
     // Vibrate if supported
     if (navigator.vibrate) {
       navigator.vibrate(200);
     }
     
-    // Don't play sound here as it's handled by the parent component
-    
     onScan(text);
-  };
+  }, [onScan]);
 
-  const handleError = (err: Error) => {
+  const handleError = useCallback((err: Error) => {
     console.error('QR Scanner Error:', err);
-    if (
-      err.name === 'NotReadableError' ||
-      err.message.includes('hardware') ||
-      err.message.includes('in use')
-    ) {
+    
+    // Check for specific mobile browser issues
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (err.name === 'NotReadableError' || err.message.includes('hardware') || err.message.includes('in use')) {
       if (retryCount < maxRetries) {
         setError(
           `Camera is in use by another application or not accessible. Retrying in ${retryDelay} seconds... (${retryCount + 1}/${maxRetries})` +
           '\n请关闭其他使用摄像头的应用，系统将自动重试。'
         );
+        
         // Start countdown
         let seconds = retryDelay;
         retryTimeoutRef.current && clearInterval(retryTimeoutRef.current);
@@ -176,19 +210,25 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         );
       }
     } else if (err.name === 'NotAllowedError' || err.message.includes('denied')) {
-      setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.');
+      if (isIOS && isSafari) {
+        setError('Camera access denied. On iOS Safari, please go to Settings > Safari > Camera and allow access, then refresh the page.\n摄像头权限被拒绝。在iOS Safari上，请前往设置 > Safari > 摄像头并允许访问，然后刷新页面。');
+      } else {
+        setError('Camera access denied. Please enable camera permissions in your browser settings and refresh the page.\n摄像头权限被拒绝，请在浏览器设置中启用摄像头权限并刷新页面。');
+      }
     } else if (err.name === 'NotFoundError' || err.message.includes('No cameras')) {
-      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.');
+      setError('No camera found. Please ensure your device has a camera and it\'s not being used by another application.\n未找到摄像头，请确保设备有摄像头且未被其他应用占用。');
     } else if (err.name === 'NotSupportedError' || err.message.includes('support')) {
-      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.');
+      setError('Your browser doesn\'t fully support camera access. Please try Chrome, Firefox, or Safari.\n您的浏览器不完全支持摄像头访问，请尝试使用Chrome、Firefox或Safari。');
+    } else if (err.message.includes('secure')) {
+      setError('Camera access requires a secure (HTTPS) connection. Please use HTTPS or localhost.\n摄像头访问需要安全连接(HTTPS)，请使用HTTPS或localhost。');
     } else {
-      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.`);
+      setError(`Camera error: ${err.message}. Please refresh the page or try a different browser.\n摄像头错误：${err.message}。请刷新页面或尝试其他浏览器。`);
     }
-  };
+  }, [retryCount, retryDelay]);
 
-  const toggleTorch = async () => {
-    const stream = videoRef.current?.srcObject as MediaStream;
-    const track = stream?.getTracks().find(track => track.kind === 'video');
+  const toggleTorch = useCallback(async () => {
+    const stream = streamRef.current;
+    const track = stream?.getVideoTracks()[0];
       
     if (track && 'getCapabilities' in track) {
       const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
@@ -203,57 +243,54 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         }
       }
     }
-  };
+  }, [torchEnabled]);
 
-  const retry = async () => {
+  const retry = useCallback(async () => {
     setIsRetrying(true);
     setError(undefined);
+    setRetryCount(0);
+    setRetryDelay(3);
+    
     try {
       await initializeScanner();
     } finally {
       setIsRetrying(false);
     }
-  };
+  }, [initializeScanner]);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     setIsActive(false);
     if (scannerRef.current) {
       scannerRef.current.stop();
       scannerRef.current = undefined;
     }
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
         track.stop();
         track.enabled = false;
       });
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     if (onClose) onClose();
-  };
+  }, [onClose]);
 
+  const switchCamera = useCallback(async (deviceId: string) => {
+    setActiveCamera(deviceId);
+    // The scanner will be reinitialized with the new camera in the useEffect
+  }, []);
+
+  // Initialize scanner when component mounts or camera changes
   useEffect(() => {
     if (!isActive) return;
-    
-    // Reset error state when reactivating
-    setError(undefined);
-    setRetryCount(0);
-    setRetryDelay(3);
     
     const cleanup = initializeScanner();
     return () => {
       cleanup?.then(cleanupFn => {
         if (cleanupFn) {
           cleanupFn();
-        }
-        // Ensure all tracks are stopped
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            track.enabled = false;
-          });
-          videoRef.current.srcObject = null;
         }
       });
     };
@@ -279,16 +316,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [isActive]);
-
-  // Add a new effect to handle video element attributes
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.setAttribute('autoplay', 'true');
-      videoRef.current.setAttribute('playsinline', 'true');
-      videoRef.current.setAttribute('muted', 'true');
-    }
-  }, []);
+  }, [isActive, stopCamera]);
 
   // Clean up retry timer on unmount
   useEffect(() => {
@@ -299,10 +327,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto">
-      <div className="relative aspect-square">
+      <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
         <video 
           ref={videoRef}
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-cover"
           autoPlay
           playsInline
           muted
@@ -311,14 +339,14 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         {/* Scanning Guide Overlay */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="w-full h-full relative">
-            {/* Corner guides - made larger */}
-            <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-primary-500" />
-            <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-primary-500" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-primary-500" />
-            <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-primary-500" />
+            {/* Corner guides */}
+            <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-blue-500" />
+            <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-blue-500" />
+            <div className="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 border-blue-500" />
+            <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-blue-500" />
             
             {/* Scanning line animation */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary-500 animate-scan" />
+            <div className="absolute top-4 left-4 right-4 h-0.5 bg-blue-500 animate-scan" />
           </div>
         </div>
 
@@ -327,8 +355,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           {cameras.length > 1 && (
             <select 
               value={activeCamera}
-              onChange={e => setActiveCamera(e.target.value)}
-              className="bg-background/80 rounded-md px-2 py-1 text-sm"
+              onChange={e => switchCamera(e.target.value)}
+              className="bg-black/70 text-white rounded-md px-2 py-1 text-sm border border-white/20"
             >
               {cameras.map(camera => (
                 <option key={camera.deviceId} value={camera.deviceId}>
@@ -342,34 +370,56 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             onClick={toggleTorch}
             variant="outline" 
             size="icon"
-            className="bg-background/80"
+            className="bg-black/70 text-white border-white/20 hover:bg-black/80"
           >
             {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
           </Button>
-          {/* Turn Off Camera Button */}
+          
           {!error && isActive && (
             <Button 
               onClick={stopCamera}
               variant="destructive"
-              size="sm"
-              className="bg-red-500 text-white ml-2"
+              size="icon"
+              className="bg-red-500 text-white hover:bg-red-600"
             >
-              Turn Off Camera
+              <CameraOff className="h-4 w-4" />
             </Button>
           )}
         </div>
 
+        {/* Loading State */}
+        {isInitializing && !error && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <div className="text-center p-4">
+              <Loader2Icon className="h-8 w-8 animate-spin text-white mx-auto mb-2" />
+              <p className="text-white text-sm">Initializing camera...</p>
+              <p className="text-white/70 text-xs">正在初始化摄像头...</p>
+            </div>
+          </div>
+        )}
+
         {/* Error State */}
         {error && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-            <div className="text-center p-4">
-              <p className="text-destructive mb-4 whitespace-pre-line">{error}</p>
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+            <div className="text-center p-4 max-w-sm">
+              <p className="text-red-400 mb-4 whitespace-pre-line text-sm">{error}</p>
               {retryCount >= maxRetries && (
                 <Button 
                   onClick={retry} 
                   disabled={isRetrying}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {isRetrying ? <Loader2Icon className="animate-spin" /> : '重试 / Retry'}
+                  {isRetrying ? (
+                    <>
+                      <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                      Retrying...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Retry / 重试
+                    </>
+                  )}
                 </Button>
               )}
             </div>
