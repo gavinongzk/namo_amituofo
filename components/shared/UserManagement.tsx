@@ -38,7 +38,35 @@ const UserManagement = ({ country }: { country: string }) => {
   const [filterText, setFilterText] = useState('');
   const pageSize = 100;
 
+  // Function to get cookie value
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+    return null;
+  };
+
   useEffect(() => {
+    // Check for saved date in cookie first
+    const savedDateCookie = getCookie('userManagementDate');
+    
+    if (savedDateCookie) {
+      try {
+        const cookieData = JSON.parse(savedDateCookie);
+        if (cookieData.dateYear && cookieData.dateMonth && cookieData.dateDay) {
+          setDateYear(cookieData.dateYear);
+          setDateMonth(cookieData.dateMonth);
+          setDateDay(cookieData.dateDay);
+          setCustomDate(cookieData.formattedDate);
+          fetchUsers(cookieData.formattedDate);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing saved date cookie:', error);
+      }
+    }
+    
+    // Fallback to default (one week ago) if no saved date
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const formattedDate = oneWeekAgo.toISOString().split('T')[0];
@@ -143,6 +171,15 @@ const UserManagement = ({ country }: { country: string }) => {
       setMessage('Please enter a valid date');
       return;
     }
+    
+    // Save to cookie
+    const cookieData = {
+      dateYear,
+      dateMonth,
+      dateDay,
+      formattedDate
+    };
+    document.cookie = `userManagementDate=${JSON.stringify(cookieData)}; path=/; max-age=${60 * 60 * 24 * 30}`; // 30 days
     
     setCustomDate(formattedDate);
     fetchUsers(formattedDate);
