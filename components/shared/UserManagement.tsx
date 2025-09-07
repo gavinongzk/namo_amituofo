@@ -44,9 +44,13 @@ const UserManagement = ({ country }: { country: string }) => {
     setCustomDate(formattedDate);
     
     // Initialize separate date fields
-    const [year, month, day] = formattedDate.split('-');
+    const [year, monthNum, day] = formattedDate.split('-');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = monthNames[parseInt(monthNum) - 1] || 'January';
+    
     setDateYear(year);
-    setDateMonth(month);
+    setDateMonth(monthName);
     setDateDay(day);
     
     fetchUsers(formattedDate);
@@ -99,33 +103,38 @@ const UserManagement = ({ country }: { country: string }) => {
   };
 
   const handleDateFieldChange = (field: 'month' | 'day' | 'year', value: string) => {
-    // Remove any non-numeric characters
-    const numericValue = value.replace(/\D/g, '');
-    
     if (field === 'month') {
-      // Limit to 2 digits and valid month range
-      const month = Math.min(12, Math.max(1, parseInt(numericValue) || 1));
-      setDateMonth(month.toString());
+      setDateMonth(value);
     } else if (field === 'day') {
-      // Limit to 2 digits and valid day range
-      const day = Math.min(31, Math.max(1, parseInt(numericValue) || 1));
-      setDateDay(day.toString());
+      setDateDay(value);
     } else if (field === 'year') {
-      // Limit to 4 digits
-      const year = numericValue.slice(0, 4);
-      setDateYear(year);
+      setDateYear(value);
     }
   };
 
   const handleApplyDate = () => {
     // Validate that all fields have values
     if (!dateYear || !dateMonth || !dateDay) {
-      setMessage('Please fill in all date fields (Month, Day, Year)');
+      setMessage('Please fill in all date fields (Day, Month, Year)');
       return;
     }
     
+    // Convert month name to number
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthIndex = monthNames.findIndex(month => 
+      month.toLowerCase() === dateMonth.toLowerCase()
+    );
+    
+    if (monthIndex === -1) {
+      setMessage('Please enter a valid month name (e.g., January, February, etc.)');
+      return;
+    }
+    
+    const monthNum = (monthIndex + 1).toString().padStart(2, '0');
+    
     // Construct date from individual fields
-    const formattedDate = `${dateYear}-${dateMonth.padStart(2, '0')}-${dateDay.padStart(2, '0')}`;
+    const formattedDate = `${dateYear}-${monthNum}-${dateDay.padStart(2, '0')}`;
     
     // Validate the date
     const date = new Date(formattedDate);
@@ -354,33 +363,27 @@ const UserManagement = ({ country }: { country: string }) => {
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <Input
-              type="number"
+              type="text"
               placeholder="DD"
               value={dateDay}
               onChange={(e) => handleDateFieldChange('day', e.target.value)}
-              className="w-16 text-center"
-              min="1"
-              max="31"
+              className="w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-gray-500">/</span>
             <Input
-              type="number"
-              placeholder="MM"
+              type="text"
+              placeholder="Month"
               value={dateMonth}
               onChange={(e) => handleDateFieldChange('month', e.target.value)}
-              className="w-16 text-center"
-              min="1"
-              max="12"
+              className="w-24 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-gray-500">/</span>
             <Input
-              type="number"
+              type="text"
               placeholder="YYYY"
               value={dateYear}
               onChange={(e) => handleDateFieldChange('year', e.target.value)}
-              className="w-20 text-center"
-              min="1900"
-              max="2100"
+              className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <Button onClick={handleApplyDate} disabled={isLoading}>
