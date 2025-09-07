@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
@@ -362,29 +363,45 @@ const UserManagement = ({ country }: { country: string }) => {
         </Button>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-1">
-            <Input
-              type="text"
-              placeholder="DD"
-              value={dateDay}
-              onChange={(e) => handleDateFieldChange('day', e.target.value)}
-              className="w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <Select value={dateDay} onValueChange={(value) => handleDateFieldChange('day', value)}>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="DD" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <SelectItem key={day} value={day.toString()}>
+                    {day.toString().padStart(2, '0')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span className="text-gray-500">/</span>
-            <Input
-              type="text"
-              placeholder="Month"
-              value={dateMonth}
-              onChange={(e) => handleDateFieldChange('month', e.target.value)}
-              className="w-24 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <Select value={dateMonth} onValueChange={(value) => handleDateFieldChange('month', value)}>
+              <SelectTrigger className="w-28">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                  <SelectItem key={month} value={month}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span className="text-gray-500">/</span>
-            <Input
-              type="text"
-              placeholder="YYYY"
-              value={dateYear}
-              onChange={(e) => handleDateFieldChange('year', e.target.value)}
-              className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <Select value={dateYear} onValueChange={(value) => handleDateFieldChange('year', value)}>
+              <SelectTrigger className="w-24">
+                <SelectValue placeholder="YYYY" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - 25 + i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button onClick={handleApplyDate} disabled={isLoading}>
             {isLoading ? (
