@@ -355,22 +355,22 @@ const UserManagement = ({ country }: { country: string }) => {
           <div className="flex items-center gap-1">
             <Input
               type="number"
-              placeholder="MM"
-              value={dateMonth}
-              onChange={(e) => handleDateFieldChange('month', e.target.value)}
-              className="w-16 text-center"
-              min="1"
-              max="12"
-            />
-            <span className="text-gray-500">/</span>
-            <Input
-              type="number"
               placeholder="DD"
               value={dateDay}
               onChange={(e) => handleDateFieldChange('day', e.target.value)}
               className="w-16 text-center"
               min="1"
               max="31"
+            />
+            <span className="text-gray-500">/</span>
+            <Input
+              type="number"
+              placeholder="MM"
+              value={dateMonth}
+              onChange={(e) => handleDateFieldChange('month', e.target.value)}
+              className="w-16 text-center"
+              min="1"
+              max="12"
             />
             <span className="text-gray-500">/</span>
             <Input
