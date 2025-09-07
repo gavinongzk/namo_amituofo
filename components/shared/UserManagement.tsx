@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
@@ -23,13 +24,16 @@ type SortConfig = { key: keyof User | 'serialNumber', direction: 'asc' | 'desc' 
 const UserManagement = ({ country }: { country: string }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [customDate, setCustomDate] = useState('');
+  const [dateMonth, setDateMonth] = useState('');
+  const [dateDay, setDateDay] = useState('');
+  const [dateYear, setDateYear] = useState('');
   const [message, setMessage] = useState('');
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'isNewUser', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [filterText, setFilterText] = useState('');
   const pageSize = 100;
@@ -39,6 +43,17 @@ const UserManagement = ({ country }: { country: string }) => {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const formattedDate = oneWeekAgo.toISOString().split('T')[0];
     setCustomDate(formattedDate);
+    
+    // Initialize separate date fields
+    const [year, monthNum, day] = formattedDate.split('-');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = monthNames[parseInt(monthNum) - 1] || 'January';
+    
+    setDateYear(year);
+    setDateMonth(monthName);
+    setDateDay(day);
+    
     fetchUsers(formattedDate);
   }, []);
 
@@ -88,8 +103,49 @@ const UserManagement = ({ country }: { country: string }) => {
     setCustomDate(e.target.value);
   };
 
+  const handleDateFieldChange = (field: 'month' | 'day' | 'year', value: string) => {
+    if (field === 'month') {
+      setDateMonth(value);
+    } else if (field === 'day') {
+      setDateDay(value);
+    } else if (field === 'year') {
+      setDateYear(value);
+    }
+  };
+
   const handleApplyDate = () => {
-    fetchUsers(customDate);
+    // Validate that all fields have values
+    if (!dateYear || !dateMonth || !dateDay) {
+      setMessage('Please fill in all date fields (Day, Month, Year)');
+      return;
+    }
+    
+    // Convert month name to number
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthIndex = monthNames.findIndex(month => 
+      month.toLowerCase() === dateMonth.toLowerCase()
+    );
+    
+    if (monthIndex === -1) {
+      setMessage('Please enter a valid month name (e.g., January, February, etc.)');
+      return;
+    }
+    
+    const monthNum = (monthIndex + 1).toString().padStart(2, '0');
+    
+    // Construct date from individual fields
+    const formattedDate = `${dateYear}-${monthNum}-${dateDay.padStart(2, '0')}`;
+    
+    // Validate the date
+    const date = new Date(formattedDate);
+    if (isNaN(date.getTime())) {
+      setMessage('Please enter a valid date');
+      return;
+    }
+    
+    setCustomDate(formattedDate);
+    fetchUsers(formattedDate);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -258,12 +314,25 @@ const UserManagement = ({ country }: { country: string }) => {
     }
 
     return filteredItems.sort((a, b) => {
-      const aValue = String(a[sortConfig.key as keyof User] || '');
-      const bValue = String(b[sortConfig.key as keyof User] || '');
+      const aValue = a[sortConfig.key as keyof User];
+      const bValue = b[sortConfig.key as keyof User];
+      
+      // Handle boolean sorting (for isNewUser)
+      if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        if (sortConfig.direction === 'desc') {
+          return aValue === bValue ? 0 : aValue ? -1 : 1; // true values first
+        } else {
+          return aValue === bValue ? 0 : aValue ? 1 : -1; // false values first
+        }
+      }
+      
+      // Handle string sorting for other fields
+      const aString = String(aValue || '');
+      const bString = String(bValue || '');
       
       return sortConfig.direction === 'asc'
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+        ? aString.localeCompare(bString)
+        : bString.localeCompare(aString);
     });
   }, [users, sortConfig, filterText]);
 
@@ -293,12 +362,47 @@ const UserManagement = ({ country }: { country: string }) => {
           )}
         </Button>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            type="date"
-            value={customDate}
-            onChange={handleDateChange}
-            className="w-full sm:w-auto"
-          />
+          <div className="flex items-center gap-1">
+            <Select value={dateDay} onValueChange={(value) => handleDateFieldChange('day', value)}>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="DD" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <SelectItem key={day} value={day.toString()}>
+                    {day.toString().padStart(2, '0')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-gray-500">/</span>
+            <Select value={dateMonth} onValueChange={(value) => handleDateFieldChange('month', value)}>
+              <SelectTrigger className="w-28">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                  <SelectItem key={month} value={month}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-gray-500">/</span>
+            <Select value={dateYear} onValueChange={(value) => handleDateFieldChange('year', value)}>
+              <SelectTrigger className="w-24">
+                <SelectValue placeholder="YYYY" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - 25 + i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button onClick={handleApplyDate} disabled={isLoading}>
             {isLoading ? (
               <>
