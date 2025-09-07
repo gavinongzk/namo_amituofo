@@ -32,7 +32,7 @@ const UserManagement = ({ country }: { country: string }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'isNewUser', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [filterText, setFilterText] = useState('');
   const pageSize = 100;
@@ -304,12 +304,25 @@ const UserManagement = ({ country }: { country: string }) => {
     }
 
     return filteredItems.sort((a, b) => {
-      const aValue = String(a[sortConfig.key as keyof User] || '');
-      const bValue = String(b[sortConfig.key as keyof User] || '');
+      const aValue = a[sortConfig.key as keyof User];
+      const bValue = b[sortConfig.key as keyof User];
+      
+      // Handle boolean sorting (for isNewUser)
+      if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        if (sortConfig.direction === 'desc') {
+          return aValue === bValue ? 0 : aValue ? -1 : 1; // true values first
+        } else {
+          return aValue === bValue ? 0 : aValue ? 1 : -1; // false values first
+        }
+      }
+      
+      // Handle string sorting for other fields
+      const aString = String(aValue || '');
+      const bString = String(bValue || '');
       
       return sortConfig.direction === 'asc'
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+        ? aString.localeCompare(bString)
+        : bString.localeCompare(aString);
     });
   }, [users, sortConfig, filterText]);
 
