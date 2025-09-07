@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,37 +100,6 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
         setFilteredAttendees(filtered);
     }, [attendees, searchTerm, selectedRegion]);
 
-    // Prepare data for charts
-    const regionData = attendees.reduce((acc, attendee) => {
-        const region = attendee.region || 'Unknown';
-        acc[region] = (acc[region] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    const eventCountData = attendees.reduce((acc, attendee) => {
-        const count = attendee.eventCount;
-        acc[count] = (acc[count] || 0) + 1;
-        return acc;
-    }, {} as Record<number, number>);
-
-    // Monthly registration data
-    const monthlyData = attendees.reduce((acc, attendee) => {
-        attendee.events.forEach(event => {
-            const month = format(parseISO(event.eventDate), 'yyyy-MM');
-            acc[month] = (acc[month] || 0) + 1;
-        });
-        return acc;
-    }, {} as Record<string, number>);
-
-    const chartOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const,
-            },
-        },
-    };
-
     const columns: ColumnDef<Attendee>[] = [
         {
             accessorKey: 'name',
@@ -181,6 +150,57 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
         getPaginationRowModel: getPaginationRowModel(),
     });
 
+    // Handle empty data state
+    if (!attendees || attendees.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Analytics Data Available</h3>
+                <p className="text-gray-500 mb-4">
+                    There are no attendee registrations to display analytics for yet.
+                </p>
+                <p className="text-sm text-gray-400">
+                    Analytics will appear once events are created and people start registering.
+                </p>
+            </div>
+        );
+    }
+
+    // Prepare data for charts
+    const regionData = attendees.reduce((acc, attendee) => {
+        const region = attendee.region || 'Unknown';
+        acc[region] = (acc[region] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const eventCountData = attendees.reduce((acc, attendee) => {
+        const count = attendee.eventCount;
+        acc[count] = (acc[count] || 0) + 1;
+        return acc;
+    }, {} as Record<number, number>);
+
+    // Monthly registration data
+    const monthlyData = attendees.reduce((acc, attendee) => {
+        attendee.events.forEach(event => {
+            const month = format(parseISO(event.eventDate), 'yyyy-MM');
+            acc[month] = (acc[month] || 0) + 1;
+        });
+        return acc;
+    }, {} as Record<string, number>);
+
+    const chartOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top' as const,
+            },
+        },
+    };
+
     return (
         <div className="space-y-6">
             {/* Filters */}
@@ -203,6 +223,40 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
                         ))}
                     </SelectContent>
                 </Select>
+            </div>
+
+            {/* Summary Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Card className="p-4">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{attendees.length}</div>
+                        <div className="text-sm text-gray-600">Total Attendees</div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                            {attendees.reduce((sum, attendee) => sum + attendee.eventCount, 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Registrations</div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                            {regions.length - 1}
+                        </div>
+                        <div className="text-sm text-gray-600">Regions</div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                            {Math.round(attendees.reduce((sum, attendee) => sum + attendee.eventCount, 0) / attendees.length * 10) / 10}
+                        </div>
+                        <div className="text-sm text-gray-600">Avg Events/Person</div>
+                    </div>
+                </Card>
             </div>
 
             {/* Charts */}
