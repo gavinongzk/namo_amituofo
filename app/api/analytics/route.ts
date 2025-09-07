@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Order from '@/lib/database/models/order.model';
-import Event from '@/lib/database/models/event.model';
 import { CustomFieldGroup } from '@/types';
 
 interface AttendeeEvent {
@@ -28,7 +27,7 @@ interface Attendee extends AttendeeData {
   eventTitle: string;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await connectToDatabase();
 

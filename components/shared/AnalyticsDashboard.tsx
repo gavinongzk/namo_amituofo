@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement } from 'chart.js';
-import { format, parseISO, subMonths, eachMonthOfInterval, differenceInDays, isSameMonth, isSameYear } from 'date-fns';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,6 +100,56 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
         setFilteredAttendees(filtered);
     }, [attendees, searchTerm, selectedRegion]);
 
+    const columns: ColumnDef<Attendee>[] = [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+        },
+        {
+            accessorKey: 'phoneNumber',
+            header: 'Phone Number',
+        },
+        {
+            accessorKey: 'region',
+            header: 'Region',
+        },
+        {
+            accessorKey: 'eventCount',
+            header: 'Events Attended',
+        },
+        {
+            accessorKey: 'lastEventDate',
+            header: 'Last Event',
+            cell: ({ row }) => {
+                const date = row.getValue('lastEventDate') as string;
+                return date ? format(parseISO(date), 'MMM dd, yyyy') : 'N/A';
+            },
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <Button
+                    onClick={() => {
+                        setSelectedAttendee(row.original);
+                        setShowUserAnalytics(true);
+                    }}
+                    size="sm"
+                >
+                    View Details
+                </Button>
+            ),
+        },
+    ];
+
+    const table = useReactTable({
+        data: filteredAttendees,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+    });
+
     // Handle empty data state
     if (!attendees || attendees.length === 0) {
         return (
@@ -150,56 +200,6 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ attendees }) =>
             },
         },
     };
-
-    const columns: ColumnDef<Attendee>[] = [
-        {
-            accessorKey: 'name',
-            header: 'Name',
-        },
-        {
-            accessorKey: 'phoneNumber',
-            header: 'Phone Number',
-        },
-        {
-            accessorKey: 'region',
-            header: 'Region',
-        },
-        {
-            accessorKey: 'eventCount',
-            header: 'Events Attended',
-        },
-        {
-            accessorKey: 'lastEventDate',
-            header: 'Last Event',
-            cell: ({ row }) => {
-                const date = row.getValue('lastEventDate') as string;
-                return date ? format(parseISO(date), 'MMM dd, yyyy') : 'N/A';
-            },
-        },
-        {
-            id: 'actions',
-            header: 'Actions',
-            cell: ({ row }) => (
-                <Button
-                    onClick={() => {
-                        setSelectedAttendee(row.original);
-                        setShowUserAnalytics(true);
-                    }}
-                    size="sm"
-                >
-                    View Details
-                </Button>
-            ),
-        },
-    ];
-
-    const table = useReactTable({
-        data: filteredAttendees,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-    });
 
     return (
         <div className="space-y-6">
