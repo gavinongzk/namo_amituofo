@@ -23,6 +23,9 @@ type SortConfig = { key: keyof User | 'serialNumber', direction: 'asc' | 'desc' 
 const UserManagement = ({ country }: { country: string }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [customDate, setCustomDate] = useState('');
+  const [dateMonth, setDateMonth] = useState('');
+  const [dateDay, setDateDay] = useState('');
+  const [dateYear, setDateYear] = useState('');
   const [message, setMessage] = useState('');
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +42,13 @@ const UserManagement = ({ country }: { country: string }) => {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const formattedDate = oneWeekAgo.toISOString().split('T')[0];
     setCustomDate(formattedDate);
+    
+    // Initialize separate date fields
+    const [year, month, day] = formattedDate.split('-');
+    setDateYear(year);
+    setDateMonth(month);
+    setDateDay(day);
+    
     fetchUsers(formattedDate);
   }, []);
 
@@ -88,8 +98,44 @@ const UserManagement = ({ country }: { country: string }) => {
     setCustomDate(e.target.value);
   };
 
+  const handleDateFieldChange = (field: 'month' | 'day' | 'year', value: string) => {
+    // Remove any non-numeric characters
+    const numericValue = value.replace(/\D/g, '');
+    
+    if (field === 'month') {
+      // Limit to 2 digits and valid month range
+      const month = Math.min(12, Math.max(1, parseInt(numericValue) || 1));
+      setDateMonth(month.toString());
+    } else if (field === 'day') {
+      // Limit to 2 digits and valid day range
+      const day = Math.min(31, Math.max(1, parseInt(numericValue) || 1));
+      setDateDay(day.toString());
+    } else if (field === 'year') {
+      // Limit to 4 digits
+      const year = numericValue.slice(0, 4);
+      setDateYear(year);
+    }
+  };
+
   const handleApplyDate = () => {
-    fetchUsers(customDate);
+    // Validate that all fields have values
+    if (!dateYear || !dateMonth || !dateDay) {
+      setMessage('Please fill in all date fields (Month, Day, Year)');
+      return;
+    }
+    
+    // Construct date from individual fields
+    const formattedDate = `${dateYear}-${dateMonth.padStart(2, '0')}-${dateDay.padStart(2, '0')}`;
+    
+    // Validate the date
+    const date = new Date(formattedDate);
+    if (isNaN(date.getTime())) {
+      setMessage('Please enter a valid date');
+      return;
+    }
+    
+    setCustomDate(formattedDate);
+    fetchUsers(formattedDate);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -293,12 +339,37 @@ const UserManagement = ({ country }: { country: string }) => {
           )}
         </Button>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            type="date"
-            value={customDate}
-            onChange={handleDateChange}
-            className="w-full sm:w-auto"
-          />
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              placeholder="MM"
+              value={dateMonth}
+              onChange={(e) => handleDateFieldChange('month', e.target.value)}
+              className="w-16 text-center"
+              min="1"
+              max="12"
+            />
+            <span className="text-gray-500">/</span>
+            <Input
+              type="number"
+              placeholder="DD"
+              value={dateDay}
+              onChange={(e) => handleDateFieldChange('day', e.target.value)}
+              className="w-16 text-center"
+              min="1"
+              max="31"
+            />
+            <span className="text-gray-500">/</span>
+            <Input
+              type="number"
+              placeholder="YYYY"
+              value={dateYear}
+              onChange={(e) => handleDateFieldChange('year', e.target.value)}
+              className="w-20 text-center"
+              min="1900"
+              max="2100"
+            />
+          </div>
           <Button onClick={handleApplyDate} disabled={isLoading}>
             {isLoading ? (
               <>
