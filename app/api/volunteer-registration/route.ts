@@ -1,18 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Event from '@/lib/database/models/event.model';
+import Category from '@/lib/database/models/category.model';
+import User from '@/lib/database/models/user.model';
 import VolunteerRegistration from '@/lib/database/models/volunteerRegistration.model';
 import { CustomFieldGroup } from '@/types';
+
+async function ensureVolunteerEventExists() {
+  try {
+    // Check if event already exists
+    let volunteerEvent = await Event.findOne({ 
+      title: '新加坡净土儿童佛学班·义工招募',
+      isDeleted: false 
+    });
+
+    if (volunteerEvent) {
+      return volunteerEvent;
+    }
+
+    // Find or create category
+    let volunteerCategory = await Category.findOne({ name: '义工招募' });
+    if (!volunteerCategory) {
+      volunteerCategory = await Category.create({
+        name: '义工招募',
+        color: 'bg-purple-100 text-purple-800',
+        description: 'Volunteer Recruitment Events'
+      });
+    }
+
+    // Find a user to be the organizer
+    let organizer = await User.findOne({ role: 'admin' });
+    if (!organizer) {
+      organizer = await User.findOne({ role: 'superadmin' });
+    }
+    if (!organizer) {
+      // Create a default organizer user
+      organizer = await User.create({
+        firstName: 'Admin',
+        lastName: 'User',
+        email: 'admin@namoamituofo.org',
+        role: 'admin',
+        country: 'Singapore'
+      });
+    }
+
+    // Create the event
+    volunteerEvent = await Event.create({
+      title: '新加坡净土儿童佛学班·义工招募',
+      description: '为了让孩子们在佛光中茁壮成长，「净土儿童佛学班」即将开课。本寺诚挚邀请大家一同加入义工之行，共同成就此殊胜因缘。',
+      location: '净土宗弥陀寺（新加坡）',
+      startDateTime: new Date('2024-02-01T10:00:00+08:00'),
+      endDateTime: new Date('2024-12-31T23:59:59+08:00'),
+      category: volunteerCategory._id,
+      organizer: organizer._id,
+      maxSeats: 100,
+      country: 'Singapore',
+      isDeleted: false,
+      isDraft: false,
+      customFields: [
+        { id: '1', label: '名字 / Name', type: 'text' },
+        { id: '2', label: '净土宗皈依号 / Pure Land Refuge Number', type: 'text' },
+        { id: '3', label: '联系号码 / Contact Number', type: 'phone' },
+        { id: '4', label: '是否愿意参与义工服务 / Willing to participate in volunteer service', type: 'radio', options: [
+          { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
+          { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
+        ]},
+        { id: '5', label: '每月参与次数 / Monthly participation frequency', type: 'radio', options: [
+          { label: '每月 2 次 / Twice a month', value: 'twice' },
+          { label: '每月 1 次 / Once a month', value: 'once' },
+          { label: '其他（请注明）/ Other (please specify)', value: 'other' }
+        ]},
+        { id: '6', label: '询问事项 / Inquiries', type: 'text' }
+      ]
+    });
+
+    console.log('Created volunteer recruitment event:', volunteerEvent._id);
+    return volunteerEvent;
+  } catch (error) {
+    console.error('Error ensuring volunteer event exists:', error);
+    return null;
+  }
+}
 
 export async function GET() {
   try {
     await connectToDatabase();
 
-    // Find the volunteer recruitment event
-    const volunteerEvent = await Event.findOne({ 
-      title: '净土儿童佛学班·义工招募',
-      isDeleted: false 
-    });
+    // Ensure the volunteer event exists
+    const volunteerEvent = await ensureVolunteerEventExists();
 
     console.log('Volunteer event found:', volunteerEvent ? volunteerEvent._id : 'Not found');
 
@@ -65,67 +140,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find or create a volunteer recruitment event
-    let volunteerEvent = await Event.findOne({ 
-      title: '净土儿童佛学班·义工招募',
-      isDeleted: false 
-    });
+    // Ensure the volunteer event exists
+    const volunteerEvent = await ensureVolunteerEventExists();
 
     console.log('Looking for volunteer event, found:', volunteerEvent ? volunteerEvent._id : 'Not found');
 
     if (!volunteerEvent) {
-      // Create the volunteer recruitment event if it doesn't exist
-      volunteerEvent = await Event.create({
-        title: '净土儿童佛学班·义工招募',
-        description: '新加坡净土儿童佛学班义工招募活动',
-        location: '净土宗弥陀寺（新加坡）',
-        startDateTime: new Date('2024-01-01T09:30:00+08:00'),
-        endDateTime: new Date('2024-12-31T11:30:00+08:00'),
-        maxSeats: 100,
-        country: 'Singapore',
-        category: null, // Will be set when category is created
-        organizer: null, // Will be set when admin creates the event
-        customFields: [
-          {
-            id: '1',
-            label: '名字 / Name',
-            type: 'text',
-            value: name
-          },
-          {
-            id: '2',
-            label: '净土宗皈依号 / Pure Land Refuge Number',
-            type: 'text',
-            value: dharmaName || ''
-          },
-          {
-            id: '3',
-            label: '联系号码 / Contact Number',
-            type: 'phone',
-            value: contactNumber
-          },
-          {
-            id: '4',
-            label: '是否愿意参与义工服务 / Willing to participate in volunteer service',
-            type: 'radio',
-            value: willingToParticipate
-          },
-          {
-            id: '5',
-            label: '每月参与次数 / Monthly participation frequency',
-            type: 'radio',
-            value: participationFrequency
-          },
-          {
-            id: '6',
-            label: '询问事项 / Inquiries',
-            type: 'text',
-            value: inquiries || ''
-          }
-        ],
-        isDraft: false
-      });
-      console.log('Created volunteer event:', volunteerEvent._id);
+      return NextResponse.json(
+        { error: 'Failed to create or find volunteer recruitment event' },
+        { status: 500 }
+      );
     }
 
     // Generate unique queue number for volunteer

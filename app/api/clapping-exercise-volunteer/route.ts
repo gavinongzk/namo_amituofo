@@ -1,18 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Event from '@/lib/database/models/event.model';
+import Category from '@/lib/database/models/category.model';
+import User from '@/lib/database/models/user.model';
 import ClappingRegistration from '@/lib/database/models/clappingRegistration.model';
 import { CustomFieldGroup } from '@/types';
+
+async function ensureClappingExerciseEventExists() {
+  try {
+    // Check if event already exists
+    let clappingEvent = await Event.findOne({ 
+      title: '拍手念佛健身操·义工招募',
+      isDeleted: false 
+    });
+
+    if (clappingEvent) {
+      return clappingEvent;
+    }
+
+    // Find or create category
+    let clappingCategory = await Category.findOne({ name: '拍手念佛健身操义工招募' });
+    if (!clappingCategory) {
+      clappingCategory = await Category.create({
+        name: '拍手念佛健身操义工招募',
+        color: 'bg-orange-100 text-orange-800',
+        description: 'Clapping Exercise Volunteer Recruitment Events'
+      });
+    }
+
+    // Find a user to be the organizer
+    let organizer = await User.findOne({ role: 'admin' });
+    if (!organizer) {
+      organizer = await User.findOne({ role: 'superadmin' });
+    }
+    if (!organizer) {
+      // Create a default organizer user
+      organizer = await User.create({
+        firstName: 'Admin',
+        lastName: 'User',
+        email: 'admin@namoamituofo.org',
+        role: 'admin',
+        country: 'Singapore'
+      });
+    }
+
+    // Create the event
+    clappingEvent = await Event.create({
+      title: '拍手念佛健身操·义工招募',
+      description: '我们即将在 新加坡弥陀寺 长期举办 「拍手念佛健身操」。此活动结合健身运动与念佛，带来身心双重利益。',
+      location: '净土宗弥陀寺（新加坡）',
+      startDateTime: new Date('2024-02-01T16:00:00+08:00'),
+      endDateTime: new Date('2024-12-31T23:59:59+08:00'),
+      category: clappingCategory._id,
+      organizer: organizer._id,
+      maxSeats: 50,
+      country: 'Singapore',
+      isDeleted: false,
+      isDraft: false,
+      customFields: [
+        { id: '1', label: '名字 / Name', type: 'text' },
+        { id: '2', label: '净土宗皈依号 / Pure Land Refuge Number', type: 'text' },
+        { id: '3', label: '联系号码 / Contact Number', type: 'phone' },
+        { id: '4', label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service', type: 'radio', options: [
+          { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
+          { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
+        ]},
+        { id: '5', label: '参与频率 / Participation frequency', type: 'radio', options: [
+          { label: '每星期 / Weekly', value: 'weekly' },
+          { label: '两个星期一次 / Bi-weekly', value: 'biweekly' },
+          { label: '其他（请注明）/ Other (please specify)', value: 'other' }
+        ]},
+        { id: '6', label: '询问事项 / Inquiries', type: 'text' }
+      ]
+    });
+
+    console.log('Created clapping exercise volunteer event:', clappingEvent._id);
+    return clappingEvent;
+  } catch (error) {
+    console.error('Error ensuring clapping exercise event exists:', error);
+    return null;
+  }
+}
 
 export async function GET() {
   try {
     await connectToDatabase();
 
-    // Find the clapping exercise volunteer recruitment event
-    const clappingExerciseEvent = await Event.findOne({ 
-      title: '拍手念佛健身操·义工招募',
-      isDeleted: false 
-    });
+    // Ensure the clapping exercise event exists
+    const clappingExerciseEvent = await ensureClappingExerciseEventExists();
 
     if (!clappingExerciseEvent) {
       return NextResponse.json({
@@ -61,64 +136,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find or create a clapping exercise volunteer recruitment event
-    let clappingExerciseEvent = await Event.findOne({ 
-      title: '拍手念佛健身操·义工招募',
-      isDeleted: false 
-    });
+    // Ensure the clapping exercise event exists
+    const clappingExerciseEvent = await ensureClappingExerciseEventExists();
 
     if (!clappingExerciseEvent) {
-      // Create the clapping exercise volunteer recruitment event if it doesn't exist
-      clappingExerciseEvent = await Event.create({
-        title: '拍手念佛健身操·义工招募',
-        description: '新加坡弥陀寺拍手念佛健身操义工招募活动',
-        location: '新加坡弥陀寺',
-        startDateTime: new Date('2024-01-01T16:00:00+08:00'),
-        endDateTime: new Date('2024-12-31T17:00:00+08:00'),
-        maxSeats: 50,
-        country: 'Singapore',
-        category: null, // Will be set when category is created
-        organizer: null, // Will be set when admin creates the event
-        customFields: [
-          {
-            id: '1',
-            label: '名字 / Name',
-            type: 'text',
-            value: name
-          },
-          {
-            id: '2',
-            label: '净土宗皈依号 / Pure Land Refuge Number',
-            type: 'text',
-            value: dharmaName || ''
-          },
-          {
-            id: '3',
-            label: '联系号码 / Contact Number',
-            type: 'phone',
-            value: contactNumber
-          },
-          {
-            id: '4',
-            label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service',
-            type: 'radio',
-            value: willingToParticipate
-          },
-          {
-            id: '5',
-            label: '参与频率 / Participation frequency',
-            type: 'radio',
-            value: participationFrequency
-          },
-          {
-            id: '6',
-            label: '询问事项 / Inquiries',
-            type: 'text',
-            value: inquiries || ''
-          }
-        ],
-        isDraft: false
-      });
+      return NextResponse.json(
+        { error: 'Failed to create or find clapping exercise volunteer recruitment event' },
+        { status: 500 }
+      );
     }
 
     // Generate unique queue number for clapping exercise volunteer

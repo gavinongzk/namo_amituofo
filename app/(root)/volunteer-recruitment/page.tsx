@@ -108,6 +108,20 @@ export default function VolunteerRecruitmentPage() {
             新加坡净土儿童佛学班·义工招募
           </h1>
           <div className="text-2xl mb-2">🌸</div>
+          
+          {/* Event Details */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto shadow-sm border border-purple-100">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div className="text-left">
+                <p className="font-semibold text-purple-700 mb-1">活动类别 / Category:</p>
+                <p className="text-gray-700">义工招募 / Volunteer Recruitment</p>
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-purple-700 mb-1">主办单位 / Organiser:</p>
+                <p className="text-gray-700">净土宗弥陀寺（新加坡）</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
