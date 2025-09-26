@@ -100,6 +100,18 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
+          <Link href="/admin/volunteers" onClick={() => handleClick('/admin/volunteers')}>
+            <Button className={`${buttonClass} bg-pink-600 hover:bg-pink-700 text-white`} disabled={loadingPath === '/admin/volunteers'}>
+              {loadingPath === '/admin/volunteers' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '义工管理 / Volunteer Management'
+              )}
+            </Button>
+          </Link>
         </>
       )}
     </div>
