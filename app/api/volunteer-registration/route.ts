@@ -23,12 +23,8 @@ export async function GET() {
       });
     }
 
-    // Get all registrations from dedicated collection (linked via event title)
-    const registrations = await VolunteerRegistration.find({
-      'customFieldValues.fields': {
-        $elemMatch: { label: '活动标题 / Event Title', value: '净土儿童佛学班·义工招募' }
-      }
-    }).sort({ createdAt: -1 });
+    // Fetch all registrations from dedicated collection
+    const registrations = await VolunteerRegistration.find({}).sort({ createdAt: -1 });
 
     console.log('Volunteer registrations found:', registrations.length);
 
