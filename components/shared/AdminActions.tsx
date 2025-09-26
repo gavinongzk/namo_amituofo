@@ -112,6 +112,18 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
+          <Link href="/admin/clapping-exercise-volunteers" onClick={() => handleClick('/admin/clapping-exercise-volunteers')}>
+            <Button className={`${buttonClass} bg-orange-600 hover:bg-orange-700 text-white`} disabled={loadingPath === '/admin/clapping-exercise-volunteers'}>
+              {loadingPath === '/admin/clapping-exercise-volunteers' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '拍手念佛健身操义工管理 / Clapping Exercise Volunteer Management'
+              )}
+            </Button>
+          </Link>
         </>
       )}
     </div>

@@ -98,6 +98,12 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       alwaysShow: true,
     },
     {
+      href: '/clapping-exercise-volunteer',
+      title: '拍手念佛健身操义工',
+      subtitle: 'Clapping Exercise Volunteer',
+      alwaysShow: true,
+    },
+    {
       href: '/admin/dashboard',
       title: '管理员系统',
       subtitle: 'Admin Dashboard',

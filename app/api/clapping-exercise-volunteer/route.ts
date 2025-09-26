@@ -8,13 +8,13 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    // Find the volunteer recruitment event
-    const volunteerEvent = await Event.findOne({ 
-      title: '净土儿童佛学班·义工招募',
+    // Find the clapping exercise volunteer recruitment event
+    const clappingExerciseEvent = await Event.findOne({ 
+      title: '拍手念佛健身操·义工招募',
       isDeleted: false 
     });
 
-    if (!volunteerEvent) {
+    if (!clappingExerciseEvent) {
       return NextResponse.json({
         success: true,
         volunteers: []
@@ -23,7 +23,7 @@ export async function GET() {
 
     // Get all orders (registrations) for this event
     const orders = await Order.find({
-      event: volunteerEvent._id,
+      event: clappingExerciseEvent._id,
       isDeleted: false
     }).sort({ createdAt: -1 });
 
@@ -33,7 +33,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Error fetching volunteer registrations:', error);
+    console.error('Error fetching clapping exercise volunteer registrations:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -64,21 +64,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find or create a volunteer recruitment event
-    let volunteerEvent = await Event.findOne({ 
-      title: '净土儿童佛学班·义工招募',
+    // Find or create a clapping exercise volunteer recruitment event
+    let clappingExerciseEvent = await Event.findOne({ 
+      title: '拍手念佛健身操·义工招募',
       isDeleted: false 
     });
 
-    if (!volunteerEvent) {
-      // Create the volunteer recruitment event if it doesn't exist
-      volunteerEvent = await Event.create({
-        title: '净土儿童佛学班·义工招募',
-        description: '新加坡净土儿童佛学班义工招募活动',
-        location: '净土宗弥陀寺（新加坡）',
-        startDateTime: new Date('2024-01-01T09:30:00+08:00'),
-        endDateTime: new Date('2024-12-31T11:30:00+08:00'),
-        maxSeats: 100,
+    if (!clappingExerciseEvent) {
+      // Create the clapping exercise volunteer recruitment event if it doesn't exist
+      clappingExerciseEvent = await Event.create({
+        title: '拍手念佛健身操·义工招募',
+        description: '新加坡弥陀寺拍手念佛健身操义工招募活动',
+        location: '新加坡弥陀寺',
+        startDateTime: new Date('2024-01-01T16:00:00+08:00'),
+        endDateTime: new Date('2024-12-31T17:00:00+08:00'),
+        maxSeats: 50,
         country: 'Singapore',
         category: null, // Will be set when category is created
         organizer: null, // Will be set when admin creates the event
@@ -103,13 +103,13 @@ export async function POST(request: NextRequest) {
           },
           {
             id: '4',
-            label: '是否愿意参与义工服务 / Willing to participate in volunteer service',
+            label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service',
             type: 'radio',
             value: willingToParticipate
           },
           {
             id: '5',
-            label: '每月参与次数 / Monthly participation frequency',
+            label: '参与频率 / Participation frequency',
             type: 'radio',
             value: participationFrequency
           },
@@ -124,14 +124,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate unique queue number for volunteer
-    const generateVolunteerQueueNumber = () => {
+    // Generate unique queue number for clapping exercise volunteer
+    const generateClappingExerciseQueueNumber = () => {
       const timestamp = Date.now();
       const random = Math.floor(Math.random() * 1000);
-      return `V${timestamp}${random}`;
+      return `C${timestamp}${random}`;
     };
 
-    const queueNumber = generateVolunteerQueueNumber();
+    const queueNumber = generateClappingExerciseQueueNumber();
 
     // Create order (registration) record following the existing pattern
     const customFieldGroup: CustomFieldGroup = {
@@ -157,13 +157,13 @@ export async function POST(request: NextRequest) {
         },
         {
           id: '4',
-          label: '是否愿意参与义工服务 / Willing to participate in volunteer service',
+          label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service',
           type: 'radio',
           value: willingToParticipate
         },
         {
           id: '5',
-          label: '每月参与次数 / Monthly participation frequency',
+          label: '参与频率 / Participation frequency',
           type: 'radio',
           value: participationFrequency
         },
@@ -182,25 +182,25 @@ export async function POST(request: NextRequest) {
     };
 
     const order = await Order.create({
-      event: volunteerEvent._id,
+      event: clappingExerciseEvent._id,
       buyer: null, // Anonymous registration
       customFieldValues: [customFieldGroup],
       createdAt: new Date()
     });
 
     // Update event attendee count
-    await Event.findByIdAndUpdate(volunteerEvent._id, {
+    await Event.findByIdAndUpdate(clappingExerciseEvent._id, {
       $inc: { attendeeCount: 1 }
     });
 
     return NextResponse.json({
       success: true,
-      message: '义工申请已成功提交',
+      message: '拍手念佛健身操义工申请已成功提交',
       registrationId: order._id
     });
 
   } catch (error) {
-    console.error('Error processing volunteer registration:', error);
+    console.error('Error processing clapping exercise volunteer registration:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
