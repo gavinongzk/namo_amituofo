@@ -21,12 +21,8 @@ export async function GET() {
       });
     }
 
-    // Get all registrations from dedicated collection (linked via event title)
-    const registrations = await ClappingRegistration.find({
-      'customFieldValues.fields': {
-        $elemMatch: { label: '活动标题 / Event Title', value: '拍手念佛健身操·义工招募' }
-      }
-    }).sort({ createdAt: -1 });
+    // Fetch all registrations from dedicated collection
+    const registrations = await ClappingRegistration.find({}).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
@@ -138,6 +134,12 @@ export async function POST(request: NextRequest) {
     const customFieldGroup: CustomFieldGroup = {
       groupId: Date.now().toString(),
       fields: [
+        {
+          id: 'eventTitle',
+          label: '活动标题 / Event Title',
+          type: 'text',
+          value: '拍手念佛健身操·义工招募'
+        },
         {
           id: '1',
           label: '名字 / Name',
