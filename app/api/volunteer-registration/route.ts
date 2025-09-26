@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Event from '@/lib/database/models/event.model';
-import Order from '@/lib/database/models/order.model';
+import VolunteerRegistration from '@/lib/database/models/volunteerRegistration.model';
 import { CustomFieldGroup } from '@/types';
 
 export async function GET() {
@@ -14,6 +14,8 @@ export async function GET() {
       isDeleted: false 
     });
 
+    console.log('Volunteer event found:', volunteerEvent ? volunteerEvent._id : 'Not found');
+
     if (!volunteerEvent) {
       return NextResponse.json({
         success: true,
@@ -21,15 +23,18 @@ export async function GET() {
       });
     }
 
-    // Get all orders (registrations) for this event
-    const orders = await Order.find({
-      event: volunteerEvent._id,
-      isDeleted: false
+    // Get all registrations from dedicated collection (linked via event title)
+    const registrations = await VolunteerRegistration.find({
+      'customFieldValues.fields': {
+        $elemMatch: { label: '活动标题 / Event Title', value: '净土儿童佛学班·义工招募' }
+      }
     }).sort({ createdAt: -1 });
+
+    console.log('Volunteer registrations found:', registrations.length);
 
     return NextResponse.json({
       success: true,
-      volunteers: orders
+      volunteers: registrations
     });
 
   } catch (error) {
@@ -69,6 +74,8 @@ export async function POST(request: NextRequest) {
       title: '净土儿童佛学班·义工招募',
       isDeleted: false 
     });
+
+    console.log('Looking for volunteer event, found:', volunteerEvent ? volunteerEvent._id : 'Not found');
 
     if (!volunteerEvent) {
       // Create the volunteer recruitment event if it doesn't exist
@@ -122,6 +129,7 @@ export async function POST(request: NextRequest) {
         ],
         isDraft: false
       });
+      console.log('Created volunteer event:', volunteerEvent._id);
     }
 
     // Generate unique queue number for volunteer
@@ -133,10 +141,16 @@ export async function POST(request: NextRequest) {
 
     const queueNumber = generateVolunteerQueueNumber();
 
-    // Create order (registration) record following the existing pattern
+    // Create registration record in dedicated collection
     const customFieldGroup: CustomFieldGroup = {
       groupId: Date.now().toString(),
       fields: [
+        {
+          id: 'eventTitle',
+          label: '活动标题 / Event Title',
+          type: 'text',
+          value: '净土儿童佛学班·义工招募'
+        },
         {
           id: '1',
           label: '名字 / Name',
@@ -181,9 +195,9 @@ export async function POST(request: NextRequest) {
       __v: 0
     };
 
-    const order = await Order.create({
-      event: volunteerEvent._id,
-      buyer: null, // Anonymous registration
+    console.log('Creating order for event:', volunteerEvent._id);
+    
+    const registrationDoc = await VolunteerRegistration.create({
       customFieldValues: [customFieldGroup],
       createdAt: new Date()
     });
@@ -196,13 +210,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: '义工申请已成功提交',
-      registrationId: order._id
+      registrationId: registrationDoc._id
     });
 
   } catch (error) {
     console.error('Error processing volunteer registration:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

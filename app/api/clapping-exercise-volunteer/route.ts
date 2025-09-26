@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import Event from '@/lib/database/models/event.model';
-import Order from '@/lib/database/models/order.model';
+import ClappingRegistration from '@/lib/database/models/clappingRegistration.model';
 import { CustomFieldGroup } from '@/types';
 
 export async function GET() {
@@ -21,15 +21,16 @@ export async function GET() {
       });
     }
 
-    // Get all orders (registrations) for this event
-    const orders = await Order.find({
-      event: clappingExerciseEvent._id,
-      isDeleted: false
+    // Get all registrations from dedicated collection (linked via event title)
+    const registrations = await ClappingRegistration.find({
+      'customFieldValues.fields': {
+        $elemMatch: { label: '活动标题 / Event Title', value: '拍手念佛健身操·义工招募' }
+      }
     }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
-      volunteers: orders
+      volunteers: registrations
     });
 
   } catch (error) {
@@ -181,9 +182,7 @@ export async function POST(request: NextRequest) {
       __v: 0
     };
 
-    const order = await Order.create({
-      event: clappingExerciseEvent._id,
-      buyer: null, // Anonymous registration
+    const registrationDoc = await ClappingRegistration.create({
       customFieldValues: [customFieldGroup],
       createdAt: new Date()
     });
@@ -196,7 +195,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: '拍手念佛健身操义工申请已成功提交',
-      registrationId: order._id
+      registrationId: registrationDoc._id
     });
 
   } catch (error) {
