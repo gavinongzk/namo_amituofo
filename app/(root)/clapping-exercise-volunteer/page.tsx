@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import Image from 'next/image'
 
 const clappingExerciseFormSchema = z.object({
   name: z.string().min(1, '名字是必填项'),
@@ -102,14 +103,17 @@ export default function ClappingExerciseVolunteerPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🪷</div>
-          <h1 className="text-4xl font-bold text-orange-800 mb-4">
-            拍手念佛健身操·义工招募
-          </h1>
-          <div className="text-2xl mb-2">✨</div>
-          <p className="text-xl text-orange-700 font-medium mb-4">
-            一起拍手念佛，快乐法喜，身心自在
-          </p>
+          {/* Clapping Exercise Image */}
+          <div className="mb-6">
+            <Image
+              src="/assets/images/clapping-exercise.jpeg"
+              alt="拍手念佛健身操·义工招募"
+              width={800}
+              height={600}
+              className="mx-auto rounded-lg shadow-lg max-w-full h-auto"
+              priority
+            />
+          </div>
           
           {/* Event Details */}
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto shadow-sm border border-orange-100">
@@ -141,31 +145,34 @@ export default function ClappingExerciseVolunteerPage() {
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               <div className="bg-orange-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  ✨ 健体益处
+                  💪 健体益处
                 </h3>
                 <ul className="space-y-2 text-gray-700">
-                  <li>• 强身健体、促进血液循环</li>
-                  <li>• 舒展筋骨，具有治病强身的功效</li>
-                  <li>• 在轻松节奏中运动身心</li>
+                  <li>• 拍一拍，血脉畅通，活力满满</li>
+                  <li>• 动一动，筋骨舒展，强身防病</li>
+                  <li>• 乐一乐，轻松节奏，身心自在</li>
                 </ul>
               </div>
 
               <div className="bg-red-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  ✨ 念佛功德
+                  🪷 念佛功德
                 </h3>
                 <ul className="space-y-2 text-gray-700">
-                  <li>• 一句&ldquo;南无阿弥陀佛&rdquo;圣号，功德不可思议</li>
-                  <li>• 于运动中随身口称念佛</li>
-                  <li>• 消灾免难、消除业障</li>
-                  <li>• 增福延寿，吉祥如意</li>
+                  <li>• 一声佛号，遍照光明，功德无量</li>
+                  <li>• 动作之间，口念佛名，身心相应</li>
+                  <li>• 除障消灾，远离困厄</li>
+                  <li>• 福慧双增，延寿安康</li>
                 </ul>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-orange-100 to-red-100 p-6 rounded-lg mb-8">
-              <p className="text-gray-700 leading-relaxed mb-4 text-center">
-                在轻松的拍手操节奏中，大家齐声念佛，共修共行，身心康宁，功德无量！
+              <p className="text-gray-700 leading-relaxed mb-2 text-center">
+                在轻快的节奏里，拍出健康，念出光明！
+              </p>
+              <p className="text-gray-700 leading-relaxed text-center">
+                大家齐声念佛，共修共乐，身安心安，功德无边！
               </p>
             </div>
 
@@ -193,13 +200,21 @@ export default function ClappingExerciseVolunteerPage() {
 
             <div className="text-center">
               <p className="text-lg text-orange-700 font-medium mb-2">
-                您的双手，不只是拍手动作，更是播种光明的种子。
+                🙌 您的双手，不只是拍手动作，更是播撒慈悲的种子！
               </p>
               <p className="text-lg text-orange-700 font-medium mb-2">
                 欢迎一同发心，让念佛拍手操传递喜乐与慈悲！
               </p>
+              <p className="text-lg text-orange-700 font-medium mb-2">
+                诚邀您一同发心参与，用节奏与佛号：
+              </p>
+              <ul className="text-lg text-orange-700 font-medium mb-4 space-y-1">
+                <li>• 拍出喜乐</li>
+                <li>• 拍出健康</li>
+                <li>• 拍出无量光明</li>
+              </ul>
               <p className="text-lg text-orange-700 font-medium mb-4">
-                诚邀您一同发心参与，共同护持此活动！
+                让我们携手护持，共同成就每场身心法喜的念佛弘愿！
               </p>
               <p className="text-xl text-orange-800 font-bold">
                 南无阿弥陀佛 🙏
