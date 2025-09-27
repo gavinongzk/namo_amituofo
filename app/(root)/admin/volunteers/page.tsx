@@ -121,7 +121,7 @@ export default function VolunteersPage() {
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🪷</div>
           <h1 className="text-3xl font-bold text-purple-800 mb-2">
-            义工申请管理
+            净土儿童佛学班义工义工申请管理
           </h1>
           <p className="text-gray-600">
             净土儿童佛学班义工招募申请列表

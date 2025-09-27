@@ -108,7 +108,7 @@ const AdminActions = () => {
                   加载中... / Loading...
                 </>
               ) : (
-                '义工管理 / Volunteer Management'
+                '净土儿童佛学班义工义工管理 / Pure Land Children Buddhist Class Volunteer Management'
               )}
             </Button>
           </Link>
