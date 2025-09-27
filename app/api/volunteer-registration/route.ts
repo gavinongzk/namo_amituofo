@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
-import Event from '@/lib/database/models/event.model';
+import VolunteerEvent from '@/lib/database/models/volunteerEvent.model';
 import Category from '@/lib/database/models/category.model';
 import User from '@/lib/database/models/user.model';
 import VolunteerRegistration from '@/lib/database/models/volunteerRegistration.model';
@@ -9,7 +9,7 @@ import { CustomFieldGroup } from '@/types';
 async function ensureVolunteerEventExists() {
   try {
     // Check if event already exists
-    let volunteerEvent = await Event.findOne({ 
+    let volunteerEvent = await VolunteerEvent.findOne({ 
       title: '新加坡净土儿童佛学班·义工招募',
       isDeleted: false 
     });
@@ -36,16 +36,14 @@ async function ensureVolunteerEventExists() {
     if (!organizer) {
       // Create a default organizer user
       organizer = await User.create({
-        firstName: 'Admin',
-        lastName: 'User',
+        clerkId: 'admin-volunteer-registration',
         email: 'admin@namoamituofo.org',
-        role: 'admin',
-        country: 'Singapore'
+        role: 'admin'
       });
     }
 
     // Create the event
-    volunteerEvent = await Event.create({
+    volunteerEvent = await VolunteerEvent.create({
       title: '新加坡净土儿童佛学班·义工招募',
       description: '为了让孩子们在佛光中茁壮成长，「净土儿童佛学班」即将开课。本寺诚挚邀请大家一同加入义工之行，共同成就此殊胜因缘。',
       location: '净土宗弥陀寺（新加坡）',
@@ -223,7 +221,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update event attendee count
-    await Event.findByIdAndUpdate(volunteerEvent._id, {
+    await VolunteerEvent.findByIdAndUpdate(volunteerEvent._id, {
       $inc: { attendeeCount: 1 }
     });
 

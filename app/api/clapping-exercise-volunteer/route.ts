@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
-import Event from '@/lib/database/models/event.model';
+import ClappingEvent from '@/lib/database/models/clappingEvent.model';
 import Category from '@/lib/database/models/category.model';
 import User from '@/lib/database/models/user.model';
 import ClappingRegistration from '@/lib/database/models/clappingRegistration.model';
@@ -9,7 +9,7 @@ import { CustomFieldGroup } from '@/types';
 async function ensureClappingExerciseEventExists() {
   try {
     // Check if event already exists
-    let clappingEvent = await Event.findOne({ 
+    let clappingEvent = await ClappingEvent.findOne({ 
       title: '拍手念佛健身操·义工招募',
       isDeleted: false 
     });
@@ -36,16 +36,14 @@ async function ensureClappingExerciseEventExists() {
     if (!organizer) {
       // Create a default organizer user
       organizer = await User.create({
-        firstName: 'Admin',
-        lastName: 'User',
+        clerkId: 'admin-clapping-exercise',
         email: 'admin@namoamituofo.org',
-        role: 'admin',
-        country: 'Singapore'
+        role: 'admin'
       });
     }
 
     // Create the event
-    clappingEvent = await Event.create({
+    clappingEvent = await ClappingEvent.create({
       title: '拍手念佛健身操·义工招募',
       description: '我们即将在 新加坡弥陀寺 长期举办 「拍手念佛健身操」。此活动结合健身运动与念佛，带来身心双重利益。',
       location: '净土宗弥陀寺（新加坡）',
@@ -215,7 +213,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update event attendee count
-    await Event.findByIdAndUpdate(clappingExerciseEvent._id, {
+    await ClappingEvent.findByIdAndUpdate(clappingExerciseEvent._id, {
       $inc: { attendeeCount: 1 }
     });
 
