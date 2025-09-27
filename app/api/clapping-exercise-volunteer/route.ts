@@ -51,7 +51,7 @@ async function ensureClappingExerciseEventExists() {
       endDateTime: new Date('2024-12-31T23:59:59+08:00'),
       category: clappingCategory._id,
       organizer: organizer._id,
-      maxSeats: 50,
+      maxSeats: 100000000,
       country: 'Singapore',
       isDeleted: false,
       isDraft: false,

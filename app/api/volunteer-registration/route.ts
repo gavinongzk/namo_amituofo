@@ -51,7 +51,7 @@ async function ensureVolunteerEventExists() {
       endDateTime: new Date('2024-12-31T23:59:59+08:00'),
       category: volunteerCategory._id,
       organizer: organizer._id,
-      maxSeats: 100,
+      maxSeats: 100000000,
       country: 'Singapore',
       isDeleted: false,
       isDraft: false,
