@@ -5,12 +5,14 @@ export interface ICategory extends Document {
   name: string;
   isHidden: boolean;
   color?: string;
+  description?: string;
 }
 
 const CategorySchema = new Schema({
   name: { type: String, required: true, unique: true },
   isHidden: { type: Boolean, default: false },
-  color: { type: String, required: false }
+  color: { type: String, required: false },
+  description: { type: String, required: false }
 })
 
 const Category = models.Category || model('Category', CategorySchema);

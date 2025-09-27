@@ -21,12 +21,22 @@ export default authMiddleware({
     '/api/batch',
     '/api/categories',
     '/monitoring',
-    '/reg/:id'
+    '/reg/:id',
+    '/volunteer-recruitment',
+    '/clapping-exercise-volunteer',
+    '/api/volunteer-registration',
+    '/api/clapping-exercise-volunteer',
+    '/api/debug-events',
+    '/api/test-order'
   ],
   ignoredRoutes: [
     '/api/webhook/clerk',
     '/api/uploadthing',
     '/monitoring',
+    '/api/volunteer-registration',
+    '/api/clapping-exercise-volunteer',
+    '/api/debug-events',
+    '/api/test-order',
   ],
   async beforeAuth(req) {
     // Apply rate limiting before authentication
