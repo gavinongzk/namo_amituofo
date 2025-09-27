@@ -103,11 +103,17 @@ export default function VolunteerRecruitmentPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🪷</div>
-          <h1 className="text-4xl font-bold text-purple-800 mb-4">
-            新加坡净土儿童佛学班·义工招募
-          </h1>
-          <div className="text-2xl mb-2">🌸</div>
+          {/* Volunteer Registration Image */}
+          <div className="mb-6">
+            <Image
+              src="/assets/images/volunteer-registration.jpeg"
+              alt="新加坡净土儿童佛学班·义工招募"
+              width={800}
+              height={600}
+              className="mx-auto rounded-lg shadow-lg max-w-full h-auto"
+              priority
+            />
+          </div>
           
           {/* Event Details */}
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto shadow-sm border border-purple-100">
@@ -171,6 +177,7 @@ export default function VolunteerRecruitmentPage() {
                   <li>• 年龄 18 岁以上，具备耐心与责任心</li>
                   <li>• 无需有照顾小孩子的经验</li>
                   <li>• 每月至少能参与一次活动</li>
+                  <li>• 女众义工、男众义工：皆可</li>
                 </ul>
               </div>
 
