@@ -183,13 +183,30 @@ export default function VolunteerRecruitmentPage() {
 
               <div className="bg-green-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                  🌷 义工功德
+                  🌸 义工功德 · 菩萨行愿 🌸
                 </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 种下陪伴儿童学佛的善缘</li>
-                  <li>• 增长慈悲与智慧，修习菩萨行</li>
-                  <li>• 与大众共修共学，结集净土福德资粮</li>
-                </ul>
+                <div className="space-y-3 text-gray-700">
+                  <div>
+                    <p className="font-medium text-purple-600 mb-1">播下无尽的佛缘</p>
+                    <p className="text-sm">陪伴儿童亲近佛法，种下念佛的善根，绽放来世无量光明。</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-purple-600 mb-1">增长慈悲与智慧</p>
+                    <p className="text-sm">在服务中修菩萨行，柔软心、智慧心，成就自他无量功德。</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-purple-600 mb-1">共修共学·功德无边</p>
+                    <p className="text-sm">与大众一同念佛、护持佛事，共享平生业成净土福慧。</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-purple-600 mb-1">庄严净土·利益众生</p>
+                    <p className="text-sm">每一份护持，皆是庄严极乐世界的莲花，普利十方有情。</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-purple-600 mb-1">同行弥陀大愿</p>
+                    <p className="text-sm">义工不仅是付出，更是与阿弥陀佛愿力相应，迈向究竟成佛之道。</p>
+                  </div>
+                </div>
               </div>
             </div>
 
