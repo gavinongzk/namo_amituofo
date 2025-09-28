@@ -222,7 +222,7 @@ export default function VolunteerRecruitmentPage() {
               </p>
             </div>
 
-            <div className="text-center">
+            <div className="text-left">
               <p className="text-lg text-purple-700 font-medium mb-2">
                 让我们一同发心，陪伴孩子走向智慧与慈悲，共同成就净业，同归阿弥陀佛温暖的怀抱。
               </p>
@@ -235,7 +235,7 @@ export default function VolunteerRecruitmentPage() {
 
         {/* Registration Form */}
         <Card className="p-8">
-          <h2 className="text-2xl font-bold text-purple-800 mb-6 text-center">
+          <h2 className="text-2xl font-bold text-purple-800 mb-6 text-left">
             义工申请表格
           </h2>
           

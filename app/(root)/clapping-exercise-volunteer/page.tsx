@@ -198,7 +198,7 @@ export default function ClappingExerciseVolunteerPage() {
               </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-left">
               <p className="text-lg text-orange-700 font-medium mb-2">
                 🙌 您的双手，不只是拍手动作，更是播撒慈悲的种子！
               </p>
@@ -225,7 +225,7 @@ export default function ClappingExerciseVolunteerPage() {
 
         {/* Registration Form */}
         <Card className="p-8">
-          <h2 className="text-2xl font-bold text-orange-800 mb-6 text-center">
+          <h2 className="text-2xl font-bold text-orange-800 mb-6 text-left">
             义工申请表格
           </h2>
           
