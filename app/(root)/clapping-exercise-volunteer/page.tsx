@@ -114,14 +114,6 @@ export default function ClappingExerciseVolunteerPage() {
               className="mx-auto rounded-2xl shadow-2xl max-w-full h-auto transform hover:scale-[1.02] transition-transform duration-500"
               priority
             />
-            <div className="absolute bottom-6 left-6 right-6">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
-                拍手念佛健身操义工招募
-              </h1>
-              <p className="text-white/90 text-lg drop-shadow-md">
-                在轻快的节奏里，拍出健康，念出光明！
-              </p>
-            </div>
           </div>
           
           {/* Event Details */}
