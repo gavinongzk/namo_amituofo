@@ -99,135 +99,212 @@ export default function ClappingExerciseVolunteerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header Section */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
           {/* Clapping Exercise Image */}
-          <div className="mb-6">
+          <div className="mb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-orange-900/20 to-transparent rounded-2xl"></div>
             <Image
               src="/assets/images/clapping-exercise.jpeg"
               alt="拍手念佛健身操·义工招募"
-              width={800}
-              height={600}
-              className="mx-auto rounded-lg shadow-lg max-w-full h-auto"
+              width={900}
+              height={500}
+              className="mx-auto rounded-2xl shadow-2xl max-w-full h-auto transform hover:scale-[1.02] transition-transform duration-500"
               priority
             />
+            <div className="absolute bottom-6 left-6 right-6">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+                拍手念佛健身操义工招募
+              </h1>
+              <p className="text-white/90 text-lg drop-shadow-md">
+                在轻快的节奏里，拍出健康，念出光明！
+              </p>
+            </div>
           </div>
           
           {/* Event Details */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto shadow-sm border border-orange-100">
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div className="text-left">
-                <p className="font-semibold text-orange-700 mb-1">活动类别 / Category:</p>
-                <p className="text-gray-700">拍手念佛健身操义工招募 / Clapping Exercise Volunteer Recruitment</p>
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 max-w-3xl mx-auto shadow-xl border border-orange-200/50">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="text-left space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <p className="font-semibold text-orange-700">活动类别 / Category:</p>
+                </div>
+                <p className="text-gray-700 ml-4">拍手念佛健身操义工招募 / Clapping Exercise Volunteer Recruitment</p>
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-orange-700 mb-1">主办单位 / Organiser:</p>
-                <p className="text-gray-700">净土宗弥陀寺（新加坡）</p>
+              <div className="text-left space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <p className="font-semibold text-orange-700">主办单位 / Organiser:</p>
+                </div>
+                <p className="text-gray-700 ml-4">净土宗弥陀寺（新加坡）</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <Card className="p-8 mb-8">
+        <Card className="p-8 mb-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm">
           <div className="prose prose-lg max-w-none">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-orange-700 mb-4">
+            <div className="mb-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full mb-4">
+                <span className="text-3xl">🙏</span>
+              </div>
+              <h2 className="text-3xl font-bold text-orange-800 mb-4">
                 亲爱的义工菩萨们：
               </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
+              <p className="text-gray-700 leading-relaxed text-lg max-w-3xl mx-auto">
                 我们即将在 新加坡弥陀寺 长期举办 「拍手念佛健身操」。此活动结合健身运动与念佛，带来身心双重利益：
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-orange-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  💪 健体益处
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 拍一拍，血脉畅通，活力满满</li>
-                  <li>• 动一动，筋骨舒展，强身防病</li>
-                  <li>• 乐一乐，轻松节奏，身心自在</li>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl border border-orange-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">💪</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">健体益处</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>拍一拍，血脉畅通，活力满满</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>动一动，筋骨舒展，强身防病</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>乐一乐，轻松节奏，身心自在</span>
+                  </li>
                 </ul>
               </div>
 
-              <div className="bg-red-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  🪷 念佛功德
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 一声佛号，遍照光明，功德无量</li>
-                  <li>• 动作之间，口念佛名，身心相应</li>
-                  <li>• 除障消灾，远离困厄</li>
-                  <li>• 福慧双增，延寿安康</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-orange-100 to-red-100 p-6 rounded-lg mb-8">
-              <p className="text-gray-700 leading-relaxed mb-2 text-center">
-                在轻快的节奏里，拍出健康，念出光明！
-              </p>
-              <p className="text-gray-700 leading-relaxed text-center">
-                大家齐声念佛，共修共乐，身安心安，功德无边！
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-yellow-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  📍 活动安排
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 时间：星期六下午4:00pm – 5:00pm</li>
-                  <li>• 地点：新加坡弥陀寺</li>
-                </ul>
-              </div>
-
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                  ⭐ 义工服务内容
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 协助带领念佛健身操</li>
-                  <li>• 协助场地布置与整理</li>
+              <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🪷</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">念佛功德</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>一声佛号，遍照光明，功德无量</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>动作之间，口念佛名，身心相应</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>除障消灾，远离困厄</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>福慧双增，延寿安康</span>
+                  </li>
                 </ul>
               </div>
             </div>
 
-            <div className="text-left">
-              <p className="text-lg text-orange-700 font-medium mb-2">
-                🙌 您的双手，不只是拍手动作，更是播撒慈悲的种子！
-              </p>
-              <p className="text-lg text-orange-700 font-medium mb-2">
-                欢迎一同发心，让念佛拍手操传递喜乐与慈悲！
-              </p>
-              <p className="text-lg text-orange-700 font-medium mb-2">
-                诚邀您一同发心参与，用节奏与佛号：
-              </p>
-              <ul className="text-lg text-orange-700 font-medium mb-4 space-y-1">
-                <li>• 拍出喜乐</li>
-                <li>• 拍出健康</li>
-                <li>• 拍出无量光明</li>
-              </ul>
-              <p className="text-lg text-orange-700 font-medium mb-4">
-                让我们携手护持，共同成就每场身心法喜的念佛弘愿！
-              </p>
-              <p className="text-xl text-orange-800 font-bold">
-                南无阿弥陀佛 🙏
-              </p>
+            <div className="bg-gradient-to-r from-orange-100 via-red-100 to-amber-100 p-8 rounded-2xl mb-8 border border-orange-200/50 shadow-lg">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-4">
+                  <span className="text-white text-xl">🎵</span>
+                </div>
+                <h3 className="text-2xl font-bold text-orange-800 mb-4">节奏与佛号，身心共修</h3>
+              </div>
+              <div className="space-y-3 text-gray-700 leading-relaxed text-center">
+                <p className="text-lg">在轻快的节奏里，拍出健康，念出光明！</p>
+                <p className="text-lg">大家齐声念佛，共修共乐，身安心安，功德无边！</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl border border-yellow-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">📍</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">活动安排</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>时间：星期六下午4:00pm – 5:00pm</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>地点：新加坡弥陀寺</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl border border-green-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">⭐</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">义工服务内容</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助带领念佛健身操</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助场地布置与整理</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="text-center bg-gradient-to-br from-orange-50 to-red-50 p-8 rounded-2xl border border-orange-200/50">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-4">
+                <span className="text-white text-2xl">🙌</span>
+              </div>
+              <h3 className="text-2xl font-bold text-orange-800 mb-4">发心护持，成就无量功德</h3>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p className="text-lg">您的双手，不只是拍手动作，更是播撒慈悲的种子！</p>
+                <p className="text-lg">欢迎一同发心，让念佛拍手操传递喜乐与慈悲！</p>
+                <div className="bg-white/50 p-6 rounded-xl my-6">
+                  <p className="text-lg font-semibold text-orange-700 mb-4">诚邀您一同发心参与，用节奏与佛号：</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-orange-100 to-orange-200 p-4 rounded-lg">
+                      <p className="text-orange-700 font-semibold">🎵 拍出喜乐</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-red-100 to-red-200 p-4 rounded-lg">
+                      <p className="text-red-700 font-semibold">💪 拍出健康</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-100 to-amber-200 p-4 rounded-lg">
+                      <p className="text-amber-700 font-semibold">✨ 拍出无量光明</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-lg font-semibold text-orange-700">让我们携手护持，共同成就每场身心法喜的念佛弘愿！</p>
+                <p className="text-3xl text-orange-800 font-bold mt-6">南无阿弥陀佛 🙏</p>
+              </div>
             </div>
           </div>
         </Card>
 
         {/* Registration Form */}
-        <Card className="p-8">
-          <h2 className="text-2xl font-bold text-orange-800 mb-6 text-left">
-            义工申请表格
-          </h2>
+        <Card className="p-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-4">
+              <span className="text-white text-2xl">📝</span>
+            </div>
+            <h2 className="text-3xl font-bold text-orange-800 mb-2">
+              义工申请表格
+            </h2>
+            <p className="text-gray-600">请填写以下信息，我们会尽快与您联系</p>
+          </div>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -374,13 +451,23 @@ export default function ClappingExerciseVolunteerPage() {
                 )}
               />
 
-              <div className="text-center pt-6">
+              <div className="text-center pt-8">
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-12 py-3 text-lg font-medium"
+                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-16 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
                 >
-                  {isSubmitting ? '提交中...' : '提交申请'}
+                  {isSubmitting ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>提交中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span>提交申请</span>
+                      <span>🙏</span>
+                    </div>
+                  )}
                 </Button>
               </div>
             </form>
@@ -388,10 +475,17 @@ export default function ClappingExerciseVolunteerPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-gray-600">
-          <p>净土宗弥陀寺（新加坡）/ Namo Amituofo Organization Ltd</p>
-          <p>27, Lor 27, Geylang, S&apos;pore 388163 | +65-8818 4848</p>
-          <p>阿裕尼地铁站附近 / Near Aljunied MRT</p>
+        <div className="text-center mt-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-orange-200/50 shadow-lg">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-4">
+            <span className="text-white text-lg">🏛️</span>
+          </div>
+          <h3 className="text-xl font-semibold text-orange-700 mb-3">净土宗弥陀寺（新加坡）</h3>
+          <p className="text-gray-700 mb-2">Namo Amituofo Organization Ltd</p>
+          <div className="space-y-1 text-gray-600">
+            <p>📍 27, Lor 27, Geylang, S&apos;pore 388163</p>
+            <p>📞 +65-8818 4848</p>
+            <p>🚇 阿裕尼地铁站附近 / Near Aljunied MRT</p>
+          </div>
         </div>
       </div>
     </div>
