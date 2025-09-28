@@ -99,110 +99,176 @@ export default function VolunteerRecruitmentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header Section */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
           {/* Volunteer Registration Image */}
-          <div className="mb-6">
+          <div className="mb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent rounded-2xl"></div>
             <Image
               src="/assets/images/volunteer-registration.jpeg"
               alt="新加坡净土儿童佛学班·义工招募"
-              width={800}
-              height={600}
-              className="mx-auto rounded-lg shadow-lg max-w-full h-auto"
+              width={900}
+              height={500}
+              className="mx-auto rounded-2xl shadow-2xl max-w-full h-auto transform hover:scale-[1.02] transition-transform duration-500"
               priority
             />
+            <div className="absolute bottom-6 left-6 right-6">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+                净土儿童佛学班义工招募
+              </h1>
+              <p className="text-white/90 text-lg drop-shadow-md">
+                与孩子们一起在佛光中成长
+              </p>
+            </div>
           </div>
           
           {/* Event Details */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto shadow-sm border border-purple-100">
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div className="text-left">
-                <p className="font-semibold text-purple-700 mb-1">活动类别 / Category:</p>
-                <p className="text-gray-700">义工招募 / Volunteer Recruitment</p>
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 max-w-3xl mx-auto shadow-xl border border-purple-200/50">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="text-left space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <p className="font-semibold text-purple-700">活动类别 / Category:</p>
+                </div>
+                <p className="text-gray-700 ml-4">义工招募 / Volunteer Recruitment</p>
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-purple-700 mb-1">主办单位 / Organiser:</p>
-                <p className="text-gray-700">净土宗弥陀寺（新加坡）</p>
+              <div className="text-left space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <p className="font-semibold text-purple-700">主办单位 / Organiser:</p>
+                </div>
+                <p className="text-gray-700 ml-4">净土宗弥陀寺（新加坡）</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <Card className="p-8 mb-8">
+        <Card className="p-8 mb-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm">
           <div className="prose prose-lg max-w-none">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-purple-700 mb-4">
+            <div className="mb-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full mb-4">
+                <span className="text-3xl">🪷</span>
+              </div>
+              <h2 className="text-3xl font-bold text-purple-800 mb-4">
                 亲爱的义工菩萨们：
               </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
+              <p className="text-gray-700 leading-relaxed text-lg max-w-3xl mx-auto">
                 为了让孩子们在佛光中茁壮成长，「净土儿童佛学班」即将开课。本寺诚挚邀请大家一同加入义工之行，共同成就此殊胜因缘。
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-pink-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                  ⏰ 时间安排
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 上课时间：每月两次 · 星期六，上午10:00am – 11:00am</li>
-                  <li>• 义工服务时间：上午9:30am - 11:30am</li>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-2xl border border-pink-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-pink-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">⏰</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-purple-700">时间安排</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>上课时间：每月两次 · 星期六，上午10:00am – 11:00am</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>义工服务时间：上午9:30am - 11:30am</span>
+                  </li>
                 </ul>
               </div>
 
-              <div className="bg-purple-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                  ⭐ 义工服务内容
-                </h3>
-                <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• 协助课堂秩序与安全照顾</li>
-                  <li>• 帮助带领儿童诵念「南无阿弥陀佛」</li>
-                  <li>• 协助讲解佛教启蒙故事与生活规范</li>
-                  <li>• 引导小组活动与游戏互动</li>
-                  <li>• 协助课程布置、清理与行政协助</li>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">⭐</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-purple-700">义工服务内容</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助课堂秩序与安全照顾</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>帮助带领儿童诵念「南无阿弥陀佛」</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助讲解佛教启蒙故事与生活规范</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>引导小组活动与游戏互动</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助课程布置、清理与行政协助</span>
+                  </li>
                 </ul>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-yellow-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                  🎯 义工条件
-                </h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• 发心护持佛法，愿意陪伴儿童成长</li>
-                  <li>• 年龄 18 岁以上，具备耐心与责任心</li>
-                  <li>• 无需有照顾小孩子的经验</li>
-                  <li>• 每月至少能参与一次活动</li>
-                  <li>• 女众义工、男众义工：皆可</li>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl border border-yellow-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🎯</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-purple-700">义工条件</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>发心护持佛法，愿意陪伴儿童成长</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>年龄 18 岁以上，具备耐心与责任心</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>无需有照顾小孩子的经验</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>每月至少能参与一次活动</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>女众义工、男众义工：皆可</span>
+                  </li>
                 </ul>
               </div>
 
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                  🌸 义工功德 · 菩萨行愿 🌸
-                </h3>
-                <div className="space-y-3 text-gray-700">
-                  <div>
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl border border-green-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🌸</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-purple-700">义工功德 · 菩萨行愿</h3>
+                </div>
+                <div className="space-y-4 text-gray-700">
+                  <div className="bg-white/50 p-3 rounded-lg">
                     <p className="font-medium text-purple-600 mb-1">播下无尽的佛缘</p>
                     <p className="text-sm">陪伴儿童亲近佛法，种下念佛的善根，绽放来世无量光明。</p>
                   </div>
-                  <div>
+                  <div className="bg-white/50 p-3 rounded-lg">
                     <p className="font-medium text-purple-600 mb-1">增长慈悲与智慧</p>
                     <p className="text-sm">在服务中修菩萨行，柔软心、智慧心，成就自他无量功德。</p>
                   </div>
-                  <div>
+                  <div className="bg-white/50 p-3 rounded-lg">
                     <p className="font-medium text-purple-600 mb-1">共修共学·功德无边</p>
                     <p className="text-sm">与大众一同念佛、护持佛事，共享平生业成净土福慧。</p>
                   </div>
-                  <div>
+                  <div className="bg-white/50 p-3 rounded-lg">
                     <p className="font-medium text-purple-600 mb-1">庄严净土·利益众生</p>
                     <p className="text-sm">每一份护持，皆是庄严极乐世界的莲花，普利十方有情。</p>
                   </div>
-                  <div>
+                  <div className="bg-white/50 p-3 rounded-lg">
                     <p className="font-medium text-purple-600 mb-1">同行弥陀大愿</p>
                     <p className="text-sm">义工不仅是付出，更是与阿弥陀佛愿力相应，迈向究竟成佛之道。</p>
                   </div>
@@ -210,23 +276,34 @@ export default function VolunteerRecruitmentPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-6 rounded-lg mb-8">
-              <p className="text-gray-700 leading-relaxed mb-4">
-                让我们以慈悲心护持「净土儿童佛学班」，在孩子纯洁的心田中播下念佛的种子，陪伴他们走在光明大道上，远离迷惘与黑暗。
-              </p>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                您所付出的每一份爱心与耐心，不仅是陪伴孩子学习，更是为他们点亮前途的明灯，让他们从小具足慈悲、智慧与感恩，成长为未来社会与佛门的栋梁。
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                义工的护持，不只是一次服务，而是成就无量的福慧因缘；帮助一个孩子，就是护佑一个家庭，培育一代善根，就是延续佛法慧命。
-              </p>
+            <div className="bg-gradient-to-r from-purple-100 via-pink-100 to-indigo-100 p-8 rounded-2xl mb-8 border border-purple-200/50 shadow-lg">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4">
+                  <span className="text-white text-xl">💝</span>
+                </div>
+                <h3 className="text-2xl font-bold text-purple-800 mb-4">发心护持，成就无量功德</h3>
+              </div>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p className="text-center">
+                  让我们以慈悲心护持「净土儿童佛学班」，在孩子纯洁的心田中播下念佛的种子，陪伴他们走在光明大道上，远离迷惘与黑暗。
+                </p>
+                <p className="text-center">
+                  您所付出的每一份爱心与耐心，不仅是陪伴孩子学习，更是为他们点亮前途的明灯，让他们从小具足慈悲、智慧与感恩，成长为未来社会与佛门的栋梁。
+                </p>
+                <p className="text-center">
+                  义工的护持，不只是一次服务，而是成就无量的福慧因缘；帮助一个孩子，就是护佑一个家庭，培育一代善根，就是延续佛法慧命。
+                </p>
+              </div>
             </div>
 
-            <div className="text-left">
-              <p className="text-lg text-purple-700 font-medium mb-2">
+            <div className="text-center bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border border-purple-200/50">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4">
+                <span className="text-white text-2xl">🙏</span>
+              </div>
+              <p className="text-xl text-purple-700 font-semibold mb-3">
                 让我们一同发心，陪伴孩子走向智慧与慈悲，共同成就净业，同归阿弥陀佛温暖的怀抱。
               </p>
-              <p className="text-xl text-purple-800 font-bold">
+              <p className="text-3xl text-purple-800 font-bold">
                 南无阿弥陀佛 🙏
               </p>
             </div>
@@ -234,10 +311,16 @@ export default function VolunteerRecruitmentPage() {
         </Card>
 
         {/* Registration Form */}
-        <Card className="p-8">
-          <h2 className="text-2xl font-bold text-purple-800 mb-6 text-left">
-            义工申请表格
-          </h2>
+        <Card className="p-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4">
+              <span className="text-white text-2xl">📝</span>
+            </div>
+            <h2 className="text-3xl font-bold text-purple-800 mb-2">
+              义工申请表格
+            </h2>
+            <p className="text-gray-600">请填写以下信息，我们会尽快与您联系</p>
+          </div>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -384,13 +467,23 @@ export default function VolunteerRecruitmentPage() {
                 )}
               />
 
-              <div className="text-center pt-6">
+              <div className="text-center pt-8">
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-3 text-lg font-medium"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-16 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
                 >
-                  {isSubmitting ? '提交中...' : '提交申请'}
+                  {isSubmitting ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>提交中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span>提交申请</span>
+                      <span>🙏</span>
+                    </div>
+                  )}
                 </Button>
               </div>
             </form>
@@ -398,10 +491,17 @@ export default function VolunteerRecruitmentPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-gray-600">
-          <p>净土宗弥陀寺（新加坡）/ Namo Amituofo Organization Ltd</p>
-          <p>27, Lor 27, Geylang, S&apos;pore 388163 | +65-8818 4848</p>
-          <p>阿裕尼地铁站附近 / Near Aljunied MRT</p>
+        <div className="text-center mt-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/50 shadow-lg">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4">
+            <span className="text-white text-lg">🏛️</span>
+          </div>
+          <h3 className="text-xl font-semibold text-purple-700 mb-3">净土宗弥陀寺（新加坡）</h3>
+          <p className="text-gray-700 mb-2">Namo Amituofo Organization Ltd</p>
+          <div className="space-y-1 text-gray-600">
+            <p>📍 27, Lor 27, Geylang, S&apos;pore 388163</p>
+            <p>📞 +65-8818 4848</p>
+            <p>🚇 阿裕尼地铁站附近 / Near Aljunied MRT</p>
+          </div>
         </div>
       </div>
     </div>
