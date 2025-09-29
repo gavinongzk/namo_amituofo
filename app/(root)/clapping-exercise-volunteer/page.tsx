@@ -17,9 +17,18 @@ const clappingExerciseFormSchema = z.object({
   dharmaName: z.string().optional(),
   contactNumber: z.string().min(1, '联系号码是必填项'),
   willingToParticipate: z.string().min(1, '请选择是否愿意参与'),
-  participationFrequency: z.string().min(1, '请选择参与频率'),
+  participationFrequency: z.string().optional(),
   otherFrequency: z.string().optional(),
   inquiries: z.string().optional(),
+}).refine((data) => {
+  // If willing to participate is 'yes', then participation frequency is required
+  if (data.willingToParticipate === 'yes') {
+    return data.participationFrequency && data.participationFrequency.trim().length > 0;
+  }
+  return true;
+}, {
+  message: '请选择参与频率',
+  path: ['participationFrequency'],
 }).refine((data) => {
   // If participationFrequency is 'other', then otherFrequency must be provided
   if (data.participationFrequency === 'other') {
@@ -394,32 +403,34 @@ export default function ClappingExerciseVolunteerPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="participationFrequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
-                      请问您大概每月能参与的次数？ *
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-orange-200 focus:border-orange-400">
-                          <SelectValue placeholder="请选择" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="once">每月 1 次</SelectItem>
-                        <SelectItem value="twice">每月 2 次</SelectItem>
-                        <SelectItem value="other">其他（请注明）</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {form.watch('willingToParticipate') === 'yes' && (
+                <FormField
+                  control={form.control}
+                  name="participationFrequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 font-medium">
+                        请问您大概每月能参与的次数？ *
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-orange-200 focus:border-orange-400">
+                            <SelectValue placeholder="请选择" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="once">每月 1 次</SelectItem>
+                          <SelectItem value="twice">每月 2 次</SelectItem>
+                          <SelectItem value="other">其他（请注明）</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
-              {form.watch('participationFrequency') === 'other' && (
+              {form.watch('willingToParticipate') === 'yes' && form.watch('participationFrequency') === 'other' && (
                 <FormField
                   control={form.control}
                   name="otherFrequency"
