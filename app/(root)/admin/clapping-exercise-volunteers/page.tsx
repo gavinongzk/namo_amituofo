@@ -58,10 +58,11 @@ export default function ClappingExerciseVolunteersPage() {
 
   const getParticipationFrequency = (volunteer: ClappingExerciseVolunteerRegistration) => {
     const frequency = getFieldValue(volunteer, '5')
+    const other = getFieldValue(volunteer, '5_other')
     switch (frequency) {
       case 'weekly': return '每星期'
       case 'biweekly': return '两个星期一次'
-      case 'other': return '其他'
+      case 'other': return other ? `其他（${other}）` : '其他'
       default: return frequency
     }
   }

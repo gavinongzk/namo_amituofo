@@ -152,6 +152,51 @@ export default function ClappingExerciseVolunteerPage() {
               </p>
             </div>
 
+            {/* Activity Schedule and Volunteer Service Content - Moved to Top */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl border border-yellow-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">📍</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">活动安排</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>时间：每月两次 · 星期六，下午4:00pm – 5:00pm</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>义工服务时间：下午3:45pm - 5:30pm</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>地点：新加坡弥陀寺</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl border border-green-200/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">⭐</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-700">义工服务内容</h3>
+                </div>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助带领念佛健身操</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span>协助场地布置与整理</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl border border-orange-200/50 hover:shadow-lg transition-shadow duration-300">
                 <div className="flex items-center mb-4">
@@ -214,46 +259,6 @@ export default function ClappingExerciseVolunteerPage() {
               <div className="space-y-3 text-gray-700 leading-relaxed text-center">
                 <p className="text-lg">在轻快的节奏里，拍出健康，念出光明！</p>
                 <p className="text-lg">大家齐声念佛，共修共乐，身安心安，功德无边！</p>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl border border-yellow-200/50 hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white text-lg">📍</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-700">活动安排</h3>
-                </div>
-                <ul className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span>时间：星期六下午4:00pm – 5:00pm</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span>地点：新加坡弥陀寺</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl border border-green-200/50 hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white text-lg">⭐</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-700">义工服务内容</h3>
-                </div>
-                <ul className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span>协助带领念佛健身操</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span>协助场地布置与整理</span>
-                  </li>
-                </ul>
               </div>
             </div>
 
@@ -395,8 +400,8 @@ export default function ClappingExerciseVolunteerPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="weekly">每星期</SelectItem>
-                        <SelectItem value="biweekly">两个星期一次</SelectItem>
+                        <SelectItem value="once">每月 1 次</SelectItem>
+                        <SelectItem value="twice">每月 2 次</SelectItem>
                         <SelectItem value="other">其他（请注明）</SelectItem>
                       </SelectContent>
                     </Select>

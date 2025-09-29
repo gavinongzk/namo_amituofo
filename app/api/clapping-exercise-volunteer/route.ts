@@ -194,6 +194,12 @@ export async function POST(request: NextRequest) {
           value: participationFrequency
         },
         {
+          id: '5_other',
+          label: '其他参与频率说明 / Other frequency details',
+          type: 'text',
+          value: otherFrequency || ''
+        },
+        {
           id: '6',
           label: '询问事项 / Inquiries',
           type: 'text',
