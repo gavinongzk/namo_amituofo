@@ -58,10 +58,11 @@ export default function VolunteersPage() {
 
   const getParticipationFrequency = (volunteer: VolunteerRegistration) => {
     const frequency = getFieldValue(volunteer, '5')
+    const other = getFieldValue(volunteer, '5_other')
     switch (frequency) {
       case 'twice': return '每月 2 次'
       case 'once': return '每月 1 次'
-      case 'other': return '其他'
+      case 'other': return other ? `其他（${other}）` : '其他'
       default: return frequency
     }
   }

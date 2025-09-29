@@ -411,8 +411,8 @@ export default function VolunteerRecruitmentPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="twice">每月 2 次</SelectItem>
                         <SelectItem value="once">每月 1 次</SelectItem>
+                        <SelectItem value="twice">每月 2 次</SelectItem>
                         <SelectItem value="other">其他（请注明）</SelectItem>
                       </SelectContent>
                     </Select>
