@@ -20,6 +20,15 @@ const clappingExerciseFormSchema = z.object({
   participationFrequency: z.string().min(1, '请选择参与频率'),
   otherFrequency: z.string().optional(),
   inquiries: z.string().optional(),
+}).refine((data) => {
+  // If participationFrequency is 'other', then otherFrequency must be provided
+  if (data.participationFrequency === 'other') {
+    return data.otherFrequency && data.otherFrequency.trim().length > 0;
+  }
+  return true;
+}, {
+  message: '请注明其他参与频率',
+  path: ['otherFrequency'], // This will show the error on the otherFrequency field
 })
 
 type ClappingExerciseFormData = z.infer<typeof clappingExerciseFormSchema>
