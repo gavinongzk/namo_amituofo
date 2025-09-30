@@ -5,6 +5,12 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Pencil, Trash2 } from 'lucide-react'
 
 interface ClappingExerciseVolunteerRegistration {
   _id: string
@@ -26,6 +32,17 @@ interface ClappingExerciseVolunteerRegistration {
 export default function ClappingExerciseVolunteersPage() {
   const [volunteers, setVolunteers] = useState<ClappingExerciseVolunteerRegistration[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingVolunteer, setEditingVolunteer] = useState<ClappingExerciseVolunteerRegistration | null>(null)
+  const [deleteVolunteerId, setDeleteVolunteerId] = useState<string | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    dharmaName: '',
+    contactNumber: '',
+    willingToParticipate: '',
+    participationFrequency: '',
+    otherFrequency: '',
+    inquiries: ''
+  })
 
   useEffect(() => {
     fetchVolunteers()
@@ -64,6 +81,74 @@ export default function ClappingExerciseVolunteersPage() {
       case 'biweekly': return '两个星期一次'
       case 'other': return other ? `其他（${other}）` : '其他'
       default: return frequency
+    }
+  }
+
+  const handleEdit = (volunteer: ClappingExerciseVolunteerRegistration) => {
+    setEditingVolunteer(volunteer)
+    setEditFormData({
+      name: getFieldValue(volunteer, '1'),
+      dharmaName: getFieldValue(volunteer, '2'),
+      contactNumber: getFieldValue(volunteer, '3'),
+      willingToParticipate: getFieldValue(volunteer, '4'),
+      participationFrequency: getFieldValue(volunteer, '5'),
+      otherFrequency: getFieldValue(volunteer, '5_other'),
+      inquiries: getFieldValue(volunteer, '6')
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingVolunteer) return
+
+    try {
+      const response = await fetch('/api/clapping-exercise-volunteer', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registrationId: editingVolunteer._id,
+          fieldUpdates: {
+            '1': editFormData.name,
+            '2': editFormData.dharmaName,
+            '3': editFormData.contactNumber,
+            '4': editFormData.willingToParticipate,
+            '5': editFormData.participationFrequency,
+            '5_other': editFormData.otherFrequency,
+            '6': editFormData.inquiries
+          }
+        })
+      })
+
+      if (response.ok) {
+        await fetchVolunteers()
+        setEditingVolunteer(null)
+        alert('更新成功')
+      } else {
+        alert('更新失败')
+      }
+    } catch (error) {
+      console.error('Error updating clapping exercise volunteer:', error)
+      alert('更新失败')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteVolunteerId) return
+
+    try {
+      const response = await fetch(`/api/clapping-exercise-volunteer?id=${deleteVolunteerId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await fetchVolunteers()
+        setDeleteVolunteerId(null)
+        alert('删除成功')
+      } else {
+        alert('删除失败')
+      }
+    } catch (error) {
+      console.error('Error deleting clapping exercise volunteer:', error)
+      alert('删除失败')
     }
   }
 
@@ -163,6 +248,7 @@ export default function ClappingExerciseVolunteersPage() {
                   <TableHead>询问事项</TableHead>
                   <TableHead>申请日期</TableHead>
                   <TableHead>状态</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -199,6 +285,26 @@ export default function ClappingExerciseVolunteersPage() {
                         {volunteer.customFieldValues[0]?.cancelled ? '已取消' : '已确认'}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(volunteer)}
+                          className="hover:bg-orange-50"
+                        >
+                          <Pencil className="h-4 w-4 text-orange-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteVolunteerId(volunteer._id)}
+                          className="hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -206,6 +312,111 @@ export default function ClappingExerciseVolunteersPage() {
           </div>
         )}
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingVolunteer} onOpenChange={() => setEditingVolunteer(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>编辑拍手念佛健身操义工申请</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="edit-name">名字 / Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-dharma">净土宗皈依号 / Pure Land Refuge Number</Label>
+              <Input
+                id="edit-dharma"
+                value={editFormData.dharmaName}
+                onChange={(e) => setEditFormData({ ...editFormData, dharmaName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-contact">联系号码 / Contact Number</Label>
+              <Input
+                id="edit-contact"
+                value={editFormData.contactNumber}
+                onChange={(e) => setEditFormData({ ...editFormData, contactNumber: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-willing">是否愿意参与</Label>
+              <select
+                id="edit-willing"
+                className="w-full border border-gray-300 rounded-md p-2"
+                value={editFormData.willingToParticipate}
+                onChange={(e) => setEditFormData({ ...editFormData, willingToParticipate: e.target.value })}
+              >
+                <option value="yes">是的，我愿意参与</option>
+                <option value="no">暂时无法参与</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="edit-frequency">参与频率</Label>
+              <select
+                id="edit-frequency"
+                className="w-full border border-gray-300 rounded-md p-2"
+                value={editFormData.participationFrequency}
+                onChange={(e) => setEditFormData({ ...editFormData, participationFrequency: e.target.value })}
+              >
+                <option value="weekly">每星期</option>
+                <option value="biweekly">两个星期一次</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            {editFormData.participationFrequency === 'other' && (
+              <div>
+                <Label htmlFor="edit-other-frequency">其他频率说明</Label>
+                <Input
+                  id="edit-other-frequency"
+                  value={editFormData.otherFrequency}
+                  onChange={(e) => setEditFormData({ ...editFormData, otherFrequency: e.target.value })}
+                />
+              </div>
+            )}
+            <div>
+              <Label htmlFor="edit-inquiries">询问事项 / Inquiries</Label>
+              <Textarea
+                id="edit-inquiries"
+                value={editFormData.inquiries}
+                onChange={(e) => setEditFormData({ ...editFormData, inquiries: e.target.value })}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingVolunteer(null)}>
+              取消
+            </Button>
+            <Button onClick={handleSaveEdit} className="bg-orange-600 hover:bg-orange-700">
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteVolunteerId} onOpenChange={() => setDeleteVolunteerId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              您确定要删除这条拍手念佛健身操义工申请吗？此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -237,3 +237,105 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    await connectToDatabase();
+    
+    const body = await request.json();
+    const { registrationId, fieldUpdates } = body;
+
+    if (!registrationId || !fieldUpdates) {
+      return NextResponse.json(
+        { error: 'Missing registrationId or fieldUpdates' },
+        { status: 400 }
+      );
+    }
+
+    // Find the registration
+    const registration = await ClappingRegistration.findById(registrationId);
+    if (!registration) {
+      return NextResponse.json(
+        { error: 'Registration not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update fields in the first group
+    const group = registration.customFieldValues[0];
+    if (group) {
+      Object.entries(fieldUpdates).forEach(([fieldId, value]) => {
+        const field = group.fields.find((f: any) => f.id === fieldId);
+        if (field) {
+          field.value = value as string;
+        }
+      });
+      group.lastUpdated = new Date();
+    }
+
+    await registration.save();
+
+    return NextResponse.json({
+      success: true,
+      message: '更新成功',
+      registration
+    });
+
+  } catch (error) {
+    console.error('Error updating clapping exercise volunteer registration:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    await connectToDatabase();
+    
+    const { searchParams } = new URL(request.url);
+    const registrationId = searchParams.get('id');
+
+    if (!registrationId) {
+      return NextResponse.json(
+        { error: 'Missing registration ID' },
+        { status: 400 }
+      );
+    }
+
+    // Find and delete the registration
+    const registration = await ClappingRegistration.findByIdAndDelete(registrationId);
+    
+    if (!registration) {
+      return NextResponse.json(
+        { error: 'Registration not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update event attendee count
+    const clappingExerciseEvent = await ClappingEvent.findOne({ 
+      title: '拍手念佛健身操·义工招募',
+      isDeleted: false 
+    });
+    
+    if (clappingExerciseEvent) {
+      await ClappingEvent.findByIdAndUpdate(clappingExerciseEvent._id, {
+        $inc: { attendeeCount: -1 }
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: '删除成功'
+    });
+
+  } catch (error) {
+    console.error('Error deleting clapping exercise volunteer registration:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
