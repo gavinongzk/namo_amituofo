@@ -59,15 +59,25 @@ async function ensureClappingExerciseEventExists() {
         { id: '1', label: '名字 / Name', type: 'text' },
         { id: '2', label: '净土宗皈依号 / Pure Land Refuge Number', type: 'text' },
         { id: '3', label: '联系号码 / Contact Number', type: 'phone' },
-        { id: '4', label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service', type: 'radio', options: [
-          { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
-          { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
-        ]},
-        { id: '5', label: '参与频率 / Participation frequency', type: 'radio', options: [
-          { label: '每星期 / Weekly', value: 'weekly' },
-          { label: '两个星期一次 / Bi-weekly', value: 'biweekly' },
-          { label: '其他（请注明）/ Other (please specify)', value: 'other' }
-        ]},
+        { 
+          id: '4', 
+          label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service', 
+          type: 'radio', 
+          options: [
+            { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
+            { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
+          ]
+        },
+        { 
+          id: '5', 
+          label: '参与频率 / Participation frequency', 
+          type: 'radio', 
+          options: [
+            { label: '每星期 / Weekly', value: 'weekly' },
+            { label: '两个星期一次 / Bi-weekly', value: 'biweekly' },
+            { label: '其他（请注明）/ Other (please specify)', value: 'other' }
+          ]
+        },
         { id: '6', label: '询问事项 / Inquiries', type: 'text' }
       ]
     });
