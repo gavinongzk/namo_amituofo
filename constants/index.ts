@@ -43,6 +43,10 @@ export const categoryCustomFields = {
     { id: '1', label: '名字、皈依名 / Name 、 Dharma Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
+    { id: '4', label: '是否有兴趣参加拍手念佛健身操（下午3:30 - 4:00）？注意：请穿着长裤。/ Interested in joining Clapping Buddha Exercise (3:30pm - 4:00pm)? Note: Please wear pants.', type: 'radio', options: [
+      { label: '是的，我有兴趣参加 / Yes, I am interested', value: 'yes' },
+      { label: '不，谢谢 / No, thank you', value: 'no' }
+    ]},
   ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 / Volunteer\'s Name', type: 'text' },
