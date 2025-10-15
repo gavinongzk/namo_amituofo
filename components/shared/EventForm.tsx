@@ -115,6 +115,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
   async function onSubmit(values: z.infer<typeof eventFormSchema>, asDraft = false) {
     console.log("Form submitted with values:", values);
+    console.log("Save as draft:", asDraft);
     
     // Ensure country is set
     if (!values.country) {
@@ -566,11 +567,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               size="lg"
               disabled={form.formState.isSubmitting}
               className="button w-full bg-gray-600 hover:bg-gray-700"
-              onClick={() => {
-                void form.handleSubmit(async (vals) => {
-                  await onSubmit(vals, true);
-                })();
-              }}
+              onClick={form.handleSubmit((vals) => onSubmit(vals, true))}
             >
               {form.formState.isSubmitting ? 'Saving Draft...' : 'Save as Draft'}
             </Button>
@@ -579,9 +576,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               size="lg"
               disabled={form.formState.isSubmitting}
               className="button w-full"
-              onClick={() => {
-                void form.handleSubmit((vals) => onSubmit(vals, false))();
-              }}
+              onClick={form.handleSubmit((vals) => onSubmit(vals, false))}
             >
               {form.formState.isSubmitting ? 'Publishing...' : (type === 'Create' ? 'Publish' : 'Publish Event')}
             </Button>

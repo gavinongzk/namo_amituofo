@@ -43,6 +43,20 @@ export const categoryCustomFields = {
     { id: '1', label: '名字、皈依名 / Name 、 Dharma Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
+    { 
+      id: '4', 
+      label: '请问您要参加【念佛拍手操】吗？ / Would you like to participate in the Nianfo Clapping Exercise?', 
+      type: 'radio', 
+      options: [
+        { label: '是的，我要参加 / Yes, I would like to participate', value: 'yes' },
+        { label: '不，谢谢 / No, thank you', value: 'no' }
+      ]
+    },
+    {
+      id: '5',
+      label: '所有参与者请穿着长裤出席，谢谢。/ All participants are kindly requested to wear long pants, thank you. 已了解 / Understood',
+      type: 'boolean'
+    },
   ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 / Volunteer\'s Name', type: 'text' },
@@ -53,30 +67,50 @@ export const categoryCustomFields = {
     { id: '1', label: '名字 / Name', type: 'text' },
     { id: '2', label: '净土宗皈依号 / Pure Land Refuge Number', type: 'text' },
     { id: '3', label: '联系号码 / Contact Number', type: 'phone' },
-    { id: '4', label: '是否愿意参与义工服务 / Willing to participate in volunteer service', type: 'radio', options: [
-      { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
-      { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
-    ]},
-    { id: '5', label: '每月参与次数 / Monthly participation frequency', type: 'radio', options: [
-      { label: '每月 2 次 / Twice a month', value: 'twice' },
-      { label: '每月 1 次 / Once a month', value: 'once' },
-      { label: '其他（请注明）/ Other (please specify)', value: 'other' }
-    ]},
+    { 
+      id: '4', 
+      label: '是否愿意参与义工服务 / Willing to participate in volunteer service', 
+      type: 'radio', 
+      options: [
+        { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
+        { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
+      ]
+    },
+    { 
+      id: '5', 
+      label: '每月参与次数 / Monthly participation frequency', 
+      type: 'radio', 
+      options: [
+        { label: '每月 2 次 / Twice a month', value: 'twice' },
+        { label: '每月 1 次 / Once a month', value: 'once' },
+        { label: '其他（请注明）/ Other (please specify)', value: 'other' }
+      ]
+    },
     { id: '6', label: '询问事项 / Inquiries', type: 'text' },
   ],
   '拍手念佛健身操义工招募': [
     { id: '1', label: '名字 / Name', type: 'text' },
     { id: '2', label: '净土宗皈依号 / Pure Land Refuge Number', type: 'text' },
     { id: '3', label: '联系号码 / Contact Number', type: 'phone' },
-    { id: '4', label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service', type: 'radio', options: [
-      { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
-      { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
-    ]},
-    { id: '5', label: '参与频率 / Participation frequency', type: 'radio', options: [
-      { label: '每星期 / Weekly', value: 'weekly' },
-      { label: '两个星期一次 / Bi-weekly', value: 'biweekly' },
-      { label: '其他（请注明）/ Other (please specify)', value: 'other' }
-    ]},
+    { 
+      id: '4', 
+      label: '是否愿意参与拍手念佛健身操义工服务 / Willing to participate in clapping exercise volunteer service', 
+      type: 'radio', 
+      options: [
+        { label: '是的，我愿意参与 / Yes, I am willing to participate', value: 'yes' },
+        { label: '暂时无法参与 / Unable to participate at the moment', value: 'no' }
+      ]
+    },
+    { 
+      id: '5', 
+      label: '参与频率 / Participation frequency', 
+      type: 'radio', 
+      options: [
+        { label: '每星期 / Weekly', value: 'weekly' },
+        { label: '两个星期一次 / Bi-weekly', value: 'biweekly' },
+        { label: '其他（请注明）/ Other (please specify)', value: 'other' }
+      ]
+    },
     { id: '6', label: '询问事项 / Inquiries', type: 'text' },
   ],
   // Add more categories as needed

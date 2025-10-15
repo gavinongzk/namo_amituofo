@@ -51,12 +51,15 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 
     const isSuperAdmin = organizer.role === 'superadmin';
 
+    const isDraftValue = isSuperAdmin ? (event.isDraft !== undefined ? event.isDraft : false) : false;
+    console.log("Creating event with isDraft:", isDraftValue, "| User role:", organizer.role, "| Provided isDraft:", event.isDraft);
+
     const newEvent = await Event.create({ 
       ...event, 
       category: event.categoryId, 
       organizer: userId,
       customFields: event.customFields,
-      isDraft: isSuperAdmin ? (event.isDraft !== undefined ? event.isDraft : false) : false
+      isDraft: isDraftValue
     });
 
     console.log("New event created successfully:", newEvent);
@@ -129,6 +132,9 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
     };
     if (typeof event.isDraft !== 'undefined' && isSuperAdmin) {
       updateData.isDraft = event.isDraft;
+      console.log("Updating event with isDraft:", event.isDraft, "| User role:", organizer?.role);
+    } else {
+      console.log("NOT updating isDraft - isSuperAdmin:", isSuperAdmin, "| Provided isDraft:", event.isDraft);
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(
