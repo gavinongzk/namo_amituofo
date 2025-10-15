@@ -45,12 +45,17 @@ export const categoryCustomFields = {
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
     { 
       id: '4', 
-      label: '是否有兴趣参加拍手念佛健身操（下午3:30 - 4:00）？注意：请穿着长裤。/ Interested in joining Clapping Recitation Exercise (3:30pm - 4:00pm)? Note: Please wear pants.', 
+      label: '请问您要参加【念佛拍手操】吗？ / Would you like to participate in the Nianfo Clapping Exercise?', 
       type: 'radio', 
       options: [
-        { label: '是的，我有兴趣参加 / Yes, I am interested', value: 'yes' },
+        { label: '是的，我要参加 / Yes, I would like to participate', value: 'yes' },
         { label: '不，谢谢 / No, thank you', value: 'no' }
       ]
+    },
+    {
+      id: '5',
+      label: '所有参与者请穿着长裤出席，谢谢。/ All participants are kindly requested to wear long pants, thank you. 已了解 / Understood',
+      type: 'boolean'
     },
   ],
   '外出结缘法会': [
