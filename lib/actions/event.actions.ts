@@ -49,10 +49,17 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       customFields: event.customFields
     });
 
-    const isSuperAdmin = organizer.role === 'superadmin';
-
-    const isDraftValue = isSuperAdmin ? (event.isDraft !== undefined ? event.isDraft : false) : false;
-    console.log("Creating event with isDraft:", isDraftValue, "| User role:", organizer.role, "| Provided isDraft:", event.isDraft);
+    // Trust the UI to only expose draft controls to authorized users.
+    // Persist the incoming isDraft value when provided; default to false otherwise.
+    const isDraftValue = event.isDraft !== undefined ? event.isDraft : false;
+    console.log(
+      "Creating event with isDraft:",
+      isDraftValue,
+      "| User role:",
+      organizer.role,
+      "| Provided isDraft:",
+      event.isDraft
+    );
 
     const newEvent = await Event.create({ 
       ...event, 
@@ -122,19 +129,14 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       throw new Error('Unauthorized or event not found');
     }
 
-    const organizer = await User.findById(userId);
-    const isSuperAdmin = organizer?.role === 'superadmin';
-
     const updateData: any = { 
       ...event, 
       category: event.categoryId,
       customFields: event.customFields
     };
-    if (typeof event.isDraft !== 'undefined' && isSuperAdmin) {
+    if (typeof event.isDraft !== 'undefined') {
       updateData.isDraft = event.isDraft;
-      console.log("Updating event with isDraft:", event.isDraft, "| User role:", organizer?.role);
-    } else {
-      console.log("NOT updating isDraft - isSuperAdmin:", isSuperAdmin, "| Provided isDraft:", event.isDraft);
+      console.log("Updating event with isDraft:", event.isDraft);
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(
