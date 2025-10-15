@@ -58,8 +58,12 @@ async function EventList({ page, searchText, category, country, role, userId }: 
       totalPages: events.totalPages
     });
 
-    // Hide drafts from public listing as an extra safeguard
-    const visibleData = (events.data || []).filter((e: any) => e && e.isDraft !== true);
+    // Show drafts only for superadmins; hide for others
+    const visibleData = (events.data || []).filter((e: any) => {
+      if (!e) return false;
+      if (role === 'superadmin') return true;
+      return e.isDraft !== true;
+    });
 
     return (
       <Collection

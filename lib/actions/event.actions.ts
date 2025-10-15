@@ -565,7 +565,8 @@ export async function getEventsForMainPage({ query, limit = 6, page, category, c
         categoryCondition ? { category: categoryCondition._id } : {},
         { country: country },
         { isDeleted: { $ne: true } },
-        { isDraft: { $ne: true } },
+        // Only exclude drafts for non-superadmins
+        role === 'superadmin' ? {} : { isDraft: { $ne: true } },
         dateCondition
       ]
     };
