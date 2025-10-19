@@ -709,46 +709,87 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       </Dialog>
 
       <style jsx global>{`
-        .phone-input-enhanced .PhoneInputInput {
+        .phone-input-enhanced .PhoneInput {
+          display: flex;
           border: 2px solid #e5e7eb;
           border-radius: 0.5rem;
+          overflow: hidden;
+          background-color: #ffffff;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .phone-input-enhanced .PhoneInput:focus-within {
+          border-color: #a3826c;
+          box-shadow: 0 0 0 3px rgba(163, 130, 108, 0.1);
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect {
+          border: none;
+          border-right: 1px solid #e5e7eb;
+          padding: 0.75rem 0.5rem;
+          font-size: 1rem;
+          height: 3rem;
+          background-color: #f9fafb;
+          transition: background-color 0.2s;
+          min-width: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect:hover {
+          background-color: #f3f4f6;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect:focus {
+          outline: none;
+          background-color: #f3f4f6;
+        }
+        
+        .phone-input-enhanced .PhoneInputInput {
+          border: none;
           padding: 0.75rem 1rem;
           font-size: 1rem;
           line-height: 1.5rem;
           height: 3rem;
-          transition: border-color 0.2s, box-shadow 0.2s;
           background-color: #ffffff;
+          flex: 1;
+          outline: none;
         }
         
         .phone-input-enhanced .PhoneInputInput:focus {
-          border-color: #a3826c;
-          box-shadow: 0 0 0 3px rgba(163, 130, 108, 0.1);
           outline: none;
-          background-color: #ffffff;
         }
         
-        .phone-input-enhanced .PhoneInputCountrySelect {
-          border: 2px solid #e5e7eb;
-          border-radius: 0.5rem 0 0 0.5rem;
-          padding: 0.75rem 0.5rem;
-          font-size: 1rem;
-          height: 3rem;
-          background-color: #ffffff;
-          transition: border-color 0.2s, box-shadow 0.2s;
+        .phone-input-enhanced .PhoneInputCountryIcon {
+          width: 20px;
+          height: 15px;
+          margin-right: 0.5rem;
         }
         
-        .phone-input-enhanced .PhoneInputCountrySelect:focus {
-          border-color: #a3826c;
-          box-shadow: 0 0 0 3px rgba(163, 130, 108, 0.1);
+        .phone-input-enhanced .PhoneInputCountrySelectArrow {
+          margin-left: 0.25rem;
+          color: #6b7280;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect select {
+          border: none;
+          background: transparent;
+          font-size: inherit;
+          color: inherit;
           outline: none;
-          background-color: #ffffff;
+          cursor: pointer;
         }
         
-        .phone-input-enhanced .PhoneInput {
-          display: flex;
-          border-radius: 0.5rem;
-          overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        .phone-input-enhanced .PhoneInputCountrySelect select:focus {
+          outline: none;
+        }
+        
+        .phone-input-enhanced .PhoneInputCountrySelect select option {
+          background-color: #ffffff;
+          color: #374151;
+          padding: 0.5rem;
         }
         
         @media (max-width: 640px) {
@@ -757,6 +798,9 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           }
           .phone-input-enhanced .PhoneInputCountrySelect {
             font-size: 16px;
+          }
+          .phone-input-enhanced .PhoneInputCountrySelect {
+            min-width: 70px;
           }
         }
       `}</style>
@@ -886,8 +930,16 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 countries={["SG", "MY"]}
                                                 international
                                                 countryCallingCodeEditable={false}
-                                                className="h-12 sm:h-12 text-base sm:text-lg phone-input-enhanced"
+                                                className="phone-input-enhanced w-full"
                                                 withCountryCallingCode
+                                                style={{
+                                                  '--PhoneInput-color--focus': '#a3826c',
+                                                  '--PhoneInputInternationalIconPhone-opacity': '0.8',
+                                                  '--PhoneInputInternationalIconGlobe-opacity': '0.65',
+                                                  '--PhoneInputCountrySelect-marginRight': '0.35em',
+                                                  '--PhoneInputCountrySelectArrow-width': '0.3em',
+                                                  '--PhoneInputCountrySelectArrow-marginLeft': '0.35em',
+                                                } as React.CSSProperties}
                                               />
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-600 bg-blue-50 p-2 rounded-md">
