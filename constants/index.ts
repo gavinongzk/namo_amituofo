@@ -54,7 +54,7 @@ export const categoryCustomFields = {
     },
     {
       id: '5',
-      label: '所有参与者请穿着长裤出席，谢谢。/ All participants are kindly requested to wear long pants, thank you. 已了解 / Understood',
+      label: '所有参与者请穿着长裤出席，谢谢。/ All participants are kindly requested to wear long pants, thank you.',
       type: 'boolean'
     },
   ],
