@@ -713,15 +713,15 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           border: 2px solid #e5e7eb;
           border-radius: 0.5rem;
           padding: 0.75rem 1rem;
-          font-size: 1.125rem;
-          line-height: 1.75rem;
+          font-size: 1rem;
+          line-height: 1.5rem;
           height: 3rem;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         
         .phone-input-enhanced .PhoneInputInput:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          border-color: #a3826c;
+          box-shadow: 0 0 0 2px rgba(163, 130, 108, 0.1);
           outline: none;
         }
         
@@ -729,15 +729,26 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           border: 2px solid #e5e7eb;
           border-radius: 0.5rem 0 0 0.5rem;
           padding: 0.75rem 0.5rem;
+          font-size: 1rem;
+          height: 3rem;
         }
         
         .phone-input-enhanced .PhoneInputCountrySelect:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          border-color: #a3826c;
+          box-shadow: 0 0 0 2px rgba(163, 130, 108, 0.1);
           outline: none;
         }
+        
+        @media (max-width: 640px) {
+          .phone-input-enhanced .PhoneInputInput {
+            font-size: 16px;
+          }
+          .phone-input-enhanced .PhoneInputCountrySelect {
+            font-size: 16px;
+          }
+        }
       `}</style>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-2 sm:px-4">
         {isCountryLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
@@ -747,11 +758,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 md:space-y-8">
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
-                <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
-                  <p className="text-red-600 font-medium text-lg">
+                <div className="p-4 sm:p-6 bg-red-50 rounded-lg border border-red-200 text-center">
+                  <p className="text-red-600 font-medium text-base sm:text-lg leading-relaxed">
                     此活动名额已满。若有需要，请联系本寺 Whatsapp: {' '}
                     <a 
                       href="https://wa.me/6588184848" 
@@ -763,7 +774,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                     </a>
                     。
                   </p>
-                  <p className="text-red-600 font-medium text-lg mt-2">
+                  <p className="text-red-600 font-medium text-base sm:text-lg mt-2 leading-relaxed">
                     This event is fully booked. If you need assistance, please contact the temple via Whatsapp: {' '}
                     <a 
                       href="https://wa.me/6588184848" 
@@ -782,44 +793,44 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                     <div 
                       key={field.id}
                       id={`person-${personIndex}`}
-                      className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
+                      className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm sm:shadow-md overflow-hidden scroll-mt-6 mb-4 sm:mb-6"
                     >
-                      <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                        <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
+                      <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-3 sm:px-6 py-4 sm:py-4 border-b border-gray-200">
+                        <h3 className="text-lg sm:text-lg md:text-xl font-semibold text-primary-700 leading-tight">
                           {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
                         </h3>
                       </div>
 
-                      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+                      <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8">
                         {customFields.map((customField: CustomField, fieldIndex) => (
                           <FormField
                             key={customField.id}
                             control={form.control}
                             name={`groups.${personIndex}.${customField.id}`}
                             render={({ field: formField }) => (
-                                                          <FormItem className="space-y-3 sm:space-y-4 p-2 sm:p-4 rounded-lg border border-gray-100 bg-gray-50/30 hover:bg-gray-50/50 transition-colors">
-                              <FormLabel className="flex items-start gap-2 sm:gap-3 text-gray-800 font-medium">
-                                <span className="flex items-center gap-1.5 sm:gap-2">
-                                  <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 text-xs font-semibold text-white bg-primary-500 rounded-full">
-                                    {getQuestionNumber(personIndex, fieldIndex)}
+                              <FormItem className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 rounded-lg border border-gray-100 bg-gray-50/30 hover:bg-gray-50/50 transition-colors">
+                                <FormLabel className="flex items-start gap-2 sm:gap-3 text-gray-800 font-medium">
+                                  <span className="flex items-center gap-1.5 sm:gap-2">
+                                    <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 text-xs font-semibold text-white bg-primary-500 rounded-full flex-shrink-0">
+                                      {getQuestionNumber(personIndex, fieldIndex)}
+                                    </span>
+                                    <span className="text-sm sm:text-base leading-relaxed">{customField.label}</span>
                                   </span>
-                                  <span className="text-sm sm:text-base">{customField.label}</span>
-                                </span>
-                              </FormLabel>
+                                </FormLabel>
                                 
                                 <FormControl>
-                                  <div className="pl-4 sm:pl-8 space-y-2 sm:space-y-3">
+                                  <div className="pl-2 sm:pl-4 md:pl-8 space-y-2 sm:space-y-3">
                                     {customField.type === 'boolean' ? (
-                                      <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-md border border-gray-200 hover:border-primary-300 transition-colors">
+                                      <div className="flex items-center gap-3 sm:gap-3 p-3 sm:p-3 bg-white rounded-md border border-gray-200 hover:border-primary-300 transition-colors min-h-[48px]">
                                         <Checkbox
                                           checked={formField.value as boolean}
                                           onCheckedChange={formField.onChange}
-                                          className="h-4 w-4 sm:h-5 sm:w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
+                                          className="h-5 w-5 sm:h-5 sm:w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500 flex-shrink-0"
                                         />
-                                        <span className="text-xs sm:text-sm text-gray-600">已了解 / Understood</span>
+                                        <span className="text-sm sm:text-sm text-gray-600 leading-relaxed">已了解 / Understood</span>
                                       </div>
                                     ) : customField.type === 'phone' ? (
-                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                      <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 bg-white rounded-md border border-gray-200">
                                         <div className="hidden sm:flex items-center gap-2 mb-2">
                                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                           <span className="text-sm font-medium text-gray-700">Phone Number</span>
@@ -830,7 +841,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                               {...formField}
                                               value={String(formField.value)}
                                               type="tel"
-                                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                              className="w-full h-12 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                               placeholder="e.g. +8613812345678"
                                             />
                                             <p className="text-sm text-gray-600 pl-1">
@@ -860,7 +871,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 countries={["SG", "MY"]}
                                                 international
                                                 countryCallingCodeEditable={false}
-                                                className="h-10 sm:h-12 text-base sm:text-lg phone-input-enhanced"
+                                                className="h-12 sm:h-12 text-base sm:text-lg phone-input-enhanced"
                                                 withCountryCallingCode
                                               />
                                             </div>
@@ -885,28 +896,28 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         )}
                                       </div>
                                     ) : customField.type === 'radio' ? (
-                                      <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                      <div className="p-3 sm:p-4 bg-white rounded-md border border-gray-200">
                                         <div className="hidden sm:flex items-center gap-2 mb-3">
                                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                                           <span className="text-sm font-medium text-gray-700">Select One Option</span>
                                         </div>
                                         <div className="flex flex-col gap-2 sm:gap-3">
                                           {customField.options && customField.options.map((option) => (
-                                            <label key={option.value} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-primary-300 transition-colors">
+                                            <label key={option.value} className="flex items-center gap-3 sm:gap-3 p-3 sm:p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-primary-300 transition-colors min-h-[48px]">
                                               <input
                                                 type="radio"
                                                 value={option.value}
                                                 checked={formField.value === option.value}
                                                 onChange={() => formField.onChange(option.value)}
-                                                className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 focus:ring-primary-500 focus:ring-2"
+                                                className="w-5 h-5 sm:w-5 sm:h-5 text-primary-600 focus:ring-primary-500 focus:ring-2 flex-shrink-0"
                                               />
-                                              <span className="text-sm sm:text-base text-gray-700 font-medium">{option.label}</span>
+                                              <span className="text-sm sm:text-base text-gray-700 font-medium leading-relaxed">{option.label}</span>
                                             </label>
                                           ))}
                                         </div>
                                       </div>
                                     ) : customField.type === 'postal' ? (
-                                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                      <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 bg-white rounded-md border border-gray-200">
                                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
                                           <div className="w-2 h-2 bg-blue-500 rounded-full sm:block hidden"></div>
                                           <span className="text-xs sm:text-sm font-medium text-gray-700">Postal Code</span>
@@ -914,7 +925,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         <Input 
                                           {...formField}
                                           type="tel"
-                                          className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                          className="w-full h-12 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                           value={String(formField.value)}
                                           placeholder={
                                             postalOverrides[personIndex]
@@ -990,14 +1001,14 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         )}
                                       </div>
                                                                       ) : (
-                                    <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                                    <div className="p-3 sm:p-4 bg-white rounded-md border border-gray-200">
                                       <div className="hidden sm:flex items-center gap-2 mb-3">
                                         <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                                         <span className="text-sm font-medium text-gray-700">Text Input</span>
                                       </div>
                                       <Input 
                                         {...formField}
-                                        className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
+                                        className="w-full h-12 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
                                           placeholder="e.g. 佛莲"
                                           onChange={(e) => {
@@ -1009,7 +1020,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                     )}
                                   </div>
                                 </FormControl>
-                                <FormMessage className="pl-4 sm:pl-8 text-xs sm:text-sm font-medium bg-red-50 text-red-700 p-1.5 sm:p-2 rounded-md border border-red-200" />
+                                <FormMessage className="pl-2 sm:pl-4 md:pl-8 text-xs sm:text-sm font-medium bg-red-50 text-red-700 p-2 sm:p-2 rounded-md border border-red-200" />
                               </FormItem>
                             )}
                           />
@@ -1017,10 +1028,8 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                       </div>
                       
                       {personIndex > 0 && (
-                        <div className="px-6 py-4 bg-red-50 border-t border-red-200">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                            </div>
+                        <div className="px-3 sm:px-6 py-4 bg-red-50 border-t border-red-200">
+                          <div className="flex items-center justify-center">
                             <Button 
                               type="button" 
                               onClick={() => {
@@ -1028,7 +1037,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                 setNumberOfFormsToShow(prev => Math.max(1, prev - 1));
                               }}
                               disabled={isSubmitting}
-                              className="bg-red-600 hover:bg-red-700 text-white h-10 px-6 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              className="bg-red-600 hover:bg-red-700 text-white h-12 sm:h-10 px-6 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                             >
                               删除{toChineseOrdinal(personIndex + 1)}参加者 Remove Participant {personIndex + 1}
                             </Button>
@@ -1038,17 +1047,17 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                     </div>
                   ))}
 
-                                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-3 sm:p-6">
+                                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 pt-4 sm:pt-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-4 sm:p-6">
                     <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
                     </div>
                     <Button
                       type="button"
                       onClick={handleAddPerson}
                       disabled={numberOfFormsToShow >= event.maxSeats || isSubmitting}
-                      className="w-full bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 hover:border-blue-400 gap-2 sm:gap-3 text-sm md:text-base font-semibold h-10 sm:h-12 md:h-14 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="w-full bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 hover:border-blue-400 gap-2 sm:gap-3 text-sm md:text-base font-semibold h-12 sm:h-12 md:h-14 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
-                      <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                      <PlusIcon className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                       添加参加者 Add Participant
                     </Button>
                   </div>
@@ -1059,19 +1068,21 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
               {/* Add PDPA consent checkbox before the submit button - only show when event is not full */}
               {!isFullyBooked && (
                 <>
-                  <PdpaConsentCheckbox 
-                    name="pdpaConsent"
-                    disabled={isSubmitting}
-                    className="mt-6"
-                  />
+                  <div className="mt-4 sm:mt-6">
+                    <PdpaConsentCheckbox 
+                      name="pdpaConsent"
+                      disabled={isSubmitting}
+                      className=""
+                    />
+                  </div>
 
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-4 sm:mt-6">
                     <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     </div>
                     <Button 
                       type="submit" 
                       disabled={isSubmitting} 
-                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
+                      className="w-full h-14 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
                     >
                       {isSubmitting ? (
                         <>
