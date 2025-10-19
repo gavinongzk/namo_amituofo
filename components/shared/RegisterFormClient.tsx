@@ -717,12 +717,14 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           line-height: 1.5rem;
           height: 3rem;
           transition: border-color 0.2s, box-shadow 0.2s;
+          background-color: #ffffff;
         }
         
         .phone-input-enhanced .PhoneInputInput:focus {
           border-color: #a3826c;
-          box-shadow: 0 0 0 2px rgba(163, 130, 108, 0.1);
+          box-shadow: 0 0 0 3px rgba(163, 130, 108, 0.1);
           outline: none;
+          background-color: #ffffff;
         }
         
         .phone-input-enhanced .PhoneInputCountrySelect {
@@ -731,12 +733,22 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           padding: 0.75rem 0.5rem;
           font-size: 1rem;
           height: 3rem;
+          background-color: #ffffff;
+          transition: border-color 0.2s, box-shadow 0.2s;
         }
         
         .phone-input-enhanced .PhoneInputCountrySelect:focus {
           border-color: #a3826c;
-          box-shadow: 0 0 0 2px rgba(163, 130, 108, 0.1);
+          box-shadow: 0 0 0 3px rgba(163, 130, 108, 0.1);
           outline: none;
+          background-color: #ffffff;
+        }
+        
+        .phone-input-enhanced .PhoneInput {
+          display: flex;
+          border-radius: 0.5rem;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         @media (max-width: 640px) {
@@ -856,9 +868,12 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 }));
                                                 form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
                                               }}
-                                              className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium mt-2 p-2 rounded-md hover:bg-primary-50 transition-colors"
                                             >
-                                              Switch back to SG/MY phone number format 切换回新马电话格式
+                                              <span>🇸🇬🇲🇾</span>
+                                              <span>切换回新马电话格式</span>
+                                              <br className="sm:hidden" />
+                                              <span className="text-xs sm:inline">Switch back to SG/MY phone number format</span>
                                             </button>
                                           </div>
                                         ) : (
@@ -875,9 +890,9 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 withCountryCallingCode
                                               />
                                             </div>
-                                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
-                                              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                                              <span>Singapore (+65) or Malaysia (+60) numbers only</span>
+                                            <div className="flex items-center gap-2 text-xs text-gray-600 bg-blue-50 p-2 rounded-md">
+                                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                              <span className="leading-relaxed">Singapore (+65) or Malaysia (+60) numbers only</span>
                                             </div>
                                             <button
                                               type="button"
@@ -888,9 +903,12 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 }));
                                                 form.setValue(`groups.${personIndex}.phone`, '');
                                               }}
-                                              className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium mt-2 p-2 rounded-md hover:bg-primary-50 transition-colors"
                                             >
-                                              使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
+                                              <span>🌍</span>
+                                              <span>使用其他国家的电话号码？点击这里</span>
+                                              <br className="sm:hidden" />
+                                              <span className="text-xs sm:inline">Using a phone number from another country? Click here</span>
                                             </button>
                                           </div>
                                         )}
@@ -969,11 +987,16 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                               form.trigger(`groups.${personIndex}.${customField.id}`);
                                             }, 100);
                                           }}
-                                          className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
+                                          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium mt-2 p-2 rounded-md hover:bg-primary-50 transition-colors"
                                         >
-                                          {postalOverrides[personIndex] ? 
-                                            "切换回邮区编号验证 Switch back to postal code validation" : 
-                                            "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
+                                          <span>{postalOverrides[personIndex] ? "🔒" : "🌍"}</span>
+                                          <span>{postalOverrides[personIndex] ? "切换回邮区编号验证" : "使用其他国家的邮区编号？点击这里"}</span>
+                                          <br className="sm:hidden" />
+                                          <span className="text-xs sm:inline">
+                                            {postalOverrides[personIndex] ? 
+                                              "Switch back to postal code validation" : 
+                                              "Using a postal code from another country? Click here"}
+                                          </span>
                                         </button>
                                         {personIndex > 0 && (
                                           <div className="flex items-center gap-2 mt-2">
@@ -1010,7 +1033,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         {...formField}
                                         className="w-full h-12 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
-                                          placeholder="e.g. 佛莲"
                                           onChange={(e) => {
                                             const sanitized = sanitizeName(e.target.value);
                                             formField.onChange(sanitized);
