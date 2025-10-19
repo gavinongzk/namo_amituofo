@@ -816,7 +816,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                           onCheckedChange={formField.onChange}
                                           className="h-4 w-4 sm:h-5 sm:w-5 rounded-md data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                                         />
-                                        <span className="text-xs sm:text-sm text-gray-600">Check if applicable</span>
+                                        <span className="text-xs sm:text-sm text-gray-600">已了解 / Understood</span>
                                       </div>
                                     ) : customField.type === 'phone' ? (
                                       <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
