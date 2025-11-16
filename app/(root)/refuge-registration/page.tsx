@@ -14,92 +14,32 @@ import { toast } from 'react-hot-toast'
 import 'react-phone-number-input/style.css'
 
 const phoneInputStyles = `
-  .phone-input-enhanced {
-    display: flex;
-    align-items: stretch;
-    border: 2px solid #e5e7eb;
-    border-radius: 0.5rem;
-    background: white;
-    transition: all 0.2s ease-in-out;
-    overflow: hidden;
-  }
-  
-  .phone-input-enhanced:focus-within {
-    border-color: #f97316;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
-    outline: none;
-  }
-  
-  .phone-input-enhanced .PhoneInputCountry {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 0.5rem;
-    background: #f9fafb;
-    border-right: 2px solid #e5e7eb;
-    margin: 0;
-  }
-  
-  .phone-input-enhanced:focus-within .PhoneInputCountry {
-    background: #fef3c7;
-    border-right-color: #f97316;
-  }
-  
-  .phone-input-enhanced .PhoneInputCountryIcon {
-    width: 1.5rem;
-    height: 1.5rem;
-    margin-right: 0.5rem;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-    border-radius: 2px;
-  }
-  
-  .phone-input-enhanced .PhoneInputCountrySelect {
-    border: none;
-    background: transparent;
-    padding: 0;
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    cursor: pointer;
-    outline: none;
-  }
-  
-  .phone-input-enhanced .PhoneInputCountrySelect:focus {
-    outline: none;
-  }
-  
-  .phone-input-enhanced .PhoneInputCountrySelectArrow {
-    opacity: 0.6;
-    margin-left: 0.25rem;
-    width: 0.75rem;
-    height: 0.75rem;
-  }
-  
   .phone-input-enhanced .PhoneInputInput {
-    flex: 1;
-    border: none;
-    border-radius: 0;
+    border: 2px solid #fda4af;
+    border-radius: 0.5rem;
     padding: 0.75rem 1rem;
     font-size: 1rem;
     line-height: 1.5rem;
-    background: white;
-    outline: none;
-    color: #111827;
-  }
-  
-  .phone-input-enhanced .PhoneInputInput::placeholder {
-    color: #9ca3af;
+    height: 3rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
   
   .phone-input-enhanced .PhoneInputInput:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
     outline: none;
-    background: white;
   }
   
-  /* Remove default borders and styling */
-  .phone-input-enhanced .PhoneInputCountryIcon--border {
-    border: none;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  .phone-input-enhanced .PhoneInputCountrySelect {
+    border: 2px solid #fda4af;
+    border-radius: 0.5rem 0 0 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .phone-input-enhanced .PhoneInputCountrySelect:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+    outline: none;
   }
 `
 
@@ -359,7 +299,7 @@ export default function RefugeRegistrationPage() {
                       联系号码 Contact Number *
                     </FormLabel>
                     <FormControl>
-                      <div className="w-full">
+                      <div className="phone-input-container w-full">
                         <PhoneInput
                           value={field.value as string}
                           onChange={(value) => field.onChange(value || '')}
@@ -367,9 +307,8 @@ export default function RefugeRegistrationPage() {
                           countries={["SG", "MY"]}
                           international
                           countryCallingCodeEditable={false}
-                          className="phone-input-enhanced"
+                          className="h-12 text-base phone-input-enhanced border-orange-200 focus:border-orange-400 rounded-lg"
                           withCountryCallingCode
-                          placeholder="Enter phone number"
                         />
                       </div>
                     </FormControl>
