@@ -5,6 +5,7 @@ import './order.model'
 import './category.model'
 import './taggedUser.model'
 import './queueCounter.model'
+import './refugeRegistration.model'
 
 // Re-export all models with explicit imports to avoid build-time issues
 import User from './user.model'
@@ -13,6 +14,7 @@ import Order from './order.model'
 import Category from './category.model'
 import TaggedUser from './taggedUser.model'
 import QueueCounter from './queueCounter.model'
+import RefugeRegistration from './refugeRegistration.model'
 
 export {
   User,
@@ -20,7 +22,8 @@ export {
   Order,
   Category,
   TaggedUser,
-  QueueCounter
+  QueueCounter,
+  RefugeRegistration
 }
 
 // Re-export interfaces

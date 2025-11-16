@@ -124,6 +124,18 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
+          <Link href="/admin/refuge-registrations" onClick={() => handleClick('/admin/refuge-registrations')}>
+            <Button className={`${buttonClass} bg-amber-600 hover:bg-amber-700 text-white`} disabled={loadingPath === '/admin/refuge-registrations'}>
+              {loadingPath === '/admin/refuge-registrations' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  加载中... / Loading...
+                </>
+              ) : (
+                '净土宗皈依报名管理 / Pure Land Taking Refuge Registration Management'
+              )}
+            </Button>
+          </Link>
         </>
       )}
     </div>
