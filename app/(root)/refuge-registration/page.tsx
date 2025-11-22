@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import { toast } from 'react-hot-toast'
+import { useUser } from '@clerk/nextjs'
+import { getCookie, setCookie } from 'cookies-next'
+import * as Sentry from '@sentry/nextjs'
 import 'react-phone-number-input/style.css'
 
 const phoneInputStyles = `
@@ -43,6 +46,11 @@ const phoneInputStyles = `
   }
 `
 
+// Helper function to get default country code
+const getDefaultCountry = (country: string | null) => {
+  return country === 'Malaysia' ? 'MY' : 'SG';
+}
+
 const refugeFormSchema = z.object({
   chineseName: z.string().min(1, '中文名字是必填项 / Chinese Name is required'),
   englishName: z.string().min(1, '英文名字是必填项 / English Name is required'),
@@ -51,22 +59,63 @@ const refugeFormSchema = z.object({
   gender: z.string().min(1, '性别是必填项 / Gender is required'),
   contactNumber: z.string().min(1, '联系号码是必填项 / Contact Number is required'),
   address: z.string().min(1, '地址是必填项 / Address is required'),
-}).refine((data) => {
-  // Validate phone number format
-  if (data.contactNumber) {
-    return isValidPhoneNumber(data.contactNumber);
-  }
-  return true;
-}, {
-  message: '联系号码格式无效 / Invalid phone number format',
-  path: ['contactNumber'],
 })
 
 type RefugeFormData = z.infer<typeof refugeFormSchema>
 
 export default function RefugeRegistrationPage() {
+  const { user, isLoaded } = useUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [userCountry, setUserCountry] = useState<string | null>(null)
+  const [phoneOverride, setPhoneOverride] = useState(false)
+  const [isCountryLoading, setIsCountryLoading] = useState(true)
+
+  // Detect user country
+  useEffect(() => {
+    const detectCountry = async () => {
+      setIsCountryLoading(true)
+      try {
+        // First check if we have a country in cookie
+        const cookieCountry = getCookie('userCountry')
+        if (cookieCountry) {
+          setUserCountry(cookieCountry as string)
+          setIsCountryLoading(false)
+          return
+        }
+
+        // Then check if user is logged in and has country in metadata
+        if (isLoaded && user && user.publicMetadata.country) {
+          setUserCountry(user.publicMetadata.country as string)
+          setIsCountryLoading(false)
+          return
+        }
+
+        // If no cookie or user metadata, use IP detection
+        const response = await fetch('https://get.geojs.io/v1/ip/country.json')
+        const data = await response.json()
+        const detectedCountry = data.country === 'SG' 
+          ? 'Singapore' 
+          : data.country === 'MY' 
+            ? 'Malaysia' 
+            : 'Singapore'
+        
+        setUserCountry(detectedCountry)
+        try {
+          setCookie('userCountry', detectedCountry)
+        } catch (error) {
+          console.error('Error setting cookie:', error)
+        }
+      } catch (error) {
+        console.error('Error detecting country:', error)
+        Sentry.captureException(error)
+        setUserCountry('Singapore')
+      } finally {
+        setIsCountryLoading(false)
+      }
+    }
+    detectCountry()
+  }, [isLoaded, user])
 
   const form = useForm<RefugeFormData>({
     resolver: zodResolver(refugeFormSchema),
@@ -76,14 +125,41 @@ export default function RefugeRegistrationPage() {
       age: '',
       dob: '',
       gender: '',
-      contactNumber: '+65',
+      contactNumber: userCountry === 'Malaysia' ? '+60' : '+65',
       address: '',
     }
   })
 
+  // Update default phone number when country is detected
+  useEffect(() => {
+    if (userCountry && !form.getValues('contactNumber') || form.getValues('contactNumber') === '+65' || form.getValues('contactNumber') === '+60') {
+      form.setValue('contactNumber', userCountry === 'Malaysia' ? '+60' : '+65')
+    }
+  }, [userCountry, form])
+
   const onSubmit = async (data: RefugeFormData) => {
     setIsSubmitting(true)
+    
     try {
+      // Validate phone number
+      const phoneNumber = data.contactNumber || ''
+      
+      if (phoneOverride) {
+        // For overridden numbers, just check if it starts with + and contains only numbers after that
+        if (!/^\+\d+$/.test(phoneNumber)) {
+          toast.error('电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format. Must start with + followed by numbers')
+          setIsSubmitting(false)
+          return
+        }
+      } else {
+        // Regular phone validation for SG/MY numbers
+        if (!isValidPhoneNumber(phoneNumber)) {
+          toast.error('联系号码无效 / Invalid phone number')
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       const response = await fetch('/api/refuge-registration', {
         method: 'POST',
         headers: {
@@ -143,7 +219,15 @@ export default function RefugeRegistrationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-8 px-4">
       <style dangerouslySetInnerHTML={{ __html: phoneInputStyles }} />
-      <div className="max-w-3xl mx-auto">
+      {isCountryLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div>
+            <p className="text-gray-600 font-medium">加载中... / Loading...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-3xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full mb-4">
@@ -299,17 +383,60 @@ export default function RefugeRegistrationPage() {
                       联系号码 Contact Number *
                     </FormLabel>
                     <FormControl>
-                      <div className="phone-input-container w-full">
-                        <PhoneInput
-                          value={field.value as string}
-                          onChange={(value) => field.onChange(value || '')}
-                          defaultCountry="SG"
-                          countries={["SG", "MY"]}
-                          international
-                          countryCallingCodeEditable={false}
-                          className="h-12 text-base phone-input-enhanced border-orange-200 focus:border-orange-400 rounded-lg"
-                          withCountryCallingCode
-                        />
+                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                        {phoneOverride ? (
+                          <div className="space-y-2">
+                            <Input
+                              {...field}
+                              value={String(field.value)}
+                              type="tel"
+                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-lg"
+                              placeholder="e.g. +8613812345678"
+                            />
+                            <p className="text-sm text-gray-600 pl-1">
+                              Format: +[country code][number]
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPhoneOverride(false)
+                                form.setValue('contactNumber', userCountry === 'Malaysia' ? '+60' : '+65')
+                              }}
+                              className="text-orange-500 hover:text-orange-600 hover:underline text-xs mt-1"
+                            >
+                              Switch back to SG/MY phone number format 切换回新马电话格式
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="phone-input-container w-full">
+                              <PhoneInput
+                                value={field.value as string}
+                                onChange={(value) => field.onChange(value || '')}
+                                defaultCountry={getDefaultCountry(userCountry)}
+                                countries={["SG", "MY"]}
+                                international
+                                countryCallingCodeEditable={false}
+                                className="h-10 sm:h-12 text-base sm:text-lg phone-input-enhanced"
+                                withCountryCallingCode
+                              />
+                            </div>
+                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                              <span>Singapore (+65) or Malaysia (+60) numbers only</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPhoneOverride(true)
+                                form.setValue('contactNumber', '')
+                              }}
+                              className="text-orange-500 hover:text-orange-600 hover:underline text-xs mt-1"
+                            >
+                              使用其他国家的电话号码？点击这里 Using a phone number from another country? Click here
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -373,6 +500,7 @@ export default function RefugeRegistrationPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
