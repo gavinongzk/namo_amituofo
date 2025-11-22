@@ -17,31 +17,45 @@ import * as Sentry from '@sentry/nextjs'
 import 'react-phone-number-input/style.css'
 
 const phoneInputStyles = `
-  .phone-input-enhanced .PhoneInputInput {
-    border: 2px solid #fda4af;
+  .phone-input-enhanced .PhoneInput {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #e5e7eb;
     border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    line-height: 1.5rem;
-    height: 3rem;
+    overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   
-  .phone-input-enhanced .PhoneInputInput:focus {
+  .phone-input-enhanced .PhoneInput:focus-within {
     border-color: #f97316;
     box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
     outline: none;
   }
   
   .phone-input-enhanced .PhoneInputCountrySelect {
-    border: 2px solid #fda4af;
-    border-radius: 0.5rem 0 0 0.5rem;
+    border: none;
+    border-right: 1px solid #e5e7eb;
     padding: 0.75rem 0.5rem;
+    background: white;
+    cursor: pointer;
   }
   
   .phone-input-enhanced .PhoneInputCountrySelect:focus {
-    border-color: #f97316;
-    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+    outline: none;
+  }
+  
+  .phone-input-enhanced .PhoneInputInput {
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    height: auto;
+    flex: 1;
+    outline: none;
+  }
+  
+  .phone-input-enhanced .PhoneInputInput:focus {
     outline: none;
   }
 `
@@ -383,14 +397,14 @@ export default function RefugeRegistrationPage() {
                       联系号码 Contact Number *
                     </FormLabel>
                     <FormControl>
-                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
+                      <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md">
                         {phoneOverride ? (
                           <div className="space-y-2">
                             <Input
                               {...field}
                               value={String(field.value)}
                               type="tel"
-                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-lg"
+                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-lg"
                               placeholder="e.g. +8613812345678"
                             />
                             <p className="text-sm text-gray-600 pl-1">
