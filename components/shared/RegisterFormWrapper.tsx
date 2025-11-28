@@ -6,6 +6,8 @@ import { IEvent } from '@/lib/database/models/event.model'
 import { CategoryName } from '@/constants'
 import RegisterFormClient from './RegisterFormClient'
 import { RegisterFormSkeleton } from './RegisterFormSkeleton'
+import { isAmitabhaBirthdayEvent } from '@/lib/utils/specialEvents'
+import AmitabhaEventExtras from '@/components/special-events/amitabha/AmitabhaEventExtras'
 
 function RegisterFormWrapper({ 
   event 
@@ -41,6 +43,9 @@ function RegisterFormWrapper({
         initialOrderCount={initialOrderCount}
         onRefresh={fetchOrderCount}
       />
+      {isAmitabhaBirthdayEvent(event) && (
+        <AmitabhaEventExtras />
+      )}
     </Suspense>
   )
 }
