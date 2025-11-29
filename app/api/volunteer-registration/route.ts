@@ -115,6 +115,12 @@ export async function GET() {
   }
 }
 
+const generateVolunteerQueueNumber = () => {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 1000);
+  return `V${timestamp}${random}`;
+};
+
 export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
@@ -149,13 +155,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Generate unique queue number for volunteer
-    const generateVolunteerQueueNumber = () => {
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 1000);
-      return `V${timestamp}${random}`;
-    };
 
     const queueNumber = generateVolunteerQueueNumber();
 
@@ -212,7 +211,7 @@ export async function POST(request: NextRequest) {
           value: inquiries || ''
         }
       ],
-      queueNumber: queueNumber,
+      queueNumber,
       cancelled: false,
       attendance: false,
       qrCode: '', // Will be generated if needed
