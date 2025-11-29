@@ -21,6 +21,9 @@ import { isEqual } from 'lodash';
 import { useRouter } from 'next/navigation';
 import { useUser } from "@clerk/nextjs";
 
+import { Card } from '@/components/ui/card'
+import Link from 'next/link'
+
 // Define inline styles for custom UI elements
 const styles = `
   .rotate-20 {
@@ -760,6 +763,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
           </p>
         </section>
+        <div className="space-y-10 mt-12">
+
+        <Card className="p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
+          <div className="text-center space-y-4">
+            <p className="text-gray-700">
+              需要报名皈依或加入义工团队？请使用既有报名表格提交资料，我们会尽快与您联系。
+            </p>
+            <Button asChild className="bg-orange-600 hover:bg-orange-700">
+            <Link
+                href="/refuge-registration"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                前往皈依 / 义工报名表单
+              </Link>
+            </Button>
+          </div>
+        </Card>
+        </div>
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
           <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
