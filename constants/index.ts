@@ -39,6 +39,15 @@ export const categoryCustomFields = {
     { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
   ],
+  '特别节日法会': [
+    { id: '1', label: '名字、皈依名 / Name 、Dharma Name', type: 'text' },
+    { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
+    { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
+    { id: '4', label: '请问您要皈依吗？是的话，请在活动报名后，点击按钮前往皈依报名表单。 / Would you like to take refuge? If yes, please click the button after submission to go to the refuge registration form after the event registration.', type: 'radio', options: [
+      { label: '是的，我要皈依 / Yes, I would like to take refuge', value: 'yes' },
+      { label: '不，谢谢 / No, thank you', value: 'no' }
+    ] },
+  ],
   '念佛超荐法会': [
     { id: '1', label: '名字、皈依名 / Name 、 Dharma Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
