@@ -422,3 +422,4 @@ const qrHashLookup = useMemo(() => {
 6. `app/api/attendance/batch/route.ts` (New)
    - Batch attendance marking endpoint
 
+

@@ -43,9 +43,6 @@ function RegisterFormWrapper({
         initialOrderCount={initialOrderCount}
         onRefresh={fetchOrderCount}
       />
-      {isAmitabhaBirthdayEvent(event) && (
-        <AmitabhaEventExtras />
-      )}
     </Suspense>
   )
 }

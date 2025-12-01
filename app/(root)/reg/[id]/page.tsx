@@ -768,7 +768,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         <Card className="p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
           <div className="text-center space-y-4">
             <p className="text-gray-700">
-              需要报名皈依？请使用既有报名表格提交资料，我们会尽快与您联系。
+              需要报名皈依？请使用既有报名表格提交资料，我们会尽快与您联系。皈依会在2026年1月一日，弥陀诞当日进行。
             </p>
             <Button asChild className="bg-orange-600 hover:bg-orange-700">
             <Link
