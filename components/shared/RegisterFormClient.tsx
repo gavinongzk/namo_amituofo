@@ -888,7 +888,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                       <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
                                         <div className="hidden sm:flex items-center gap-2 mb-3">
                                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                          <span className="text-sm font-medium text-gray-700">Select One Option</span>
+                                          <span className="text-sm font-medium text-gray-700">请选择一个选项 / Please select one option</span>
                                         </div>
                                         <div className="flex flex-col gap-2 sm:gap-3">
                                           {customField.options && customField.options.map((option) => (
