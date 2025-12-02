@@ -770,7 +770,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             <h2 className="text-gray-700">
             若有意愿参与法会当天的三皈依仪式，请点击下方按钮完成资料填写。 / To join the Three Refuges Ceremony, click the button below to fill in your details.
             </h2>
-            <Button asChild className="bg-orange-600 hover:bg-orange-700">
+            <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 text-lg font-semibold rounded-md">
             <Link
                 href="/refuge-registration"
                 target="_blank"
