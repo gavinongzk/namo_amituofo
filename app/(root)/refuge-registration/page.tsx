@@ -209,7 +209,7 @@ export default function RefugeRegistrationPage() {
               <div className="text-6xl mb-4">🪷</div>
               <h1 className="text-3xl font-bold text-orange-800 mb-4">皈依报名成功
               / Registration Successful</h1>
-              <p className="text-lg text-gray-700 mb-6">
+              <p className="text-lg text-gray-700 mb-6 ml-12">
               随喜您的发心，您的皈依申请已成功提交，请于弥陀诞辰法会当天准时出席。南無阿彌陀佛
 
               注：如还需为多一位报名皈依，请点选下方按钮。
