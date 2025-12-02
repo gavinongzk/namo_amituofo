@@ -765,18 +765,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         </section>
         <div className="space-y-10 mt-12">
 
-        <Card className="p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
+        <Card className="p-12 md:p-16 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
           <div className="text-center space-y-4">
-            <p className="text-gray-700">
-              需要报名皈依？请使用既有报名表格提交资料，我们会尽快与您联系。皈依会在2026年1月一日，弥陀诞当日进行。/ Would you like to take refuge? Please use the link on the next page to submit your information, we will contact you soon. The refuge will be conducted on January 1, 2026, the day of Amitabha's birthday.
-            </p>
+            <h2 className="text-gray-700">
+            若有意愿参与法会当天的三皈依仪式，请点击下方按钮完成资料填写。 / To join the Three Refuges Ceremony, click the button below to fill in your details.
+            </h2>
             <Button asChild className="bg-orange-600 hover:bg-orange-700">
             <Link
                 href="/refuge-registration"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                前往皈依报名表单
+                报名皈依 / Refuge Registration
               </Link>
             </Button>
           </div>

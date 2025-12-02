@@ -207,12 +207,16 @@ export default function RefugeRegistrationPage() {
           <Card className="p-8 text-center">
             <div className="mb-6">
               <div className="text-6xl mb-4">🪷</div>
-              <h1 className="text-3xl font-bold text-orange-800 mb-4">感恩您的发心</h1>
+              <h1 className="text-3xl font-bold text-orange-800 mb-4">皈依报名成功
+              / Registration Successful</h1>
               <p className="text-lg text-gray-700 mb-6">
-                您的报名已成功提交！我们会尽快与您联系，安排皈依事宜。
-              </p>
-              <p className="text-gray-600 mb-4">
-                南无阿弥陀佛 🙏
+              随喜您的发心，您的皈依申请已成功提交，请于弥陀诞辰法会当天准时出席。南無阿彌陀佛
+
+              注：如还需为多一位报名皈依，请点选下方按钮。
+
+              Rejoice in your sincere aspiration. Your refuge application has been successfully submitted. Please be present on the day of the Amitabha Birthday Dharma Ceremony. Namo Amituofo.
+
+              Note: If you need to register another person for refuge, please click the button below.
               </p>
               <Button 
                 onClick={() => {
@@ -221,7 +225,7 @@ export default function RefugeRegistrationPage() {
                 }}
                 className="bg-orange-600 hover:bg-orange-700"
               >
-                返回报名页面 / Return to Registration
+                再报名皈依 / Refuge Registration
               </Button>
             </div>
           </Card>
