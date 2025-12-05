@@ -86,12 +86,6 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
       alwaysShow: true,
     },
     {
-      href: '/refuge-registration',
-      title: '净土宗皈依',
-      subtitle: 'Taking Refuge',
-      alwaysShow: true,
-    },
-    {
       href: '/faq',
       title: '常见问题',
       subtitle: 'FAQ',
