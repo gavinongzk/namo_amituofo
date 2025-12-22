@@ -749,8 +749,18 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return field?.value ? String(field.value) : '';
   };
 
+  const fieldLooksLikeRefugeQuestion = (f: CustomField) => {
+    const label = String(f.label || '');
+    const optionsText = (f.options || [])
+      .map((opt: any) => `${opt?.label ?? ''} ${opt?.value ?? ''}`.trim())
+      .join(' | ');
+
+    // Match by label OR by options (more robust for older stored data / label edits)
+    return /皈依|take refuge/i.test(label) || /皈依|take refuge/i.test(optionsText);
+  };
+
   const doesGroupWantRefuge = (group: any) => {
-    const refugeAnswer = getGroupFieldValue(group, (f) => /皈依|take refuge/i.test(f.label || ''));
+    const refugeAnswer = getGroupFieldValue(group, (f) => fieldLooksLikeRefugeQuestion(f));
     return refugeAnswer.trim().toLowerCase() === 'yes';
   };
 
