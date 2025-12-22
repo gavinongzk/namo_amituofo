@@ -753,13 +753,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   };
 
   const fieldLooksLikeRefugeQuestion = (f: CustomField) => {
-    const label = String(f.label || '');
-    const optionsText = (f.options || [])
-      .map((opt: any) => `${opt?.label ?? ''} ${opt?.value ?? ''}`.trim())
-      .join(' | ');
+    // Important: don't match "皈依名 / Dharma Name" (name field), only match the actual refuge question.
+    // The refuge question is a radio field in `constants/index.ts` and includes "要皈依吗 / take refuge".
+    if (f.type !== 'radio') return false;
 
-    // Match by label OR by options (more robust for older stored data / label edits)
-    return /皈依|refuge/i.test(label) || /皈依|refuge/i.test(optionsText);
+    const label = String(f.label || '');
+    // Match explicit question phrasing, not the generic substring "皈依" (which appears in "皈依名").
+    return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(label);
   };
 
   const doesGroupWantRefuge = (group: any) => {
@@ -847,10 +847,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </div>
                 <div className="mt-2 space-y-1">
                   {allCustomFieldValues.map((g: any) => {
-                    const refugeLabel =
-                      (g?.fields || []).find((f: CustomField) => /皈依|refuge/i.test(String(f.label || '')))?.label || '';
-                    const refugeValue =
-                      (g?.fields || []).find((f: CustomField) => /皈依|refuge/i.test(String(f.label || '')))?.value || '';
+                    const refugeField = (g?.fields || []).find((f: CustomField) => fieldLooksLikeRefugeQuestion(f));
+                    const refugeLabel = refugeField?.label || '';
+                    const refugeValue = refugeField?.value || '';
                     return (
                       <div key={String(g.groupId)} className="break-all">
                         <span className="font-semibold">group</span> {String(g.groupId)} / <span className="font-semibold">queue</span> {String(g.queueNumber)} — <span className="font-semibold">refugeValue</span>: {String(refugeValue)} — <span className="font-semibold">label</span>: {String(refugeLabel).slice(0, 80)}{String(refugeLabel).length > 80 ? '…' : ''}
