@@ -19,7 +19,10 @@ import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import * as Sentry from '@sentry/nextjs';
 import { isEqual } from 'lodash';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useUser } from "@clerk/nextjs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RefugeRegistrationForm } from '@/components/shared/RefugeRegistrationForm';
 
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
@@ -201,6 +204,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const debugRefuge = searchParams?.get('debugRefuge') === '1';
+  const [showRefugeDialog, setShowRefugeDialog] = useState(false);
+  const [selectedRefugeIndex, setSelectedRefugeIndex] = useState(0);
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -725,6 +732,77 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
+  // -------- Refuge auto-redirect (must stay ABOVE any early returns to satisfy Rules of Hooks) --------
+  const allOrders = order
+    ? [order, ...(relatedOrders || []).filter(relatedOrder => relatedOrder && relatedOrder._id !== order._id)]
+    : [];
+
+  const allCustomFieldValues = allOrders
+    .flatMap(order =>
+      order.customFieldValues.map(group => ({
+        ...group,
+        orderId: order._id,
+        event: order.event,
+      }))
+    )
+    .sort((a, b) => {
+      const aNum = parseInt((a.queueNumber || '0').replace(/\D/g, ''));
+      const bNum = parseInt((b.queueNumber || '0').replace(/\D/g, ''));
+      return aNum - bNum;
+    });
+
+  const getGroupFieldValue = (group: any, predicate: (field: CustomField) => boolean) => {
+    const field = (group?.fields || []).find((f: CustomField) => predicate(f));
+    return field?.value ? String(field.value) : '';
+  };
+
+  const fieldLooksLikeRefugeQuestion = (f: CustomField) => {
+    // Important: don't match "皈依名 / Dharma Name" (name field), only match the actual refuge question.
+    // The refuge question is a radio field in `constants/index.ts` and includes "要皈依吗 / take refuge".
+    if (f.type !== 'radio') return false;
+
+    const label = String(f.label || '');
+    // Match explicit question phrasing, not the generic substring "皈依" (which appears in "皈依名").
+    return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(label);
+  };
+
+  const doesGroupWantRefuge = (group: any) => {
+    const refugeAnswer = getGroupFieldValue(group, (f) => fieldLooksLikeRefugeQuestion(f));
+    const normalized = refugeAnswer.trim().toLowerCase();
+    return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '是';
+  };
+
+  const refugeCandidates = allCustomFieldValues
+    .map((group: any) => {
+      const englishName = getGroupFieldValue(group, (f) => /name|名字/i.test(f.label || '')) || '';
+      const contactNumber =
+        getGroupFieldValue(group, (f) => f.type === 'phone' || /phone|联系号码/i.test(f.label || '')) || '';
+
+      return {
+        groupId: String(group.groupId || ''),
+        queueNumber: String(group.queueNumber || ''),
+        englishName,
+        contactNumber,
+        wantsRefuge: doesGroupWantRefuge(group),
+      };
+    })
+    .filter((c) => c.wantsRefuge);
+
+  const firstRefugeCandidate = refugeCandidates[0];
+
+  useEffect(() => {
+    if (!order) return;
+    if (refugeCandidates.length === 0) return;
+    if (typeof window === 'undefined') return;
+
+    const storageKey = `refuge_popup_dismissed:${id}`;
+    if (sessionStorage.getItem(storageKey) === '1') return;
+    setSelectedRefugeIndex(0);
+    setShowRefugeDialog(true);
+  }, [id, order, refugeCandidates.length]);
+
+  // --------------------------------------------------------------------------------------------------
+
   if (isLoading) {
     return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
   }
@@ -732,23 +810,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   if (!order) {
     return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
   }
-
-  // Combine current order and related orders with proper null checks
-  const allOrders = [order, ...(relatedOrders || []).filter(relatedOrder => relatedOrder && relatedOrder._id !== order._id)];
-  
-  // Get all customFieldValues from all orders and sort by queue number
-  const allCustomFieldValues = allOrders.flatMap(order => 
-    order.customFieldValues.map(group => ({
-      ...group,
-      orderId: order._id, // Keep track of which order this came from
-      event: order.event // Keep the event info
-    }))
-  ).sort((a, b) => {
-    // Extract numbers from queue numbers for proper numeric sorting
-    const aNum = parseInt((a.queueNumber || '0').replace(/\D/g, ''));
-    const bNum = parseInt((b.queueNumber || '0').replace(/\D/g, ''));
-    return aNum - bNum;
-  });
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
@@ -763,28 +824,99 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
           </p>
         </section>
-        <div className="space-y-10 mt-12">
-
-        <Card className="p-12 md:p-16 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
-          <div className="text-center space-y-4">
-            <h2 className="text-gray-700">
-            若有意愿参与法会当天的三皈依仪式，请点击下方按钮完成资料填写。 / To join the Three Refuges Ceremony, click the button below to fill in your details.
-            </h2>
-            <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 text-lg font-semibold rounded-md">
-            <Link
-                href="/refuge-registration"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                报名皈依 / Refuge Registration
-              </Link>
-            </Button>
-          </div>
-        </Card>
-        </div>
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
           <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+            <Dialog
+              open={showRefugeDialog}
+              onOpenChange={(open) => {
+                setShowRefugeDialog(open);
+                if (!open && typeof window !== 'undefined') {
+                  sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                }
+              }}
+            >
+              <DialogContent className="max-w-3xl w-[96vw] max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>皈依报名 / Refuge Registration</DialogTitle>
+                  <DialogDescription>
+                    您选择了“要皈依”。请在此完成皈依报名表单。 / You selected “Yes” for refuge. Please complete the form here.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {refugeCandidates.length > 1 && (
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-700 font-medium">
+                      请选择要填写的参加者 / Choose participant
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {refugeCandidates.map((c, idx) => (
+                        <Button
+                          key={`${c.groupId}-${c.queueNumber}`}
+                          type="button"
+                          variant={idx === selectedRefugeIndex ? "default" : "outline"}
+                          onClick={() => setSelectedRefugeIndex(idx)}
+                        >
+                          {c.englishName || `Queue ${c.queueNumber}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <RefugeRegistrationForm
+                  variant="dialog"
+                  initialValues={{
+                    englishName: refugeCandidates[selectedRefugeIndex]?.englishName || '',
+                    contactNumber: refugeCandidates[selectedRefugeIndex]?.contactNumber || '',
+                  }}
+                  autoFocusEnglishName
+                  onSubmitted={() => {
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                    }
+                    setShowRefugeDialog(false);
+                  }}
+                />
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                      }
+                      setShowRefugeDialog(false);
+                    }}
+                  >
+                    暂不 / Not now
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {debugRefuge && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-900">
+                <div className="font-semibold mb-2">Debug: refuge redirect</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div><span className="font-semibold">orderId:</span> {order._id}</div>
+                  <div><span className="font-semibold">refugeCandidates:</span> {refugeCandidates.length}</div>
+                </div>
+                <div className="mt-2 space-y-1">
+                  {allCustomFieldValues.map((g: any) => {
+                    const refugeField = (g?.fields || []).find((f: CustomField) => fieldLooksLikeRefugeQuestion(f));
+                    const refugeLabel = refugeField?.label || '';
+                    const refugeValue = refugeField?.value || '';
+                    return (
+                      <div key={String(g.groupId)} className="break-all">
+                        <span className="font-semibold">group</span> {String(g.groupId)} / <span className="font-semibold">queue</span> {String(g.queueNumber)} — <span className="font-semibold">refugeValue</span>: {String(refugeValue)} — <span className="font-semibold">label</span>: {String(refugeLabel).slice(0, 80)}{String(refugeLabel).length > 80 ? '…' : ''}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
               <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event?.title || 'N/A'}</h4>
             </div>
