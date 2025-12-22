@@ -21,6 +21,8 @@ import { isEqual } from 'lodash';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useUser } from "@clerk/nextjs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RefugeRegistrationForm } from '@/components/shared/RefugeRegistrationForm';
 
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
@@ -204,6 +206,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const router = useRouter();
   const searchParams = useSearchParams();
   const debugRefuge = searchParams?.get('debugRefuge') === '1';
+  const [showRefugeDialog, setShowRefugeDialog] = useState(false);
+  const [selectedRefugeIndex, setSelectedRefugeIndex] = useState(0);
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -768,15 +772,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '是';
   };
 
-  const buildRefugeUrl = (candidate?: { englishName: string; contactNumber: string }) => {
-    const params = new URLSearchParams();
-    if (candidate?.englishName) params.set('englishName', candidate.englishName);
-    if (candidate?.contactNumber) params.set('contactNumber', candidate.contactNumber);
-    params.set('fromReg', '1');
-    params.set('autofocus', '1');
-    return `/refuge-registration?${params.toString()}`;
-  };
-
   const refugeCandidates = allCustomFieldValues
     .map((group: any) => {
       const englishName = getGroupFieldValue(group, (f) => /name|名字/i.test(f.label || '')) || '';
@@ -796,21 +791,15 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const firstRefugeCandidate = refugeCandidates[0];
 
   useEffect(() => {
-    if (!order) return; // don't redirect while loading / not found
+    if (!order) return;
     if (refugeCandidates.length === 0) return;
     if (typeof window === 'undefined') return;
 
-    const storageKey = `refuge_auto_redirect_done:${id}`;
+    const storageKey = `refuge_popup_dismissed:${id}`;
     if (sessionStorage.getItem(storageKey) === '1') return;
-    sessionStorage.setItem(storageKey, '1');
-
-    const destination =
-      refugeCandidates.length === 1 && firstRefugeCandidate
-        ? buildRefugeUrl(firstRefugeCandidate)
-        : buildRefugeUrl();
-
-    router.push(destination);
-  }, [id, order, refugeCandidates.length, firstRefugeCandidate, router]);
+    setSelectedRefugeIndex(0);
+    setShowRefugeDialog(true);
+  }, [id, order, refugeCandidates.length]);
 
   // --------------------------------------------------------------------------------------------------
 
@@ -838,6 +827,75 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
           <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+            <Dialog
+              open={showRefugeDialog}
+              onOpenChange={(open) => {
+                setShowRefugeDialog(open);
+                if (!open && typeof window !== 'undefined') {
+                  sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                }
+              }}
+            >
+              <DialogContent className="max-w-3xl w-[96vw] max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>皈依报名 / Refuge Registration</DialogTitle>
+                  <DialogDescription>
+                    您选择了“要皈依”。请在此完成皈依报名表单。 / You selected “Yes” for refuge. Please complete the form here.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {refugeCandidates.length > 1 && (
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-700 font-medium">
+                      请选择要填写的参加者 / Choose participant
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {refugeCandidates.map((c, idx) => (
+                        <Button
+                          key={`${c.groupId}-${c.queueNumber}`}
+                          type="button"
+                          variant={idx === selectedRefugeIndex ? "default" : "outline"}
+                          onClick={() => setSelectedRefugeIndex(idx)}
+                        >
+                          {c.englishName || `Queue ${c.queueNumber}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <RefugeRegistrationForm
+                  variant="dialog"
+                  initialValues={{
+                    englishName: refugeCandidates[selectedRefugeIndex]?.englishName || '',
+                    contactNumber: refugeCandidates[selectedRefugeIndex]?.contactNumber || '',
+                  }}
+                  autoFocusEnglishName
+                  onSubmitted={() => {
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                    }
+                    setShowRefugeDialog(false);
+                  }}
+                />
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        sessionStorage.setItem(`refuge_popup_dismissed:${id}`, '1');
+                      }
+                      setShowRefugeDialog(false);
+                    }}
+                  >
+                    暂不 / Not now
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             {debugRefuge && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-900">
                 <div className="font-semibold mb-2">Debug: refuge redirect</div>
