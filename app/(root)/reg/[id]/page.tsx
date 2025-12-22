@@ -750,6 +750,70 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     return aNum - bNum;
   });
 
+  const getGroupFieldValue = (group: any, predicate: (field: CustomField) => boolean) => {
+    const field = (group?.fields || []).find((f: CustomField) => predicate(f));
+    return field?.value ? String(field.value) : '';
+  };
+
+  const doesGroupWantRefuge = (group: any) => {
+    const refugeAnswer = getGroupFieldValue(group, (f) => /皈依|take refuge/i.test(f.label || ''));
+    return refugeAnswer.trim().toLowerCase() === 'yes';
+  };
+
+  const buildRefugeUrl = (candidate?: { englishName: string; contactNumber: string }) => {
+    const params = new URLSearchParams();
+    if (candidate?.englishName) params.set('englishName', candidate.englishName);
+    if (candidate?.contactNumber) params.set('contactNumber', candidate.contactNumber);
+    params.set('fromReg', '1');
+    params.set('autofocus', '1');
+    return `/refuge-registration?${params.toString()}`;
+  };
+
+  const refugeCandidates = allCustomFieldValues
+    .map((group: any) => {
+      const englishName =
+        getGroupFieldValue(group, (f) => /name|名字/i.test(f.label || '')) ||
+        '';
+      const contactNumber =
+        getGroupFieldValue(group, (f) => f.type === 'phone' || /phone|联系号码/i.test(f.label || '')) ||
+        '';
+
+      return {
+        groupId: String(group.groupId || ''),
+        queueNumber: String(group.queueNumber || ''),
+        englishName,
+        contactNumber,
+        wantsRefuge: doesGroupWantRefuge(group),
+      };
+    })
+    .filter((c) => c.wantsRefuge);
+
+  const firstRefugeCandidate = refugeCandidates[0];
+
+  // Auto-redirect once (per tab) if they selected "Yes" for refuge.
+  useEffect(() => {
+    if (refugeCandidates.length === 0) return;
+    if (!firstRefugeCandidate) return;
+    if (typeof window === 'undefined') return;
+
+    const storageKey = `refuge_auto_redirect_done:${id}`;
+    if (sessionStorage.getItem(storageKey) === '1') return;
+    sessionStorage.setItem(storageKey, '1');
+
+    // If multiple participants selected "Yes", don't prefill to avoid picking the wrong person.
+    const destination = refugeCandidates.length === 1
+      ? buildRefugeUrl(firstRefugeCandidate)
+      : buildRefugeUrl();
+
+    router.push(destination);
+  }, [
+    id,
+    refugeCandidates.length,
+    firstRefugeCandidate?.englishName,
+    firstRefugeCandidate?.contactNumber,
+    router,
+  ]);
+
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
       <style jsx global>{styles}</style>
@@ -763,25 +827,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             当天请在报到处以此二维码点名。/ Please use this QR code to take attendance at the registration counter on the event day.
           </p>
         </section>
-        <div className="space-y-10 mt-12">
-
-        <Card className="p-12 md:p-16 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
-          <div className="text-center space-y-4">
-            <h2 className="text-gray-700">
-            若有意愿参与法会当天的三皈依仪式，请点击下方按钮完成资料填写。 / To join the Three Refuges Ceremony, click the button below to fill in your details.
-            </h2>
-            <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 text-lg font-semibold rounded-md">
-            <Link
-                href="/refuge-registration"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                报名皈依 / Refuge Registration
-              </Link>
-            </Button>
-          </div>
-        </Card>
-        </div>
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
           <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">

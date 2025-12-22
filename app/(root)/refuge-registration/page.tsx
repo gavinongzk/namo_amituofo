@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { useUser } from '@clerk/nextjs'
 import { getCookie, setCookie } from 'cookies-next'
 import * as Sentry from '@sentry/nextjs'
 import 'react-phone-number-input/style.css'
+import { useSearchParams } from 'next/navigation'
 
 const phoneInputStyles = `
   .phone-input-enhanced .PhoneInput {
@@ -79,11 +80,13 @@ type RefugeFormData = z.infer<typeof refugeFormSchema>
 
 export default function RefugeRegistrationPage() {
   const { user, isLoaded } = useUser()
+  const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [userCountry, setUserCountry] = useState<string | null>(null)
   const [phoneOverride, setPhoneOverride] = useState(false)
   const [isCountryLoading, setIsCountryLoading] = useState(true)
+  const prefillAppliedRef = useRef(false)
 
   // Detect user country
   useEffect(() => {
@@ -144,10 +147,29 @@ export default function RefugeRegistrationPage() {
     }
   })
 
+  // Apply prefill from query params (e.g. coming from event registration)
+  useEffect(() => {
+    if (prefillAppliedRef.current) return;
+    if (!searchParams) return;
+
+    const englishName = searchParams.get('englishName') || '';
+    const contactNumber = searchParams.get('contactNumber') || '';
+
+    if (englishName) form.setValue('englishName', englishName);
+    if (contactNumber) form.setValue('contactNumber', contactNumber);
+
+    if (englishName || contactNumber) {
+      prefillAppliedRef.current = true;
+    }
+  }, [searchParams, form]);
+
   // Update default phone number when country is detected
   useEffect(() => {
-    if (userCountry && !form.getValues('contactNumber') || form.getValues('contactNumber') === '+65' || form.getValues('contactNumber') === '+60') {
-      form.setValue('contactNumber', userCountry === 'Malaysia' ? '+60' : '+65')
+    if (!userCountry) return;
+    if (prefillAppliedRef.current) return;
+    const current = form.getValues('contactNumber');
+    if (!current || current === '+65' || current === '+60') {
+      form.setValue('contactNumber', userCountry === 'Malaysia' ? '+60' : '+65');
     }
   }, [userCountry, form])
 
