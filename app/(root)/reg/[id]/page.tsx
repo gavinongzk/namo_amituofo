@@ -725,30 +725,24 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     setEditValue('');
   };
 
-  if (isLoading) {
-    return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
-  }
+  // -------- Refuge auto-redirect (must stay ABOVE any early returns to satisfy Rules of Hooks) --------
+  const allOrders = order
+    ? [order, ...(relatedOrders || []).filter(relatedOrder => relatedOrder && relatedOrder._id !== order._id)]
+    : [];
 
-  if (!order) {
-    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
-  }
-
-  // Combine current order and related orders with proper null checks
-  const allOrders = [order, ...(relatedOrders || []).filter(relatedOrder => relatedOrder && relatedOrder._id !== order._id)];
-  
-  // Get all customFieldValues from all orders and sort by queue number
-  const allCustomFieldValues = allOrders.flatMap(order => 
-    order.customFieldValues.map(group => ({
-      ...group,
-      orderId: order._id, // Keep track of which order this came from
-      event: order.event // Keep the event info
-    }))
-  ).sort((a, b) => {
-    // Extract numbers from queue numbers for proper numeric sorting
-    const aNum = parseInt((a.queueNumber || '0').replace(/\D/g, ''));
-    const bNum = parseInt((b.queueNumber || '0').replace(/\D/g, ''));
-    return aNum - bNum;
-  });
+  const allCustomFieldValues = allOrders
+    .flatMap(order =>
+      order.customFieldValues.map(group => ({
+        ...group,
+        orderId: order._id,
+        event: order.event,
+      }))
+    )
+    .sort((a, b) => {
+      const aNum = parseInt((a.queueNumber || '0').replace(/\D/g, ''));
+      const bNum = parseInt((b.queueNumber || '0').replace(/\D/g, ''));
+      return aNum - bNum;
+    });
 
   const getGroupFieldValue = (group: any, predicate: (field: CustomField) => boolean) => {
     const field = (group?.fields || []).find((f: CustomField) => predicate(f));
@@ -771,12 +765,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   const refugeCandidates = allCustomFieldValues
     .map((group: any) => {
-      const englishName =
-        getGroupFieldValue(group, (f) => /name|名字/i.test(f.label || '')) ||
-        '';
+      const englishName = getGroupFieldValue(group, (f) => /name|名字/i.test(f.label || '')) || '';
       const contactNumber =
-        getGroupFieldValue(group, (f) => f.type === 'phone' || /phone|联系号码/i.test(f.label || '')) ||
-        '';
+        getGroupFieldValue(group, (f) => f.type === 'phone' || /phone|联系号码/i.test(f.label || '')) || '';
 
       return {
         groupId: String(group.groupId || ''),
@@ -790,29 +781,32 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
   const firstRefugeCandidate = refugeCandidates[0];
 
-  // Auto-redirect once (per tab) if they selected "Yes" for refuge.
   useEffect(() => {
+    if (!order) return; // don't redirect while loading / not found
     if (refugeCandidates.length === 0) return;
-    if (!firstRefugeCandidate) return;
     if (typeof window === 'undefined') return;
 
     const storageKey = `refuge_auto_redirect_done:${id}`;
     if (sessionStorage.getItem(storageKey) === '1') return;
     sessionStorage.setItem(storageKey, '1');
 
-    // If multiple participants selected "Yes", don't prefill to avoid picking the wrong person.
-    const destination = refugeCandidates.length === 1
-      ? buildRefugeUrl(firstRefugeCandidate)
-      : buildRefugeUrl();
+    const destination =
+      refugeCandidates.length === 1 && firstRefugeCandidate
+        ? buildRefugeUrl(firstRefugeCandidate)
+        : buildRefugeUrl();
 
     router.push(destination);
-  }, [
-    id,
-    refugeCandidates.length,
-    firstRefugeCandidate?.englishName,
-    firstRefugeCandidate?.contactNumber,
-    router,
-  ]);
+  }, [id, order, refugeCandidates.length, firstRefugeCandidate, router]);
+
+  // --------------------------------------------------------------------------------------------------
+
+  if (isLoading) {
+    return <div className="wrapper my-8 text-center">加载中... Loading...</div>;
+  }
+
+  if (!order) {
+    return <div className="wrapper my-8 text-center text-2xl font-bold text-red-500">报名资料未找到 Registration not found</div>;
+  }
 
   return (
     <div className="my-4 sm:my-8 max-w-full sm:max-w-4xl mx-2 sm:mx-auto">
