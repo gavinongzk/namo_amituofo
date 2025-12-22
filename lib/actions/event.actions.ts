@@ -576,7 +576,8 @@ export async function getEventsForMainPage({ query, limit = 6, page, category, c
     // Optimized pipeline - only fetch registration counts if needed
     const pipeline = [
       { $match: conditions },
-      { $sort: { startDateTime: -1 as const, createdAt: -1 as const } },
+      // Earliest upcoming events first on the main page
+      { $sort: { startDateTime: 1 as const, createdAt: -1 as const } },
       { $skip: skipAmount },
       { $limit: limit },
       {
