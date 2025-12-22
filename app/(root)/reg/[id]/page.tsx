@@ -19,6 +19,7 @@ import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import * as Sentry from '@sentry/nextjs';
 import { isEqual } from 'lodash';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useUser } from "@clerk/nextjs";
 
 import { Card } from '@/components/ui/card'
@@ -201,6 +202,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const debugRefuge = searchParams?.get('debugRefuge') === '1';
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -756,12 +759,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       .join(' | ');
 
     // Match by label OR by options (more robust for older stored data / label edits)
-    return /皈依|take refuge/i.test(label) || /皈依|take refuge/i.test(optionsText);
+    return /皈依|refuge/i.test(label) || /皈依|refuge/i.test(optionsText);
   };
 
   const doesGroupWantRefuge = (group: any) => {
     const refugeAnswer = getGroupFieldValue(group, (f) => fieldLooksLikeRefugeQuestion(f));
-    return refugeAnswer.trim().toLowerCase() === 'yes';
+    const normalized = refugeAnswer.trim().toLowerCase();
+    return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '是';
   };
 
   const buildRefugeUrl = (candidate?: { englishName: string; contactNumber: string }) => {
@@ -834,6 +838,28 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
         <div className="bg-white shadow-lg rounded-b-xl sm:rounded-b-2xl overflow-hidden">
           <div className="p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+            {debugRefuge && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-900">
+                <div className="font-semibold mb-2">Debug: refuge redirect</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div><span className="font-semibold">orderId:</span> {order._id}</div>
+                  <div><span className="font-semibold">refugeCandidates:</span> {refugeCandidates.length}</div>
+                </div>
+                <div className="mt-2 space-y-1">
+                  {allCustomFieldValues.map((g: any) => {
+                    const refugeLabel =
+                      (g?.fields || []).find((f: CustomField) => /皈依|refuge/i.test(String(f.label || '')))?.label || '';
+                    const refugeValue =
+                      (g?.fields || []).find((f: CustomField) => /皈依|refuge/i.test(String(f.label || '')))?.value || '';
+                    return (
+                      <div key={String(g.groupId)} className="break-all">
+                        <span className="font-semibold">group</span> {String(g.groupId)} / <span className="font-semibold">queue</span> {String(g.queueNumber)} — <span className="font-semibold">refugeValue</span>: {String(refugeValue)} — <span className="font-semibold">label</span>: {String(refugeLabel).slice(0, 80)}{String(refugeLabel).length > 80 ? '…' : ''}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
               <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event?.title || 'N/A'}</h4>
             </div>
