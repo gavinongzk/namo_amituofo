@@ -283,7 +283,7 @@ export function RefugeRegistrationForm({
                 name="englishName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">英文名字 English Name *</FormLabel>
+                    <FormLabel className="text-gray-700 font-medium">英文姓名 English Name *</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Please enter English name"
