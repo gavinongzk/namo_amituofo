@@ -304,7 +304,7 @@ export default function RefugeRegistrationsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="edit-chinese-name">中文名字 Chinese Name *</Label>
+              <Label htmlFor="edit-chinese-name">中文姓名 Chinese Name *</Label>
               <Input
                 id="edit-chinese-name"
                 value={editFormData.chineseName}
@@ -312,7 +312,7 @@ export default function RefugeRegistrationsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-english-name">英文名字 English Name *</Label>
+              <Label htmlFor="edit-english-name">英文姓名 English Name *</Label>
               <Input
                 id="edit-english-name"
                 value={editFormData.englishName}
