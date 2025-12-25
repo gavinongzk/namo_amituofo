@@ -133,8 +133,8 @@ export default function RefugeRegistrationsPage() {
 
   const exportToCSV = () => {
     const headers = [
-      '中文名字',
-      '英文名字',
+      '中文姓名',
+      '英文姓名',
       '年龄',
       '出生日期',
       '性别',
@@ -225,8 +225,8 @@ export default function RefugeRegistrationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>中文名字</TableHead>
-                  <TableHead>英文名字</TableHead>
+                  <TableHead>中文姓名</TableHead>
+                  <TableHead>英文姓名</TableHead>
                   <TableHead>年龄</TableHead>
                   <TableHead>出生日期</TableHead>
                   <TableHead>性别</TableHead>
