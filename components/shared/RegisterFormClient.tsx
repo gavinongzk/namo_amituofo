@@ -60,6 +60,11 @@ interface RegisterFormClientProps {
   onRefresh: () => Promise<void>
 }
 
+const fieldLooksLikeRefugeQuestion = (field: CustomField): boolean => {
+  // Important: don't match "皈依名 / Dharma Name" (name field), only match the actual refuge question.
+  return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(field.label);
+};
+
 const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
   if (!phoneNumber || typeof phoneNumber !== 'string') return null;
   if (phoneNumber.startsWith('+60')) return 'Malaysia';
@@ -248,7 +253,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       groups: Array(1).fill(null).map(() => Object.fromEntries(
         customFields.map(field => [
           field.id, 
-          field.type === 'boolean' ? false : ''
+          field.type === 'boolean'
+            ? false
+            : (field.type === 'radio' && fieldLooksLikeRefugeQuestion(field))
+              ? 'no'
+              : ''
         ])
       )),
       pdpaConsent: false
@@ -527,9 +536,13 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     append(Object.fromEntries(
       customFields.map(field => [
         field.id,
-        field.type === 'boolean' ? false :
-        field.type === 'phone' ? (userCountry === 'Malaysia' ? '+60' : '+65') :
-        ''
+        field.type === 'boolean'
+          ? false
+          : (field.type === 'radio' && fieldLooksLikeRefugeQuestion(field))
+            ? 'no'
+            : field.type === 'phone'
+              ? (userCountry === 'Malaysia' ? '+60' : '+65')
+              : ''
       ])
     ));
     // Increment the number of forms to show
