@@ -66,8 +66,8 @@ const getDefaultCountry = (country: string | null) => {
 }
 
 const refugeFormSchema = z.object({
-  chineseName: z.string().min(1, '中文名字是必填项 / Chinese Name is required'),
-  englishName: z.string().min(1, '英文名字是必填项 / English Name is required'),
+  chineseName: z.string().min(1, '中文姓名是必填项 / Chinese Name is required'),
+  englishName: z.string().min(1, '英文姓名是必填项 / English Name is required'),
   age: z.string().min(1, '年龄是必填项 / Age is required').regex(/^\d+$/, '年龄必须是数字 / Age must be a number'),
   dob: z.string().min(1, '出生日期是必填项 / Date of Birth is required'),
   gender: z.string().min(1, '性别是必填项 / Gender is required'),
@@ -269,9 +269,9 @@ export function RefugeRegistrationForm({
                 name="chineseName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">中文名字 Chinese Name *</FormLabel>
+                    <FormLabel className="text-gray-700 font-medium">中文姓名 Chinese Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入中文名字 / Please enter Chinese name" {...field} className="border-orange-200 focus:border-orange-400" />
+                      <Input placeholder="请输入中文姓名 / Please enter Chinese name" {...field} className="border-orange-200 focus:border-orange-400" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
