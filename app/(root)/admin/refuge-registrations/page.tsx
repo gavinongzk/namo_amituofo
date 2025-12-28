@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -24,6 +24,7 @@ interface RefugeRegistration {
   contactNumber: string
   address: string
   createdAt: string
+  remarks?: string
 }
 
 export default function RefugeRegistrationsPage() {
@@ -32,6 +33,10 @@ export default function RefugeRegistrationsPage() {
   const [loading, setLoading] = useState(true)
   const [editingRegistration, setEditingRegistration] = useState<RefugeRegistration | null>(null)
   const [deleteRegistrationId, setDeleteRegistrationId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchField, setSearchField] = useState<'all' | 'name' | 'phone'>('all')
+  const [remarksDrafts, setRemarksDrafts] = useState<Record<string, string>>({})
+  const [savingRemarksId, setSavingRemarksId] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState({
     chineseName: '',
     englishName: '',
@@ -39,8 +44,34 @@ export default function RefugeRegistrationsPage() {
     dob: '',
     gender: '',
     contactNumber: '',
-    address: ''
+    address: '',
+    remarks: ''
   })
+
+  const isSuperadmin = user?.publicMetadata.role === 'superadmin'
+
+  const filteredRegistrations = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return registrations
+
+    const normalizePhone = (value: string) => value.replace(/\D/g, '')
+
+    return registrations.filter((r) => {
+      const nameHaystack = `${r.chineseName || ''} ${r.englishName || ''}`.toLowerCase()
+      const phoneHaystackRaw = (r.contactNumber || '').toLowerCase()
+      const phoneHaystackDigits = normalizePhone(r.contactNumber || '')
+
+      const matchesName = nameHaystack.includes(q)
+      const matchesPhoneRaw = phoneHaystackRaw.includes(q)
+      const qDigits = normalizePhone(q)
+      const matchesPhoneDigits = qDigits.length > 0 && phoneHaystackDigits.includes(qDigits)
+      const matchesPhone = matchesPhoneRaw || matchesPhoneDigits
+
+      if (searchField === 'name') return matchesName
+      if (searchField === 'phone') return matchesPhone
+      return matchesName || matchesPhone
+    })
+  }, [registrations, searchField, searchQuery])
 
   useEffect(() => {
     if (isLoaded) {
@@ -62,7 +93,17 @@ export default function RefugeRegistrationsPage() {
       const response = await fetch('/api/refuge-registration')
       if (response.ok) {
         const data = await response.json()
-        setRegistrations(data.registrations || [])
+        const regs: RefugeRegistration[] = data.registrations || []
+        setRegistrations(regs)
+        setRemarksDrafts((prev) => {
+          const next = { ...prev }
+          for (const r of regs) {
+            if (next[r._id] === undefined) {
+              next[r._id] = r.remarks || ''
+            }
+          }
+          return next
+        })
       }
     } catch (error) {
       console.error('Error fetching refuge registrations:', error)
@@ -80,7 +121,8 @@ export default function RefugeRegistrationsPage() {
       dob: registration.dob,
       gender: registration.gender,
       contactNumber: registration.contactNumber,
-      address: registration.address
+      address: registration.address,
+      remarks: registration.remarks || ''
     })
   }
 
@@ -107,6 +149,32 @@ export default function RefugeRegistrationsPage() {
     } catch (error) {
       console.error('Error updating refuge registration:', error)
       alert('更新失败 / Update failed')
+    }
+  }
+
+  const handleSaveRemarks = async (registrationId: string) => {
+    if (!isSuperadmin) return
+    try {
+      setSavingRemarksId(registrationId)
+      const response = await fetch('/api/refuge-registration', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registrationId,
+          remarks: remarksDrafts[registrationId] ?? ''
+        })
+      })
+
+      if (response.ok) {
+        await fetchRegistrations()
+      } else {
+        alert('备注保存失败 / Failed to save remarks')
+      }
+    } catch (error) {
+      console.error('Error saving remarks:', error)
+      alert('备注保存失败 / Failed to save remarks')
+    } finally {
+      setSavingRemarksId(null)
     }
   }
 
@@ -140,10 +208,11 @@ export default function RefugeRegistrationsPage() {
       '性别',
       '联系号码',
       '地址',
-      '报名日期'
+      '报名日期',
+      '备注'
     ]
 
-    const csvData = registrations.map(registration => [
+    const csvData = filteredRegistrations.map(registration => [
       registration.chineseName,
       registration.englishName,
       registration.age,
@@ -151,7 +220,8 @@ export default function RefugeRegistrationsPage() {
       registration.gender === 'male' ? '男众 Male' : '女众 Female',
       registration.contactNumber,
       registration.address,
-      new Date(registration.createdAt).toLocaleDateString('zh-CN')
+      new Date(registration.createdAt).toLocaleDateString('zh-CN'),
+      registration.remarks || ''
     ])
 
     const csvContent = [headers, ...csvData]
@@ -204,12 +274,43 @@ export default function RefugeRegistrationsPage() {
           </p>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            总报名数: {registrations.length}
-          </Badge>
+        <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              总报名数: {filteredRegistrations.length}
+              {filteredRegistrations.length !== registrations.length ? ` / ${registrations.length}` : ''}
+            </Badge>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Select value={searchField} onValueChange={(v) => setSearchField(v as 'all' | 'name' | 'phone')}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="搜索字段 / Search field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">姓名或电话 / Name or phone</SelectItem>
+                  <SelectItem value="name">姓名 / Name</SelectItem>
+                  <SelectItem value="phone">电话 / Phone</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex gap-2 items-center">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜索姓名或电话... / Search name or phone..."
+                  className="w-full sm:w-[320px]"
+                />
+                {searchQuery.trim().length > 0 && (
+                  <Button variant="outline" onClick={() => setSearchQuery('')}>
+                    清除 / Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <Button onClick={exportToCSV} className="bg-orange-600 hover:bg-orange-700">
-            导出 CSV / Export CSV
+            导出 CSV / Export CSV ({filteredRegistrations.length})
           </Button>
         </div>
       </div>
@@ -219,6 +320,14 @@ export default function RefugeRegistrationsPage() {
           <div className="text-center py-12">
             <div className="text-4xl mb-4">🌸</div>
             <p className="text-lg text-gray-600">暂无报名记录 / No registrations found</p>
+          </div>
+        ) : filteredRegistrations.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">🔎</div>
+            <p className="text-lg text-gray-600">没有匹配结果 / No matching results</p>
+            <p className="text-sm text-gray-500 mt-2">
+              搜索: <span className="font-mono">{searchQuery.trim()}</span>
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -233,11 +342,12 @@ export default function RefugeRegistrationsPage() {
                   <TableHead>联系号码</TableHead>
                   <TableHead>地址</TableHead>
                   <TableHead>报名日期</TableHead>
+                  {isSuperadmin && <TableHead>备注</TableHead>}
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {registrations.map((registration) => (
+                {filteredRegistrations.map((registration) => (
                   <TableRow key={registration._id}>
                     <TableCell className="font-medium">
                       {registration.chineseName}
@@ -268,6 +378,35 @@ export default function RefugeRegistrationsPage() {
                     <TableCell>
                       {new Date(registration.createdAt).toLocaleDateString('zh-CN')}
                     </TableCell>
+                    {isSuperadmin && (
+                      <TableCell className="min-w-[260px]">
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            value={remarksDrafts[registration._id] ?? ''}
+                            onChange={(e) =>
+                              setRemarksDrafts((prev) => ({
+                                ...prev,
+                                [registration._id]: e.target.value
+                              }))
+                            }
+                            placeholder="备注 / Remarks"
+                            className="h-9"
+                            disabled={savingRemarksId === registration._id}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSaveRemarks(registration._id)}
+                            disabled={
+                              savingRemarksId === registration._id ||
+                              (remarksDrafts[registration._id] ?? '') === (registration.remarks || '')
+                            }
+                          >
+                            {savingRemarksId === registration._id ? '保存中...' : '保存'}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
                         <Button
@@ -363,6 +502,14 @@ export default function RefugeRegistrationsPage() {
                 id="edit-address"
                 value={editFormData.address}
                 onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-remarks">备注 Remarks</Label>
+              <Input
+                id="edit-remarks"
+                value={editFormData.remarks}
+                onChange={(e) => setEditFormData({ ...editFormData, remarks: e.target.value })}
               />
             </div>
           </div>

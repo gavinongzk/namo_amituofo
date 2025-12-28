@@ -9,6 +9,7 @@ export interface IRefugeRegistration extends Document {
   gender: string;
   contactNumber: string;
   address: string;
+  remarks?: string;
 }
 
 const RefugeRegistrationSchema = new Schema<IRefugeRegistration>({
@@ -44,6 +45,10 @@ const RefugeRegistrationSchema = new Schema<IRefugeRegistration>({
   address: {
     type: String,
     required: true,
+  },
+  remarks: {
+    type: String,
+    default: '',
   },
 });
 

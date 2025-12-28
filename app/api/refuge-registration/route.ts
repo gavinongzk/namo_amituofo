@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import RefugeRegistration from '@/lib/database/models/refugeRegistration.model';
+import { auth } from '@clerk/nextjs';
 
 export async function GET() {
   try {
     await connectToDatabase();
+
+    const { sessionClaims } = auth();
+    const role = sessionClaims?.role as string;
+    if (role !== 'superadmin') {
+      return NextResponse.json({ error: 'Unauthorized: Only superadmins can view refuge registrations' }, { status: 403 });
+    }
 
     // Fetch all registrations from dedicated collection
     const registrations = await RefugeRegistration.find({}).sort({ createdAt: -1 });
@@ -84,6 +91,12 @@ export async function PUT(request: NextRequest) {
   try {
     await connectToDatabase();
     
+    const { sessionClaims } = auth();
+    const role = sessionClaims?.role as string;
+    if (role !== 'superadmin') {
+      return NextResponse.json({ error: 'Unauthorized: Only superadmins can update refuge registrations' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { registrationId, ...fieldUpdates } = body;
 
@@ -127,6 +140,12 @@ export async function DELETE(request: NextRequest) {
   try {
     await connectToDatabase();
     
+    const { sessionClaims } = auth();
+    const role = sessionClaims?.role as string;
+    if (role !== 'superadmin') {
+      return NextResponse.json({ error: 'Unauthorized: Only superadmins can delete refuge registrations' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const registrationId = searchParams.get('id');
 
