@@ -418,6 +418,19 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     };
   }, [isActive, stopStreamAndScanner]);
 
+  // Ensure camera shuts down on navigation / refresh (more reliable on iOS Safari).
+  useEffect(() => {
+    const handlePageExit = () => {
+      stopStreamAndScanner();
+    };
+    window.addEventListener('pagehide', handlePageExit);
+    window.addEventListener('beforeunload', handlePageExit);
+    return () => {
+      window.removeEventListener('pagehide', handlePageExit);
+      window.removeEventListener('beforeunload', handlePageExit);
+    };
+  }, [stopStreamAndScanner]);
+
   // Add a new effect to handle video element attributes
   useEffect(() => {
     if (videoRef.current) {

@@ -38,7 +38,7 @@ const EventInfo = ({ event }: { event: any }) => {
             {event.category.name}
           </p>
           {!event.isDraft && (
-            <div className="flex justify-start">
+            <div className="w-full sm:w-auto">
               <CheckoutButton event={event} />
             </div>
           )}
