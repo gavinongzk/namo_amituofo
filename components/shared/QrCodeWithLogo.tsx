@@ -48,9 +48,12 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         // Set canvas dimensions with scale
         canvas.width = scaledWidth;
         canvas.height = scaledHeight;
-        canvas.style.width = `${qrCodeImage.width}px`;
-        canvas.style.height = `${qrCodeImage.height}px`;
-        canvas.style.margin = '0 auto'; // Center the canvas horizontally
+        // Important: keep a high-DPI internal canvas for sharpness, but always
+        // scale the displayed canvas to fit its container to avoid clipping
+        // in fixed-size wrappers (e.g. duplicate registration dialog).
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
 
         // Enable image smoothing for better quality
         ctx.imageSmoothingEnabled = true;
@@ -137,7 +140,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         )}
         <canvas 
           ref={canvasRef} 
-          className="w-full h-full object-contain"
+          className="w-full h-full"
           style={{ imageRendering: 'crisp-edges' }}
         />
         {isAttended && (

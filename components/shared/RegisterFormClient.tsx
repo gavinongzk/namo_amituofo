@@ -1133,7 +1133,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                         {duplicate.qrCode && (
                           <div className="pt-2">
                             <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
-                            <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
+                            <div className="w-40 h-40 sm:w-44 sm:h-44 mx-auto bg-white rounded-lg border border-gray-200 flex items-center justify-center p-2">
                               <QrCodeWithLogo
                                 qrCode={duplicate.qrCode}
                                 isAttended={false}

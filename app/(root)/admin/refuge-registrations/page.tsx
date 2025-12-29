@@ -34,7 +34,6 @@ export default function RefugeRegistrationsPage() {
   const [editingRegistration, setEditingRegistration] = useState<RefugeRegistration | null>(null)
   const [deleteRegistrationId, setDeleteRegistrationId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchField, setSearchField] = useState<'all' | 'name' | 'phone'>('all')
   const [remarksDrafts, setRemarksDrafts] = useState<Record<string, string>>({})
   const [savingRemarksId, setSavingRemarksId] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState({
@@ -66,12 +65,9 @@ export default function RefugeRegistrationsPage() {
       const qDigits = normalizePhone(q)
       const matchesPhoneDigits = qDigits.length > 0 && phoneHaystackDigits.includes(qDigits)
       const matchesPhone = matchesPhoneRaw || matchesPhoneDigits
-
-      if (searchField === 'name') return matchesName
-      if (searchField === 'phone') return matchesPhone
       return matchesName || matchesPhone
     })
-  }, [registrations, searchField, searchQuery])
+  }, [registrations, searchQuery])
 
   useEffect(() => {
     if (isLoaded) {
@@ -282,23 +278,12 @@ export default function RefugeRegistrationsPage() {
             </Badge>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select value={searchField} onValueChange={(v) => setSearchField(v as 'all' | 'name' | 'phone')}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="搜索字段 / Search field" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">姓名或电话 / Name or phone</SelectItem>
-                  <SelectItem value="name">姓名 / Name</SelectItem>
-                  <SelectItem value="phone">电话 / Phone</SelectItem>
-                </SelectContent>
-              </Select>
-
               <div className="flex gap-2 items-center">
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索姓名或电话... / Search name or phone..."
-                  className="w-full sm:w-[320px]"
+                  className="w-full sm:w-[420px]"
                 />
                 {searchQuery.trim().length > 0 && (
                   <Button variant="outline" onClick={() => setSearchQuery('')}>

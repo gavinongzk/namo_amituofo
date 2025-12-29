@@ -227,9 +227,22 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
     // Optimize: Use aggregation pipeline for better performance
     const pipeline = [
       { $match: conditions },
-      // Sort by (1) not expired first, then (2) earliest start date
-      { $addFields: { __isExpired: { $lt: ['$endDateTime', now] } } },
-      { $sort: { __isExpired: 1 as const, startDateTime: 1 as const, createdAt: -1 as const } },
+      // Sort by (1) not expired first, then (2) active: earliest start date, expired: latest end date
+      {
+        $addFields: {
+          __isExpired: { $lt: ['$endDateTime', now] },
+          // Active events: ascending startDateTime
+          // Expired events: descending endDateTime (by sorting on a negative ms timestamp)
+          __sortKey: {
+            $cond: [
+              { $lt: ['$endDateTime', now] },
+              { $multiply: [-1, { $toLong: '$endDateTime' }] },
+              { $toLong: '$startDateTime' }
+            ]
+          }
+        }
+      },
+      { $sort: { __isExpired: 1 as const, __sortKey: 1 as const, createdAt: -1 as const } },
       { $skip: skipAmount },
       { $limit: limit },
       {
@@ -260,8 +273,8 @@ export async function getAllEvents({ query, limit = 6, page, category, country, 
           category: { $arrayElemAt: ['$category', 0] }
         }
       },
-      // Do not leak internal computed field
-      { $unset: '__isExpired' }
+      // Do not leak internal computed fields
+      { $unset: ['__isExpired', '__sortKey'] }
     ];
 
     // Parallel queries with optimized aggregation
@@ -336,9 +349,20 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
     // Optimize: Use aggregation pipeline for better performance
     const pipeline = [
       { $match: conditions },
-      // Sort by (1) not expired first, then (2) earliest start date
-      { $addFields: { __isExpired: { $lt: ['$endDateTime', now] } } },
-      { $sort: { __isExpired: 1 as const, startDateTime: 1 as const, createdAt: -1 as const } },
+      // Sort by (1) not expired first, then (2) active: earliest start date, expired: latest end date
+      {
+        $addFields: {
+          __isExpired: { $lt: ['$endDateTime', now] },
+          __sortKey: {
+            $cond: [
+              { $lt: ['$endDateTime', now] },
+              { $multiply: [-1, { $toLong: '$endDateTime' }] },
+              { $toLong: '$startDateTime' }
+            ]
+          }
+        }
+      },
+      { $sort: { __isExpired: 1 as const, __sortKey: 1 as const, createdAt: -1 as const } },
       { $skip: skipAmount },
       { $limit: Number(limit) },
       {
@@ -369,8 +393,8 @@ export async function getAllEventsForSuperAdmin({ query, limit = 6, page, catego
           category: { $arrayElemAt: ['$category', 0] }
         }
       },
-      // Do not leak internal computed field
-      { $unset: '__isExpired' }
+      // Do not leak internal computed fields
+      { $unset: ['__isExpired', '__sortKey'] }
     ];
 
     // Parallel queries with optimized aggregation
@@ -591,9 +615,20 @@ export async function getEventsForMainPage({ query, limit = 6, page, category, c
     // Optimized pipeline - only fetch registration counts if needed
     const pipeline = [
       { $match: conditions },
-      // Sort by (1) not expired first, then (2) earliest start date
-      { $addFields: { __isExpired: { $lt: ['$endDateTime', now] } } },
-      { $sort: { __isExpired: 1 as const, startDateTime: 1 as const, createdAt: -1 as const } },
+      // Sort by (1) not expired first, then (2) active: earliest start date, expired: latest end date
+      {
+        $addFields: {
+          __isExpired: { $lt: ['$endDateTime', now] },
+          __sortKey: {
+            $cond: [
+              { $lt: ['$endDateTime', now] },
+              { $multiply: [-1, { $toLong: '$endDateTime' }] },
+              { $toLong: '$startDateTime' }
+            ]
+          }
+        }
+      },
+      { $sort: { __isExpired: 1 as const, __sortKey: 1 as const, createdAt: -1 as const } },
       { $skip: skipAmount },
       { $limit: limit },
       {
@@ -620,8 +655,8 @@ export async function getEventsForMainPage({ query, limit = 6, page, category, c
           category: { $arrayElemAt: ['$category', 0] }
         }
       },
-      // Do not leak internal computed field
-      { $unset: '__isExpired' }
+      // Do not leak internal computed fields
+      { $unset: ['__isExpired', '__sortKey'] }
     ];
 
     const [events, eventsCount] = await Promise.all([
