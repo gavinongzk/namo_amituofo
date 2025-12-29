@@ -194,6 +194,62 @@ body {
     @apply rounded-full h-[44px] sm:h-[48px] md:h-[54px] p-regular-16 transition-all duration-300 hover:shadow-md active:scale-95;
   }
 
+  /* Prominent CTA micro-interactions (opt-in) */
+  .cta-button {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Subtle glow pulse (runs a couple times on load; respects reduced motion) */
+  @media (prefers-reduced-motion: no-preference) {
+    .cta-attention {
+      animation: cta-glow 2.2s ease-in-out 0s 2;
+    }
+  }
+
+  @keyframes cta-glow {
+    0%,
+    100% {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+    50% {
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+    }
+  }
+
+  /* Hover shimmer sweep (professional, not flashy) */
+  .cta-button::after {
+    content: '';
+    position: absolute;
+    inset: -40% -70%;
+    background: linear-gradient(
+      110deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.25) 45%,
+      rgba(255, 255, 255, 0.55) 50%,
+      rgba(255, 255, 255, 0.25) 55%,
+      transparent 70%
+    );
+    transform: translateX(-120%) rotate(8deg);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cta-button:hover::after {
+      opacity: 1;
+      animation: cta-shine 900ms ease-out;
+    }
+  }
+
+  @keyframes cta-shine {
+    to {
+      transform: translateX(120%) rotate(8deg);
+    }
+  }
+
   .select-item {
     @apply py-2 sm:py-3 cursor-pointer focus:bg-primary-50;
   }

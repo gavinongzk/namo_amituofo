@@ -30,7 +30,7 @@ const CheckoutButton = ({ event }: { event: IEvent }) => {
         <Button 
           onClick={handleRegisterClick} 
           aria-label="报名 / Register"
-          className="button w-full sm:w-auto sm:min-w-[240px] bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          className="button cta-button cta-attention w-full sm:w-auto sm:min-w-[240px] bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
           size="lg"
           disabled={isLoading}
         >
