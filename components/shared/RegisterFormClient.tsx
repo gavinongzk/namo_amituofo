@@ -560,11 +560,18 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     if (savedFormData) {
       try {
         const parsedData = JSON.parse(savedFormData as string);
+
+        // Never prefill the refuge question from cookies.
+        // Reason: the cookie is keyed only by field id (e.g. "4"), which can represent different questions across categories,
+        // and it can also override the intended default ("no") for the refuge question.
+        const refugeFieldId = customFields.find(
+          (f) => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)
+        )?.id;
         
         // Pre-fill first person's non-sensitive fields
         Object.entries(parsedData).forEach(([fieldId, value]) => {
           // Don't pre-fill sensitive info like phone numbers
-          if (!fieldId.includes('phone')) {
+          if (!fieldId.includes('phone') && fieldId !== refugeFieldId) {
             form.setValue(`groups.0.${fieldId}`, value as string | boolean);
           }
         });
@@ -572,7 +579,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         console.error('Error parsing saved form data:', e);
       }
     }
-  }, []);
+  }, [customFields, form]);
 
   const saveFormData = (values: z.infer<typeof formSchema>) => {
     const firstPerson = values.groups[0];
@@ -1126,7 +1133,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                         {duplicate.qrCode && (
                           <div className="pt-2">
                             <p className="text-gray-600 font-medium text-sm mb-2">二维码 QR Code:</p>
-                            <div className="w-36 h-36 mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
+                            <div className="w-40 h-40 sm:w-44 sm:h-44 mx-auto bg-white rounded-lg border border-gray-200 flex items-center justify-center p-2">
                               <QrCodeWithLogo
                                 qrCode={duplicate.qrCode}
                                 isAttended={false}
