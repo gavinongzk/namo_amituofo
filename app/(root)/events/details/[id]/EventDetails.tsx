@@ -34,14 +34,17 @@ const EventInfo = ({ event }: { event: any }) => {
         {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
           <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
-          <p className={`text-base font-semibold rounded-full px-6 py-2.5 w-fit ${bgColor} ${textColor}`}>
-            {event.category.name}
-          </p>
           {!event.isDraft && (
             <div className="w-full sm:w-auto">
               <CheckoutButton event={event} />
             </div>
           )}
+          <p
+            className={`text-xs font-medium rounded-full px-3 py-1 w-fit opacity-70 ${bgColor} ${textColor}`}
+            aria-label={`Event type: ${event.category.name}`}
+          >
+            {event.category.name}
+          </p>
         </div>
 
         <div className="h-px bg-gray-200" />
