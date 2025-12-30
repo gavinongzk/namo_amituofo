@@ -148,6 +148,8 @@ export function UnifiedRegistrationAssistant() {
         body: JSON.stringify({
           message: trimmed,
           events: events.map((e) => ({ _id: e._id, title: e.title, country: e.country, category: e.category })),
+          currentTargets: targets,
+          currentEventId: selectedEventId,
         }),
       })
 
