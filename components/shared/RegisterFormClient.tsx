@@ -26,6 +26,7 @@ import { clearAllClientCache, isClientSideError, getErrorMessage } from '@/lib/u
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
 import { createRegistrationFormSchema } from '@/lib/validator';
+import { VoiceRegisterFormAssistant } from '@/components/shared/VoiceRegisterFormAssistant';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -769,6 +770,25 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               {message && <p className="text-red-500">{message}</p>}
+              <VoiceRegisterFormAssistant
+                customFields={customFields}
+                disabled={isSubmitting}
+                getGroups={() => form.getValues().groups}
+                applyUpdates={(updates) => {
+                  // Ensure the target participant form is visible
+                  const maxIndex = Math.max(...updates.map((u) => u.personIndex))
+                  if (Number.isFinite(maxIndex) && maxIndex + 1 > numberOfFormsToShow) {
+                    setNumberOfFormsToShow(maxIndex + 1)
+                  }
+
+                  for (const u of updates) {
+                    form.setValue(`groups.${u.personIndex}.${u.fieldId}` as any, u.value as any, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                }}
+              />
               {isFullyBooked ? (
                 <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
                   <p className="text-red-600 font-medium text-lg">

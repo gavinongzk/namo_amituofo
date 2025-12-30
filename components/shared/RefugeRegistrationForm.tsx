@@ -15,6 +15,7 @@ import { useUser } from '@clerk/nextjs'
 import { getCookie, setCookie } from 'cookies-next'
 import * as Sentry from '@sentry/nextjs'
 import 'react-phone-number-input/style.css'
+import { VoiceRefugeFormAssistant } from '@/components/shared/VoiceRefugeFormAssistant'
 
 const phoneInputStyles = `
   .phone-input-enhanced .PhoneInput {
@@ -261,6 +262,17 @@ export function RefugeRegistrationForm({
               <p className="text-gray-600 text-sm">* Indicates required question</p>
             </div>
           )}
+
+          <VoiceRefugeFormAssistant
+            disabled={isSubmitting}
+            getValues={() => form.getValues()}
+            applyUpdates={(updates) => {
+              for (const [k, v] of Object.entries(updates)) {
+                if (typeof v !== 'string') continue
+                form.setValue(k as keyof RefugeFormData, v, { shouldDirty: true, shouldValidate: true })
+              }
+            }}
+          />
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

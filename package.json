@@ -10,10 +10,12 @@
     "check-aliases": "node scripts/check-path-aliases.js",
     "dev": "next dev",
     "prebuild": "node scripts/update-version.js",
-    "build": "next build",
-    "build:vercel": "next build",
+    "build": "next build --no-lint",
+    "build:strict": "next build",
+    "build:vercel": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "update-version": "node scripts/update-version.js"
   },
   "dependencies": {
