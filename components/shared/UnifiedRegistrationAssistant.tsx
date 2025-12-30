@@ -68,9 +68,13 @@ export function UnifiedRegistrationAssistant() {
     const load = async () => {
       setEventsLoading(true)
       try {
-        // Uses lightweight selection endpoint
-        const resp = await fetch('/api/events/selection?country=Singapore', { method: 'GET' })
-        if (!resp.ok) throw new Error('Failed to load events')
+        // Uses public lightweight selection endpoint (no Clerk dependency)
+        const resp = await fetch('/api/events/public-selection?country=Singapore', { method: 'GET' })
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => '')
+          console.error('Failed to load events:', resp.status, resp.statusText, text)
+          throw new Error(`Failed to load events (HTTP ${resp.status})`)
+        }
         const data = (await resp.json()) as { data?: EventLite[] }
         setEvents(Array.isArray(data?.data) ? data.data : [])
       } catch (e) {
