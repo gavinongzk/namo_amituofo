@@ -8,9 +8,15 @@ export default function RefugeRegistrationPage() {
   const searchParams = useSearchParams()
 
   const initialValues = useMemo(() => {
-    const englishName = searchParams?.get('englishName') || ''
-    const contactNumber = searchParams?.get('contactNumber') || ''
-    return { englishName, contactNumber }
+    return {
+      chineseName: searchParams?.get('chineseName') || '',
+      englishName: searchParams?.get('englishName') || '',
+      age: searchParams?.get('age') || '',
+      dob: searchParams?.get('dob') || '',
+      gender: searchParams?.get('gender') || '',
+      contactNumber: searchParams?.get('contactNumber') || '',
+      address: searchParams?.get('address') || '',
+    }
   }, [searchParams])
 
   const autoFocusEnglishName = (searchParams?.get('autofocus') || '') === '1'

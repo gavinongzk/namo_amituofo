@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-type RefugeFieldKey =
-  | 'chineseName'
-  | 'englishName'
-  | 'age'
-  | 'dob'
-  | 'gender'
-  | 'contactNumber'
-  | 'address'
-
-type RefugeFormValues = Partial<Record<RefugeFieldKey, string>>
+import {
+  firstMissingRefugeField,
+  refugeQuestionForField,
+  type RefugeFieldKey,
+  type RefugeFormValues,
+} from '@/lib/forms/refugeForm'
 
 type AssistantResponse = {
   updates: Partial<Record<RefugeFieldKey, string>>
@@ -17,41 +12,6 @@ type AssistantResponse = {
   nextQuestion?: string
   done?: boolean
   usedModel?: 'openrouter' | 'rules'
-}
-
-function firstMissingField(values: RefugeFormValues): RefugeFieldKey | null {
-  const order: RefugeFieldKey[] = [
-    'chineseName',
-    'englishName',
-    'age',
-    'dob',
-    'gender',
-    'contactNumber',
-    'address',
-  ]
-  for (const k of order) {
-    if (!values[k] || !String(values[k]).trim()) return k
-  }
-  return null
-}
-
-function questionForField(field: RefugeFieldKey): string {
-  switch (field) {
-    case 'chineseName':
-      return '请告诉我您的中文姓名。 / What is your Chinese name?'
-    case 'englishName':
-      return '请告诉我您的英文姓名。 / What is your English name?'
-    case 'age':
-      return '请问您今年几岁？ / What is your age?'
-    case 'dob':
-      return '请告诉我您的出生日期（例如 1990-01-30）。 / What is your date of birth (e.g. 1990-01-30)?'
-    case 'gender':
-      return '请问性别是男众还是女众？ / Gender: male or female?'
-    case 'contactNumber':
-      return '请告诉我您的联系号码（含国家码，例如 +65...）。 / What is your contact number (with country code, e.g. +65...)?'
-    case 'address':
-      return '请告诉我您的地址。 / What is your address?'
-  }
 }
 
 function normalizeDob(input: string): string | null {
@@ -122,7 +82,7 @@ function extractWithRules(message: string, values: RefugeFormValues): AssistantR
   }
 
   const merged: RefugeFormValues = { ...values, ...updates }
-  const missing = firstMissingField(merged)
+  const missing = firstMissingRefugeField(merged)
   const done = !missing
 
   const assistantMessage =
@@ -133,7 +93,7 @@ function extractWithRules(message: string, values: RefugeFormValues): AssistantR
   return {
     updates,
     assistantMessage: done ? `${assistantMessage} 资料已齐，可以提交。 / All set — you can submit.` : assistantMessage,
-    nextQuestion: done ? undefined : questionForField(missing),
+    nextQuestion: done ? undefined : refugeQuestionForField(missing),
     done,
     usedModel: 'rules',
   }
@@ -145,8 +105,14 @@ async function extractWithOpenRouter(message: string, values: RefugeFormValues):
 
   const system = [
     'You are a form-filling assistant for an elderly user.',
-    'Extract structured updates for a registration form with fields:',
-    'chineseName, englishName, age, dob (YYYY-MM-DD), gender (male|female), contactNumber (E.164 like +65...), address.',
+    'Extract structured updates for a refuge registration form with fields:',
+    '- chineseName: required string',
+    '- englishName: required string',
+    '- age: required number (store as digits in a string, e.g. "65")',
+    '- dob: required date in YYYY-MM-DD',
+    '- gender: required, must be "male" or "female"',
+    '- contactNumber: required phone number, prefer E.164 like +65..., no spaces',
+    '- address: required string',
     'If information is missing, ask ONE short follow-up question (bilingual Chinese/English).',
     'Return JSON only with keys: updates, assistantMessage, nextQuestion, done.',
   ].join('\n')
@@ -195,13 +161,13 @@ async function extractWithOpenRouter(message: string, values: RefugeFormValues):
 
   const updates = (parsed?.updates ?? {}) as AssistantResponse['updates']
   const merged: RefugeFormValues = { ...values, ...updates }
-  const missing = firstMissingField(merged)
+  const missing = firstMissingRefugeField(merged)
   const done = Boolean(parsed?.done) || !missing
 
   return {
     updates,
     assistantMessage: String(parsed?.assistantMessage ?? ''),
-    nextQuestion: done ? undefined : String(parsed?.nextQuestion ?? questionForField(missing!)),
+    nextQuestion: done ? undefined : String(parsed?.nextQuestion ?? refugeQuestionForField(missing!)),
     done,
     usedModel: 'openrouter',
   }

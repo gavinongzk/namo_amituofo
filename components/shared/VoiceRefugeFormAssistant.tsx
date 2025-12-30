@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { toast } from 'react-hot-toast'
-import type { RefugeFormData } from './RefugeRegistrationForm'
+import type { RefugeFormData } from '@/lib/forms/refugeForm'
 
 type RefugeFieldKey = keyof RefugeFormData
 

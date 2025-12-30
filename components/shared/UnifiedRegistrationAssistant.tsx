@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { toast } from 'react-hot-toast'
+import { firstMissingRefugeField, refugeQuestionForField, type RefugeFormValues } from '@/lib/forms/refugeForm'
 
 type EventLite = {
   _id: string
@@ -51,6 +52,10 @@ export function UnifiedRegistrationAssistant() {
   const [targets, setTargets] = useState<AssistantTarget[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string>('')
 
+  const [refugeValues, setRefugeValues] = useState<RefugeFormValues>({})
+  const [refugeDone, setRefugeDone] = useState(false)
+  const [activeFlow, setActiveFlow] = useState<'router' | 'refuge_fill'>('router')
+
   const recognitionCtor = useMemo(() => getSpeechRecognitionCtor(), [])
   const recognitionRef = useRef<any>(null)
   const canUseSpeech = Boolean(recognitionCtor) && typeof window !== 'undefined'
@@ -62,6 +67,20 @@ export function UnifiedRegistrationAssistant() {
     const utterance = new SpeechSynthesisUtterance(text)
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
+  }
+
+  const buildRefugePrefillHref = (values: RefugeFormValues) => {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(values)) {
+      if (typeof v !== 'string') continue
+      const s = v.trim()
+      if (!s) continue
+      params.set(k, s)
+    }
+    // help the user continue typing if they still want to edit
+    params.set('autofocus', '1')
+    const qs = params.toString()
+    return qs ? `/refuge-registration?${qs}` : '/refuge-registration'
   }
 
   useEffect(() => {
@@ -87,6 +106,29 @@ export function UnifiedRegistrationAssistant() {
     }
     void load()
   }, [])
+
+  // When user switches into refuge filling mode, proactively ask the next missing field question.
+  useEffect(() => {
+    if (activeFlow !== 'refuge_fill') return
+    const missing = firstMissingRefugeField(refugeValues)
+    setRefugeDone(!missing)
+    if (!missing) return
+
+    // Only auto-ask once per entry into the flow (avoid spamming on every keystroke).
+    setMessages((prev) => {
+      const last = prev[prev.length - 1]
+      const q = refugeQuestionForField(missing)
+      if (last?.role === 'assistant' && last.text.includes(q)) return prev
+      return [
+        ...prev,
+        {
+          role: 'assistant',
+          text: `好的，我们来完成皈依报名资料。/ OK — let's complete your refuge registration.\n${q}`,
+        },
+      ]
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFlow])
 
   const stopListening = () => {
     try {
@@ -146,30 +188,80 @@ export function UnifiedRegistrationAssistant() {
     setMessages((prev) => [...prev, { role: 'user', text: trimmed }])
 
     try {
-      const resp = await fetch('/api/assistant-router', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: trimmed,
-          events: events.map((e) => ({ _id: e._id, title: e.title, country: e.country, category: e.category })),
-          currentTargets: targets,
-          currentEventId: selectedEventId,
-        }),
-      })
+      if (activeFlow === 'refuge_fill') {
+        const resp = await fetch('/api/voice-assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: trimmed,
+            values: refugeValues,
+          }),
+        })
 
-      if (!resp.ok) {
-        toast.error('助手暂时不可用 / Assistant unavailable')
-        return
-      }
+        if (!resp.ok) {
+          toast.error('助手暂时不可用 / Assistant unavailable')
+          return
+        }
 
-      const data = (await resp.json()) as RouterResponse
-      setTargets(Array.isArray(data.targets) ? data.targets : [])
-      if (data.eventId) setSelectedEventId(data.eventId)
+        const data = (await resp.json()) as {
+          updates?: RefugeFormValues
+          assistantMessage?: string
+          nextQuestion?: string
+          done?: boolean
+        }
 
-      const combined = [data.assistantMessage, data.nextQuestion].filter(Boolean).join('\n')
-      if (combined) {
-        setMessages((prev) => [...prev, { role: 'assistant', text: combined }])
-        speak(combined)
+        const updates = (data?.updates ?? {}) as RefugeFormValues
+        const merged = { ...refugeValues, ...updates }
+        setRefugeValues(merged)
+        setRefugeDone(Boolean(data?.done) || !firstMissingRefugeField(merged))
+        if (updates && Object.keys(updates).length > 0) {
+          toast.success('已更新皈依资料 / Updated refuge details')
+        }
+
+        const combined = [data.assistantMessage, data.nextQuestion].filter(Boolean).join('\n')
+        if (combined) {
+          setMessages((prev) => [...prev, { role: 'assistant', text: combined }])
+          speak(combined)
+        } else {
+          const missing = firstMissingRefugeField(merged)
+          if (missing) {
+            const q = refugeQuestionForField(missing)
+            setMessages((prev) => [...prev, { role: 'assistant', text: q }])
+            speak(q)
+          }
+        }
+      } else {
+        const resp = await fetch('/api/assistant-router', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: trimmed,
+            events: events.map((e) => ({ _id: e._id, title: e.title, country: e.country, category: e.category })),
+            currentTargets: targets,
+            currentEventId: selectedEventId,
+          }),
+        })
+
+        if (!resp.ok) {
+          toast.error('助手暂时不可用 / Assistant unavailable')
+          return
+        }
+
+        const data = (await resp.json()) as RouterResponse
+        const nextTargets = Array.isArray(data.targets) ? data.targets : []
+        setTargets(nextTargets)
+        if (data.eventId) setSelectedEventId(data.eventId)
+
+        // If user asked for refuge registration, switch to fill mode right away.
+        if (nextTargets.includes('refuge_registration') && !nextTargets.includes('event_registration')) {
+          setActiveFlow('refuge_fill')
+        }
+
+        const combined = [data.assistantMessage, data.nextQuestion].filter(Boolean).join('\n')
+        if (combined) {
+          setMessages((prev) => [...prev, { role: 'assistant', text: combined }])
+          speak(combined)
+        }
       }
     } catch (e) {
       console.error(e)
@@ -235,6 +327,52 @@ export function UnifiedRegistrationAssistant() {
       </Card>
 
       <div className="mt-6 space-y-4">
+        {activeFlow === 'refuge_fill' && (
+          <Card className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-semibold text-gray-900 mb-1">皈依报名（在此页面完成）/ Refuge Registration (fill here)</div>
+                <div className="text-xs text-gray-600">
+                  我会按必填项逐一提问，并把答案整理成表格资料。/ I’ll ask required questions one by one and build the form for you.
+                </div>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setActiveFlow('router')}>
+                返回 / Back
+              </Button>
+            </div>
+
+            <div className="mt-3 text-sm text-gray-700">
+              <div className="font-semibold text-gray-900 mb-2">当前已收集 / Collected</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {(
+                  [
+                    ['chineseName', '中文姓名'],
+                    ['englishName', '英文姓名'],
+                    ['age', '年龄'],
+                    ['dob', '出生日期'],
+                    ['gender', '性别'],
+                    ['contactNumber', '联系号码'],
+                    ['address', '地址'],
+                  ] as Array<[keyof RefugeFormValues, string]>
+                ).map(([k, label]) => (
+                  <div key={String(k)} className="rounded-md border border-gray-200 bg-white px-3 py-2">
+                    <div className="text-xs text-gray-500">{label}</div>
+                    <div className="text-sm text-gray-900">{String(refugeValues?.[k] ?? '').trim() || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" asChild>
+                <Link href={buildRefugePrefillHref(refugeValues)} prefetch={false}>
+                  {refugeDone ? '打开表格并提交 / Open form & submit' : '打开表格（已预填）/ Open form (prefilled)'}
+                </Link>
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {targets.includes('event_registration') && (
           <Card className="p-4">
             <div className="font-semibold text-gray-900 mb-2">活动报名 / Event Registration</div>
@@ -278,11 +416,22 @@ export function UnifiedRegistrationAssistant() {
         {targets.includes('refuge_registration') && (
           <Card className="p-4">
             <div className="font-semibold text-gray-900 mb-2">皈依报名 / Refuge Registration</div>
-            <Button type="button" asChild>
-              <Link href="/refuge-registration" prefetch={false}>
-                前往皈依报名表 / Go to refuge form
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  setActiveFlow('refuge_fill')
+                  setTargets((prev) => (prev.includes('refuge_registration') ? prev : [...prev, 'refuge_registration']))
+                }}
+              >
+                在此页面由助手提问并填写 / Fill here with assistant
+              </Button>
+              <Button type="button" variant="outline" asChild>
+                <Link href={buildRefugePrefillHref(refugeValues)} prefetch={false}>
+                  直接打开表格 / Open form
+                </Link>
+              </Button>
+            </div>
           </Card>
         )}
       </div>
