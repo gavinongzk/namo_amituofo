@@ -212,8 +212,21 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     for (const constraints of tryConstraints) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        // Validate stream exists and has video tracks (important for Android compatibility)
+        if (!stream) {
+          throw new Error('Camera stream is null. Please try again or refresh the page.');
+        }
+        
+        const videoTracks = stream.getVideoTracks();
+        if (!videoTracks || videoTracks.length === 0) {
+          // Clean up the stream before trying next constraint
+          stream.getTracks().forEach((t) => t.stop());
+          throw new Error('Camera stream has no video tracks.');
+        }
+        
         // Always attach stream + track to refs only after we know we can use them.
-        const track = stream.getVideoTracks()[0] || null;
+        const track = videoTracks[0] || null;
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
