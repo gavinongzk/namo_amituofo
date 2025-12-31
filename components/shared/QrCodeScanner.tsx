@@ -22,6 +22,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const lastScanRef = useRef<{ value: string; at: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoTrackRef = useRef<MediaStreamTrack | null>(null);
+  const isStoppingRef = useRef<boolean>(false);
 
   const handleSuccessfulScan = useCallback((text: string) => {
     // Vibrate if supported
@@ -143,15 +144,32 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   }, [activeCameraId, handleSuccessfulScan, listCameras]);
 
   const stopScanning = useCallback(async () => {
-    if (scannerRef.current && isScanning) {
+    // Prevent multiple simultaneous stop operations
+    if (isStoppingRef.current) {
+      return;
+    }
+    
+    if (scannerRef.current) {
+      isStoppingRef.current = true;
       try {
-        await scannerRef.current.stop();
+        if (isScanning) {
+          await scannerRef.current.stop();
+          setIsScanning(false);
+        }
+        // Clear only after stop completes (or if not scanning)
+        try {
+          scannerRef.current.clear();
+        } catch (clearErr) {
+          // Ignore clear errors - scanner may already be cleared or in an invalid state
+          console.warn('Error clearing scanner (may be expected):', clearErr);
+        }
       } catch (err) {
         console.error('Error stopping scanner:', err);
+        setIsScanning(false);
+      } finally {
+        isStoppingRef.current = false;
+        videoTrackRef.current = null;
       }
-      scannerRef.current.clear();
-      setIsScanning(false);
-      videoTrackRef.current = null;
     }
   }, [isScanning]);
 
@@ -185,22 +203,21 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     setError(undefined);
     
     try {
-      // Use a temporary scanner instance for file scanning (scanFile doesn't need container ID)
-      const tempScanner = new Html5Qrcode(containerRef.current?.id || 'temp-qr-reader');
-      try {
-        const decodedText = await tempScanner.scanFile(file, false);
-        if (decodedText) {
-          handleSuccessfulScan(decodedText.trim());
-        } else {
-          throw new Error('No QR code found in the selected image.');
-        }
-      } finally {
-        // Clean up temp scanner
-        try {
-          await tempScanner.clear();
-        } catch {
-          // Ignore cleanup errors
-        }
+      // Use the existing scanner instance if available, otherwise create a temporary one
+      let scannerToUse = scannerRef.current;
+      if (!scannerToUse && containerRef.current) {
+        scannerToUse = new Html5Qrcode(containerRef.current.id);
+      } else if (!scannerToUse) {
+        // Fallback: create a temporary scanner (scanFile doesn't require active scanning)
+        scannerToUse = new Html5Qrcode('qr-reader');
+      }
+      
+      const decodedText = await scannerToUse.scanFile(file, false);
+      // scanFile is independent of camera scanning - no need to stop/clear
+      if (decodedText) {
+        handleSuccessfulScan(decodedText.trim());
+      } else {
+        throw new Error('No QR code found in the selected image.');
       }
     } catch (err: any) {
       console.error('Failed to decode image QR:', err);
@@ -230,17 +247,18 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
     
     return () => {
-      stopScanning();
+      // Clean up when camera changes or component unmounts
+      if (isScanning) {
+        stopScanning();
+      }
     };
-  }, [activeCameraId]);
+  }, [activeCameraId, isScanning, startScanning, stopScanning]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // stopScanning already handles cleanup
       stopScanning();
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
     };
   }, [stopScanning]);
 
