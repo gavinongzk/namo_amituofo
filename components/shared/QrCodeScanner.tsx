@@ -26,6 +26,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const scannerRef = useRef<{ stop: () => void }>();
   const [isActive, setIsActive] = useState(true);
+  const [needsUserGesture, setNeedsUserGesture] = useState(false);
+  const [isDecodingImage, setIsDecodingImage] = useState(false);
   const [restartNonce, setRestartNonce] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
   const [retryDelay, setRetryDelay] = useState(3); // seconds
@@ -38,6 +40,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const barcodeDetectorRef = useRef<BarcodeDetectorLike | null>(null);
   const lastScanRef = useRef<{ value: string; at: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     // Check if running on Safari - keeping for future use
@@ -51,7 +54,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
 
     // Check if running in insecure context
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
       throw new Error('Camera access requires a secure (HTTPS) connection.');
     }
   }, []);
@@ -69,6 +72,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const retry = useCallback(() => {
     setIsRetrying(true);
     setError(undefined);
+    setNeedsUserGesture(false);
     setRestartNonce((n) => n + 1);
     // Small delay to avoid spinner flicker; scanning restarts via effect.
     setTimeout(() => setIsRetrying(false), 250);
@@ -132,6 +136,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }
 
     setTorchEnabled(false);
+    setNeedsUserGesture(false);
     videoTrackRef.current = null;
 
     if (streamRef.current) {
@@ -207,22 +212,43 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     for (const constraints of tryConstraints) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        streamRef.current = stream;
+        // Always attach stream + track to refs only after we know we can use them.
         const track = stream.getVideoTracks()[0] || null;
-        videoTrackRef.current = track;
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           try {
             await videoRef.current.play();
           } catch (playError) {
-            // If autoplay fails, surface a helpful message rather than silently failing.
-            throw new Error('Failed to start video stream. Please tap the video area or check browser autoplay settings.');
+            // Some browsers (notably iOS Safari / in-app browsers) require an explicit user gesture to start playback.
+            // Keep the stream attached, and let the user tap to start.
+            console.warn('Video play() blocked; waiting for user gesture:', playError);
+            setNeedsUserGesture(true);
           }
         }
 
+        streamRef.current = stream;
+        videoTrackRef.current = track;
         return stream;
       } catch (e) {
+        // Prevent leaking a camera stream on partial failures.
+        try {
+          const maybeStream = streamRef.current;
+          if (maybeStream) maybeStream.getTracks().forEach((t) => t.stop());
+        } catch {
+          // ignore
+        } finally {
+          streamRef.current = null;
+          videoTrackRef.current = null;
+          if (videoRef.current) {
+            try {
+              videoRef.current.pause();
+            } catch {
+              // ignore
+            }
+            videoRef.current.srcObject = null;
+          }
+        }
         lastErr = e;
       }
     }
@@ -293,6 +319,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
       // Ensure we start from a clean state.
       stopStreamAndScanner();
+      setNeedsUserGesture(false);
 
       // Request permission + start stream with best-effort rear camera selection.
       const stream = await startStream(activeCamera);
@@ -374,6 +401,57 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     stopStreamAndScanner({ close: true });
   };
 
+  const handleUserGestureStart = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      await video.play();
+      setNeedsUserGesture(false);
+    } catch (e) {
+      console.error('Still unable to start video playback:', e);
+      setError('Unable to start camera preview. Please try another browser (Safari/Chrome) or use "Scan from Photo".');
+    }
+  }, []);
+
+  const decodeFromImageFile = useCallback(
+    async (file: File) => {
+      setIsDecodingImage(true);
+      setError(undefined);
+      try {
+        // Prefer native BarcodeDetector for images if available.
+        ensureBarcodeDetector();
+        const detector = barcodeDetectorRef.current;
+        if (detector) {
+          const bitmap = await createImageBitmap(file);
+          const results = await detector.detect(bitmap);
+          const value = results?.[0]?.rawValue?.trim();
+          if (!value) throw new Error('No QR code found in the selected image.');
+          handleSuccessfulScan(value);
+          return;
+        }
+
+        // Fallback to ZXing image decode.
+        const url = URL.createObjectURL(file);
+        try {
+          const reader = new BrowserQRCodeReader();
+          const result = await reader.decodeFromImageUrl(url);
+          const text = result?.getText?.() || '';
+          const value = String(text).trim();
+          if (!value) throw new Error('No QR code found in the selected image.');
+          handleSuccessfulScan(value);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      } catch (e: any) {
+        console.error('Failed to decode image QR:', e);
+        setError(`Scan from photo failed: ${e?.message || 'Unknown error'}`);
+      } finally {
+        setIsDecodingImage(false);
+      }
+    },
+    [ensureBarcodeDetector, handleSuccessfulScan]
+  );
+
   useEffect(() => {
     if (!isActive) return;
     
@@ -382,6 +460,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     setRetryCount(0);
     setRetryDelay(3);
     lastScanRef.current = null;
+    setNeedsUserGesture(false);
     
     const cleanup = initializeScanner();
     return () => {
@@ -393,6 +472,20 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       });
     };
   }, [activeCamera, isActive, initializeScanner, restartNonce]);
+
+  // Refresh camera list if devices change (e.g., permission granted, camera plugged/unplugged).
+  useEffect(() => {
+    if (!navigator?.mediaDevices?.addEventListener) return;
+    const handler = () => {
+      listCameras().catch(() => {
+        // ignore
+      });
+    };
+    navigator.mediaDevices.addEventListener('devicechange', handler);
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', handler);
+    };
+  }, [listCameras]);
 
   // Pause camera when tab is hidden; resume when visible
   const pausedByVisibilityRef = useRef(false);
@@ -467,6 +560,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           autoPlay
           playsInline
           muted
+          onClick={() => {
+            if (needsUserGesture) void handleUserGestureStart();
+          }}
         />
         
         {/* Scanning Guide Overlay */}
@@ -498,6 +594,31 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               ))}
             </select>
           )}
+
+          {/* Scan from photo (fallback for browsers that block camera) */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              void decodeFromImageFile(file);
+              // reset so selecting the same file again re-triggers change
+              e.currentTarget.value = '';
+            }}
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="bg-background/80"
+            disabled={isDecodingImage}
+          >
+            {isDecodingImage ? 'Scanning…' : 'Scan Photo'}
+          </Button>
           
           <Button 
             onClick={toggleTorch}
@@ -520,6 +641,21 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             </Button>
           )}
         </div>
+
+        {/* iOS / in-app browser recovery: user gesture needed to start video playback */}
+        {needsUserGesture && !error && (
+          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+            <div className="text-center p-4 max-w-[320px]">
+              <p className="text-sm text-gray-900 mb-3">
+                Tap to start camera preview (required on some phones/browsers).<br />
+                某些手机/浏览器需要点击才能启动摄像头预览。
+              </p>
+              <Button onClick={() => void handleUserGestureStart()}>
+                Start Camera / 启动摄像头
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Error State */}
         {error && (
