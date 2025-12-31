@@ -23,6 +23,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoTrackRef = useRef<MediaStreamTrack | null>(null);
   const isStoppingRef = useRef<boolean>(false);
+  const isStartingRef = useRef<boolean>(false);
+  const camerasListedRef = useRef<boolean>(false);
 
   const handleSuccessfulScan = useCallback((text: string) => {
     // Vibrate if supported
@@ -33,9 +35,16 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   }, [onScan]);
 
   const listCameras = useCallback(async () => {
+    // Only list cameras once to avoid repeated permission prompts
+    if (camerasListedRef.current && cameras.length > 0) {
+      return cameras;
+    }
+    
     try {
       const devices = await Html5Qrcode.getCameras();
       setCameras(devices);
+      camerasListedRef.current = true;
+      
       if (devices.length > 0 && !activeCameraId) {
         // Prefer back camera on mobile devices
         const backCamera = devices.find(device => 
@@ -50,9 +59,19 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       console.error('Error listing cameras:', err);
       return [];
     }
-  }, [activeCameraId]);
+  }, [activeCameraId, cameras]);
 
   const startScanning = useCallback(async (cameraId?: string) => {
+    // Prevent multiple simultaneous start operations
+    if (isStartingRef.current || isStoppingRef.current) {
+      return;
+    }
+    
+    // Don't start if already scanning with the same camera
+    if (isScanning && scannerRef.current) {
+      return;
+    }
+
     if (!containerRef.current) return;
 
     const cameraIdToUse = cameraId || activeCameraId;
@@ -67,10 +86,12 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         c.label.toLowerCase().includes('environment')
       )?.id || cameras[0].id;
       setActiveCameraId(idToUse);
+      // Recursive call will be guarded by the checks above
       await startScanning(idToUse);
       return;
     }
 
+    isStartingRef.current = true;
     try {
       setError(undefined);
       
@@ -102,7 +123,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
           lastScanRef.current = { value: decodedText, at: nowMs };
           handleSuccessfulScan(decodedText);
         },
-        (errorMessage) => {
+        (_errorMessage) => {
           // Ignore scanning errors - they're expected when no QR is visible
         }
       );
@@ -140,8 +161,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       
       setError(errorMessage);
       setIsScanning(false);
+    } finally {
+      isStartingRef.current = false;
     }
-  }, [activeCameraId, handleSuccessfulScan, listCameras]);
+  }, [activeCameraId, handleSuccessfulScan, listCameras, isScanning]);
 
   const stopScanning = useCallback(async () => {
     // Prevent multiple simultaneous stop operations
@@ -235,39 +258,46 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     'getCapabilities' in videoTrackRef.current &&
     (videoTrackRef.current.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }).torch;
 
-  // Initialize cameras on mount
+  // Initialize cameras on mount (only once)
   useEffect(() => {
-    listCameras();
-  }, [listCameras]);
+    if (!camerasListedRef.current) {
+      listCameras();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - listCameras is stable
 
   // Start scanning when camera is selected
   useEffect(() => {
-    if (activeCameraId && !isScanning) {
+    if (activeCameraId && !isScanning && !isStartingRef.current) {
       startScanning();
     }
     
     return () => {
-      // Clean up when camera changes or component unmounts
+      // Clean up when camera changes
       if (isScanning) {
         stopScanning();
       }
     };
-  }, [activeCameraId, isScanning, startScanning, stopScanning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCameraId]); // Only trigger on camera change - functions are stable
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // stopScanning already handles cleanup
       stopScanning();
     };
-  }, [stopScanning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only cleanup on unmount - stopScanning is stable
 
-  // Handle visibility change
+  // Handle visibility change (only pause/resume, don't recreate)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
-        stopScanning();
-      } else if (activeCameraId) {
+        if (isScanning) {
+          stopScanning();
+        }
+      } else if (activeCameraId && !isScanning && !isStartingRef.current) {
+        // Only resume if we have a camera and we're not already scanning/starting
         startScanning();
       }
     };
@@ -276,7 +306,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [activeCameraId, startScanning, stopScanning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCameraId, isScanning]); // Only depend on what we check - functions are stable
 
   return (
     <div className="relative w-full max-w-[500px] mx-auto px-2 sm:px-0">
