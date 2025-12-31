@@ -62,7 +62,8 @@ async function reassignQueueNumbers(eventId: string) {
     const qrCodeData = `${eventId}_${newQueueNumber}_${registrationHash}`;
     const qrCode = await QRCode.toDataURL(qrCodeData, {
       errorCorrectionLevel: 'H',
-      margin: 2,
+      margin: 4,
+      width: 512,
       color: {
         dark: '#000000',
         light: '#FFFFFF',

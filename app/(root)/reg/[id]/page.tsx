@@ -87,11 +87,12 @@ const isPostalCodeField = (field: CustomField): boolean => {
          label.includes('邮政编码');
 };
 
-const QRCodeDisplay = React.memo(function QRCodeDisplay({ qrCode, isAttended, isNewlyMarked, queueNumber }: { 
+const QRCodeDisplay = React.memo(function QRCodeDisplay({ qrCode, isAttended, isNewlyMarked, queueNumber, mode }: { 
   qrCode: string, 
   isAttended: boolean,
   isNewlyMarked?: boolean,
-  queueNumber?: string
+  queueNumber?: string,
+  mode?: 'pretty' | 'scan'
 }) {
   return (
     <div className="w-full h-full flex items-center justify-center">
@@ -100,6 +101,7 @@ const QRCodeDisplay = React.memo(function QRCodeDisplay({ qrCode, isAttended, is
         isAttended={isAttended}
         isNewlyMarked={isNewlyMarked}
         queueNumber={queueNumber}
+        mode={mode}
       />
     </div>
   );
@@ -208,6 +210,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const debugRefuge = searchParams?.get('debugRefuge') === '1';
   const [showRefugeDialog, setShowRefugeDialog] = useState(false);
   const [selectedRefugeIndex, setSelectedRefugeIndex] = useState(0);
+  const [qrPreview, setQrPreview] = useState<{
+    qrCode: string;
+    queueNumber?: string;
+    participantLabel?: string;
+  } | null>(null);
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/sounds/success-beep.mp3');
@@ -896,6 +903,54 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               </DialogContent>
             </Dialog>
 
+            <Dialog
+              open={!!qrPreview}
+              onOpenChange={(open) => {
+                if (!open) setQrPreview(null);
+              }}
+            >
+              <DialogContent className="max-w-md w-[96vw]">
+                <DialogHeader>
+                  <DialogTitle>二维码 QR Code</DialogTitle>
+                  <DialogDescription>
+                    {qrPreview?.participantLabel ? `${qrPreview.participantLabel} — ` : ''}
+                    {qrPreview?.queueNumber ? `Queue #${qrPreview.queueNumber}` : ''}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {qrPreview?.qrCode && (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 w-[82vw] max-w-[360px] aspect-square">
+                      <QRCodeDisplay
+                        qrCode={qrPreview.qrCode}
+                        isAttended={false}
+                        isNewlyMarked={false}
+                        queueNumber={qrPreview.queueNumber}
+                        mode="scan"
+                      />
+                    </div>
+                    <div className="text-xs text-gray-600 text-center">
+                      提示：把手机屏幕亮度调高，会更容易扫描。<br />
+                      Tip: Increase screen brightness for faster scanning.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={() => setQrPreview(null)}>
+                        关闭 / Close
+                      </Button>
+                      <Button type="button" asChild>
+                        <a
+                          href={qrPreview.qrCode}
+                          download={`qr-${qrPreview.queueNumber || 'code'}.png`}
+                        >
+                          保存二维码 / Save
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
             {debugRefuge && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-900">
                 <div className="font-semibold mb-2">Debug: refuge redirect</div>
@@ -979,14 +1034,33 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                     <div className="p-4 flex justify-center">
                       <div className="text-center mb-6 max-w-[250px]">
                         <h6 className="text-lg font-semibold mb-3 text-center">二维码 QR Code</h6>
-                        <div className="flex justify-center w-[200px] h-[200px] mx-auto">
-                          <QRCodeDisplay 
-                            qrCode={group.qrCode} 
-                            isAttended={!!group.attendance}
-                            isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
-                            queueNumber={group.queueNumber}
-                          />
-                        </div>
+                        <button
+                          type="button"
+                          className="mx-auto block"
+                          onClick={() => {
+                            const qr = group.qrCode;
+                            if (!qr) return;
+                            setQrPreview({
+                              qrCode: qr,
+                              queueNumber: group.queueNumber,
+                              participantLabel: `${toChineseOrdinal(index + 1)}参加者 / Participant ${index + 1}`,
+                            });
+                          }}
+                          aria-label="Enlarge QR code"
+                        >
+                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-2 w-[72vw] max-w-[280px] aspect-square mx-auto">
+                            <QRCodeDisplay 
+                              qrCode={group.qrCode} 
+                              isAttended={!!group.attendance}
+                              isNewlyMarked={newlyMarkedGroups.has(group.groupId)}
+                              queueNumber={group.queueNumber}
+                              mode="scan"
+                            />
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500">
+                            点击放大 / Tap to enlarge
+                          </div>
+                        </button>
                         {group.queueNumber && (
                           <div className="mt-4 text-center">
                             <p className="text-sm text-primary-600 font-medium mb-2">点名队列号 Attendance Queue Number</p>

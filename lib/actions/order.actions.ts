@@ -97,7 +97,10 @@ export async function createOrder(order: CreateOrderParams) {
       const qrCodeData = `${order.eventId}_${newQueueNumber}_${registrationHash}`;
       const qrCode = await QRCode.toDataURL(qrCodeData, {
         errorCorrectionLevel: 'H',
-        margin: 2,
+        // Larger quiet zone helps scanning from phone screens (especially in bright sun / low-end cameras).
+        margin: 4,
+        // Generate a higher-resolution raster so the QR stays crisp when scaled up in the UI.
+        width: 512,
         color: {
           dark: '#000000',
           light: '#FFFFFF'

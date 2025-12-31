@@ -9,13 +9,19 @@ interface QrCodeWithLogoProps {
   isAttended: boolean;
   isNewlyMarked?: boolean;
   queueNumber?: string;
+  /**
+   * - pretty: branded QR (with logo). Best for display.
+   * - scan: optimized for scanners (no logo, extra quiet zone, crisp modules).
+   */
+  mode?: 'pretty' | 'scan';
 }
 
 const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({ 
   qrCode, 
   isAttended,
   isNewlyMarked,
-  queueNumber 
+  queueNumber,
+  mode = 'pretty',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,41 +44,51 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
 
     const qrCodeImage = new Image();
     qrCodeImage.onload = () => {
+      // Set high DPI for sharper rendering
+      const scale = window.devicePixelRatio || 1;
+
+      // Add an extra quiet-zone on top of whatever margin exists in the QR image itself.
+      // This makes scanning more reliable (especially when the QR is inside a busy UI).
+      const extraQuietZone = mode === 'scan' ? Math.round(qrCodeImage.width * 0.12) : 0;
+      const outWidth = qrCodeImage.width + extraQuietZone * 2;
+      const outHeight = qrCodeImage.height + extraQuietZone * 2;
+      const scaledWidth = outWidth * scale;
+      const scaledHeight = outHeight * scale;
+
+      // Set canvas dimensions with scale
+      canvas.width = scaledWidth;
+      canvas.height = scaledHeight;
+      // Important: keep a high-DPI internal canvas for sharpness, but always
+      // scale the displayed canvas to fit its container to avoid clipping
+      // in fixed-size wrappers (e.g. duplicate registration dialog).
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.display = 'block';
+
+      // Reset transforms and scale context to match device pixel ratio
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(scale, scale);
+
+      // Fill white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, outWidth, outHeight);
+
+      // Draw QR code as crisply as possible (no smoothing).
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(qrCodeImage, extraQuietZone, extraQuietZone, qrCodeImage.width, qrCodeImage.height);
+
+      // For scan mode, stop here (no logo overlay).
+      if (mode === 'scan') {
+        setIsLoading(false);
+        return;
+      }
+
       const logoImage = new Image();
       logoImage.onload = () => {
-        // Set high DPI for sharper rendering
-        const scale = window.devicePixelRatio || 1;
-        const scaledWidth = qrCodeImage.width * scale;
-        const scaledHeight = qrCodeImage.height * scale;
-
-        // Set canvas dimensions with scale
-        canvas.width = scaledWidth;
-        canvas.height = scaledHeight;
-        // Important: keep a high-DPI internal canvas for sharpness, but always
-        // scale the displayed canvas to fit its container to avoid clipping
-        // in fixed-size wrappers (e.g. duplicate registration dialog).
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.display = 'block';
-
-        // Enable image smoothing for better quality
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        // Scale context to match device pixel ratio
-        ctx.scale(scale, scale);
-
-        // Fill white background
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, qrCodeImage.width, qrCodeImage.height);
-
-        // Draw QR code
-        ctx.drawImage(qrCodeImage, 0, 0, qrCodeImage.width, qrCodeImage.height);
-
-        // Calculate logo size (20% of QR code size for better readability)
-        const logoSize = qrCodeImage.width * 0.2;
-        const logoX = (qrCodeImage.width - logoSize) / 2;
-        const logoY = (qrCodeImage.height - logoSize) / 2;
+        // Calculate logo size (smaller = easier scanning). Use the QR image size, not including extra quiet zone.
+        const logoSize = qrCodeImage.width * 0.16;
+        const logoX = extraQuietZone + (qrCodeImage.width - logoSize) / 2;
+        const logoY = extraQuietZone + (qrCodeImage.height - logoSize) / 2;
 
         // Create a circular clip path for the logo with anti-aliasing
         ctx.save();
@@ -93,6 +109,9 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         
         // Clip and draw the logo
         ctx.clip();
+        // Smoothing is fine for the logo itself.
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(
           logoImage,
           logoX - padding,
@@ -107,10 +126,13 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
       logoImage.onerror = (e) => {
         console.error('Failed to load logo image:', e);
         // Draw QR code without logo as fallback
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(scale, scale);
+        ctx.clearRect(0, 0, outWidth, outHeight);
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(qrCodeImage, 0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, outWidth, outHeight);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrCodeImage, extraQuietZone, extraQuietZone, qrCodeImage.width, qrCodeImage.height);
         setIsLoading(false);
       };
       logoImage.src = logoSrc;
@@ -121,7 +143,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
     };
     qrCodeImage.src = qrCode;
 
-  }, [qrCode, logoSrc]);
+  }, [qrCode, logoSrc, mode]);
 
   // Apply opacity and grayscale via CSS classes on the container
   const containerClasses = cn(
