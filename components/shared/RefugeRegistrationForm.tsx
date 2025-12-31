@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import { toast } from 'react-hot-toast'
 import { useUser } from '@clerk/nextjs'
 import { getCookie, setCookie } from 'cookies-next'
 import * as Sentry from '@sentry/nextjs'
 import 'react-phone-number-input/style.css'
+import { VoiceRefugeFormAssistant } from '@/components/shared/VoiceRefugeFormAssistant'
+import { refugeFormSchema, type RefugeFormData } from '@/lib/forms/refugeForm'
 
 const phoneInputStyles = `
   .phone-input-enhanced .PhoneInput {
@@ -64,18 +65,6 @@ const phoneInputStyles = `
 const getDefaultCountry = (country: string | null) => {
   return country === 'Malaysia' ? 'MY' : 'SG'
 }
-
-const refugeFormSchema = z.object({
-  chineseName: z.string().min(1, '中文姓名是必填项 / Chinese Name is required'),
-  englishName: z.string().min(1, '英文姓名是必填项 / English Name is required'),
-  age: z.string().min(1, '年龄是必填项 / Age is required').regex(/^\d+$/, '年龄必须是数字 / Age must be a number'),
-  dob: z.string().min(1, '出生日期是必填项 / Date of Birth is required'),
-  gender: z.string().min(1, '性别是必填项 / Gender is required'),
-  contactNumber: z.string().min(1, '联系号码是必填项 / Contact Number is required'),
-  address: z.string().min(1, '地址是必填项 / Address is required'),
-})
-
-export type RefugeFormData = z.infer<typeof refugeFormSchema>
 
 export type RefugeFormInitialValues = Partial<Pick<
   RefugeFormData,
@@ -261,6 +250,17 @@ export function RefugeRegistrationForm({
               <p className="text-gray-600 text-sm">* Indicates required question</p>
             </div>
           )}
+
+          <VoiceRefugeFormAssistant
+            disabled={isSubmitting}
+            getValues={() => form.getValues()}
+            applyUpdates={(updates) => {
+              for (const [k, v] of Object.entries(updates)) {
+                if (typeof v !== 'string') continue
+                form.setValue(k as keyof RefugeFormData, v, { shouldDirty: true, shouldValidate: true })
+              }
+            }}
+          />
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
