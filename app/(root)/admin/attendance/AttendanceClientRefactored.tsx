@@ -424,26 +424,26 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
         />
 
         {showScanner && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow-sm border mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-2">
                 <QrCodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
               </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <span className="text-lg">📋</span>
+              <div className="lg:col-span-1">
+                <h4 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 flex items-center gap-2">
+                  <span className="text-base sm:text-lg">📋</span>
                   Recent Scans
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-none overflow-y-auto">
                   {recentScans.length > 0 ? (
                     recentScans.map((scan, index) => (
-                      <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                        <div className="font-medium">{scan.name}</div>
+                      <div key={index} className="p-1.5 sm:p-2 bg-gray-50 rounded text-xs sm:text-sm">
+                        <div className="font-medium truncate">{scan.name}</div>
                         <div className="text-gray-500">Queue: {scan.queueNumber}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-gray-500 text-sm italic">No recent scans</div>
+                    <div className="text-gray-500 text-xs sm:text-sm italic">No recent scans</div>
                   )}
                 </div>
               </div>

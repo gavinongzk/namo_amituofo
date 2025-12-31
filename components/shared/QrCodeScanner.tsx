@@ -552,7 +552,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   }, [cameras, activeCamera, isActive]);
 
   return (
-    <div className="relative w-full max-w-[500px] mx-auto">
+    <div className="relative w-full max-w-[500px] mx-auto px-2 sm:px-0">
       <div className="relative aspect-square">
         <video 
           ref={videoRef}
@@ -568,89 +568,95 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         {/* Scanning Guide Overlay */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="w-full h-full relative">
-            {/* Corner guides - made larger */}
-            <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-primary-500" />
-            <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-primary-500" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-primary-500" />
-            <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-primary-500" />
+            {/* Corner guides - responsive sizing for mobile */}
+            <div className="absolute top-0 left-0 w-16 h-16 sm:w-24 sm:h-24 border-t-[3px] sm:border-t-4 border-l-[3px] sm:border-l-4 border-primary-500" />
+            <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 border-t-[3px] sm:border-t-4 border-r-[3px] sm:border-r-4 border-primary-500" />
+            <div className="absolute bottom-0 left-0 w-16 h-16 sm:w-24 sm:h-24 border-b-[3px] sm:border-b-4 border-l-[3px] sm:border-l-4 border-primary-500" />
+            <div className="absolute bottom-0 right-0 w-16 h-16 sm:w-24 sm:h-24 border-b-[3px] sm:border-b-4 border-r-[3px] sm:border-r-4 border-primary-500" />
             
             {/* Scanning line animation */}
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary-500 animate-scan" />
           </div>
         </div>
 
-        {/* Camera Controls */}
-        <div className="absolute top-4 right-4 flex gap-2 z-10">
-          {cameras.length > 1 && (
-            <select 
-              value={activeCamera}
-              onChange={e => setActiveCamera(e.target.value)}
-              className="bg-background/80 rounded-md px-2 py-1 text-sm"
-            >
-              {cameras.map(camera => (
-                <option key={camera.deviceId} value={camera.deviceId}>
-                  {camera.label || `Camera ${camera.deviceId.slice(0, 4)}`}
-                </option>
-              ))}
-            </select>
-          )}
+        {/* Camera Controls - Mobile optimized layout */}
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 flex flex-col sm:flex-row gap-1.5 sm:gap-2">
+          {/* Primary controls row (always visible) */}
+          <div className="flex gap-1.5 sm:gap-2">
+            {cameras.length > 1 && (
+              <select 
+                value={activeCamera}
+                onChange={e => setActiveCamera(e.target.value)}
+                className="bg-background/90 backdrop-blur-sm rounded-md px-1.5 sm:px-2 py-1 text-xs sm:text-sm border border-border/50 min-w-0 flex-shrink"
+              >
+                {cameras.map(camera => (
+                  <option key={camera.deviceId} value={camera.deviceId}>
+                    {camera.label || `Camera ${camera.deviceId.slice(0, 4)}`}
+                  </option>
+                ))}
+              </select>
+            )}
 
-          {/* Scan from photo (fallback for browsers that block camera) */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              void decodeFromImageFile(file);
-              // reset so selecting the same file again re-triggers change
-              e.currentTarget.value = '';
-            }}
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            size="sm"
-            className="bg-background/80"
-            disabled={isDecodingImage}
-          >
-            {isDecodingImage ? 'Scanning…' : 'Scan Photo'}
-          </Button>
-          
-          <Button 
-            onClick={toggleTorch}
-            variant="outline" 
-            size="icon"
-            className="bg-background/80"
-            disabled={!torchAvailable}
-          >
-            {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
-          </Button>
-          {/* Turn Off Camera Button */}
+            {/* Scan from photo (fallback for browsers that block camera) */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                void decodeFromImageFile(file);
+                // reset so selecting the same file again re-triggers change
+                e.currentTarget.value = '';
+              }}
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              size="sm"
+              className="bg-background/90 backdrop-blur-sm border-border/50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              disabled={isDecodingImage}
+            >
+              <span className="hidden sm:inline">{isDecodingImage ? 'Scanning…' : 'Scan Photo'}</span>
+              <span className="sm:hidden">{isDecodingImage ? '…' : '📷'}</span>
+            </Button>
+            
+            <Button 
+              onClick={toggleTorch}
+              variant="outline" 
+              size="icon"
+              className="bg-background/90 backdrop-blur-sm border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              disabled={!torchAvailable}
+            >
+              {torchEnabled ? <FlashlightOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Flashlight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+            </Button>
+          </div>
+
+          {/* Turn Off Camera Button - separate row on mobile */}
           {!error && isActive && (
             <Button 
               onClick={stopCamera}
               variant="destructive"
               size="sm"
-              className="bg-red-500 text-white ml-2"
+              className="bg-red-500/90 backdrop-blur-sm hover:bg-red-600 text-white text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9 w-full sm:w-auto"
             >
-              Turn Off Camera
+              <span className="hidden sm:inline">Turn Off Camera</span>
+              <span className="sm:hidden">Turn Off</span>
             </Button>
           )}
         </div>
 
         {/* iOS / in-app browser recovery: user gesture needed to start video playback */}
         {needsUserGesture && !error && (
-          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-            <div className="text-center p-4 max-w-[320px]">
-              <p className="text-sm text-gray-900 mb-3">
+          <div className="absolute inset-0 bg-background/60 flex items-center justify-center p-4">
+            <div className="text-center max-w-[280px] sm:max-w-[320px]">
+              <p className="text-xs sm:text-sm text-gray-900 mb-3">
                 Tap to start camera preview (required on some phones/browsers).<br />
                 某些手机/浏览器需要点击才能启动摄像头预览。
               </p>
-              <Button onClick={() => void handleUserGestureStart()}>
+              <Button onClick={() => void handleUserGestureStart()} className="text-xs sm:text-sm px-4 py-2">
                 Start Camera / 启动摄像头
               </Button>
             </div>
@@ -659,15 +665,16 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
 
         {/* Error State */}
         {error && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-            <div className="text-center p-4">
-              <p className="text-destructive mb-4 whitespace-pre-line">{error}</p>
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center p-4">
+            <div className="text-center max-w-full">
+              <p className="text-xs sm:text-sm text-destructive mb-4 whitespace-pre-line break-words">{error}</p>
               {retryCount >= maxRetries && (
                 <Button 
                   onClick={retry} 
                   disabled={isRetrying}
+                  className="text-xs sm:text-sm px-4 py-2"
                 >
-                  {isRetrying ? <Loader2Icon className="animate-spin" /> : '重试 / Retry'}
+                  {isRetrying ? <Loader2Icon className="animate-spin h-4 w-4" /> : '重试 / Retry'}
                 </Button>
               )}
             </div>
@@ -675,9 +682,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         )}
       </div>
 
-      <p className="mt-2 text-sm text-gray-600 text-center">
+      <p className="mt-2 text-xs sm:text-sm text-gray-600 text-center px-2">
         将二维码置于框内以进行扫描。
-        <br />
+        <br className="hidden sm:block" />
+        <span className="sm:hidden"> / </span>
         Position the QR code within the frame to scan.
       </p>
     </div>
