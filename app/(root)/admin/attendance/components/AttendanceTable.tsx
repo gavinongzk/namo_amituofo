@@ -146,7 +146,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 }}
                 className="border rounded px-3 py-2 h-10 bg-white"
               >
-                {[100, 200, 300].map(size => (
+                {[100, 200, 300, 400].map(size => (
                   <option key={size} value={size}>
                     Show {size}
                   </option>
