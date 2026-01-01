@@ -230,7 +230,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               }}
               className="border-2 border-gray-200 rounded-md px-3 py-2 h-11 bg-white focus:border-blue-500"
             >
-              {[50, 100, 200, 300].map(size => (
+              {[50, 100, 200, 300, 400].map(size => (
                 <option key={size} value={size}>
                   {size}
                 </option>
@@ -351,9 +351,11 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 {renderSortableHeader('Name 名字', 'name')}
                 {isSuperAdmin && renderSortableHeader('Phone 电话', 'phoneNumber')}
                 {isSuperAdmin && renderSortableHeader('Postal 邮区', 'postalCode')}
-                <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
-                  <span className="text-sm">Remarks 备注</span>
-                </th>
+                {isSuperAdmin && (
+                  <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
+                    <span className="text-sm">Remarks 备注</span>
+                  </th>
+                )}
                 <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
                   <span className="text-sm">Attendance 出席</span>
                 </th>
@@ -398,33 +400,35 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                     {isSuperAdmin && <td className="py-3 px-4 text-sm">{row.postalCode}</td>}
                     
                     {/* Remarks */}
-                    <td className="py-3 px-4">
-                      {isSuperAdmin && onRemarksUpdate ? (
-                        <div className="flex items-center gap-2 max-w-xs">
-                          <Input
-                            type="text"
-                            value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : (taggedUsers[row.phoneNumber] || '')}
-                            onChange={(e) => handleRemarkChange(row.registrationId, e.target.value)}
-                            className={cn(
-                              "h-8 text-sm",
-                              modifiedRemarks.has(row.registrationId) && "border-yellow-400 bg-yellow-50"
+                    {isSuperAdmin && (
+                      <td className="py-3 px-4">
+                        {onRemarksUpdate ? (
+                          <div className="flex items-center gap-2 max-w-xs">
+                            <Input
+                              type="text"
+                              value={remarks[row.registrationId] !== undefined ? remarks[row.registrationId] : (taggedUsers[row.phoneNumber] || '')}
+                              onChange={(e) => handleRemarkChange(row.registrationId, e.target.value)}
+                              className={cn(
+                                "h-8 text-sm",
+                                modifiedRemarks.has(row.registrationId) && "border-yellow-400 bg-yellow-50"
+                              )}
+                              placeholder="Remarks..."
+                            />
+                            {modifiedRemarks.has(row.registrationId) && (
+                              <Button
+                                onClick={() => handleRemarksSubmit(row.registrationId, row.phoneNumber, row.name)}
+                                size="sm"
+                                className="h-8 px-2"
+                              >
+                                <Save className="h-3 w-3" />
+                              </Button>
                             )}
-                            placeholder="Remarks..."
-                          />
-                          {modifiedRemarks.has(row.registrationId) && (
-                            <Button
-                              onClick={() => handleRemarksSubmit(row.registrationId, row.phoneNumber, row.name)}
-                              size="sm"
-                              className="h-8 px-2"
-                            >
-                              <Save className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
-                      )}
-                    </td>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                        )}
+                      </td>
+                    )}
                     
                     {/* Attendance */}
                     <td className="py-3 px-4">
