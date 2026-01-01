@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Flashlight, FlashlightOff, Loader2 as Loader2Icon, Settings } from 'lucide-react';
+import { Flashlight, FlashlightOff, Loader2 as Loader2Icon, Settings, RefreshCw } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Scanner types
@@ -720,6 +720,19 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     }, 300);
   }, [stopScanning, startScanning]);
 
+  const handleRetryCamera = useCallback(async () => {
+    setError(undefined);
+    await stopScanning();
+    
+    // Force refresh camera list
+    await listCameras();
+    
+    // Small delay before restarting
+    setTimeout(() => {
+      startScanning();
+    }, 500);
+  }, [stopScanning, listCameras, startScanning]);
+
   const torchAvailable = adapterRef.current?.getVideoTrack?.() && 
     'getCapabilities' in (adapterRef.current.getVideoTrack() as MediaStreamTrack) &&
     ((adapterRef.current.getVideoTrack() as MediaStreamTrack).getCapabilities() as MediaTrackCapabilities & { torch?: boolean }).torch;
@@ -847,6 +860,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
             >
               {torchEnabled ? <FlashlightOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Flashlight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             </Button>
+
+            {/* Retry Camera Button */}
+            <Button 
+              onClick={handleRetryCamera}
+              variant="outline" 
+              size="icon"
+              className="bg-background/90 backdrop-blur-sm border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              title="Retry Camera / 重试摄像头"
+            >
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
           </div>
 
           {/* Turn Off Camera Button */}
@@ -873,13 +897,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               <p className="text-xs sm:text-sm text-destructive mb-4 whitespace-pre-line break-words">{error}</p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <Button 
-                  onClick={() => {
-                    setError(undefined);
-                    startScanning();
-                  }}
+                  onClick={handleRetryCamera}
                   className="text-xs sm:text-sm px-4 py-2"
                 >
-                  Retry / 重试
+                  Retry Camera / 重试摄像头
                 </Button>
                 {scannerType !== 'html5-qrcode' && (
                   <Button 
