@@ -844,7 +844,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={() => fileInputRef.current?.click()}
               variant="outline"
               size="sm"
-              className="bg-background/90 backdrop-blur-sm border-border/50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="bg-white dark:bg-gray-800 border-border/50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
               disabled={isDecodingImage}
             >
               <span className="hidden sm:inline">{isDecodingImage ? 'Scanning…' : 'Scan Photo'}</span>
@@ -855,7 +855,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={toggleTorch}
               variant="outline" 
               size="icon"
-              className="bg-background/90 backdrop-blur-sm border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              className="bg-white dark:bg-gray-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
               disabled={!torchAvailable}
             >
               {torchEnabled ? <FlashlightOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Flashlight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
@@ -866,7 +866,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={handleRetryCamera}
               variant="outline" 
               size="icon"
-              className="bg-background/90 backdrop-blur-sm border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              className="bg-white dark:bg-gray-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
               title="Retry Camera / 重试摄像头"
             >
               <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -882,7 +882,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               }}
               variant="destructive"
               size="sm"
-              className="bg-red-500/90 backdrop-blur-sm hover:bg-red-600 text-white text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9 w-full sm:w-auto"
+              className="bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9 w-full sm:w-auto"
             >
               <span className="hidden sm:inline">Turn Off Camera</span>
               <span className="sm:hidden">Turn Off</span>
