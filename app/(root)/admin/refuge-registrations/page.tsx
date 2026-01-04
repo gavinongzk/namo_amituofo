@@ -91,15 +91,20 @@ export default function RefugeRegistrationsPage() {
         const data = await response.json()
         const regs: RefugeRegistration[] = data.registrations || []
         setRegistrations(regs)
+        // Update remarksDrafts to match fetched data, but preserve unsaved changes
         setRemarksDrafts((prev) => {
           const next = { ...prev }
           for (const r of regs) {
+            // Only update if there's no unsaved draft (to preserve user's typing)
+            // If the registration was just saved, it will be updated by handleSaveRemarks
             if (next[r._id] === undefined) {
               next[r._id] = r.remarks || ''
             }
           }
           return next
         })
+      } else {
+        console.error('Failed to fetch registrations:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error fetching refuge registrations:', error)
@@ -152,23 +157,57 @@ export default function RefugeRegistrationsPage() {
     if (!isSuperadmin) return
     try {
       setSavingRemarksId(registrationId)
+      const remarksValue = remarksDrafts[registrationId] ?? ''
+      
       const response = await fetch('/api/refuge-registration', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           registrationId,
-          remarks: remarksDrafts[registrationId] ?? ''
+          remarks: remarksValue
         })
       })
 
       if (response.ok) {
-        await fetchRegistrations()
+        const result = await response.json()
+        const updatedRegistration = result.registration
+        
+        if (updatedRegistration) {
+          // Update the local state with the server response to ensure consistency
+          setRegistrations((prev) =>
+            prev.map((reg) =>
+              reg._id === registrationId
+                ? { ...reg, remarks: updatedRegistration.remarks || '' }
+                : reg
+            )
+          )
+          // Update remarksDrafts to match the saved value so the save button becomes disabled
+          setRemarksDrafts((prev) => ({
+            ...prev,
+            [registrationId]: updatedRegistration.remarks || ''
+          }))
+        } else {
+          // Fallback: update with the value we sent if server didn't return registration
+          setRegistrations((prev) =>
+            prev.map((reg) =>
+              reg._id === registrationId
+                ? { ...reg, remarks: remarksValue }
+                : reg
+            )
+          )
+          setRemarksDrafts((prev) => ({
+            ...prev,
+            [registrationId]: remarksValue
+          }))
+        }
       } else {
-        alert('备注保存失败 / Failed to save remarks')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to save remarks:', errorData)
+        alert(`备注保存失败 / Failed to save remarks: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error saving remarks:', error)
-      alert('备注保存失败 / Failed to save remarks')
+      alert(`备注保存失败 / Failed to save remarks: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSavingRemarksId(null)
     }
