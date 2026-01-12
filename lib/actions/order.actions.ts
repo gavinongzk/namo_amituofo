@@ -678,7 +678,7 @@ export const getLastRegistrationByPhoneNumber = async (phoneNumber: string) => {
       }
     })
     .sort({ createdAt: -1 })
-    .lean();
+    .lean() as any;
 
     if (!lastOrder) return null;
 
