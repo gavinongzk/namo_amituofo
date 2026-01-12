@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getOrderById, getOrderDetailsWithoutExpirationCheck } from '@/lib/actions/order.actions';
-import { formatBilingualDateTime } from '@/lib/utils';
+import { formatBilingualDateTime, generateCalendarLink } from '@/lib/utils';
 import { CustomFieldGroup, CustomField } from '@/types';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
@@ -974,6 +974,28 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             )}
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
               <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event?.title || 'N/A'}</h4>
+              <div className="mt-2">
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs sm:text-sm border-primary-200 text-primary-700 hover:bg-primary-50"
+                >
+                  <a 
+                    href={generateCalendarLink({
+                      title: order.event.title,
+                      startDateTime: order.event.startDateTime,
+                      endDateTime: order.event.endDateTime,
+                      location: order.event.location,
+                      description: order.event.registrationSuccessMessage
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    📅 添加到日历 Add to Calendar
+                  </a>
+                </Button>
+              </div>
             </div>
 
             <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
@@ -988,7 +1010,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   </>
                 ) : 'N/A'}
               </p>
-              {order.event?.location && <p><span className="font-semibold">地点 Location:</span> {order.event.location}</p>}
+              {order.event?.location && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
+                  <p className="flex-1"><span className="font-semibold">地点 Location:</span> {order.event.location}</p>
+                  <Button 
+                    asChild 
+                    variant="link" 
+                    size="sm" 
+                    className="text-xs sm:text-sm text-primary-600 h-auto p-0 justify-start"
+                  >
+                    <a 
+                      href={convertToGoogleMapsLink(order.event.location).webUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      📍 获取路线 Get Directions
+                    </a>
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Display all participants sorted by queue number */}

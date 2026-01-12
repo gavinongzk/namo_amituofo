@@ -19,6 +19,11 @@ const EventList = dynamicImport(() =>
   { ssr: true }
 );
 
+const Search = dynamicImport(() => 
+  import('@/components/shared/Search'),
+  { ssr: true }
+);
+
 // Add progressive loading skeleton
 const EventSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -55,9 +60,14 @@ export default async function Home({ searchParams }: SearchParamProps) {
         {country === 'Singapore' ? '活动列表 / Latest Events' : 'Events'}
       </h2>
 
-      <Suspense fallback={<EventSkeleton />}>
-        <CategoryFilter />
-      </Suspense>
+      <div className="flex w-full flex-col gap-5 md:flex-row">
+        <Suspense fallback={<div className="h-10 w-full animate-pulse bg-gray-200 rounded-md" />}>
+          <Search />
+        </Suspense>
+        <Suspense fallback={<div className="h-10 w-40 animate-pulse bg-gray-200 rounded-md" />}>
+          <CategoryFilter />
+        </Suspense>
+      </div>
 
       <Suspense fallback={<EventSkeleton />}>
         <EventList 

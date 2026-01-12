@@ -99,7 +99,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   const [phoneCountries, setPhoneCountries] = useState<Record<number, string | null>>({});
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
-  const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
+  const [copyFromFirstState, setCopyFromFirstState] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number>(5);
   
   // New state for error handling and retry
@@ -548,8 +548,8 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     ));
     // Increment the number of forms to show
     setNumberOfFormsToShow(prev => prev + 1);
-    // Initialize the new person's postal checkbox as unchecked
-    setPostalCheckedState(prev => ({
+    // Initialize the new person's copy state as false
+    setCopyFromFirstState(prev => ({
       ...prev,
       [fields.length]: false
     }));
@@ -824,10 +824,47 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                       id={`person-${personIndex}`}
                       className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
                     >
-                      <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                      <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
                           {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
                         </h3>
+                        
+                        {personIndex > 0 && (
+                          <div className="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-lg border border-primary-200">
+                            <Checkbox
+                              id={`copy-from-first-${personIndex}`}
+                              checked={copyFromFirstState[personIndex] ?? false}
+                              onCheckedChange={(checked) => {
+                                setCopyFromFirstState(prev => ({
+                                  ...prev,
+                                  [personIndex]: !!checked
+                                }));
+                                
+                                if (checked) {
+                                  const firstPersonValues = form.getValues(`groups.0`);
+                                  Object.entries(firstPersonValues).forEach(([fieldId, value]) => {
+                                    // Copy everything EXCEPT name (usually unique)
+                                    // and specifically target phone and postal which are common
+                                    if (!fieldId.toLowerCase().includes('name')) {
+                                      form.setValue(`groups.${personIndex}.${fieldId}`, value, {
+                                        shouldValidate: true,
+                                        shouldDirty: true
+                                      });
+                                    }
+                                  });
+                                  toast.success(`已复制第一位参加者的资料 / Copied info from Participant 1`, { duration: 2000 });
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <label 
+                              htmlFor={`copy-from-first-${personIndex}`}
+                              className="text-xs sm:text-sm font-medium text-primary-700 cursor-pointer select-none"
+                            >
+                              与第一位相同 Same as Participant 1
+                            </label>
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
@@ -1004,32 +1041,8 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                             "切换回邮区编号验证 Switch back to postal code validation" : 
                                             "使用其他国家的邮区编号？点击这里 Using a postal code from another country? Click here"}
                                         </button>
-                                        {personIndex > 0 && (
-                                          <div className="flex items-center gap-2 mt-2">
-                                            <Checkbox
-                                              checked={postalCheckedState[personIndex] ?? false}
-                                              onCheckedChange={(checked) => {
-                                                setPostalCheckedState(prev => ({
-                                                  ...prev,
-                                                  [personIndex]: !!checked
-                                                }));
-                                                
-                                                if (checked) {
-                                                  const firstPersonPostal = form.getValues(`groups.0.${customField.id}`);
-                                                  form.setValue(`groups.${personIndex}.${customField.id}`, firstPersonPostal);
-                                                } else {
-                                                  form.setValue(`groups.${personIndex}.${customField.id}`, '');
-                                                }
-                                              }}
-                                              className="h-4 w-4"
-                                            />
-                                            <label className="text-sm text-gray-600">
-                                              与{toChineseOrdinal(1)}参加者相同 Same as Participant 1
-                                            </label>
-                                          </div>
-                                        )}
                                       </div>
-                                                                      ) : (
+                                    ) : (
                                     <div className="p-2 sm:p-4 bg-white rounded-md border border-gray-200">
                                       <div className="hidden sm:flex items-center gap-2 mb-3">
                                         <div className="w-2 h-2 bg-orange-500 rounded-full"></div>

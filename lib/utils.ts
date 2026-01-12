@@ -493,3 +493,13 @@ export async function getUserIpAddress(): Promise<string | null> {
     return null;
   }
 }
+
+export function generateCalendarLink(event: { title: string, startDateTime: string, endDateTime: string, location?: string, description?: string }) {
+  const start = new Date(event.startDateTime).toISOString().replace(/-|:|\.\d+/g, '');
+  const end = new Date(event.endDateTime).toISOString().replace(/-|:|\.\d+/g, '');
+  const title = encodeURIComponent(event.title);
+  const location = encodeURIComponent(event.location || '');
+  const description = encodeURIComponent(event.description || '');
+
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${description}&location=${location}`;
+}
