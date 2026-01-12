@@ -25,6 +25,7 @@ const phoneInputStyles = `
     border-radius: 0.5rem;
     overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
+    background: white;
   }
   
   .phone-input-enhanced .PhoneInput:focus-within {
@@ -33,31 +34,43 @@ const phoneInputStyles = `
     outline: none;
   }
   
+  .phone-input-enhanced .PhoneInputInput {
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    height: 3.5rem;
+    flex: 1;
+    outline: none;
+  }
+
+  .phone-input-enhanced .PhoneInputCountry {
+    border-right: 1px solid #e5e7eb;
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: center;
+    background: #fffaf0;
+  }
+  
   .phone-input-enhanced .PhoneInputCountrySelect {
     border: none;
-    border-right: 1px solid #e5e7eb;
-    padding: 0.75rem 0.5rem;
-    background: white;
+    padding: 0;
+    margin: 0;
     cursor: pointer;
+    background: transparent;
   }
   
   .phone-input-enhanced .PhoneInputCountrySelect:focus {
     outline: none;
   }
-  
-  .phone-input-enhanced .PhoneInputInput {
-    border: none;
-    border-radius: 0;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    line-height: 1.5rem;
+
+  .phone-input-enhanced .PhoneInputCountryIcon {
+    width: 1.5rem;
     height: auto;
-    flex: 1;
-    outline: none;
   }
-  
-  .phone-input-enhanced .PhoneInputInput:focus {
-    outline: none;
+
+  .phone-input-enhanced .PhoneInputCountrySelectArrow {
+    margin-left: 0.25rem;
   }
 `
 
@@ -390,7 +403,7 @@ export function RefugeRegistrationForm({
                                 withCountryCallingCode
                               />
                             </div>
-                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                            <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
                               <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
                               <span>Singapore (+65) or Malaysia (+60) numbers only</span>
                             </div>

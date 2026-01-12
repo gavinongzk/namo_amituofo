@@ -162,19 +162,7 @@ export function VoiceRefugeFormAssistant({
   }, [enabled])
 
   if (!enabled) {
-    return (
-      <div className="mb-6">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          onClick={() => setEnabled(true)}
-          className="w-full"
-        >
-          使用语音/聊天填写表格 / Use voice or chat to fill the form
-        </Button>
-      </div>
-    )
+    return null
   }
 
   return (

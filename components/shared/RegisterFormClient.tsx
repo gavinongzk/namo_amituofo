@@ -17,7 +17,7 @@ import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "react-hot-toast"
-import { PlusIcon, Loader2Icon, RefreshCwIcon } from 'lucide-react'
+import { PlusIcon, Loader2Icon, RefreshCwIcon, Wand2Icon } from 'lucide-react'
 import { debounce } from 'lodash';
 import * as Sentry from '@sentry/nextjs';
 import { validateSingaporePostalCode } from '@/lib/utils';
@@ -27,6 +27,7 @@ import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
 import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
 import { createRegistrationFormSchema } from '@/lib/validator';
 import { VoiceRegisterFormAssistant } from '@/components/shared/VoiceRegisterFormAssistant';
+import { getLastRegistrationByPhoneNumber } from '@/lib/actions/order.actions';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
@@ -101,6 +102,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [copyFromFirstState, setCopyFromFirstState] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number>(5);
+  const [isAutofilling, setIsAutofilling] = useState(false);
   
   // New state for error handling and retry
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -555,8 +557,79 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     }));
   };
 
+  const phoneFieldId = useMemo(() => customFields.find(f => f.type === 'phone')?.id, [customFields]);
+  const nameFieldId = useMemo(() => customFields.find(f => f.label.toLowerCase().includes('name'))?.id, [customFields]);
+
+  // Handle automatic pre-filling when phone number is entered
   useEffect(() => {
-    // Load saved form data from cookies
+    if (!phoneFieldId || !nameFieldId) return;
+
+    const firstPhone = form.watch(`groups.0.${phoneFieldId}`);
+    
+    if (firstPhone && typeof firstPhone === 'string' && isValidPhoneNumber(firstPhone)) {
+      const triggerAutofill = async () => {
+        // Only autofill if the name is still empty to avoid overwriting
+        const currentName = form.getValues(`groups.0.${nameFieldId}`);
+        if (!currentName || currentName === '') {
+          try {
+            setIsAutofilling(true);
+            const lastReg = await getLastRegistrationByPhoneNumber(firstPhone);
+            
+            if (lastReg && lastReg.fields) {
+              lastReg.fields.forEach((field: any) => {
+                // Don't autofill the refuge question or the phone number itself
+                if (!fieldLooksLikeRefugeQuestion(field) && field.id !== phoneFieldId) {
+                  form.setValue(`groups.0.${field.id}`, field.value, {
+                    shouldValidate: true,
+                    shouldDirty: true
+                  });
+                }
+              });
+              toast.success("已为您自动填写资料 / Details autofilled", { 
+                icon: '✨',
+                duration: 3000 
+              });
+            }
+          } catch (error) {
+            console.error("Autofill error:", error);
+          } finally {
+            setIsAutofilling(false);
+          }
+        }
+      };
+
+      const debouncedAutofill = debounce(triggerAutofill, 1000);
+      debouncedAutofill();
+      return () => debouncedAutofill.cancel();
+    }
+  }, [form.watch(`groups.0.${phoneFieldId || ''}`), phoneFieldId, nameFieldId, form]);
+
+  useEffect(() => {
+    // 1. Try to load from localStorage first (more comprehensive)
+    const savedGroups = localStorage.getItem('lastRegistrationGroups');
+    if (savedGroups) {
+      try {
+        const groups = JSON.parse(savedGroups);
+        if (Array.isArray(groups) && groups.length > 0) {
+          const firstPerson = groups[0];
+          const refugeFieldId = customFields.find(
+            (f) => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)
+          )?.id;
+
+          Object.entries(firstPerson).forEach(([fieldId, value]) => {
+            // Don't pre-fill refuge question from storage
+            if (fieldId !== refugeFieldId) {
+              form.setValue(`groups.0.${fieldId}`, value as string | boolean);
+            }
+          });
+          return; // Skip cookie loading if localStorage worked
+        }
+      } catch (e) {
+        console.error('Error parsing localStorage groups:', e);
+      }
+    }
+
+    // 2. Fallback to existing cookie logic
     const savedFormData = getCookie('lastUsedFields');
     if (savedFormData) {
       try {
@@ -583,6 +656,15 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   }, [customFields, form]);
 
   const saveFormData = (values: z.infer<typeof formSchema>) => {
+    // Save full groups to localStorage for better pre-filling next time
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('lastRegistrationGroups', JSON.stringify(values.groups));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    }
+
     const firstPerson = values.groups[0];
     const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
       // Don't save sensitive info
@@ -730,32 +812,59 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       </Dialog>
 
       <style jsx global>{`
-        .phone-input-enhanced .PhoneInputInput {
+        .phone-input-enhanced .PhoneInput {
+          display: flex;
+          align-items: stretch;
           border: 2px solid #e5e7eb;
           border-radius: 0.5rem;
+          overflow: hidden;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          background: white;
+        }
+
+        .phone-input-enhanced .PhoneInput:focus-within {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          outline: none;
+        }
+
+        .phone-input-enhanced .PhoneInputInput {
+          border: none;
           padding: 0.75rem 1rem;
           font-size: 1.125rem;
           line-height: 1.75rem;
-          height: 3rem;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        
-        .phone-input-enhanced .PhoneInputInput:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          height: 3.5rem;
+          flex: 1;
           outline: none;
         }
         
+        .phone-input-enhanced .PhoneInputCountry {
+          border-right: 1px solid #e5e7eb;
+          padding: 0 0.75rem;
+          display: flex;
+          align-items: center;
+          background: #f9fafb;
+        }
+
         .phone-input-enhanced .PhoneInputCountrySelect {
-          border: 2px solid #e5e7eb;
-          border-radius: 0.5rem 0 0 0.5rem;
-          padding: 0.75rem 0.5rem;
+          border: none;
+          padding: 0;
+          margin: 0;
+          cursor: pointer;
+          background: transparent;
         }
         
         .phone-input-enhanced .PhoneInputCountrySelect:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
           outline: none;
+        }
+
+        .phone-input-enhanced .PhoneInputCountryIcon {
+          width: 1.5rem;
+          height: auto;
+        }
+
+        .phone-input-enhanced .PhoneInputCountrySelectArrow {
+          margin-left: 0.25rem;
         }
       `}</style>
       <div className="max-w-3xl mx-auto">
@@ -825,9 +934,17 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                       className="bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden scroll-mt-6"
                     >
                       <div className="bg-gradient-to-r from-primary-500/10 to-transparent px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
-                          {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
-                        </h3>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg sm:text-xl font-semibold text-primary-700">
+                            {toChineseOrdinal(personIndex + 1)}参加者 / Participant {personIndex + 1}
+                          </h3>
+                          {personIndex === 0 && isAutofilling && (
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-100 rounded-full animate-pulse">
+                              <Loader2Icon className="h-3 w-3 animate-spin text-primary-600" />
+                              <span className="text-[10px] font-medium text-primary-700">查找资料中...</span>
+                            </div>
+                          )}
+                        </div>
                         
                         {personIndex > 0 && (
                           <div className="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-lg border border-primary-200">
@@ -897,7 +1014,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                       </div>
                                     ) : customField.type === 'phone' ? (
                                       <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md border border-gray-200">
-                                        <div className="hidden sm:flex items-center gap-2 mb-2">
+                                        <div className="flex items-center gap-2 mb-2">
                                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                           <span className="text-sm font-medium text-gray-700">Phone Number</span>
                                         </div>
@@ -941,7 +1058,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                 withCountryCallingCode
                                               />
                                             </div>
-                                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                                            <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
                                               <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
                                               <span>Singapore (+65) or Malaysia (+60) numbers only</span>
                                             </div>
@@ -1052,7 +1169,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                         {...formField}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 rounded-lg"
                                         value={String(formField.value)}
-                                          placeholder="e.g. 佛莲"
+                                          placeholder="请输入姓名 Please enter your name"
                                           onChange={(e) => {
                                             const sanitized = sanitizeName(e.target.value);
                                             formField.onChange(sanitized);

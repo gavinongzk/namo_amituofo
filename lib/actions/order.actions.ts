@@ -657,3 +657,44 @@ export const getOrderDetailsWithoutExpirationCheck = unstable_cache(
     tags: ['order-details', 'orders'] // Cache tags for invalidation
   }
 );
+
+export const getLastRegistrationByPhoneNumber = async (phoneNumber: string) => {
+  try {
+    await connectToDatabase();
+    
+    // Remove any cache-busting query params
+    const cleanPhoneNumber = phoneNumber.split('?')[0];
+    
+    // Find the most recent order with this phone number
+    const lastOrder = await Order.findOne({
+      'customFieldValues.fields': {
+        $elemMatch: {
+          $or: [
+            { type: 'phone', value: cleanPhoneNumber },
+            { label: { $regex: /phone/i }, value: cleanPhoneNumber },
+            { label: { $regex: /contact.?number/i }, value: cleanPhoneNumber }
+          ]
+        }
+      }
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+    if (!lastOrder) return null;
+
+    // Find the specific registration group within the order that matches the phone number
+    const group = lastOrder.customFieldValues.find((g: any) => 
+      g.fields.some((f: any) => 
+        (f.type === 'phone' || f.label.toLowerCase().includes('phone') || f.label.toLowerCase().includes('contact number')) && 
+        f.value === cleanPhoneNumber
+      )
+    );
+
+    if (!group) return null;
+
+    return JSON.parse(JSON.stringify(group));
+  } catch (error) {
+    console.error('Error in getLastRegistrationByPhoneNumber:', error);
+    return null;
+  }
+};
