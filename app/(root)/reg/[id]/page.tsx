@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { OrderDetailsPageProps } from '@/types';
 import { Pencil, X, Check, Loader2, RotateCcw, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import toast from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 import { convertPhoneNumbersToLinks, prepareRegistrationIdentifiers, toChineseOrdinal } from '@/lib/utils';
 import { eventDefaultValues } from "@/constants";
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
@@ -165,6 +165,7 @@ const UncancelButton = React.memo(function UncancelButton({ groupId, onUncancel,
 });
 
 const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) => {
+  const { toast } = useToast();
   const [order, setOrder] = useState<{
     _id: string;
     event: {
@@ -404,18 +405,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const handleCancellation = async (groupId: string, queueNumber?: string): Promise<void> => {
     if (!queueNumber) {
         console.error('Cannot cancel registration: queueNumber is required');
-        toast.error('取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '取消报名失败: 缺少队列号 / Cannot cancel registration: missing queue number',
         });
         return;
     }
     
     if (!order?.event?._id) {
         console.error('Cannot cancel registration: eventId is required');
-        toast.error('取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '取消报名失败: 缺少活动ID / Cannot cancel registration: missing event ID',
         });
         return;
     }
@@ -463,9 +466,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         });
 
         if (res.ok) {
-            toast.success('报名已成功取消 / Registration cancelled successfully', {
-                duration: 4000,
-                position: 'top-center',
+            toast({
+                title: "成功 / Success",
+                description: '报名已成功取消 / Registration cancelled successfully',
             });
             // Refetch data after successful cancellation to ensure state is accurate
             fetchOrderDetails();
@@ -475,9 +478,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             setRelatedOrders(oldRelatedOrders);
             const errorData = await res.json();
             console.error('Cancellation failed:', errorData);
-            toast.error(`取消报名失败: ${errorData.message || '未知错误'} / Failed to cancel registration: ${errorData.message || 'Unknown error'}`, {
-                duration: 4000,
-                position: 'top-center',
+            toast({
+                variant: "destructive",
+                title: "错误 / Error",
+                description: `取消报名失败: ${errorData.message || '未知错误'} / Failed to cancel registration: ${errorData.message || 'Unknown error'}`,
             });
         }
     } catch (error) {
@@ -485,9 +489,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         setOrder(oldOrder);
         setRelatedOrders(oldRelatedOrders);
         console.error('Error during cancellation:', error);
-        toast.error('取消报名失败: 网络错误 / Failed to cancel registration: Network error', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '取消报名失败: 网络错误 / Failed to cancel registration: Network error',
         });
     }
   };
@@ -495,18 +500,20 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
   const handleUncancellation = async (groupId: string, queueNumber: string): Promise<void> => {
     if (!queueNumber) {
         console.error('Cannot uncancel registration: queueNumber is required');
-        toast.error('恢复报名失败: 缺少队列号 / Cannot uncancel registration: missing queue number', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '恢复报名失败: 缺少队列号 / Cannot uncancel registration: missing queue number',
         });
         return;
     }
     
     if (!order?.event?._id) {
         console.error('Cannot uncancel registration: eventId is required');
-        toast.error('恢复报名失败: 缺少活动ID / Cannot uncancel registration: missing event ID', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '恢复报名失败: 缺少活动ID / Cannot uncancel registration: missing event ID',
         });
         return;
     }
@@ -554,9 +561,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         });
 
         if (res.ok) {
-            toast.success('报名已成功恢复 / Registration uncanceled successfully', {
-                duration: 4000,
-                position: 'top-center',
+            toast({
+                title: "成功 / Success",
+                description: '报名已成功恢复 / Registration uncanceled successfully',
             });
             // Refetch data after successful uncancellation to ensure state is accurate
             fetchOrderDetails();
@@ -566,9 +573,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             setRelatedOrders(oldRelatedOrders);
             const errorData = await res.json();
             console.error('Uncancellation failed:', errorData);
-            toast.error(`恢复报名失败: ${errorData.message || '未知错误'} / Failed to uncancel registration: ${errorData.message || 'Unknown error'}`, {
-                duration: 4000,
-                position: 'top-center',
+            toast({
+                variant: "destructive",
+                title: "错误 / Error",
+                description: `恢复报名失败: ${errorData.message || '未知错误'} / Failed to uncancel registration: ${errorData.message || 'Unknown error'}`,
             });
         }
     } catch (error) {
@@ -576,9 +584,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         setOrder(oldOrder);
         setRelatedOrders(oldRelatedOrders);
         console.error('Error during uncancellation:', error);
-        toast.error('恢复报名失败: 网络错误 / Failed to uncancel registration: Network error', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '恢复报名失败: 网络错误 / Failed to uncancel registration: Network error',
         });
     }
   };
@@ -600,9 +609,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     
     if (!currentGroup) {
         console.error('Could not find group with queue number:', queueNumber);
-        toast.error('Error: Could not find the correct registration to edit', {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: 'Error: Could not find the correct registration to edit',
         });
         return;
     }
@@ -716,9 +726,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
             sessionStorage.removeItem('eventLookupAllRegistrations');
         }
 
-        toast.success('成功更新 Successfully updated', {
-            duration: 3000,
-            position: 'top-center',
+        toast({
+            title: "成功 / Success",
+            description: '成功更新 Successfully updated',
         });
     } catch (error: any) {
         console.error('Error updating field:', error);
@@ -727,9 +737,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
         if (error.message) {
             errorMessage = error.message;
         }
-        toast.error(errorMessage, {
-            duration: 4000,
-            position: 'top-center',
+        toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: errorMessage,
         });
     }
   };
@@ -1095,9 +1106,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                   const queueNumber = group.queueNumber as string;
                                   if (!queueNumber) {
                                     console.error('Cannot save: missing queue number');
-                                    toast.error('Cannot save: missing queue number', {
-                                      duration: 4000,
-                                      position: 'top-center',
+                                    toast({
+                                        variant: "destructive",
+                                        title: "错误 / Error",
+                                        description: 'Cannot save: missing queue number',
                                     });
                                     return;
                                   }
@@ -1131,9 +1143,10 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                       const queueNumber = group.queueNumber as string;
                                       if (!queueNumber) {
                                         console.error('Cannot edit: missing queue number');
-                                        toast.error('Cannot edit: missing queue number', {
-                                          duration: 4000,
-                                          position: 'top-center',
+                                        toast({
+                                            variant: "destructive",
+                                            title: "错误 / Error",
+                                            description: 'Cannot edit: missing queue number',
                                         });
                                         return;
                                       }

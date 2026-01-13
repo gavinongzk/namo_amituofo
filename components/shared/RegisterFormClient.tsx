@@ -16,7 +16,7 @@ import { categoryCustomFields, CategoryName } from '@/constants'
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { toast } from "react-hot-toast"
+import { useToast } from "@/hooks/use-toast"
 import { PlusIcon, Loader2Icon, RefreshCwIcon } from 'lucide-react'
 import { debounce } from 'lodash';
 import * as Sentry from '@sentry/nextjs';
@@ -86,6 +86,7 @@ const isGroupEmpty = (group: any, customFields: CustomField[]) => {
 
 const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFormClientProps) => {
   const router = useRouter()
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('');
   const { user, isLoaded } = useUser();
@@ -133,9 +134,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       // Clear all cache first
       await clearAllCache();
       
-      // Show loading message
-      toast.loading("正在重试... / Retrying...", { id: 'retry-toast' });
-      
       // Wait a moment for cache clearing to take effect
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -146,11 +144,18 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       setShowErrorDialog(false);
       setErrorDetails('');
       
-      toast.success("页面已刷新，请重试。/ Page refreshed, please try again.", { id: 'retry-toast' });
+      toast({
+        title: "成功 / Success",
+        description: "页面已刷新，请重试。/ Page refreshed, please try again.",
+      });
       
     } catch (error) {
       console.error('Error during retry:', error);
-      toast.error("重试失败，请手动刷新页面。/ Retry failed, please refresh manually.", { id: 'retry-toast' });
+      toast({
+        variant: "destructive",
+        title: "错误 / Error",
+        description: "重试失败，请手动刷新页面。/ Retry failed, please refresh manually.",
+      });
     } finally {
       setIsRetrying(false);
     }
@@ -177,7 +182,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     setShowErrorDialog(true);
     
     // Show error toast
-    toast.error(errorMessage, { duration: 5000 });
+    toast({
+      variant: "destructive",
+      title: "错误 / Error",
+      description: errorMessage,
+    });
   };
 
   useEffect(() => {
@@ -311,7 +320,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     } catch (error) {
       console.error('Error checking phone numbers:', error);
       Sentry.captureException(error);
-      toast.error("检查电话号码时出错 / Error checking phone numbers.");
+      toast({
+        variant: "destructive",
+        title: "错误 / Error",
+        description: "检查电话号码时出错 / Error checking phone numbers.",
+      });
       return [];
     }
   };
@@ -324,8 +337,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     try {
       setIsSubmitting(true);
       
-      const toastId = toast.loading("检查报名详情中... / Checking registration details...");
-      
       saveFormData(values);
 
       // Filter out empty groups before further processing
@@ -333,8 +344,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
       // If all groups are empty after filtering, show a message and return
       if (filledGroups.length === 0) {
-        toast.dismiss(toastId);
-        toast.error("请至少填写一份报名表格。/ Please fill in at least one registration form.", { id: toastId, duration: 5000 });
+        toast({
+          variant: "destructive",
+          title: "错误 / Error",
+          description: "请至少填写一份报名表格。/ Please fill in at least one registration form.",
+        });
         setIsSubmitting(false);
         return;
       }
@@ -364,7 +378,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         }
         
         if (phoneValidationErrors.length > 0) {
-          toast.error(phoneValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: phoneValidationErrors.join('\n'),
+          });
           setIsSubmitting(false);
           return;
         }
@@ -414,7 +432,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         }
         
         if (postalValidationErrors.length > 0) {
-          toast.error(postalValidationErrors.join('\n'), { id: toastId, duration: 5000 });
+          toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: postalValidationErrors.join('\n'),
+          });
           setIsSubmitting(false);
           return;
         }
@@ -427,7 +449,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       } as any);
       
       if (duplicates.length > 0) {
-        toast.dismiss(toastId);
         setDuplicatePhoneNumbers(duplicates);
         setFormValues({...values, groups: filledGroups});
         setShowConfirmation(true);
@@ -435,7 +456,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         return;
       }
       
-      await submitForm({...values, groups: filledGroups}, toastId);
+      await submitForm({...values, groups: filledGroups});
     } catch (error: any) {
       console.error('Error in onSubmit:', error);
       setIsSubmitting(false);
@@ -444,11 +465,9 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     }
   };
 
-  const submitForm = async (values: z.infer<typeof formSchema>, toastId: string) => {
+  const submitForm = async (values: z.infer<typeof formSchema>) => {
     try {
       setMessage('');
-      
-      toast.loading("处理报名中... / Processing registration...", { id: toastId });
       
       const customFieldValues = values.groups.map((group, index) => ({
         groupId: `group_${index + 1}`,
@@ -496,7 +515,10 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       // Refresh the order count after successful submission
       await onRefresh();
       
-      toast.success("报名成功！/ Registration successful!", { id: toastId });
+      toast({
+        title: "成功 / Success",
+        description: "报名成功！/ Registration successful!",
+      });
       router.push(`/reg/${data.order._id}`);
     } catch (error: any) {
       console.error('Error submitting form:', error);
@@ -522,7 +544,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           }
         }
         
-        toast.error(errorMessage, { id: toastId, duration: 5000 });
+        toast({
+          variant: "destructive",
+          title: "错误 / Error",
+          description: errorMessage,
+        });
         setMessage(errorMessage);
       }
     } finally {
@@ -1171,7 +1197,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                   setShowConfirmation(false);
                   setIsSubmitting(true);
                   if (formValues) {
-                    submitForm(formValues, toast.loading("处理报名中... / Processing registration..."));
+                    submitForm(formValues);
                   }
                 }}
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
