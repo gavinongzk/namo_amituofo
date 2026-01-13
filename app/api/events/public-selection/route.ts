@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const country = searchParams.get('country') || 'Singapore'
 
-    // Public endpoint: do NOT depend on Clerk. This is used by the voice assistant page.
+    // Public endpoint: do NOT depend on Clerk.
     // Role omitted => treated as regular user (no drafts, normal expiration filtering).
     const events = await getEventsForSelection({ country, role: undefined })
 
