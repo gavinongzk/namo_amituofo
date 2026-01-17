@@ -261,7 +261,7 @@ export function RefugeRegistrationForm({
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full mb-4">
                 <span className="text-white text-xl">📝</span>
               </div>
-              <h2 className="text-2xl font-bold text-orange-800 mb-2">报名表格 / Registration Form</h2>
+              <h2 className="text-2xl font-bold text-orange-800 mb-2">三宝皈依报名表格 / Refuge Registration Form</h2>
               <p className="text-gray-600 text-sm">* Indicates required question</p>
             </div>
           )}
