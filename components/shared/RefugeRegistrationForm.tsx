@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import { toast } from 'react-hot-toast'
+import { useToast } from '@/hooks/use-toast'
 import { useUser } from '@clerk/nextjs'
 import { getCookie, setCookie } from 'cookies-next'
 import * as Sentry from '@sentry/nextjs'
@@ -81,6 +81,7 @@ export function RefugeRegistrationForm({
   autoFocusEnglishName?: boolean
   onSubmitted?: () => void
 }) {
+  const { toast } = useToast()
   const { user, isLoaded } = useUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -175,12 +176,20 @@ export function RefugeRegistrationForm({
       const phoneNumber = data.contactNumber || ''
       if (phoneOverride) {
         if (!/^\+\d+$/.test(phoneNumber)) {
-          toast.error('电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format. Must start with + followed by numbers')
+          toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '电话号码格式无效。必须以+开头，后跟数字 / Invalid phone number format. Must start with + followed by numbers'
+          })
           return
         }
       } else {
         if (!isValidPhoneNumber(phoneNumber)) {
-          toast.error('联系号码无效 / Invalid phone number')
+          toast({
+            variant: "destructive",
+            title: "错误 / Error",
+            description: '联系号码无效 / Invalid phone number'
+          })
           return
         }
       }
@@ -197,11 +206,18 @@ export function RefugeRegistrationForm({
       }
 
       setIsSubmitted(true)
-      toast.success('报名成功！/ Registration successful!')
+      toast({
+        title: "成功 / Success",
+        description: '报名成功！/ Registration successful!'
+      })
       onSubmitted?.()
     } catch (error: any) {
       console.error('Error submitting refuge registration:', error)
-      toast.error(error.message || '提交失败，请重试 / Submission failed, please try again')
+      toast({
+        variant: "destructive",
+        title: "错误 / Error",
+        description: error.message || '提交失败，请重试 / Submission failed, please try again'
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -245,7 +261,7 @@ export function RefugeRegistrationForm({
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full mb-4">
                 <span className="text-white text-xl">📝</span>
               </div>
-              <h2 className="text-2xl font-bold text-orange-800 mb-2">报名表格 / Registration Form</h2>
+              <h2 className="text-2xl font-bold text-orange-800 mb-2">三宝皈依报名表格 / Refuge Registration Form</h2>
               <p className="text-gray-600 text-sm">* Indicates required question</p>
             </div>
           )}
