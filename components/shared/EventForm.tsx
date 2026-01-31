@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
-import { eventDefaultValues, categoryCustomFields } from "@/constants"
+import { eventDefaultValues, categoryCustomFields, REFUGE_QUESTION_CATEGORY } from "@/constants"
 import { CategoryName } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
@@ -70,6 +70,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           startDateTime: new Date(event.startDateTime),
           endDateTime: new Date(event.endDateTime),
           categoryId: event.category._id,
+          showRefugeQuestion: event.showRefugeQuestion ?? true,
           customFields: event.customFields.map(field => ({
             id: field.id,
             label: field.label,
@@ -84,6 +85,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           ...eventDefaultValues,
           startDateTime: getNextSunday(13), // 1 PM
           endDateTime: getNextSunday(16), // 4 PM
+          showRefugeQuestion: true,
         }
   })
 
@@ -486,13 +488,42 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                           {field.label} ({field.type === 'radio' && (field as CustomField).options 
                             ? (field as CustomField).options?.map(opt => opt.label).join(' / ') 
                             : field.type.charAt(0).toUpperCase() + field.type.slice(1)})
-                          <span className="text-green-600 ml-2">(Will be included for this category)</span>
+                        <span className="text-green-600 ml-2">(Will be included for this category)</span>
                         </li>
                       ));
                     })()}
                   </ul>
                 </div>
               )}
+              {form.watch('categoryId') && (() => {
+                const selectedCategoryId = form.watch('categoryId');
+                const categoryName = event?.category?.name || categories?.find((cat: ICategory) => cat._id === selectedCategoryId)?.name;
+                if (categoryName !== REFUGE_QUESTION_CATEGORY) return null;
+                return (
+                  <FormField
+                    control={form.control}
+                    name="showRefugeQuestion"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mt-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value ?? true}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            包括皈依问题 / Include refuge question
+                          </FormLabel>
+                          <FormDescription>
+                            若勾选，报名表单将显示“请问您要皈依吗？”若选择“是”，完成报名后系统将引导填写皈依报名表单。 / If checked, the registration form will show &quot;Would you like to take refuge?&quot; Choosing &quot;Yes&quot; will guide users to the refuge registration form after submission.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                );
+              })()}
             </div>
           </div>
 

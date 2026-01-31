@@ -25,7 +25,8 @@ export const eventFormSchema = z.object({
     options: z.array(z.string()).optional()
   })),
   country: z.string(),
-  isDraft: z.boolean().optional()
+  isDraft: z.boolean().optional(),
+  showRefugeQuestion: z.boolean().optional()
 })
 
 // Helper function to create dynamic field validation

@@ -112,3 +112,6 @@ export const categoryCustomFields = {
 };
 
 export type CategoryName = keyof typeof categoryCustomFields;
+
+/** Category that has the optional refuge question. Admin can toggle it per event. */
+export const REFUGE_QUESTION_CATEGORY: CategoryName = '特别节日法会';
