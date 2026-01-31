@@ -66,7 +66,8 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       category: event.categoryId, 
       organizer: userId,
       customFields: event.customFields,
-      isDraft: isDraftValue
+      isDraft: isDraftValue,
+      showRefugeQuestion: event.showRefugeQuestion
     });
 
     console.log("New event created successfully:", newEvent);
@@ -132,7 +133,8 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
     const updateData: any = { 
       ...event, 
       category: event.categoryId,
-      customFields: event.customFields
+      customFields: event.customFields,
+      showRefugeQuestion: event.showRefugeQuestion
     };
     if (typeof event.isDraft !== 'undefined') {
       updateData.isDraft = event.isDraft;

@@ -19,6 +19,7 @@ export interface IEvent extends Document {
   country: string;
   isDeleted: boolean;
   isDraft?: boolean;
+  showRefugeQuestion?: boolean;
 }
 
 const EventSchema = new Schema({
@@ -40,7 +41,8 @@ const EventSchema = new Schema({
   }],
   maxSeats: { type: Number, required: true },
   isDeleted: { type: Boolean, default: false },
-  isDraft: { type: Boolean, default: true }
+  isDraft: { type: Boolean, default: true },
+  showRefugeQuestion: { type: Boolean, default: true }
 })
 
 // Add indexes for better query performance

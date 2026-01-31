@@ -24,6 +24,7 @@ export type CreateEventParams = {
     customFields: CustomField[]
     country: string
     isDraft?: boolean
+    showRefugeQuestion?: boolean
   }
   path: string
 }
@@ -42,6 +43,7 @@ export type UpdateEventParams = {
     customFields: CustomField[]
     country: string
     isDraft?: boolean
+    showRefugeQuestion?: boolean
   }
   path: string
 }
@@ -90,6 +92,7 @@ export type Event = {
   }
   customFields: CustomField[]
   isDraft?: boolean
+  showRefugeQuestion?: boolean
 }
 
 // ====== CATEGORY PARAMS

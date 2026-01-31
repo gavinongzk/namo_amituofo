@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import { categoryCustomFields, CategoryName } from '@/constants'
+import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORY } from '@/constants'
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -246,7 +246,11 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     detectCountry();
   }, [isLoaded, user]);
 
-  const customFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
+  const rawCustomFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
+  // Filter out refuge question when admin disabled it (only applies to 特别节日法会)
+  const customFields = (event.category.name === REFUGE_QUESTION_CATEGORY && event.showRefugeQuestion === false)
+    ? rawCustomFields.filter((f) => !fieldLooksLikeRefugeQuestion(f))
+    : rawCustomFields;
 
   const formSchema = createRegistrationFormSchema(customFields);
 
