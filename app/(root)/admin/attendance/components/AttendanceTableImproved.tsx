@@ -360,7 +360,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                   <span className="text-sm">Attendance 出席</span>
                 </th>
                 <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
-                  <span className="text-sm">Status 状态</span>
+                  <span className="text-sm">Cancel 取消</span>
                 </th>
                 {isSuperAdmin && (
                   <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50 w-16">
