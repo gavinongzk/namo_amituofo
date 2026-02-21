@@ -308,6 +308,10 @@ class JsqrAdapter implements ScannerAdapter {
         video: {
           deviceId: { exact: deviceId },
           facingMode: 'environment',
+          // Prefer a 720p-ish stream on mobile for a good balance
+          // between sharpness and decoding performance.
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       };
 
@@ -342,13 +346,34 @@ class JsqrAdapter implements ScannerAdapter {
       this.scanningInterval = setInterval(async () => {
         if (!video || !this.canvas || !this.ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
 
-        this.canvas.width = video.videoWidth;
-        this.canvas.height = video.videoHeight;
-        this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+        // Downscale the frame for much faster jsQR decoding,
+        // then scan only the central region where our UI asks the
+        // user to place the QR code.
+        const videoWidth = video.videoWidth || video.clientWidth || 0;
+        const videoHeight = video.videoHeight || video.clientHeight || 0;
+        if (!videoWidth || !videoHeight) return;
+
+        const targetMax = 640; // cap longest edge to ~640px for performance
+        const scale = Math.min(targetMax / videoWidth, targetMax / videoHeight, 1);
+        const scaledWidth = Math.floor(videoWidth * scale);
+        const scaledHeight = Math.floor(videoHeight * scale);
+
+        if (this.canvas.width !== scaledWidth || this.canvas.height !== scaledHeight) {
+          this.canvas.width = scaledWidth;
+          this.canvas.height = scaledHeight;
+        }
+
+        this.ctx.drawImage(video, 0, 0, scaledWidth, scaledHeight);
+
+        // Central square region (matches on-screen guide frame)
+        const minDim = Math.min(scaledWidth, scaledHeight);
+        const roiSize = Math.floor(minDim * 0.7); // 70% of min dimension
+        const roiX = Math.floor((scaledWidth - roiSize) / 2);
+        const roiY = Math.floor((scaledHeight - roiSize) / 2);
 
         try {
-          const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          const imageData = this.ctx.getImageData(roiX, roiY, roiSize, roiSize);
+          const code = jsQR(imageData.data, roiSize, roiSize);
           if (code && code.data) {
             void onScan(code.data);
           }
@@ -552,7 +577,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         return saved as ScannerType;
       }
     }
-    return 'html5-qrcode';
+    // Default to qr-scanner on first use; it's highly optimized
+    // for mobile (uses BarcodeDetector/WebWorker when available).
+    return 'qr-scanner';
   });
 
   const [error, setError] = useState<string>();

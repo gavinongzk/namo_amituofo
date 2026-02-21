@@ -931,7 +931,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                 {qrPreview?.qrCode && (
                   <div className="flex flex-col items-center gap-3">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 w-[82vw] max-w-[360px] aspect-square">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 w-[88vw] max-w-[400px] aspect-square">
                       <QRCodeDisplay
                         qrCode={qrPreview.qrCode}
                         isAttended={false}
@@ -1059,7 +1059,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                           }}
                           aria-label="Enlarge QR code"
                         >
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-2 w-[72vw] max-w-[280px] aspect-square mx-auto">
+                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-2 w-[78vw] max-w-[320px] aspect-square mx-auto">
                             <QRCodeDisplay 
                               qrCode={group.qrCode} 
                               isAttended={!!group.attendance}
