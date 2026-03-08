@@ -247,7 +247,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   }, [isLoaded, user]);
 
   const rawCustomFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
-  // Filter out refuge question when admin disabled it (only applies to 特别节日法会)
+  // Filter out refuge question when admin disabled it (admin chooses per event for 特别节日法会)
   const customFields = (event.category.name === REFUGE_QUESTION_CATEGORY && event.showRefugeQuestion === false)
     ? rawCustomFields.filter((f) => !fieldLooksLikeRefugeQuestion(f))
     : rawCustomFields;
