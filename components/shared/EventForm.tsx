@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
-import { eventDefaultValues, categoryCustomFields, REFUGE_QUESTION_CATEGORY } from "@/constants"
+import { eventDefaultValues, categoryCustomFields, REFUGE_QUESTION_CATEGORIES } from "@/constants"
 import { CategoryName } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
@@ -498,7 +498,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               {form.watch('categoryId') && (() => {
                 const selectedCategoryId = form.watch('categoryId');
                 const categoryName = event?.category?.name || categories?.find((cat: ICategory) => cat._id === selectedCategoryId)?.name;
-                if (categoryName !== REFUGE_QUESTION_CATEGORY) return null;
+                if (!categoryName || !REFUGE_QUESTION_CATEGORIES.includes(categoryName as CategoryName)) return null;
                 return (
                   <FormField
                     control={form.control}
