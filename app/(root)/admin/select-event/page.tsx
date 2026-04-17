@@ -64,18 +64,8 @@ const SelectEventPage = () => {
         if (Array.isArray(result.data)) {
           // Superadmins see all events (including drafts and expired). Others see only non-draft, non-expired events
           const source = result.data;
-          const recentAndUpcomingEvents = await Promise.all(source
-            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
-            .map(async (event: Event) => {
-              const countsResponse = await fetch(`/api/events/${event._id}/counts`);
-              const countsData = await countsResponse.json();
-              return {
-                ...event,
-                totalRegistrations: countsData.totalRegistrations,
-                attendedUsers: countsData.attendedUsers,
-                cannotReciteAndWalk: countsData.cannotReciteAndWalk
-              };
-            }));
+          const recentAndUpcomingEvents = source
+            .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
           console.log('Processed events:', recentAndUpcomingEvents); // Add logging
           setEvents(recentAndUpcomingEvents);
         } else {

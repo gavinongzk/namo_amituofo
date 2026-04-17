@@ -100,7 +100,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   const [postalOverrides, setPostalOverrides] = useState<Record<number, boolean>>({});
   const [numberOfFormsToShow, setNumberOfFormsToShow] = useState<number>(1);
   const [postalCheckedState, setPostalCheckedState] = useState<Record<number, boolean>>({});
-  const [timeRemaining, setTimeRemaining] = useState<number>(5);
   
   // New state for error handling and retry
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -516,8 +515,10 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
       const data = await response.json();
       
-      // Refresh the order count after successful submission
-      await onRefresh();
+      // Refresh order count in background so users reach QR page sooner.
+      void onRefresh().catch((refreshError) => {
+        console.error('Error refreshing order count:', refreshError);
+      });
       
       toast({
         title: "成功 / Success",
@@ -681,26 +682,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     return () => subscription.unsubscribe();
   }, [form, debouncedSaveForm]);
 
-  // Add useEffect for timer
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (showConfirmation && timeRemaining > 0) {
-      timer = setInterval(() => {
-        setTimeRemaining(prev => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [showConfirmation, timeRemaining]);
-
-  // Reset timer when dialog is closed
-  useEffect(() => {
-    if (!showConfirmation) {
-      setTimeRemaining(5);
-    }
-  }, [showConfirmation]);
-
   return (
     <>
       {/* Error Dialog */}
@@ -788,16 +769,14 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         }
       `}</style>
       <div className="max-w-3xl mx-auto">
-        {isCountryLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent"></div>
-              <p className="text-gray-600 font-medium">加载中... / Loading...</p>
-            </div>
-          </div>
-        ) : (
-          <Form {...form}>
+        <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {isCountryLoading && (
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                  <span>正在检测国家，您可以先填写表格。/ Detecting country, you can fill the form now.</span>
+                </div>
+              )}
               {message && <p className="text-red-500">{message}</p>}
               {isFullyBooked ? (
                 <div className="p-6 bg-red-50 rounded-lg border border-red-200 text-center">
@@ -1137,7 +1116,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
               )}
             </form>
           </Form>
-        )}
 
         <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
           <DialogContent className="bg-white sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -1205,14 +1183,14 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                   }
                 }}
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={timeRemaining > 0 || isSubmitting}
+                disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                     处理中... / Processing...
                   </>
-                ) : timeRemaining > 0 ? `继续 / Continue (${timeRemaining}s)` : '继续 / Continue'}
+                ) : '继续 / Continue'}
               </Button>
             </DialogFooter>
           </DialogContent>

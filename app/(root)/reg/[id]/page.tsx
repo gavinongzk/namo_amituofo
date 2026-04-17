@@ -222,6 +222,26 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     audio.play().catch(e => console.error('Error playing audio:', e));
   };
 
+  const getRelatedOrdersForCurrentEvent = useCallback(
+    async (phoneNumber: string, currentEventId: string) => {
+      if (!phoneNumber || !currentEventId) return [];
+
+      const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
+      const relatedOrdersResponse = await fetch(
+        `/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&eventId=${encodeURIComponent(currentEventId)}&includeOrderDetails=true${isSuperAdmin ? '&includeAllRegistrations=true' : ''}`
+      );
+
+      if (!relatedOrdersResponse.ok) return [];
+
+      const groupedOrders = await relatedOrdersResponse.json();
+      const currentEventOrders = groupedOrders.find((group: any) => group.event._id === currentEventId);
+      if (!currentEventOrders || !Array.isArray(currentEventOrders.detailedOrders)) return [];
+
+      return currentEventOrders.detailedOrders;
+    },
+    [user?.publicMetadata.role]
+  );
+
   const checkAttendanceStatus = useCallback(async () => {
     if (!order?.event?._id) return;
     try {
@@ -239,22 +259,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       let updatedRelatedOrders = [];
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
-        // Check if user is superadmin before including cancelled registrations
-        const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-        const relatedOrdersResponse = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${isSuperAdmin ? '&includeAllRegistrations=true' : ''}`);
-
-        if (relatedOrdersResponse.ok) {
-          const data = await relatedOrdersResponse.json();
-          const currentEventId = latestOrder.event._id;
-          const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
-          if (currentEventOrders) {
-            const orderIds = currentEventOrders.orderIds;
-            const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
-            );
-            updatedRelatedOrders = allOrders.filter(o => o && o._id !== latestOrder._id);
-          }
-        }
+        const detailedOrders = await getRelatedOrdersForCurrentEvent(phoneNumber, latestOrder.event._id);
+        updatedRelatedOrders = detailedOrders.filter((o: any) => o && o._id !== latestOrder._id);
       }
 
       // Compare attendance and play sound if newly marked
@@ -296,7 +302,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       console.error('Error checking attendance status:', err);
       Sentry.captureException(err);
     }
-  }, [order?.event?._id, order?._id, user?.publicMetadata.role]);
+  }, [getRelatedOrdersForCurrentEvent, order?.event?._id, order?._id]);
 
   const fetchOrderDetails = useCallback(async () => {
     // Don't fetch if we've fetched recently (debounce)
@@ -324,53 +330,25 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
       // If we have phone numbers, fetch orders
       if (phoneNumbers.length > 0) {
         const phoneNumber = phoneNumbers[0];
-        // Check if user is superadmin before including cancelled registrations
-        const isSuperAdmin = user?.publicMetadata.role === 'superadmin';
-        
-        const response = await fetch(`/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}${isSuperAdmin ? '&includeAllRegistrations=true' : ''}`);
+        const detailedOrders = await getRelatedOrdersForCurrentEvent(phoneNumber, initialOrder.event._id);
 
-        if (response.ok) {
-          const data = await response.json();
+        // Filter out the current order and any null results
+        const otherOrders = detailedOrders.filter((relatedOrder: any) => relatedOrder && relatedOrder._id !== initialOrder._id);
 
-          // data is an array of grouped orders by event
-          // We need to find all orders for the current event
-          const currentEventId = initialOrder.event._id;
-          const currentEventOrders = data.find((group: any) => group.event._id === currentEventId);
+        // Load attendance state from localStorage
+        const storageKey = `attendance_${initialOrder.event._id}`;
+        const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-          if (currentEventOrders) {
-            // Get all orders for this event
-            const orderIds = currentEventOrders.orderIds;
-            const allOrders = await Promise.all(
-              orderIds.map((orderId: string) => fetch(`/api/reg/${orderId}`).then(r => r.ok ? r.json() : null))
-            );
-
-            // Filter out the current order and any null results
-            const otherOrders = allOrders.filter(order => order && order._id !== initialOrder._id);
-
-            // Load attendance state from localStorage
-            const storageKey = `attendance_${initialOrder.event._id}`;
-            const attendanceState: Record<string, boolean> = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-            // Update attendance state from localStorage
-            const updatedInitialOrder = {
-              ...initialOrder,
-              customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
-                ...group,
-                attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
-              }))
-            };
-            setOrder(updatedInitialOrder);
-            setRelatedOrders(otherOrders);
-          }
-        } else {
-           // Handle non-OK responses for both superadmin and non-superadmin cases
-           // Depending on the desired behavior, you might want to show an error
-           // or handle specific status codes other than 403 if necessary.
-           // For 403 specifically, the conditional fetch above should prevent it
-           // for non-superadmins, so any remaining 403 would be unexpected.
-           console.error('Error fetching related orders:', response.status, response.statusText);
-           setError(`Failed to load related orders: ${response.statusText}`);
-        }
+        // Update attendance state from localStorage
+        const updatedInitialOrder = {
+          ...initialOrder,
+          customFieldValues: initialOrder.customFieldValues.map((group: CustomFieldGroup) => ({
+            ...group,
+            attendance: group.queueNumber ? attendanceState[group.queueNumber] ?? group.attendance : group.attendance
+          }))
+        };
+        setOrder(updatedInitialOrder);
+        setRelatedOrders(otherOrders);
       } else {
         // No phone numbers found, just set the initial order
         setOrder(initialOrder);
@@ -386,7 +364,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
     } finally {
       setIsLoading(false);
     }
-  }, [id, user?.publicMetadata.role]);
+  }, [getRelatedOrdersForCurrentEvent, id]);
 
   // Initial fetch
   useEffect(() => {

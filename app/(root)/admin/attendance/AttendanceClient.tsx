@@ -68,6 +68,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
   const [recentScans, setRecentScans] = useState<Array<{ queueNumber: string; name: string }>>([]);
   const [taggedUsers, setTaggedUsers] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState(false);
+  const [fastAttendanceMode, setFastAttendanceMode] = useState(false);
 
   // User permissions
   const { user } = useUser();
@@ -114,15 +115,45 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
     }
   }, [registrations]);
 
-  const handleQueueNumberSubmit = useCallback(() => {
+  const handleQueueNumberSubmit = useCallback(async () => {
+    const normalizedQueueNumber = queueNumber.trim();
+    if (!normalizedQueueNumber) return;
+
     const registration = registrations.find(r => 
-      r.order.customFieldValues.some(group => group.queueNumber === queueNumber)
+      r.order.customFieldValues.some(group => group.queueNumber === normalizedQueueNumber)
     );
     
     if (registration) {
-      const group = registration.order.customFieldValues.find(g => g.queueNumber === queueNumber);
+      const group = registration.order.customFieldValues.find(g => g.queueNumber === normalizedQueueNumber);
       if (group) {
         const nameField = group.fields.find(field => field.label.toLowerCase().includes('name'));
+
+        if (fastAttendanceMode) {
+          const nextAttendanceState = !group.attendance;
+          showModalWithMessage('Updating / 更新中', 'Updating attendance... 更新出席情况...', 'loading');
+          try {
+            await markAttendance(registration.id, group.groupId, nextAttendanceState);
+            showModalWithMessage(
+              'Success / 成功',
+              `Attendance ${nextAttendanceState ? 'marked' : 'unmarked'} successfully\n出席情况${nextAttendanceState ? '已标记' : '已取消标记'}`,
+              'success'
+            );
+          } catch (error) {
+            console.error('Error updating attendance in fast mode:', error);
+            if (error instanceof Error && error.message.includes('CANCELLED_REGISTRATION')) {
+              showModalWithMessage(
+                'Error / 错误',
+                'Cannot mark attendance for cancelled registration. Please uncancel the registration first.\n无法为已取消的报名标记出席。请先取消取消状态。',
+                'error'
+              );
+            } else {
+              showModalWithMessage('Error / 错误', 'Failed to update attendance. 更新出席情况失败。', 'error');
+            }
+          }
+          setQueueNumber('');
+          return;
+        }
+
         setConfirmationData({
           registrationId: registration.id,
           groupId: group.groupId,
@@ -135,7 +166,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
     } else {
       setMessage('Registration not found with this queue number. 未找到此排队号码的报名。');
     }
-  }, [queueNumber, registrations]);
+  }, [fastAttendanceMode, markAttendance, queueNumber, registrations, showModalWithMessage]);
 
   // Attendance operations
   const handleMarkAttendance = useCallback(async (registrationId: string, groupId: string, attended: boolean) => {
@@ -434,6 +465,8 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
           onExportToSheets={isSuperAdmin ? handleExportToSheets : undefined}
           isExporting={isExporting}
           isSuperAdmin={isSuperAdmin}
+          fastAttendanceMode={fastAttendanceMode}
+          onToggleFastAttendanceMode={() => setFastAttendanceMode((prev) => !prev)}
         />
 
         {showScanner && (
