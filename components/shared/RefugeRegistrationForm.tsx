@@ -226,14 +226,7 @@ export function RefugeRegistrationForm({
   const content = (
     <>
       <style dangerouslySetInnerHTML={{ __html: phoneInputStyles }} />
-      {isCountryLoading ? (
-        <div className="flex items-center justify-center py-6">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent" />
-            <p className="text-gray-600 font-medium text-sm">加载中... / Loading...</p>
-          </div>
-        </div>
-      ) : isSubmitted ? (
+      {isSubmitted ? (
         <Card className={variant === 'dialog' ? 'p-6 text-center' : 'p-8 text-center'}>
           <div className="mb-4">
             <h2 className="text-xl font-bold text-orange-800 mb-2">皈依报名成功 / Registration Successful</h2>
@@ -256,6 +249,12 @@ export function RefugeRegistrationForm({
         </Card>
       ) : (
         <Card className={variant === 'dialog' ? 'p-4 sm:p-6 shadow-none border-0' : 'p-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm'}>
+          {isCountryLoading && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-800">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+              <span>正在检测国家，您可以先填写表格。/ Detecting country, you can fill the form now.</span>
+            </div>
+          )}
           {variant === 'page' && (
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full mb-4">

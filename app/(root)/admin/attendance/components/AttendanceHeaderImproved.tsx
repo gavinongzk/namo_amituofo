@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Loader2, QrCode, RefreshCw, Download, FileSpreadsheet, ChevronDown, Zap } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,8 @@ interface AttendanceHeaderImprovedProps {
   onExportToSheets?: () => void;
   isExporting?: boolean;
   isSuperAdmin: boolean;
+  fastAttendanceMode: boolean;
+  onToggleFastAttendanceMode: () => void;
 }
 
 const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
@@ -34,7 +36,9 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
   onDownloadCsv,
   onExportToSheets,
   isExporting = false,
-  isSuperAdmin
+  isSuperAdmin,
+  fastAttendanceMode,
+  onToggleFastAttendanceMode
 }) => {
 
 
@@ -93,6 +97,15 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+
+          <Button
+            onClick={onToggleFastAttendanceMode}
+            variant={fastAttendanceMode ? "default" : "outline"}
+            className={fastAttendanceMode ? "bg-amber-600 hover:bg-amber-700" : "hover:bg-amber-50 hover:border-amber-300"}
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            {fastAttendanceMode ? 'Fast Mode On' : 'Fast Mode Off'}
           </Button>
         </div>
 

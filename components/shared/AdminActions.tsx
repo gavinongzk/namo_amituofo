@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
 const AdminActions = () => {
   const [loadingPath, setLoadingPath] = useState<string | null>(null);
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
   const pathname = usePathname();
   const { user } = useUser();
   const isSuperAdmin = user?.publicMetadata?.role === 'superadmin';
@@ -64,30 +65,6 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
-          <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
-            <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
-              {loadingPath === '/admin/upload_orders' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  加载中... / Loading...
-                </>
-              ) : (
-                '上传订单 / Upload Orders'
-              )}
-            </Button>
-          </Link>
-          <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
-            <Button className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white`} disabled={loadingPath === '/admin/users'}>
-              {loadingPath === '/admin/users' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  加载中... / Loading...
-                </>
-              ) : (
-                '管理用户 / Manage Users'
-              )}
-            </Button>
-          </Link>
           <Link href="/admin/analytics" onClick={() => handleClick('/admin/analytics')}>
             <Button className={`${buttonClass} bg-purple-600 hover:bg-purple-700 text-white`} disabled={loadingPath === '/admin/analytics'}>
               {loadingPath === '/admin/analytics' ? (
@@ -100,42 +77,95 @@ const AdminActions = () => {
               )}
             </Button>
           </Link>
-          <Link href="/admin/volunteers" onClick={() => handleClick('/admin/volunteers')}>
-            <Button className={`${buttonClass} bg-pink-600 hover:bg-pink-700 text-white`} disabled={loadingPath === '/admin/volunteers'}>
-              {loadingPath === '/admin/volunteers' ? (
+          <Link href="/admin/always-add-users" onClick={() => handleClick('/admin/always-add-users')}>
+            <Button className={`${buttonClass} bg-cyan-600 hover:bg-cyan-700 text-white`} disabled={loadingPath === '/admin/always-add-users'}>
+              {loadingPath === '/admin/always-add-users' ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   加载中... / Loading...
                 </>
               ) : (
-                '净土儿童佛学班义工义工管理 / Pure Land Children Buddhist Class Volunteer Management'
+                '固定自动报名用户 / Always Add Users'
               )}
             </Button>
           </Link>
-          <Link href="/admin/clapping-exercise-volunteers" onClick={() => handleClick('/admin/clapping-exercise-volunteers')}>
-            <Button className={`${buttonClass} bg-orange-600 hover:bg-orange-700 text-white`} disabled={loadingPath === '/admin/clapping-exercise-volunteers'}>
-              {loadingPath === '/admin/clapping-exercise-volunteers' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  加载中... / Loading...
-                </>
-              ) : (
-                '拍手念佛健身操义工管理 / Clapping Exercise Volunteer Management'
-              )}
+
+          <div className="border border-gray-200 rounded-lg bg-white p-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => setShowAdvancedTools((prev) => !prev)}
+            >
+              <span>高级管理员工具 / Advanced Admin Tools</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedTools ? 'rotate-180' : ''}`} />
             </Button>
-          </Link>
-          <Link href="/admin/refuge-registrations" onClick={() => handleClick('/admin/refuge-registrations')}>
-            <Button className={`${buttonClass} bg-amber-600 hover:bg-amber-700 text-white`} disabled={loadingPath === '/admin/refuge-registrations'}>
-              {loadingPath === '/admin/refuge-registrations' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  加载中... / Loading...
-                </>
-              ) : (
-                '净土宗皈依报名管理 / Pure Land Taking Refuge Registration Management'
-              )}
-            </Button>
-          </Link>
+
+            {showAdvancedTools && (
+              <div className="mt-3 flex flex-col gap-3">
+                <Link href="/admin/upload_orders" onClick={() => handleClick('/admin/upload_orders')}>
+                  <Button className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white`} disabled={loadingPath === '/admin/upload_orders'}>
+                    {loadingPath === '/admin/upload_orders' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        加载中... / Loading...
+                      </>
+                    ) : (
+                      '上传订单 / Upload Orders'
+                    )}
+                  </Button>
+                </Link>
+                <Link href="/admin/users" onClick={() => handleClick('/admin/users')}>
+                  <Button className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white`} disabled={loadingPath === '/admin/users'}>
+                    {loadingPath === '/admin/users' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        加载中... / Loading...
+                      </>
+                    ) : (
+                      '管理用户 / Manage Users'
+                    )}
+                  </Button>
+                </Link>
+                <Link href="/admin/volunteers" onClick={() => handleClick('/admin/volunteers')}>
+                  <Button className={`${buttonClass} bg-pink-600 hover:bg-pink-700 text-white`} disabled={loadingPath === '/admin/volunteers'}>
+                    {loadingPath === '/admin/volunteers' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        加载中... / Loading...
+                      </>
+                    ) : (
+                      '净土儿童佛学班义工义工管理 / Pure Land Children Buddhist Class Volunteer Management'
+                    )}
+                  </Button>
+                </Link>
+                <Link href="/admin/clapping-exercise-volunteers" onClick={() => handleClick('/admin/clapping-exercise-volunteers')}>
+                  <Button className={`${buttonClass} bg-orange-600 hover:bg-orange-700 text-white`} disabled={loadingPath === '/admin/clapping-exercise-volunteers'}>
+                    {loadingPath === '/admin/clapping-exercise-volunteers' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        加载中... / Loading...
+                      </>
+                    ) : (
+                      '拍手念佛健身操义工管理 / Clapping Exercise Volunteer Management'
+                    )}
+                  </Button>
+                </Link>
+                <Link href="/admin/refuge-registrations" onClick={() => handleClick('/admin/refuge-registrations')}>
+                  <Button className={`${buttonClass} bg-amber-600 hover:bg-amber-700 text-white`} disabled={loadingPath === '/admin/refuge-registrations'}>
+                    {loadingPath === '/admin/refuge-registrations' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        加载中... / Loading...
+                      </>
+                    ) : (
+                      '净土宗皈依报名管理 / Pure Land Taking Refuge Registration Management'
+                    )}
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

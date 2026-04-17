@@ -52,6 +52,10 @@ export const categoryCustomFields = {
     { id: '1', label: '名字、皈依名 / Name 、 Dharma Name', type: 'text' },
     { id: '2', label: '联系号码 / Contact Number', type: 'phone' },
     { id: '3', label: '邮区编号 / Postal Code', type: 'postal' },
+    { id: '4', label: '请问您要皈依吗？若选择“是”，完成活动报名后系统将引导您继续填写皈依报名表单。 / Would you like to take refuge? If yes, after submitting the event registration we will guide you to continue with the refuge registration form.', type: 'radio', options: [
+      { label: '是的，我要皈依 / Yes, I would like to take refuge', value: 'yes' },
+      { label: '不，谢谢 / No, thank you', value: 'no' }
+    ] },
   ],
   '外出结缘法会': [
     { id: '1', label: '义工名字 / Volunteer\'s Name', type: 'text' },
@@ -113,5 +117,5 @@ export const categoryCustomFields = {
 
 export type CategoryName = keyof typeof categoryCustomFields;
 
-/** Category that has the optional refuge question. Admin chooses per event whether to show or hide it. */
-export const REFUGE_QUESTION_CATEGORY: CategoryName = '特别节日法会';
+/** Categories that have the optional refuge question. Admin chooses per event whether to show or hide it. */
+export const REFUGE_QUESTION_CATEGORIES: CategoryName[] = ['特别节日法会', '念佛超荐法会'];

@@ -16,10 +16,12 @@ import {
   GetEventsByUserParams,
   GetRelatedEventsByCategoryParams,
 } from '@/types'
-import { getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 import type { Document } from 'mongoose';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
-
+import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES } from '@/constants';
+import type { CustomField, CustomFieldGroup } from '@/types';
+import AutoEnrollProfile from '@/lib/database/models/autoEnrollProfile.model';
+import { createOrder, getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
 const getCategoryByName = async (name: string) => {
   return Category.findOne({ name: { $regex: name, $options: 'i' } })
 }
@@ -29,6 +31,99 @@ const populateEvent = (query: any) => {
     .populate({ path: 'organizer', model: User, select: '_id' })
     .populate({ path: 'category', model: Category, select: '_id name color' })
 }
+
+const fieldLooksLikeRefugeQuestion = (field: CustomField): boolean => {
+  return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(field.label);
+};
+
+const getTemplateFieldsByCategory = (categoryName: string, showRefugeQuestion: boolean): CustomField[] => {
+  const templateFields =
+    (categoryCustomFields[categoryName as CategoryName] || categoryCustomFields.default) as CustomField[];
+
+  if (REFUGE_QUESTION_CATEGORIES.includes(categoryName as CategoryName) && !showRefugeQuestion) {
+    return templateFields.filter((field) => !fieldLooksLikeRefugeQuestion(field));
+  }
+
+  return templateFields;
+};
+
+const getGroupValueForField = (field: CustomField, profile: any): string | boolean => {
+  const fieldLabel = field.label.toLowerCase();
+
+  if (field.type === 'phone') return profile.phoneNumber;
+  if (field.type === 'postal') return profile.postalCode || '';
+  if (field.type === 'radio') return fieldLooksLikeRefugeQuestion(field) ? 'no' : '';
+  if (field.type === 'boolean') return false;
+
+  if (/name|名字|皈依名/.test(fieldLabel)) return profile.name;
+
+  return '';
+};
+
+const autoEnrollProfilesForEvent = async ({
+  eventId,
+  country,
+  categoryId,
+  showRefugeQuestion,
+}: {
+  eventId: string;
+  country: string;
+  categoryId: string;
+  showRefugeQuestion: boolean;
+}) => {
+  try {
+    const profiles = await AutoEnrollProfile.find({
+      country,
+      enabled: true,
+    })
+      .select('_id name phoneNumber postalCode')
+      .lean();
+
+    if (!profiles.length) return;
+
+    const categoryDoc = (await Category.findById(categoryId).select('name').lean()) as
+      | { name?: string }
+      | null;
+    const categoryName = categoryDoc?.name || 'default';
+    const templateFields = getTemplateFieldsByCategory(categoryName, showRefugeQuestion);
+
+    for (const profile of profiles) {
+      const phoneNumber = String(profile.phoneNumber || '').trim();
+      if (!phoneNumber) continue;
+
+      const fields = templateFields.map((field) => ({
+        id: field.id,
+        label: field.label,
+        type: field.type,
+        value: getGroupValueForField(field, profile),
+        options: field.options,
+      })) as CustomField[];
+
+      const customFieldValues: CustomFieldGroup[] = [
+        {
+          groupId: `always_add_${profile._id}_${Date.now()}`,
+          fields,
+        },
+      ];
+
+      try {
+        await createOrder({
+          eventId,
+          createdAt: new Date(),
+          customFieldValues,
+        });
+      } catch (error: any) {
+        const message = String(error?.message || '');
+        if (message.includes('fully booked')) {
+          break;
+        }
+        console.error(`Failed to auto-enroll phone ${phoneNumber} for event ${eventId}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to auto-enroll profiles for event ${eventId}:`, error);
+  }
+};
 
 // CREATE
 export async function createEvent({ userId, event, path }: CreateEventParams) {
@@ -71,6 +166,18 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     });
 
     console.log("New event created successfully:", newEvent);
+
+    if (!isDraftValue) {
+      await autoEnrollProfilesForEvent({
+        eventId: String(newEvent._id),
+        country: String(newEvent.country || event.country),
+        categoryId: String(newEvent.category || event.categoryId),
+        showRefugeQuestion:
+          typeof newEvent.showRefugeQuestion === 'boolean'
+            ? newEvent.showRefugeQuestion
+            : event.showRefugeQuestion !== false,
+      });
+    }
 
     revalidatePath(path);
     revalidatePath('/');
@@ -129,6 +236,7 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
     if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
       throw new Error('Unauthorized or event not found');
     }
+    const wasDraft = Boolean(eventToUpdate.isDraft);
 
     const updateData: any = { 
       ...event, 
@@ -146,6 +254,19 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       updateData,
       { new: true }
     );
+
+    const isNowDraft = Boolean(updatedEvent?.isDraft);
+    if (updatedEvent && wasDraft && !isNowDraft) {
+      await autoEnrollProfilesForEvent({
+        eventId: String(updatedEvent._id),
+        country: String(updatedEvent.country || event.country),
+        categoryId: String(updatedEvent.category || event.categoryId),
+        showRefugeQuestion:
+          typeof updatedEvent.showRefugeQuestion === 'boolean'
+            ? updatedEvent.showRefugeQuestion
+            : event.showRefugeQuestion !== false,
+      });
+    }
     
     // Revalidate all relevant caches
     revalidatePath(path);

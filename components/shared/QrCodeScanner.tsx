@@ -645,9 +645,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
       setError(undefined);
       
       // Clean up previous adapter
-      if (adapterRef.current) {
-        await adapterRef.current.stopScanning();
-        adapterRef.current.cleanup?.();
+      const previousAdapter = adapterRef.current;
+      if (previousAdapter) {
+        await previousAdapter.stopScanning();
+        previousAdapter.cleanup?.();
+        if (adapterRef.current === previousAdapter) {
+          adapterRef.current = null;
+        }
       }
 
       const adapter = getAdapter();
@@ -680,14 +684,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   }, [isScanning, getAdapter, handleSuccessfulScan]);
 
   const stopScanning = useCallback(async () => {
-    if (adapterRef.current) {
+    const currentAdapter = adapterRef.current;
+    if (currentAdapter) {
       try {
-        await adapterRef.current.stopScanning();
+        await currentAdapter.stopScanning();
       } catch (err) {
         console.error('Error stopping scanner:', err);
       }
-      adapterRef.current.cleanup?.();
-      adapterRef.current = null;
+      currentAdapter.cleanup?.();
+      if (adapterRef.current === currentAdapter) {
+        adapterRef.current = null;
+      }
     }
     setIsScanning(false);
   }, []);

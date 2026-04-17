@@ -5,6 +5,8 @@ import { rateLimiterMiddleware } from './lib/middleware/rateLimiter';
 export default authMiddleware({
   publicRoutes: [
     '/',
+    '/sign-in(.*)',
+    '/sign-up(.*)',
     '/events/:id',
     '/api/webhook/clerk',
     '/api/events',
@@ -86,6 +88,12 @@ export default authMiddleware({
       return NextResponse.next();
     }
 
+    if (req.nextUrl.pathname.startsWith('/admin/') && !auth.userId) {
+      const signInUrl = new URL('/sign-in', req.url);
+      signInUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(signInUrl);
+    }
+
     const role = auth.sessionClaims?.role as string;
 
     if ((req.nextUrl.pathname.startsWith('/api/')) || (req.nextUrl.pathname.startsWith('/admin/'))) {
@@ -118,6 +126,8 @@ function getAllowedRoles(pathname: string): string[] {
     '/admin/users': ['superadmin'],
     '/admin/analytics': ['superadmin'],
     '/api/events/:id/max-seats': ['superadmin'],
+    '/admin/always-add-users': ['superadmin'],
+    '/api/admin/always-add-users': ['superadmin'],
   };
 
   return routeRoles[pathname] || ['user', 'admin', 'superadmin'];
