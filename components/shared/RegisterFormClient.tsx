@@ -17,7 +17,8 @@ import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { PlusIcon, Loader2Icon, RefreshCwIcon } from 'lucide-react'
+import { PlusIcon, Loader2Icon, RefreshCwIcon, ChevronLeftIcon } from 'lucide-react'
+import Link from 'next/link'
 import { debounce } from 'lodash';
 import * as Sentry from '@sentry/nextjs';
 import { validateSingaporePostalCode } from '@/lib/utils';
@@ -547,6 +548,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     }
   };
   const isFullyBooked = initialOrderCount >= event.maxSeats;
+  const seatsRemaining = Math.max(0, event.maxSeats - initialOrderCount);
 
   // Update the append function
   const handleAddPerson = () => {
@@ -754,7 +756,27 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           outline: none;
         }
       `}</style>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto space-y-4">
+        <div className="flex flex-col gap-3">
+          <Link
+            href={`/events/details/${event._id}`}
+            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-sm"
+          >
+            <ChevronLeftIcon className="h-4 w-4 shrink-0" aria-hidden />
+            返回活动详情 / Back to event details
+          </Link>
+          {!isFullyBooked && event.maxSeats > 0 && (
+            <div
+              className="rounded-lg border border-primary-200 bg-primary-50/90 px-4 py-3 text-sm text-grey-800"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="font-medium text-primary-900">名额 / Capacity: </span>
+              剩余 {seatsRemaining} 席 / {seatsRemaining} seat{seatsRemaining === 1 ? '' : 's'}{' '}
+              remaining（共 {event.maxSeats} / {event.maxSeats} total）
+            </div>
+          )}
+        </div>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               {isCountryLoading && (
@@ -1055,8 +1077,10 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
                                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6">
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border border-blue-200 p-3 sm:p-6">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-                    </div>
+                    <p className="text-sm text-grey-700 mb-3 sm:mb-4">
+                      可为同行家人或朋友添加多位参加者（视剩余名额而定）。/ Add more participants for
+                      family or friends, subject to remaining seats.
+                    </p>
                     <Button
                       type="button"
                       onClick={handleAddPerson}
@@ -1073,8 +1097,9 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
               {!isFullyBooked && (
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    </div>
+                    <p className="text-sm text-grey-700 mb-3 sm:mb-4">
+                      请确认所填信息无误后再提交。/ Please confirm your details before submitting.
+                    </p>
                     <Button 
                       type="submit" 
                       disabled={isSubmitting} 

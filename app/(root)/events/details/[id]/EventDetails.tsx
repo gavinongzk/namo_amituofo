@@ -11,6 +11,9 @@ import Link from 'next/link';
 
 import { getCategoryColor } from '@/lib/utils/colorUtils';
 
+const DEFAULT_VENUE_MAPS_URL =
+  process.env.NEXT_PUBLIC_VENUE_MAPS_URL ?? 'https://goo.gl/maps/9LsNw8fSLmqRD64X6';
+
 const EventInfo = ({ event }: { event: any }) => {
   // Get category color
   const categoryColor = event.category.color 
@@ -27,8 +30,12 @@ const EventInfo = ({ event }: { event: any }) => {
       {/* Event Details Card */}
       <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-grey-100">
         {event.isDraft && (
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-800">
-            This event is a draft. It is not visible to the public and registration is disabled.
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-900">
+            <p className="font-medium">草稿活动 / Draft event</p>
+            <p className="mt-1 text-sm">
+              此活动尚未对公众开放，报名已关闭。/ This event is not published yet and registration is
+              disabled for the public.
+            </p>
           </div>
         )}
         {/* Title and Category Section */}
@@ -75,17 +82,19 @@ const EventInfo = ({ event }: { event: any }) => {
         {/* Location Section */}
         <div className="flex items-start gap-5">
           <Link 
-            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            href={DEFAULT_VENUE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="在地图中打开地点 Open location in maps"
             className="bg-primary-50 p-4 rounded-full shrink-0 hover:bg-primary-100 transition-colors"
           >
-            <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
+            <Image src="/assets/icons/location.svg" alt="" width={24} height={24} />
           </Link>
           <Link 
-            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            href={DEFAULT_VENUE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="在地图中打开地点 Open location in maps"
             className="flex flex-col gap-1 hover:text-primary-500 transition-colors"
           >
             <p className="text-lg font-semibold text-grey-800">地点 Location:</p>

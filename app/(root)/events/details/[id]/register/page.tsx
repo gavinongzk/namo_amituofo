@@ -3,7 +3,6 @@ import { Suspense } from 'react'
 import Loading from '@/components/shared/Loader'
 import { getEventById } from '@/lib/actions/event.actions'
 import { unstable_cache } from 'next/cache'
-import { headers } from 'next/headers'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
