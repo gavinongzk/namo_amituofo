@@ -156,9 +156,9 @@ export default function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="zh-Hans">
         <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="apple-mobile-web-app-title" content="净土宗 | Namo Amituofo" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="mobile-web-app-capable" content="yes" />
@@ -177,19 +177,18 @@ export default function RootLayout({
           />
           <NetworkStatus />
 
-          <main className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col">
             {children}
-          </main>
-          
+          </div>
+
           <ShadcnToaster />
 
-          {/* Performance analytics script with proper loading strategy */}
-          <Script
-            strategy="afterInteractive"
-            id="performance-analytics"
-            dangerouslySetInnerHTML={{
-              __html: `
-                // Basic performance tracking
+          {process.env.NODE_ENV === 'development' && (
+            <Script
+              strategy="afterInteractive"
+              id="performance-analytics"
+              dangerouslySetInnerHTML={{
+                __html: `
                 window.addEventListener('load', function() {
                   setTimeout(function() {
                     const timing = performance.getEntriesByType('navigation')[0];
@@ -198,9 +197,10 @@ export default function RootLayout({
                     paint.forEach(p => console.log(p.name + ':', p.startTime, 'ms'));
                   }, 0);
                 });
-              `
-            }}
-          />
+              `,
+              }}
+            />
+          )}
         </body>
       </html>
     </ClerkProvider>
