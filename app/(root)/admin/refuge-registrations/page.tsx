@@ -279,7 +279,7 @@ export default function RefugeRegistrationsPage() {
       <div className="container mx-auto py-8">
         <div className="text-center">
           <div className="text-2xl">🪷</div>
-          <p className="text-lg text-gray-600">加载中... / Loading...</p>
+          <p className="text-lg text-grey-600">加载中... / Loading...</p>
         </div>
       </div>
     )
@@ -290,7 +290,7 @@ export default function RefugeRegistrationsPage() {
       <div className="container mx-auto py-8">
         <div className="text-center">
           <div className="text-2xl">🪷</div>
-          <p className="text-lg text-gray-600">加载中... / Loading...</p>
+          <p className="text-lg text-grey-600">加载中... / Loading...</p>
         </div>
       </div>
     )
@@ -304,7 +304,7 @@ export default function RefugeRegistrationsPage() {
           <h1 className="text-3xl font-bold text-orange-800 mb-2">
             净土宗皈依报名管理
           </h1>
-          <p className="text-gray-600">
+          <p className="text-grey-600">
             Pure Land Buddhism Taking Refuge Registration Management
           </p>
         </div>
@@ -343,13 +343,13 @@ export default function RefugeRegistrationsPage() {
         {registrations.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-4">🌸</div>
-            <p className="text-lg text-gray-600">暂无报名记录 / No registrations found</p>
+            <p className="text-lg text-grey-600">暂无报名记录 / No registrations found</p>
           </div>
         ) : filteredRegistrations.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-4">🔎</div>
-            <p className="text-lg text-gray-600">没有匹配结果 / No matching results</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-lg text-grey-600">没有匹配结果 / No matching results</p>
+            <p className="text-sm text-grey-500 mt-2">
               搜索: <span className="font-mono">{searchQuery.trim()}</span>
             </p>
           </div>

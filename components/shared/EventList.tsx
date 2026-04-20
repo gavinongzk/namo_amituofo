@@ -20,8 +20,6 @@ interface EventsResponse {
 }
 
 async function EventList({ page, searchText, category, country, role, userId }: EventListProps) {
-  console.log('🎬 EventList starting with params:', { page, searchText, category, country, role, userId });
-  
   let events: EventsResponse;
   
   try {
@@ -37,26 +35,10 @@ async function EventList({ page, searchText, category, country, role, userId }: 
       country,
       role
     }) as EventsResponse;
-    
-    console.log('📦 Fetched events:', {
-      count: events.data?.length,
-      events: events.data?.map(event => ({
-        id: event._id,
-        title: event.title,
-        imageUrl: event.imageUrl,
-        hasImageUrl: !!event.imageUrl
-      }))
-    });
 
     if (!events || !events.data) {
-      console.warn('⚠️ No events data available');
       events = { data: [], totalPages: 0 };
     }
-
-    console.log('✅ Rendering Collection with events:', {
-      dataLength: events.data?.length,
-      totalPages: events.totalPages
-    });
 
     // Show drafts only for superadmins; hide for others
     const visibleData = (events.data || []).filter((e: any) => {

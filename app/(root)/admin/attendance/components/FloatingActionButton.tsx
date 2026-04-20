@@ -40,7 +40,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         onToggleScanner();
         setIsOpen(false);
       },
-      className: showScanner ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'
+      className: showScanner ? 'bg-green-600 hover:bg-green-700' : 'bg-grey-600 hover:bg-grey-700'
     },
     {
       icon: RefreshCw,

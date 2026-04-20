@@ -11,6 +11,9 @@ import Link from 'next/link';
 
 import { getCategoryColor } from '@/lib/utils/colorUtils';
 
+const DEFAULT_VENUE_MAPS_URL =
+  process.env.NEXT_PUBLIC_VENUE_MAPS_URL ?? 'https://goo.gl/maps/9LsNw8fSLmqRD64X6';
+
 const EventInfo = ({ event }: { event: any }) => {
   // Get category color
   const categoryColor = event.category.color 
@@ -19,21 +22,25 @@ const EventInfo = ({ event }: { event: any }) => {
     
   // Safely extract background and text colors
   const colorParts = categoryColor.split(' ');
-  const bgColor = colorParts[0] || 'bg-gray-200';
-  const textColor = colorParts[1] || 'text-gray-700';
+  const bgColor = colorParts[0] || 'bg-grey-200';
+  const textColor = colorParts[1] || 'text-grey-700';
 
   return (
     <div className="flex w-full flex-col gap-8 p-5 md:p-10">
       {/* Event Details Card */}
-      <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+      <div className="flex flex-col gap-6 bg-white rounded-2xl p-8 shadow-md border border-grey-100">
         {event.isDraft && (
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-800">
-            This event is a draft. It is not visible to the public and registration is disabled.
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-900">
+            <p className="font-medium">草稿活动 / Draft event</p>
+            <p className="mt-1 text-sm">
+              此活动尚未对公众开放，报名已关闭。/ This event is not published yet and registration is
+              disabled for the public.
+            </p>
           </div>
         )}
         {/* Title and Category Section */}
         <div className="flex flex-col gap-4">
-          <h2 className='text-3xl font-bold text-gray-800'>{event.title}</h2>
+          <h2 className='text-3xl font-bold text-grey-800'>{event.title}</h2>
           {!event.isDraft && (
             <div className="w-full sm:w-auto">
               <CheckoutButton event={event} />
@@ -47,7 +54,7 @@ const EventInfo = ({ event }: { event: any }) => {
           </p>
         </div>
 
-        <div className="h-px bg-gray-200" />
+        <div className="h-px bg-grey-200" />
 
         {/* Date and Time Section */}
         <div className='flex gap-5 items-start'>
@@ -56,50 +63,52 @@ const EventInfo = ({ event }: { event: any }) => {
           </div>
           <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col gap-1">
-              <p className="text-lg font-semibold text-gray-800">日期 Date:</p>
-              <p className="text-base text-gray-600">
+              <p className="text-lg font-semibold text-grey-800">日期 Date:</p>
+              <p className="text-base text-grey-600">
                 {formatBilingualDateTime(event.startDateTime).combined.dateOnly}
               </p>
             </div>
             <div className="flex flex-col gap-1">
-              <p className="text-lg font-semibold text-gray-800">时间 Time:</p>
-              <p className="text-base text-gray-600">
+              <p className="text-lg font-semibold text-grey-800">时间 Time:</p>
+              <p className="text-base text-grey-600">
                 {formatBilingualDateTime(event.startDateTime).cn.timeOnly} - {formatBilingualDateTime(event.endDateTime).cn.timeOnly}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="h-px bg-gray-200" />
+        <div className="h-px bg-grey-200" />
 
         {/* Location Section */}
         <div className="flex items-start gap-5">
           <Link 
-            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            href={DEFAULT_VENUE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="在地图中打开地点 Open location in maps"
             className="bg-primary-50 p-4 rounded-full shrink-0 hover:bg-primary-100 transition-colors"
           >
-            <Image src="/assets/icons/location.svg" alt="location" width={24} height={24} />
+            <Image src="/assets/icons/location.svg" alt="" width={24} height={24} />
           </Link>
           <Link 
-            href="https://goo.gl/maps/9LsNw8fSLmqRD64X6"
+            href={DEFAULT_VENUE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="在地图中打开地点 Open location in maps"
             className="flex flex-col gap-1 hover:text-primary-500 transition-colors"
           >
-            <p className="text-lg font-semibold text-gray-800">地点 Location:</p>
-            <p className="text-base text-gray-600">{event.location}</p>
+            <p className="text-lg font-semibold text-grey-800">地点 Location:</p>
+            <p className="text-base text-grey-600">{event.location}</p>
           </Link>
         </div>
 
-        <div className="h-px bg-gray-200" />
+        <div className="h-px bg-grey-200" />
 
         {/* Description Section */}
         <div className="flex flex-col gap-4">
-          <p className="text-xl font-bold text-gray-800">活动描述 Event Description:</p>
+          <p className="text-xl font-bold text-grey-800">活动描述 Event Description:</p>
           <p 
-            className="text-base text-gray-600 leading-relaxed" 
+            className="text-base text-grey-600 leading-relaxed" 
             style={{ whiteSpace: 'pre-wrap' }}
             dangerouslySetInnerHTML={{ 
               __html: convertPhoneNumbersToLinks(event.description) 
@@ -143,7 +152,7 @@ const EventImage = ({ event }: { event: any }) => {
 
   return (
     <div className="flex items-start justify-center p-5 md:p-10 md:sticky md:top-5">
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-gray-50">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-grey-50">
         {event.imageUrl && !imageError ? (
           <>
             <Image 
@@ -162,21 +171,21 @@ const EventImage = ({ event }: { event: any }) => {
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
             />
             {imageLoading && (
-              <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+              <div className="absolute inset-0 bg-grey-100 animate-pulse" />
             )}
           </>
         ) : (
-          <div className="flex-center flex-col p-4 text-grey-500 bg-gray-50 w-full h-full rounded-[10px] border-2 border-dashed border-gray-200">
+          <div className="flex-center flex-col p-4 text-grey-500 bg-grey-50 w-full h-full rounded-[10px] border-2 border-dashed border-grey-200">
             <div className="flex-center flex-col gap-2 max-w-[200px] text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex-center">
-                <div className="w-8 h-8 border-2 border-gray-300 rounded-lg relative overflow-hidden">
+              <div className="w-16 h-16 rounded-full bg-grey-100 flex-center">
+                <div className="w-8 h-8 border-2 border-grey-300 rounded-lg relative overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-gray-300 rounded-full -translate-y-1" />
+                    <div className="w-4 h-4 bg-grey-300 rounded-full -translate-y-1" />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-gray-300" />
+                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-grey-300" />
                 </div>
               </div>
-              <p className="p-medium-14 text-gray-600">
+              <p className="p-medium-14 text-grey-600">
                 {imageError ? (
                   <span className="text-red-500">Failed to load image</span>
                 ) : (
@@ -203,13 +212,13 @@ export default function EventDetails({ event }: { event: any }) {
   if (!event) {
     return (
       <div className="flex-center min-h-[200px]">
-        <p className="text-gray-500">Event not found</p>
+        <p className="text-grey-500">Event not found</p>
       </div>
     );
   }
 
   return (
-    <section className="w-full bg-gray-50 min-h-screen py-10">
+    <section className="w-full bg-grey-50 min-h-screen py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
         <Suspense fallback={<Loading />}>
           <EventImage event={event} />

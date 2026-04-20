@@ -113,10 +113,10 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
   };
 
   const renderSortableHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
+    <th className="py-3 px-4 border-b text-left font-semibold text-grey-700 bg-grey-50">
       <button
         onClick={() => requestSort(key)}
-        className="flex items-center gap-2 hover:text-gray-900 transition-colors group w-full text-left"
+        className="flex items-center gap-2 hover:text-grey-900 transition-colors group w-full text-left"
       >
         <span className="text-sm">{label}</span>
         <div className="flex flex-col">
@@ -125,7 +125,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               "h-3 w-3 transition-colors",
               sortConfig.key === key && sortConfig.direction === 'asc' 
                 ? 'text-blue-600' 
-                : 'text-gray-400 group-hover:text-gray-600'
+                : 'text-grey-400 group-hover:text-grey-600'
             )} 
           />
           <ChevronDown 
@@ -133,7 +133,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               "h-3 w-3 -mt-1 transition-colors",
               sortConfig.key === key && sortConfig.direction === 'desc' 
                 ? 'text-blue-600' 
-                : 'text-gray-400 group-hover:text-gray-600'
+                : 'text-grey-400 group-hover:text-grey-600'
             )} 
           />
         </div>
@@ -191,11 +191,11 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
       <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
           <div>
-            <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h4 className="text-xl font-bold text-grey-900 flex items-center gap-2">
               <span className="text-2xl">👥</span>
               <div>
                 <div>Users / 用户</div>
-                <div className="text-sm font-normal text-gray-600">
+                <div className="text-sm font-normal text-grey-600">
                   {filteredData.length} of {data.length}
                 </div>
               </div>
@@ -205,17 +205,17 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
           {/* Enhanced Search */}
           <div className="flex flex-col sm:flex-row gap-3 min-w-0 lg:min-w-[400px]">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-grey-400" />
               <Input
                 placeholder="Search..."
                 value={searchText}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500"
+                className="pl-10 h-11 border-2 border-grey-200 focus:border-blue-500"
               />
               {searchText && (
                 <button
                   onClick={() => onSearchChange('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-grey-400 hover:text-grey-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -228,7 +228,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 onPageSizeChange(Number(e.target.value));
                 onPageChange(1);
               }}
-              className="border-2 border-gray-200 rounded-md px-3 py-2 h-11 bg-white focus:border-blue-500"
+              className="border-2 border-grey-200 rounded-md px-3 py-2 h-11 bg-white focus:border-blue-500"
             >
               {[50, 100, 200, 300, 400].map(size => (
                 <option key={size} value={size}>
@@ -321,7 +321,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               </Button>
             </div>
 
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-grey-600">
               Page {currentPage} of {totalPages}
             </span>
           </div>
@@ -340,7 +340,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
               <tr>
                 {/* Bulk select */}
                 {isSuperAdmin && (
-                  <th className="py-3 px-4 border-b bg-gray-50 w-12">
+                  <th className="py-3 px-4 border-b bg-grey-50 w-12">
                     <Checkbox
                       checked={selectedRows.size === paginatedData.length && paginatedData.length > 0}
                       onCheckedChange={handleSelectAll}
@@ -352,18 +352,18 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                 {isSuperAdmin && renderSortableHeader('Phone 电话', 'phoneNumber')}
                 {isSuperAdmin && renderSortableHeader('Postal 邮区', 'postalCode')}
                 {isSuperAdmin && (
-                  <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
+                  <th className="py-3 px-4 border-b text-left font-semibold text-grey-700 bg-grey-50">
                     <span className="text-sm">Remarks 备注</span>
                   </th>
                 )}
-                <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
+                <th className="py-3 px-4 border-b text-left font-semibold text-grey-700 bg-grey-50">
                   <span className="text-sm">Attendance 出席</span>
                 </th>
-                <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50">
+                <th className="py-3 px-4 border-b text-left font-semibold text-grey-700 bg-grey-50">
                   <span className="text-sm">Cancel 取消</span>
                 </th>
                 {isSuperAdmin && (
-                  <th className="py-3 px-4 border-b text-left font-semibold text-gray-700 bg-gray-50 w-16">
+                  <th className="py-3 px-4 border-b text-left font-semibold text-grey-700 bg-grey-50 w-16">
                     <span className="text-sm">Actions</span>
                   </th>
                 )}
@@ -378,8 +378,8 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                   <tr 
                     key={rowId}
                     className={cn(
-                      "hover:bg-gray-50 transition-colors duration-150 border-b",
-                      row.cancelled ? 'bg-red-50 text-gray-500' :
+                      "hover:bg-grey-50 transition-colors duration-150 border-b",
+                      row.cancelled ? 'bg-red-50 text-grey-500' :
                       (isSuperAdmin && row.isDuplicate) ? 'bg-yellow-50' : '',
                       isSelected && 'bg-blue-50'
                     )}
@@ -425,7 +425,7 @@ const AttendanceTableImproved: React.FC<AttendanceTableImprovedProps> = ({
                             )}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                          <span className="text-sm text-grey-700">{row.remarks || '—'}</span>
                         )}
                       </td>
                     )}

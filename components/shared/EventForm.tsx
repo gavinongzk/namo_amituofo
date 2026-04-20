@@ -115,21 +115,14 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   });
 
   async function onSubmit(values: z.infer<typeof eventFormSchema>, asDraft = false) {
-    console.log("Form submitted with values:", values);
-    console.log("Save as draft:", asDraft);
-    
     // Ensure country is set
     if (!values.country) {
-      console.log("Country is required but not set");
-      // Set a default country if not provided
       values.country = "Singapore";
-      console.log("Set default country to Singapore");
     }
     
     let uploadedImageUrl = values.imageUrl || ''; // Ensure it's always a string
 
     if(files.length > 0) {
-      console.log("Uploading files...");
       const uploadedImages = await startUpload(files)
 
       if(!uploadedImages) {
@@ -138,23 +131,10 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       }
 
       uploadedImageUrl = uploadedImages[0].url
-      console.log("File uploaded successfully:", uploadedImageUrl);
     }
 
     if(type === 'Create') {
       try {
-        console.log("Attempting to create event with data:", {
-          event: { 
-            ...values, 
-            imageUrl: uploadedImageUrl,
-            customFields: values.customFields,
-            country: values.country, // Explicitly include country
-            isDraft: asDraft
-          },
-          userId,
-          path: '/profile'
-        });
-        
         const newEvent = await createEvent({
           event: { 
             ...values, 
@@ -168,8 +148,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           userId,
           path: '/profile'
         })
-        
-        console.log("newEvent created:", newEvent);
 
         if(newEvent) {
           form.reset();
@@ -209,7 +187,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           router.push(`/events/details/${updatedEvent._id}`)
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   }
@@ -451,8 +429,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         <div className="flex flex-col gap-5">
           <div className="mb-5">
             <h3 className="text-lg font-medium mb-3">Default Questions</h3>
-            <p className="text-gray-600 mb-4">The following questions will be automatically included for all registrants:</p>
-            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+            <p className="text-grey-600 mb-4">The following questions will be automatically included for all registrants:</p>
+            <div className="bg-grey-50 p-4 rounded-lg space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Basic Questions:</h4>
                 <ul className="list-disc pl-5 space-y-2">
@@ -599,7 +577,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               type="button"
               size="lg"
               disabled={form.formState.isSubmitting}
-              className="button w-full bg-gray-600 hover:bg-gray-700"
+              className="button w-full bg-grey-600 hover:bg-grey-700"
               onClick={form.handleSubmit((vals) => onSubmit(vals, true))}
             >
               {form.formState.isSubmitting ? 'Saving Draft...' : 'Save as Draft'}

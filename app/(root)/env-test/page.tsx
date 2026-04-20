@@ -14,7 +14,7 @@ export default async function EnvTestPage() {
         <p><strong>NEXT_PUBLIC_SERVER_URL:</strong> {envVars.NEXT_PUBLIC_SERVER_URL}</p>
         <div className="mt-4">
           <h2 className="text-lg font-semibold mb-2">All Environment Variables:</h2>
-          <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm">
+          <pre className="bg-grey-100 p-4 rounded overflow-auto text-sm">
             {JSON.stringify(process.env, null, 2)}
           </pre>
         </div>

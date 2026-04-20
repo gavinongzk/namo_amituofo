@@ -36,7 +36,6 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
         const cacheBuster = `t=${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
         const endpoint = `/api/reg?phoneNumber=${encodeURIComponent(phoneNumber)}&${cacheBuster}`;
         
-        console.log(`Fetching registrations from: ${endpoint}`);
         const response = await fetch(endpoint, {
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -50,8 +49,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
         }
         
         const data = await response.json();
-        console.log(`Received ${data.length} registration(s)`);
-        
+
         // Clear any cached registrations from session storage to ensure fresh data
         sessionStorage.removeItem('eventLookupRegistrations');
         sessionStorage.removeItem('eventLookupAllRegistrations');
@@ -83,7 +81,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
         <h2 className="text-2xl font-bold mb-4 text-center text-primary-500">
           活动查询 Event Lookup
         </h2>
-        <p className="text-gray-600 mb-6 text-center">
+        <p className="text-grey-600 mb-6 text-center">
           输入您报名时使用的电话号码，查找您的活动详情和排队号码。/
           Enter your registration phone number to find your event details and queue number.
         </p>
@@ -105,11 +103,11 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
               countries={["SG", "MY"]}
               international
               countryCallingCodeEditable={false}
-              className="p-regular-16 border-2 border-gray-300 rounded-md"
+              className="p-regular-16 border-2 border-grey-300 rounded-md"
             />
           )}
           
-          <div className="text-xs text-gray-500 text-right">
+          <div className="text-xs text-grey-500 text-right">
             <button
               type="button"
               onClick={() => {
@@ -156,7 +154,7 @@ const RegistrationLookup = ({ showManualInput = false, className = '' }: Registr
           <h3 className="p-bold-20 md:h5-bold text-primary-500">
             报名资料将显示在这里 Registrations will appear here
           </h3>
-          <p className="p-regular-14 text-gray-600">
+          <p className="p-regular-14 text-grey-600">
             使用上方的表单搜索您的报名资料和排队号码。/
             Use the form above to search for your registrations and queue numbers.
           </p>

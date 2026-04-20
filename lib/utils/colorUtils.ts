@@ -18,7 +18,7 @@ const CATEGORY_COLORS = [
   'bg-sky-200 text-sky-700',
   'bg-fuchsia-200 text-fuchsia-700',
   'bg-slate-200 text-slate-700',
-  'bg-gray-200 text-gray-700',
+  'bg-grey-200 text-grey-700',
   'bg-zinc-200 text-zinc-700',
 ];
 
@@ -42,7 +42,7 @@ const CATEGORY_BG_COLORS = [
   'bg-sky-200',
   'bg-fuchsia-200',
   'bg-slate-200',
-  'bg-gray-200',
+  'bg-grey-200',
   'bg-zinc-200',
 ];
 

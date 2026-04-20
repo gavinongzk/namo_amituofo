@@ -216,12 +216,12 @@ const EventLookupPage = () => {
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100"
+                className="bg-white p-8 rounded-xl shadow-lg border border-grey-100"
             >
                 <h2 className="text-3xl font-bold mb-4 text-center text-primary-500">
                     活动查询 Event Lookup
                 </h2>
-                <p className="text-gray-600 mb-8 text-center max-w-2xl mx-auto">
+                <p className="text-grey-600 mb-8 text-center max-w-2xl mx-auto">
                     输入您报名时使用的电话号码，查找您的活动详情和排队号码。
                     <br />
                     Enter your registration phone number to find your event details and queue number.
@@ -254,12 +254,12 @@ const EventLookupPage = () => {
                                 countries={["SG", "MY"]}
                                 international
                                 countryCallingCodeEditable={false}
-                                className="p-regular-16 border-2 border-gray-300 rounded-md h-12 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-500"
+                                className="p-regular-16 border-2 border-grey-300 rounded-md h-12 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-500"
                             />
                         )}
                     </div>
                     
-                    <div className="text-xs text-gray-500 text-right">
+                    <div className="text-xs text-grey-500 text-right">
                         <button
                             type="button"
                             onClick={() => {
@@ -345,7 +345,7 @@ const EventLookupPage = () => {
                     <h3 className="p-bold-20 md:h5-bold text-primary-500">
                         报名资料将显示在这里 Registrations will appear here
                     </h3>
-                    <p className="p-regular-14 text-gray-600">
+                    <p className="p-regular-14 text-grey-600">
                         使用上方的表单搜索您的报名资料和排队号码。
                         <br />
                         Use the form above to search for your registrations and queue numbers.

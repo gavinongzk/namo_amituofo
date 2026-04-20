@@ -80,7 +80,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
       'bg-sky-200': '#bae6fd',
       'bg-fuchsia-200': '#e9d5ff',
       'bg-slate-200': '#e2e8f0',
-      'bg-gray-200': '#e5e7eb',
+      'bg-grey-200': '#e5e7eb',
       'bg-zinc-200': '#e4e4e7',
     };
     
@@ -118,11 +118,11 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">总活动数量 Total Events</h5>
+          <h5 className="text-sm font-medium text-grey-500">总活动数量 Total Events</h5>
           <p className="mt-1 text-2xl font-semibold">{registrations.length}</p>
         </Card>
         <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">首次参与 First Event</h5>
+          <h5 className="text-sm font-medium text-grey-500">首次参与 First Event</h5>
           <p className="mt-1 text-sm font-medium">
             {sortedRegistrations.length > 0 && sortedRegistrations[sortedRegistrations.length - 1].event.startDateTime
               ? format(new Date(String(sortedRegistrations[sortedRegistrations.length - 1].event.startDateTime)), 'MMM d, yyyy')
@@ -130,7 +130,7 @@ const EventLookupAnalytics: React.FC<EventLookupAnalyticsProps> = ({ registratio
           </p>
         </Card>
         <Card className="p-4">
-          <h5 className="text-sm font-medium text-gray-500">最近参与 Latest Event</h5>
+          <h5 className="text-sm font-medium text-grey-500">最近参与 Latest Event</h5>
           <p className="mt-1 text-sm font-medium">
             {sortedRegistrations.length > 0 && sortedRegistrations[0].event.startDateTime
               ? format(new Date(String(sortedRegistrations[0].event.startDateTime)), 'MMM d, yyyy')

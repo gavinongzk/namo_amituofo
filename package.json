@@ -15,12 +15,13 @@
     "build:vercel": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "analyze": "ANALYZE=true pnpm exec next build --no-lint",
+    "ci": "pnpm lint && pnpm typecheck && pnpm run build:strict",
     "typecheck": "tsc --noEmit",
     "update-version": "node scripts/update-version.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.27.5",
-    "@heroicons/react": "^2.1.5",
     "@hookform/resolvers": "^3.3.2",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -106,5 +107,8 @@
     "vibe-tools": "^0.61.5",
     "xlsx": "^0.18.5",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "15.1.0"
   }
 }

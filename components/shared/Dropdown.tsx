@@ -88,9 +88,9 @@ const Dropdown = ({ value, onChangeHandler, isSuperAdmin = false, showHidden = f
         </SelectTrigger>
         <SelectContent>
           {categories.length > 0 && categories.map((category) => (
-            <div key={category._id} className="flex justify-between items-center p-2 hover:bg-gray-100">
+            <div key={category._id} className="flex justify-between items-center p-2 hover:bg-grey-100">
               <SelectItem value={category._id} className="select-item p-regular-14">
-                <span className={category.isHidden ? 'text-gray-400' : ''}>
+                <span className={category.isHidden ? 'text-grey-400' : ''}>
                   {category.name}
                 </span>
               </SelectItem>

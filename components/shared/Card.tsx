@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react'
 
 // Legacy category colors for backward compatibility
 export const categoryColors: { [key: string]: string } = {
-  'All': 'bg-gray-200 text-gray-700',
+  'All': 'bg-grey-200 text-grey-700',
   '念佛超荐法会': 'bg-blue-200 text-blue-700',
   '念佛共修': 'bg-orange-200 text-orange-700',
   '外出结缘法会': 'bg-green-200 text-green-700',
@@ -50,8 +50,8 @@ const Card = ({ event, hasOrderLink, isMyTicket, userId, priority = false }: Car
     
   // Safely extract background and text colors
   const colorParts = categoryColor.split(' ');
-  const bgColor = colorParts[0] || 'bg-gray-200';
-  const textColor = colorParts[1] || 'text-gray-700';
+  const bgColor = colorParts[0] || 'bg-grey-200';
+  const textColor = colorParts[1] || 'text-grey-700';
     
   const isExpired = new Date(event.endDateTime) < new Date();
 

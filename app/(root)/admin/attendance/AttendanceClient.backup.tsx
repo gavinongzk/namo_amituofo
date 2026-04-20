@@ -721,11 +721,11 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
   };
 
   const renderHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100 whitespace-normal">
+    <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100 whitespace-normal">
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
-        className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+        className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
       >
         <span className="block text-xs">{label}</span>
         {sortConfig.key === key && (
@@ -1064,7 +1064,7 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
         <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
           {/* Queue number input section */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-grey-700 mb-2">
               Quick Attendance / 快速出席
             </label>
             <div className="flex flex-col lg:flex-row gap-3">
@@ -1097,7 +1097,7 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
             
             <Button
               onClick={fetchRegistrations}
-              className="bg-gray-500 hover:bg-gray-600 text-white h-12 flex items-center justify-center gap-2"
+              className="bg-grey-500 hover:bg-grey-600 text-white h-12 flex items-center justify-center gap-2"
             >
               <span className="text-lg">🔄</span>
               Refresh 刷新
@@ -1157,13 +1157,13 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
                 <div className="space-y-2">
                   {recentScans.length > 0 ? (
                     recentScans.map((scan, index) => (
-                      <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                      <div key={index} className="p-2 bg-grey-50 rounded text-sm">
                         <div className="font-medium">{scan.name}</div>
-                        <div className="text-gray-500">Queue: {scan.queueNumber}</div>
+                        <div className="text-grey-500">Queue: {scan.queueNumber}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-gray-500 text-sm italic">No recent scans</div>
+                    <div className="text-grey-500 text-sm italic">No recent scans</div>
                   )}
                 </div>
               </div>
@@ -1210,7 +1210,7 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
 
           {/* Enhanced pagination for larger screens */}
           {!isLoading && totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-grey-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -1257,12 +1257,12 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
               </div>
 
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-grey-600">
                   Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
                 </span>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Go to:</span>
+                  <span className="text-sm text-grey-600">Go to:</span>
                   <Input
                     type="number"
                     value={currentPage}
@@ -1297,7 +1297,7 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
           )}
         </div>
 
-                 <div className="overflow-x-auto mt-6 border border-gray-200 rounded-lg shadow">
+                 <div className="overflow-x-auto mt-6 border border-grey-200 rounded-lg shadow">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -1310,17 +1310,17 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
                   {renderHeader('Name 名字', 'name')}
                   {isSuperAdmin && renderHeader('Phone 电话', 'phoneNumber')}
                   {isSuperAdmin && renderHeader('Postal Code 邮区编号', 'postalCode')}
-                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                     <span className="block text-xs">Remarks 备注</span>
                   </th>
-                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                     <span className="block text-xs">Attendance 出席</span>
                   </th>
-                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                  <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                     <span className="block text-xs">Cancelled 已取消</span>
                   </th>
                   {isSuperAdmin && (
-                    <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                    <th className="py-2 px-3 border-b text-left font-semibold text-grey-700 bg-grey-100">
                       <span className="block text-xs">Delete 删除</span>
                     </th>
                   )}
@@ -1331,8 +1331,8 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
                   <tr 
                     key={`${row.registrationId}_${row.groupId}`}
                     className={`
-                      hover:bg-gray-50 transition-colors duration-150
-                      ${row.cancelled ? 'bg-red-50 line-through text-gray-500' :
+                      hover:bg-grey-50 transition-colors duration-150
+                      ${row.cancelled ? 'bg-red-50 line-through text-grey-500' :
                         (isSuperAdmin && row.isDuplicate) ? 'bg-green-50' : ''}
                     `}
                   >
@@ -1363,7 +1363,7 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
                           </Button>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                        <span className="text-sm text-grey-700">{row.remarks || '—'}</span>
                       )}
                     </td>
                     <td className="py-3 px-4 border-b border-r">
@@ -1435,14 +1435,14 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
                 </Button>
                 <Button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                  className="bg-grey-300 hover:bg-grey-400 text-grey-700"
                   title="Scroll to top"
                 >
                   ↑ Top
                 </Button>
                 <Button
                   onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                  className="bg-grey-300 hover:bg-grey-400 text-grey-700"
                   title="Scroll to bottom"
                 >
                   ↓ Bottom
@@ -1536,14 +1536,14 @@ const AttendanceClient = React.memo(function AttendanceClient({ event }: { event
               <h3 className={cn(
                 "text-lg font-semibold mb-4",
                 modalType === 'success' ? 'text-green-800' : 
-                modalType === 'error' ? 'text-red-800' : 'text-gray-900'
+                modalType === 'error' ? 'text-red-800' : 'text-grey-900'
               )}>
                 {modalTitle}
               </h3>
               <p className={cn(
                 "mb-4 whitespace-pre-line",
                 modalType === 'success' ? 'text-green-700' : 
-                modalType === 'error' ? 'text-red-700' : 'text-gray-700'
+                modalType === 'error' ? 'text-red-700' : 'text-grey-700'
               )}>
                 {modalMessage}
               </p>

@@ -145,20 +145,20 @@ const FloatingActionButtons: React.FC<FloatingActionButtonsProps> = ({
           <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-200">
             {/* Pagination Controls */}
             {showPagination && totalPages > 1 && (
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-2 shadow-lg">
+              <div className="bg-white/95 backdrop-blur-sm border border-grey-200 rounded-xl p-2 shadow-lg">
                 <div className="flex items-center gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={onPreviousPage || defaultOnPreviousPage}
                     disabled={currentPage === 1}
-                    className={`${getSizeClasses()} p-0 hover:bg-gray-100`}
+                    className={`${getSizeClasses()} p-0 hover:bg-grey-100`}
                     title="Previous page"
                   >
                     <SkipBack className={getIconSize()} />
                   </Button>
                   
-                  <div className="px-2 py-1 text-xs font-medium bg-gray-50 rounded min-w-[50px] text-center">
+                  <div className="px-2 py-1 text-xs font-medium bg-grey-50 rounded min-w-[50px] text-center">
                     {currentPage}/{totalPages}
                   </div>
                   
@@ -167,7 +167,7 @@ const FloatingActionButtons: React.FC<FloatingActionButtonsProps> = ({
                     variant="ghost"
                     onClick={onNextPage || defaultOnNextPage}
                     disabled={currentPage === totalPages}
-                    className={`${getSizeClasses()} p-0 hover:bg-gray-100`}
+                    className={`${getSizeClasses()} p-0 hover:bg-grey-100`}
                     title="Next page"
                   >
                     <SkipForward className={getIconSize()} />
@@ -178,13 +178,13 @@ const FloatingActionButtons: React.FC<FloatingActionButtonsProps> = ({
 
             {/* Scroll Controls */}
             {showScrollButtons && (
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-2 shadow-lg">
+              <div className="bg-white/95 backdrop-blur-sm border border-grey-200 rounded-xl p-2 shadow-lg">
                 <div className="flex flex-col gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={onScrollToTop || defaultScrollToTop}
-                    className={`${getSizeClasses()} p-0 hover:bg-gray-100`}
+                    className={`${getSizeClasses()} p-0 hover:bg-grey-100`}
                     title="Scroll to top"
                   >
                     <ArrowUp className={getIconSize()} />
@@ -194,7 +194,7 @@ const FloatingActionButtons: React.FC<FloatingActionButtonsProps> = ({
                     size="sm"
                     variant="ghost"
                     onClick={onScrollToBottom || defaultScrollToBottom}
-                    className={`${getSizeClasses()} p-0 hover:bg-gray-100`}
+                    className={`${getSizeClasses()} p-0 hover:bg-grey-100`}
                     title="Scroll to bottom"
                   >
                     <ArrowDown className={getIconSize()} />

@@ -46,7 +46,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
       {/* Primary Action - Queue Number Input */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-grey-700 mb-3">
           Quick Attendance / 快速出席
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -77,7 +77,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
       </div>
 
       {/* Action Bar - Organized into sections */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-grey-50 rounded-lg">
         
         {/* Left: Core Actions */}
         <div className="flex flex-wrap items-center gap-3">
@@ -93,7 +93,7 @@ const AttendanceHeaderImproved: React.FC<AttendanceHeaderImprovedProps> = ({
           <Button
             onClick={onRefresh}
             variant="outline"
-            className="hover:bg-gray-100 transition-all duration-200"
+            className="hover:bg-grey-100 transition-all duration-200"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh

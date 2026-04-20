@@ -819,7 +819,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
     <div className="relative w-full max-w-[500px] mx-auto px-2 sm:px-0">
       {/* Scanner Type Selector */}
       <div className="mb-3 flex items-center justify-between gap-2">
-        <label className="text-xs sm:text-sm text-gray-600">
+        <label className="text-xs sm:text-sm text-grey-600">
           Scanner Type / 扫描器类型:
         </label>
         <Select value={scannerType} onValueChange={handleScannerTypeChange}>
@@ -878,7 +878,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={() => fileInputRef.current?.click()}
               variant="outline"
               size="sm"
-              className="bg-white dark:bg-gray-800 border-border/50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="bg-white dark:bg-grey-800 border-border/50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
               disabled={isDecodingImage}
             >
               <span className="hidden sm:inline">{isDecodingImage ? 'Scanning…' : 'Scan Photo'}</span>
@@ -889,7 +889,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={toggleTorch}
               variant="outline" 
               size="icon"
-              className="bg-white dark:bg-gray-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              className="bg-white dark:bg-grey-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
               disabled={!torchAvailable}
             >
               {torchEnabled ? <FlashlightOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Flashlight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
@@ -900,7 +900,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
               onClick={handleRetryCamera}
               variant="outline" 
               size="icon"
-              className="bg-white dark:bg-gray-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+              className="bg-white dark:bg-grey-800 border-border/50 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
               title="Retry Camera / 重试摄像头"
             >
               <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -951,13 +951,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
         )}
       </div>
 
-      <p className="mt-2 text-xs sm:text-sm text-gray-600 text-center px-2">
+      <p className="mt-2 text-xs sm:text-sm text-grey-600 text-center px-2">
         将二维码置于框内以进行扫描。
         <br className="hidden sm:block" />
         <span className="sm:hidden"> / </span>
         Position the QR code within the frame to scan.
         <br />
-        <span className="text-xs text-gray-500">Using: {scannerTypeNames[scannerType]}</span>
+        <span className="text-xs text-grey-500">Using: {scannerTypeNames[scannerType]}</span>
       </p>
     </div>
   );

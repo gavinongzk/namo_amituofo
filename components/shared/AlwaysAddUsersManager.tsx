@@ -189,7 +189,7 @@ const AlwaysAddUsersManager = () => {
     <div className="space-y-6">
       <section className="rounded-lg border bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-xl font-semibold">Always Add Users</h2>
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-grey-600">
           These users are auto-registered whenever a new event is published in their country.
         </p>
 
@@ -228,7 +228,7 @@ const AlwaysAddUsersManager = () => {
               setFormState((prev) => ({ ...prev, enabled: checked === true }))
             }
           />
-          <span className="text-sm text-gray-700">Enabled</span>
+          <span className="text-sm text-grey-700">Enabled</span>
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -258,9 +258,9 @@ const AlwaysAddUsersManager = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-gray-600">Loading list...</p>
+          <p className="text-sm text-grey-600">Loading list...</p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-gray-600">No always-add users configured yet.</p>
+          <p className="text-sm text-grey-600">No always-add users configured yet.</p>
         ) : (
           <div className="space-y-2">
             {items.map((item) => (
@@ -270,10 +270,10 @@ const AlwaysAddUsersManager = () => {
               >
                 <div className="space-y-1 text-sm">
                   <p className="font-medium">{item.name}</p>
-                  <p className="text-gray-600">
+                  <p className="text-grey-600">
                     {item.phoneNumber} {item.postalCode ? ` | ${item.postalCode}` : ''}
                   </p>
-                  <p className="text-gray-500">
+                  <p className="text-grey-500">
                     {item.country} | {item.enabled ? 'Enabled' : 'Disabled'}
                   </p>
                 </div>

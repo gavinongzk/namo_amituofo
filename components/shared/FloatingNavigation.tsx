@@ -111,7 +111,7 @@ const FloatingNavigation: React.FC<FloatingNavigationProps> = ({
     >
       {/* Pagination Controls */}
       {showPagination && totalPages > 1 && (
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg p-2 shadow-lg">
+        <div className="bg-white/90 backdrop-blur-sm border border-grey-200 rounded-lg p-2 shadow-lg">
           <div className="flex items-center gap-1">
             <Button
               size="sm"
@@ -144,7 +144,7 @@ const FloatingNavigation: React.FC<FloatingNavigationProps> = ({
 
       {/* Scroll Controls */}
       {showScrollButtons && (
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg p-2 shadow-lg">
+        <div className="bg-white/90 backdrop-blur-sm border border-grey-200 rounded-lg p-2 shadow-lg">
           <div className="flex flex-col gap-1">
             <Button
               size="sm"

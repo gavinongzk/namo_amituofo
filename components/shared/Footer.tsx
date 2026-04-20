@@ -9,7 +9,7 @@ const Footer = () => {
 
 
   return (
-    <footer className="border-t bg-gray-50">
+    <footer className="border-t bg-grey-50">
       <div className="wrapper py-8">
         {/* Main Footer Content */}
         <div className="flex justify-center mb-8">
@@ -28,9 +28,9 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-200 pt-6">
+        <div className="border-t border-grey-200 pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-4 text-sm text-grey-600">
               <span>© {currentYear} 净土宗弥陀寺 (新加坡)</span>
               <span>•</span>
               <span>Namo Amituofo Organization Ltd.</span>
@@ -41,13 +41,13 @@ const Footer = () => {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/privacy-policy" 
-                className="text-sm text-gray-600 hover:text-primary-600 hover:underline transition-colors"
+                className="text-sm text-grey-600 hover:text-primary-600 hover:underline transition-colors"
               >
                 隐私政策
               </Link>
               <Link 
                 href="/faq" 
-                className="text-sm text-gray-600 hover:text-primary-600 hover:underline transition-colors"
+                className="text-sm text-grey-600 hover:text-primary-600 hover:underline transition-colors"
               >
                 常见问题
               </Link>

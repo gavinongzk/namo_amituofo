@@ -31,32 +31,13 @@ const Collection = ({
   urlParamName,
   userId,
 }: CollectionProps) => {
-  console.log('🎯 Collection received props:', {
-    dataLength: data?.length,
-    page,
-    totalPages,
-    collectionType
-  });
-
   // Ensure data is an array and handle null/undefined
   const safeData = Array.isArray(data) ? data : [];
   
-  // Filter out null/undefined events and log any that are found
   const validData = safeData.filter(event => {
-    if (!event) {
-      console.warn('⚠️ Null/undefined event found in collection data');
-      return false;
-    }
-    if (!event._id) {
-      console.warn('⚠️ Event missing _id:', event);
-      return false;
-    }
+    if (!event) return false;
+    if (!event._id) return false;
     return true;
-  });
-
-  console.log('📦 Processed collection data:', {
-    originalLength: data?.length,
-    validLength: validData.length
   });
 
   return (
@@ -65,11 +46,6 @@ const Collection = ({
         <div className="flex flex-col items-center gap-6 sm:gap-8 md:gap-10">
           <ul className="grid w-full grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-6">
             {validData.map((event, index) => {
-              console.log('🎨 Rendering event:', {
-                id: event._id,
-                title: event.title
-              });
-              
               const hasOrderLink = collectionType === 'Events_Organized';
               const isMyTicket = collectionType === 'My_Tickets';
 

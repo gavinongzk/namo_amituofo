@@ -168,7 +168,7 @@ const QrCodeWithLogo: React.FC<QrCodeWithLogoProps> = React.memo(({
         {isAttended && (
           <>
             {/* Grey overlay for attended QR code */}
-            <div className="absolute inset-0 bg-gray-400/60 z-10 pointer-events-none rounded-lg" />
+            <div className="absolute inset-0 bg-grey-400/60 z-10 pointer-events-none rounded-lg" />
             <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all duration-300 z-20
               ${isNewlyMarked ? 'animate-fade-in scale-105' : ''}`}>
               <div className="bg-green-100/90 p-3 rounded-lg shadow-lg backdrop-blur-sm">

@@ -1,11 +1,22 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useUser } from "@clerk/nextjs";
+import { Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import AttendanceDetailsCard from '@/components/shared/AttendanceDetails';
-import QrCodeScanner from '@/components/shared/QrCodeScanner';
 import FloatingNavigation from '@/components/shared/FloatingNavigation';
+
+const QrCodeScanner = dynamic(() => import('@/components/shared/QrCodeScanner'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center gap-3 p-8">
+      <Loader2 className="h-8 w-8 animate-spin text-primary-500" aria-hidden />
+      <span className="text-sm text-grey-600">加载扫描器… Loading scanner…</span>
+    </div>
+  ),
+});
 import { cn } from "@/lib/utils";
 import crypto from 'crypto';
 
@@ -483,13 +494,13 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
                 <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-none overflow-y-auto">
                   {recentScans.length > 0 ? (
                     recentScans.map((scan, index) => (
-                      <div key={index} className="p-1.5 sm:p-2 bg-gray-50 rounded text-xs sm:text-sm">
+                      <div key={index} className="p-1.5 sm:p-2 bg-grey-50 rounded text-xs sm:text-sm">
                         <div className="font-medium truncate">{scan.name}</div>
-                        <div className="text-gray-500">Queue: {scan.queueNumber}</div>
+                        <div className="text-grey-500">Queue: {scan.queueNumber}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-gray-500 text-xs sm:text-sm italic">No recent scans</div>
+                    <div className="text-grey-500 text-xs sm:text-sm italic">No recent scans</div>
                   )}
                 </div>
               </div>
@@ -534,14 +545,14 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
               <h3 className={cn(
                 "text-lg font-semibold mb-4",
                 modalType === 'success' ? 'text-green-800' : 
-                modalType === 'error' ? 'text-red-800' : 'text-gray-900'
+                modalType === 'error' ? 'text-red-800' : 'text-grey-900'
               )}>
                 {modalTitle}
               </h3>
               <p className={cn(
                 "mb-4 whitespace-pre-line",
                 modalType === 'success' ? 'text-green-700' : 
-                modalType === 'error' ? 'text-red-700' : 'text-gray-700'
+                modalType === 'error' ? 'text-red-700' : 'text-grey-700'
               )}>
                 {modalMessage}
               </p>
@@ -549,7 +560,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
                 <div className="flex justify-end">
                   <button 
                     onClick={() => setShowModal(false)} 
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 border border-grey-300 rounded-md hover:bg-grey-50"
                   >
                     Close / 关闭
                   </button>
@@ -568,7 +579,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
               <div className="flex justify-end space-x-4">
                 <button 
                   onClick={() => setShowDeleteConfirmation(false)} 
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border border-grey-300 rounded-md hover:bg-grey-50"
                 >
                   Cancel / 取消
                 </button>
@@ -600,7 +611,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
               <div className="flex justify-end space-x-4">
                 <button 
                   onClick={() => setShowConfirmation(false)} 
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border border-grey-300 rounded-md hover:bg-grey-50"
                 >
                   Cancel / 取消
                 </button>

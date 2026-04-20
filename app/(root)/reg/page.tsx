@@ -94,9 +94,9 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-300">
+              <table className="min-w-full bg-white border border-grey-300">
                 <thead>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-grey-100">
                     <th className="py-2 px-4 border-b text-left">Queue Number</th>
                     <th className="py-2 px-4 border-b text-left">Event Title</th>
                     <th className="py-2 px-4 border-b text-left">Registration Date</th>
@@ -111,7 +111,7 @@ const Orders = async ({ searchParams }: SearchParamProps) => {
                 <tbody>
                   {filteredOrders.map((order: IOrderItem) => 
                     order.customFieldValues.map((group, index) => (
-                      <tr key={`${order._id}_${group.groupId}`} className="hover:bg-gray-50">
+                      <tr key={`${order._id}_${group.groupId}`} className="hover:bg-grey-50">
                         <td className="py-2 px-4 border-b text-left">{group.queueNumber || 'N/A'}</td>
                         <td className="py-2 px-4 border-b text-left">{order.event.title}</td>
                         <td className="py-2 px-4 border-b text-left">

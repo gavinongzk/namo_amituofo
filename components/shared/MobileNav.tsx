@@ -16,7 +16,7 @@ import { usePathname } from 'next/navigation';
 const AdminLoginButton = () => (
   <Link 
     href="/sign-in" 
-    className="flex items-center gap-3 p-3 text-gray-600 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-all duration-300"
+    className="flex items-center gap-3 p-3 text-grey-600 hover:bg-grey-50 active:bg-grey-100 rounded-lg transition-all duration-300"
     onClick={(e) => e.stopPropagation()}
   >
     <Image 
@@ -28,7 +28,7 @@ const AdminLoginButton = () => (
     />
     <div className="flex flex-col">
       <span className="font-medium text-sm">管理员登录</span>
-      <span className="text-xs text-gray-500">Admin Login</span>
+      <span className="text-xs text-grey-500">Admin Login</span>
     </div>
   </Link>
 )
@@ -73,7 +73,7 @@ const MobileNav = () => {
                 className="w-32 h-auto transition-opacity hover:opacity-80"
               />
             </div>
-            <Separator className="border border-gray-100" />
+            <Separator className="border border-grey-100" />
             <div className="flex-1 overflow-y-auto">
               <NavWrapper onClose={handleClose} />
             </div>
@@ -81,7 +81,7 @@ const MobileNav = () => {
           
           <SignedOut>
             <div className="mt-auto pt-4">
-              <Separator className="border border-gray-100" />
+              <Separator className="border border-grey-100" />
               <div className="mt-4">
                 <AdminLoginButton />
               </div>

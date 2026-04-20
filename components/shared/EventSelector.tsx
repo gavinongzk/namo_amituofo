@@ -86,7 +86,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
     const endDate = new Date(event.endDateTime);
     
     if (now > endDate) {
-      return { label: "已过期 / Expired", color: "text-gray-500" };
+      return { label: "已过期 / Expired", color: "text-grey-500" };
     } else if (now >= startDate && now <= endDate) {
       return { label: "进行中 / Ongoing", color: "text-green-600" };
     } else {
@@ -102,7 +102,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
         <span className="block md:inline">Select an Event</span>
       </h2>
       {isLoading ? (
-        <div className="flex items-center justify-center p-4 border rounded-md bg-gray-50">
+        <div className="flex items-center justify-center p-4 border rounded-md bg-grey-50">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           <span className="text-sm md:text-base">
             <span className="md:inline">加载中...</span>
@@ -112,7 +112,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
         </div>
       ) : (
         <Select onValueChange={(value) => onEventSelect(events.find(e => e._id === value)!)}>
-          <SelectTrigger className="w-full bg-white border-gray-300 hover:bg-gray-50 transition-colors">
+          <SelectTrigger className="w-full bg-white border-grey-300 hover:bg-grey-50 transition-colors">
             <SelectValue placeholder="选择一个活动 / Select an event" />
           </SelectTrigger>
           <SelectContent className="max-h-[400px] overflow-hidden">
@@ -120,7 +120,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
               {/* Upcoming Events */}
               {Object.entries(groupedEvents.upcomingEvents).map(([category, categoryEvents]) => (
                 <SelectGroup key={category}>
-                  <SelectLabel className="bg-gray-100 px-3 py-2 rounded-md text-sm font-semibold mb-2 sticky top-0 z-10">
+                  <SelectLabel className="bg-grey-100 px-3 py-2 rounded-md text-sm font-semibold mb-2 sticky top-0 z-10">
                     {category}
                   </SelectLabel>
                   {categoryEvents.map((event) => {
@@ -129,7 +129,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                       <SelectItem 
                         key={event._id} 
                         value={event._id} 
-                        className="py-3 px-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="py-3 px-3 cursor-pointer hover:bg-grey-50 border-b border-grey-100 last:border-b-0"
                       >
                         <div className="flex flex-col gap-2 w-full">
                           <div className="flex justify-between items-start w-full">
@@ -139,14 +139,14 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                             </span>
                           </div>
                           
-                          <div className="flex flex-col text-sm text-gray-600 gap-1">
+                          <div className="flex flex-col text-sm text-grey-600 gap-1">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                              <Calendar className="h-3.5 w-3.5 text-grey-500" />
                               <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
                             </div>
                             
                             <div className="flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 text-gray-500" />
+                              <Clock className="h-3.5 w-3.5 text-grey-500" />
                               <span>
                                 {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly} - 
                                 {formatBilingualDateTime(new Date(event.endDateTime)).combined.timeOnly}
@@ -155,7 +155,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                             
                             {event.location && (
                               <div className="flex items-center gap-1.5">
-                                <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                                <MapPin className="h-3.5 w-3.5 text-grey-500" />
                                 <span className="truncate">{event.location}</span>
                               </div>
                             )}
@@ -170,7 +170,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
               {/* Expired Events */}
               {groupedEvents.expiredEvents.length > 0 && (
                 <SelectGroup>
-                  <SelectLabel className="bg-gray-100 px-3 py-2 rounded-md text-sm font-semibold mb-2 sticky top-0 z-10 mt-2">
+                  <SelectLabel className="bg-grey-100 px-3 py-2 rounded-md text-sm font-semibold mb-2 sticky top-0 z-10 mt-2">
                     已过期活动 / Expired Events
                   </SelectLabel>
                   {groupedEvents.expiredEvents
@@ -179,24 +179,24 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                       <SelectItem 
                         key={event._id} 
                         value={event._id} 
-                        className="py-3 px-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 opacity-75"
+                        className="py-3 px-3 cursor-pointer hover:bg-grey-50 border-b border-grey-100 last:border-b-0 opacity-75"
                       >
                         <div className="flex flex-col gap-2 w-full">
                           <div className="flex justify-between items-start w-full">
-                            <span className="font-medium text-base text-gray-600 pt-0">{event.title}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full text-gray-500 bg-gray-100">
+                            <span className="font-medium text-base text-grey-600 pt-0">{event.title}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full text-grey-500 bg-grey-100">
                               已过期 / Expired
                             </span>
                           </div>
                           
-                          <div className="flex flex-col text-sm text-gray-500 gap-1">
+                          <div className="flex flex-col text-sm text-grey-500 gap-1">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                              <Calendar className="h-3.5 w-3.5 text-grey-400" />
                               <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
                             </div>
                             
                             <div className="flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 text-gray-400" />
+                              <Clock className="h-3.5 w-3.5 text-grey-400" />
                               <span>
                                 {formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly} - 
                                 {formatBilingualDateTime(new Date(event.endDateTime)).combined.timeOnly}
@@ -205,7 +205,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onEventSelect }) => {
                             
                             {event.location && (
                               <div className="flex items-center gap-1.5">
-                                <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                                <MapPin className="h-3.5 w-3.5 text-grey-400" />
                                 <span className="truncate">{event.location}</span>
                               </div>
                             )}

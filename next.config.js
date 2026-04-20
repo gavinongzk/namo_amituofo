@@ -28,12 +28,13 @@ const nextConfig = {
   // Optimize build performance
   experimental: {
     optimizePackageImports: [
-      '@radix-ui/react-icons', 
+      '@radix-ui/react-icons',
       'lucide-react',
       'chart.js',
+      'recharts',
       'framer-motion',
       'googleapis',
-      'jspdf'
+      'jspdf',
     ],
   },
   // Reduce bundle size
@@ -108,7 +109,13 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+// Only load when ANALYZE=true (local); avoids Vercel requiring a devDependency.
+if (process.env.ANALYZE === 'true') {
+  const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: true })
+  module.exports = withBundleAnalyzer(nextConfig)
+} else {
+  module.exports = nextConfig
+}
 
 
 // Temporarily disabled Sentry to debug build issues

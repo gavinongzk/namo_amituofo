@@ -25,7 +25,7 @@
 }
 
 .PhoneInputInput {
-  @apply w-full px-4 py-2 pl-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply w-full px-4 py-2 pl-12 border border-grey-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent;
 }
 
 @layer base {
@@ -93,11 +93,15 @@
 }
 
 * {
-  list-style: none;
   padding: 0;
   margin: 0;
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+}
+
+:where(nav) ul,
+:where(nav) ol {
+  list-style: none;
 }
 
 body {
@@ -183,7 +187,7 @@ body {
   }
 
   .input-field {
-    @apply bg-gray-50 h-[44px] sm:h-[48px] md:h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-full p-regular-16 px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 text-base !important;
+    @apply bg-grey-50 h-[44px] sm:h-[48px] md:h-[54px] focus-visible:ring-offset-0 placeholder:text-grey-500 rounded-full p-regular-16 px-3 sm:px-4 py-2 sm:py-3 border-2 border-grey-100 focus-visible:border-primary focus-visible:ring-transparent transition-all duration-300 text-base !important;
   }
 
   .textarea {
@@ -255,7 +259,7 @@ body {
   }
 
   .toggle-switch {
-    @apply bg-gray-300 !important;
+    @apply bg-grey-300 !important;
   }
 }
 
@@ -324,7 +328,7 @@ body {
 }
 
 .react-datepicker__time-list-item--selected {
-  background-color: #624cf5 !important;
+  background-color: #a3826c !important;
 }
 
 /* ========================================== NEW UTILITY CLASS */
@@ -351,21 +355,21 @@ body {
 .page-link {
   display: block;
   padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
   text-decoration: none;
-  color: #007bff;
+  color: #8b6a54;
   cursor: pointer;
 }
 
 .page-link:hover {
-  background-color: #f1f1f1;
+  background-color: #f5f2f0;
 }
 
 .page-item.active .page-link {
-  background-color: #007bff;
+  background-color: #a3826c;
   color: white;
-  border-color: #007bff;
+  border-color: #8b6a54;
 }
 
 .section-padding {
@@ -655,4 +659,20 @@ html {
 
 .animate-check-mark {
   animation: check-mark 0.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash,
+  .animate-fade-in,
+  .animate-check-mark,
+  .fab-enter,
+  .fab-exit,
+  .cta-attention,
+  .cta-button:hover::after {
+    animation: none !important;
+  }
+
+  .hover-scale {
+    @apply hover:scale-100;
+  }
 }
