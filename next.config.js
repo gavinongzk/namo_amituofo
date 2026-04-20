@@ -1,7 +1,3 @@
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -113,7 +109,13 @@ const nextConfig = {
   }
 }
 
-module.exports = withBundleAnalyzer(nextConfig)
+// Only load when ANALYZE=true (local); avoids Vercel requiring a devDependency.
+if (process.env.ANALYZE === 'true') {
+  const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: true })
+  module.exports = withBundleAnalyzer(nextConfig)
+} else {
+  module.exports = nextConfig
+}
 
 
 // Temporarily disabled Sentry to debug build issues
