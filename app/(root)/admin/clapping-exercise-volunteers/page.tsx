@@ -195,7 +195,7 @@ export default function ClappingExerciseVolunteersPage() {
       <div className="container mx-auto py-8">
         <div className="text-center">
           <div className="text-2xl">🪷</div>
-          <p className="text-lg text-gray-600">加载中...</p>
+          <p className="text-lg text-grey-600">加载中...</p>
         </div>
       </div>
     )
@@ -209,7 +209,7 @@ export default function ClappingExerciseVolunteersPage() {
           <h1 className="text-3xl font-bold text-orange-800 mb-2">
             拍手念佛健身操义工申请管理
           </h1>
-          <p className="text-gray-600">
+          <p className="text-grey-600">
             拍手念佛健身操义工招募申请列表
           </p>
         </div>
@@ -233,7 +233,7 @@ export default function ClappingExerciseVolunteersPage() {
         {volunteers.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-4">✨</div>
-            <p className="text-lg text-gray-600">暂无拍手念佛健身操义工申请</p>
+            <p className="text-lg text-grey-600">暂无拍手念佛健身操义工申请</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -266,7 +266,7 @@ export default function ClappingExerciseVolunteersPage() {
                     <TableCell>
                       <Badge 
                         variant={getFieldValue(volunteer, '4') === 'yes' ? 'default' : 'secondary'}
-                        className={getFieldValue(volunteer, '4') === 'yes' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                        className={getFieldValue(volunteer, '4') === 'yes' ? 'bg-green-100 text-green-800' : 'bg-grey-100 text-grey-800'}
                       >
                         {getParticipationStatus(volunteer)}
                       </Badge>
@@ -348,7 +348,7 @@ export default function ClappingExerciseVolunteersPage() {
               <Label htmlFor="edit-willing">是否愿意参与</Label>
               <select
                 id="edit-willing"
-                className="w-full border border-gray-300 rounded-md p-2"
+                className="w-full border border-grey-300 rounded-md p-2"
                 value={editFormData.willingToParticipate}
                 onChange={(e) => setEditFormData({ ...editFormData, willingToParticipate: e.target.value })}
               >
@@ -360,7 +360,7 @@ export default function ClappingExerciseVolunteersPage() {
               <Label htmlFor="edit-frequency">参与频率</Label>
               <select
                 id="edit-frequency"
-                className="w-full border border-gray-300 rounded-md p-2"
+                className="w-full border border-grey-300 rounded-md p-2"
                 value={editFormData.participationFrequency}
                 onChange={(e) => setEditFormData({ ...editFormData, participationFrequency: e.target.value })}
               >

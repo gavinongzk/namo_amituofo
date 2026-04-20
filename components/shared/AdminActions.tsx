@@ -25,8 +25,8 @@ const AdminActions = () => {
   const buttonClass = "w-full h-12 transition duration-300 transform hover:scale-105 rounded-md flex items-center justify-center gap-2";
 
   return (
-    <div className="flex flex-col gap-4 p-6 bg-gray-100 rounded-lg shadow-lg">
-      <h4 className="text-2xl font-bold text-center text-gray-800">管理员操作 / Admin Actions</h4>
+    <div className="flex flex-col gap-4 p-6 bg-grey-100 rounded-lg shadow-lg">
+      <h4 className="text-2xl font-bold text-center text-grey-800">管理员操作 / Admin Actions</h4>
       <Link href="/admin/select-event" onClick={() => handleClick('/admin/select-event')}>
         <Button className={`${buttonClass} bg-blue-600 hover:bg-blue-700 text-white`} disabled={loadingPath === '/admin/select-event'}>
           {loadingPath === '/admin/select-event' ? (
@@ -90,7 +90,7 @@ const AdminActions = () => {
             </Button>
           </Link>
 
-          <div className="border border-gray-200 rounded-lg bg-white p-3">
+          <div className="border border-grey-200 rounded-lg bg-white p-3">
             <Button
               type="button"
               variant="outline"

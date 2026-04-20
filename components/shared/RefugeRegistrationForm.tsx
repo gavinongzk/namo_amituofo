@@ -230,7 +230,7 @@ export function RefugeRegistrationForm({
         <Card className={variant === 'dialog' ? 'p-6 text-center' : 'p-8 text-center'}>
           <div className="mb-4">
             <h2 className="text-xl font-bold text-orange-800 mb-2">皈依报名成功 / Registration Successful</h2>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-grey-700">
               随喜您的发心，您的皈依申请已成功提交。请于法会当天准时出席。南無阿彌陀佛。
               <br />
               Rejoice in your sincere aspiration. Please be present on the event day. Namo Amituofo.
@@ -261,7 +261,7 @@ export function RefugeRegistrationForm({
                 <span className="text-white text-xl">📝</span>
               </div>
               <h2 className="text-2xl font-bold text-orange-800 mb-2">三宝皈依报名表格 / Refuge Registration Form</h2>
-              <p className="text-gray-600 text-sm">* Indicates required question</p>
+              <p className="text-grey-600 text-sm">* Indicates required question</p>
             </div>
           )}
 
@@ -272,7 +272,7 @@ export function RefugeRegistrationForm({
                 name="chineseName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">中文姓名 Chinese Name *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">中文姓名 Chinese Name *</FormLabel>
                     <FormControl>
                       <Input placeholder="请输入中文姓名 / Please enter Chinese name" {...field} className="border-orange-200 focus:border-orange-400" />
                     </FormControl>
@@ -286,7 +286,7 @@ export function RefugeRegistrationForm({
                 name="englishName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">英文姓名 English Name *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">英文姓名 English Name *</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Please enter English name"
@@ -305,7 +305,7 @@ export function RefugeRegistrationForm({
                 name="age"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">年龄 Age *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">年龄 Age *</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="请输入年龄 / Please enter age" {...field} className="border-orange-200 focus:border-orange-400" />
                     </FormControl>
@@ -319,7 +319,7 @@ export function RefugeRegistrationForm({
                 name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">出生日期 DOB *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">出生日期 DOB *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} className="border-orange-200 focus:border-orange-400" />
                     </FormControl>
@@ -333,7 +333,7 @@ export function RefugeRegistrationForm({
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">性别 Gender *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">性别 Gender *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="border-orange-200 focus:border-orange-400">
@@ -355,7 +355,7 @@ export function RefugeRegistrationForm({
                 name="contactNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">联系号码 Contact Number *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">联系号码 Contact Number *</FormLabel>
                     <FormControl>
                       <div className="space-y-2 sm:space-y-3 p-2 sm:p-4 bg-white rounded-md">
                         {phoneOverride ? (
@@ -364,10 +364,10 @@ export function RefugeRegistrationForm({
                               {...field}
                               value={String(field.value)}
                               type="tel"
-                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-lg"
+                              className="w-full h-10 sm:h-12 text-base sm:text-lg border-2 border-grey-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-lg"
                               placeholder="e.g. +8613812345678"
                             />
-                            <p className="text-sm text-gray-600 pl-1">Format: +[country code][number]</p>
+                            <p className="text-sm text-grey-600 pl-1">Format: +[country code][number]</p>
                             <button
                               type="button"
                               onClick={() => {
@@ -393,7 +393,7 @@ export function RefugeRegistrationForm({
                                 withCountryCallingCode
                               />
                             </div>
-                            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                            <div className="hidden sm:flex items-center gap-2 text-xs text-grey-500 bg-blue-50 p-2 rounded">
                               <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
                               <span>Singapore (+65) or Malaysia (+60) numbers only</span>
                             </div>
@@ -421,7 +421,7 @@ export function RefugeRegistrationForm({
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">地址 Address *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">地址 Address *</FormLabel>
                     <FormControl>
                       <Input placeholder="请输入地址 / Please enter address" {...field} className="border-orange-200 focus:border-orange-400" />
                     </FormControl>

@@ -92,19 +92,19 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
         <h3 className="text-lg font-semibold mb-4">User Information</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <p className="text-sm text-gray-600">Name</p>
+            <p className="text-sm text-grey-600">Name</p>
             <p className="font-medium">{attendee.name}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Phone</p>
+            <p className="text-sm text-grey-600">Phone</p>
             <p className="font-medium">{attendee.phoneNumber}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Region</p>
+            <p className="text-sm text-grey-600">Region</p>
             <p className="font-medium">{attendee.region || 'N/A'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Total Events</p>
+            <p className="text-sm text-grey-600">Total Events</p>
             <p className="font-medium">{attendee.eventCount}</p>
           </div>
         </div>
@@ -179,10 +179,10 @@ const UserAnalyticsVisuals: React.FC<UserAnalyticsVisualsProps> = ({ attendee, a
               .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime())
               .slice(0, 10)
               .map((event, index) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div key={index} className="flex justify-between items-center p-2 bg-grey-50 rounded">
                   <div>
                     <p className="font-medium text-sm">{event.eventTitle}</p>
-                    <p className="text-xs text-gray-600">{format(parseISO(event.eventDate), 'MMM dd, yyyy')}</p>
+                    <p className="text-xs text-grey-600">{format(parseISO(event.eventDate), 'MMM dd, yyyy')}</p>
                   </div>
                   <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
                     {event.category.name}

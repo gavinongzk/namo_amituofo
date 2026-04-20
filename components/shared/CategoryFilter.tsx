@@ -27,7 +27,7 @@ const CategoryFilter = () => {
 
   // Legacy category colors for backward compatibility
   const categoryColors: Record<string, string> = useMemo(() => ({
-    'All': 'bg-gray-200',
+    'All': 'bg-grey-200',
     '念佛超荐法会': 'bg-blue-200',
     '念佛共修': 'bg-orange-200',
     '外出结缘法会': 'bg-green-200',
@@ -116,9 +116,9 @@ const CategoryFilter = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-md">
+      <div className="flex items-center gap-2 px-4 py-2 bg-grey-50 rounded-md">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-gray-500">加载中... Loading categories...</span>
+        <span className="text-grey-500">加载中... Loading categories...</span>
       </div>
     );
   }
@@ -139,7 +139,7 @@ const CategoryFilter = () => {
         <SelectContent>
           <SelectItem 
             value="All" 
-            className="select-item p-regular-14 hover:bg-gray-50"
+            className="select-item p-regular-14 hover:bg-grey-50"
           >
             <div className="flex items-center gap-2 w-full">
               <div className={`w-3 h-3 rounded-full flex-shrink-0 ${categoryColors['All']}`} />
@@ -150,7 +150,7 @@ const CategoryFilter = () => {
             <SelectItem 
               key={category._id} 
               value={category.name}
-              className="select-item p-regular-14 hover:bg-gray-50"
+              className="select-item p-regular-14 hover:bg-grey-50"
             >
               <div className="flex items-center gap-2 w-full">
                 <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getCategoryColor(category)}`} />

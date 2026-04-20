@@ -1,9 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
-import AnalyticsDashboard from '@/components/shared/AnalyticsDashboard';
+import { Loader2 } from 'lucide-react';
+
+const AnalyticsDashboard = dynamic(
+  () => import('@/components/shared/AnalyticsDashboard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-10 w-10 animate-spin text-primary-500" aria-hidden />
+      </div>
+    ),
+  }
+);
 
 interface AttendeeEvent {
   eventDate: string;
@@ -78,8 +91,8 @@ const AdminAnalyticsPage = () => {
       <div className="wrapper my-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading analytics data...</p>
+            <Loader2 className="h-12 w-12 animate-spin text-primary-500 mx-auto mb-4" aria-hidden />
+            <p className="text-grey-600">Loading analytics data...</p>
           </div>
         </div>
       </div>
@@ -119,8 +132,8 @@ const AdminAnalyticsPage = () => {
   return (
     <div className="wrapper my-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-grey-900">Analytics Dashboard</h1>
+        <p className="text-grey-600 mt-2">
           View attendee statistics and event analytics
         </p>
       </div>

@@ -842,7 +842,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                 {refugeCandidates.length > 1 && (
                   <div className="space-y-2">
-                    <div className="text-sm text-gray-700 font-medium">
+                    <div className="text-sm text-grey-700 font-medium">
                       请选择要填写的参加者 / Choose participant
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -909,7 +909,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
 
                 {qrPreview?.qrCode && (
                   <div className="flex flex-col items-center gap-3">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 w-[88vw] max-w-[400px] aspect-square">
+                    <div className="bg-white rounded-xl border border-grey-200 shadow-sm p-3 w-[88vw] max-w-[400px] aspect-square">
                       <QRCodeDisplay
                         qrCode={qrPreview.qrCode}
                         isAttended={false}
@@ -918,7 +918,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                         mode="scan"
                       />
                     </div>
-                    <div className="text-xs text-gray-600 text-center">
+                    <div className="text-xs text-grey-600 text-center">
                       提示：把手机屏幕亮度调高，会更容易扫描。<br />
                       Tip: Increase screen brightness for faster scanning.
                     </div>
@@ -961,11 +961,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                 </div>
               </div>
             )}
-            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
+            <div className="bg-grey-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl">
               <h4 className="text-sm sm:text-base md:text-lg font-bold mb-1 md:mb-2 text-primary-700">活动 Event: {order.event?.title || 'N/A'}</h4>
             </div>
 
-            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
+            <div className="bg-grey-50 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <p>
                 <span className="font-semibold">日期时间 Date & Time: </span> 
                 {order.event?.startDateTime ? (
@@ -987,13 +987,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
               return (
                 <div key={group.groupId} className={`mt-3 sm:mt-4 md:mt-6 bg-white shadow-md rounded-lg sm:rounded-xl overflow-hidden ${group.cancelled ? 'opacity-75 relative' : ''}`}>
                   {group.cancelled && (
-                    <div className="absolute inset-0 z-10 bg-gray-200/30 pointer-events-none flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 z-10 bg-grey-200/30 pointer-events-none flex items-center justify-center overflow-hidden">
                       <div className="rotate-20 bg-red-100 text-red-800 px-8 py-2 text-xl font-bold shadow-lg opacity-90 absolute">
                         已取消 CANCELLED
                       </div>
                     </div>
                   )}
-                  <div className={`${group.cancelled ? 'bg-gray-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
+                  <div className={`${group.cancelled ? 'bg-grey-500' : 'bg-primary-500'} p-2 sm:p-3 md:p-4`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div className="flex flex-col gap-1 flex-1">
                         <h5 className="text-sm sm:text-base md:text-lg font-semibold text-white flex items-center gap-2 flex-wrap">
@@ -1037,7 +1037,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                           }}
                           aria-label="Enlarge QR code"
                         >
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-2 w-[78vw] max-w-[320px] aspect-square mx-auto">
+                          <div className="bg-white rounded-xl border border-grey-200 shadow-sm p-2 w-[78vw] max-w-[320px] aspect-square mx-auto">
                             <QRCodeDisplay 
                               qrCode={group.qrCode} 
                               isAttended={!!group.attendance}
@@ -1046,7 +1046,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                               mode="scan"
                             />
                           </div>
-                          <div className="mt-2 text-xs text-gray-500">
+                          <div className="mt-2 text-xs text-grey-500">
                             点击放大 / Tap to enlarge
                           </div>
                         </button>
@@ -1056,7 +1056,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                             <div className="bg-primary-500 text-white px-6 py-3 rounded-xl inline-block shadow-lg">
                               <p className="text-2xl font-bold">#{group.queueNumber}</p>
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">请在报到处出示此号码 Please show this number at registration</p>
+                            <p className="text-xs text-grey-500 mt-2">请在报到处出示此号码 Please show this number at registration</p>
                           </div>
                         )}
                       </div>
@@ -1067,7 +1067,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                   <div className="p-4 space-y-4">
                     {group.fields.filter(field => !isPostalCodeField(field)).map((field: CustomField) => (
                       <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <span className="font-semibold text-gray-700 sm:w-1/3">{field.label}:</span>
+                        <span className="font-semibold text-grey-700 sm:w-1/3">{field.label}:</span>
                         <div className="flex-1 flex items-center gap-2">
                           {editingField?.queueNumber === group.queueNumber && editingField?.field === field.id ? (
                             <div className="flex-1 flex items-center gap-2">
@@ -1128,11 +1128,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ params: { id } }) =
                                         });
                                         return;
                                       }
-                                      console.log('Edit button clicked for:', {
-                                        queueNumber,
-                                        field: field.id,
-                                        currentValue: field.value
-                                      });
                                       if (field.id) {
                                         const value = typeof field.value === 'string' ? field.value : '';
                                         handleEdit(queueNumber, field.id, value);

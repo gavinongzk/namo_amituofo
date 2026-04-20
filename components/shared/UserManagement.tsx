@@ -412,7 +412,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-gray-500">/</span>
+            <span className="text-grey-500">/</span>
             <Select value={dateMonth} onValueChange={(value) => handleDateFieldChange('month', value)}>
               <SelectTrigger className="w-28">
                 <SelectValue placeholder="Month" />
@@ -426,7 +426,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-gray-500">/</span>
+            <span className="text-grey-500">/</span>
             <Select value={dateYear} onValueChange={(value) => handleDateFieldChange('year', value)}>
               <SelectTrigger className="w-24">
                 <SelectValue placeholder="YYYY" />
@@ -469,7 +469,7 @@ const UserManagement = ({ country }: { country: string }) => {
             ) : (
               <p>Drag and drop an Excel file here, or click to select file</p>
             )}
-            <div className="mt-2 text-sm text-gray-500">
+            <div className="mt-2 text-sm text-grey-500">
               <p>Accepted column headers:</p>
               <ul className="list-disc list-inside mt-1">
                 <li>
@@ -523,14 +523,14 @@ const UserManagement = ({ country }: { country: string }) => {
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
         </div>
       ) : (
-        <table className="min-w-full bg-white border border-gray-300">
+        <table className="min-w-full bg-white border border-grey-300">
           <thead>
-            <tr className="bg-gray-100">
+            <tr className="bg-grey-100">
               <th className="py-2 px-4 border-b text-left">
                 <Button
                   variant="ghost"
                   onClick={() => requestSort('serialNumber')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
                 >
                   S/N
                   {sortConfig.key === 'serialNumber' && (
@@ -542,7 +542,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 <Button
                   variant="ghost"
                   onClick={() => requestSort('name')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
                 >
                   Name
                   {sortConfig.key === 'name' && (
@@ -554,7 +554,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 <Button
                   variant="ghost"
                   onClick={() => requestSort('phoneNumber')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
                 >
                   Phone Number
                   {sortConfig.key === 'phoneNumber' && (
@@ -566,7 +566,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 <Button
                   variant="ghost"
                   onClick={() => requestSort('isNewUser')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
                 >
                   Status
                   {sortConfig.key === 'isNewUser' && (
@@ -578,7 +578,7 @@ const UserManagement = ({ country }: { country: string }) => {
                 <Button
                   variant="ghost"
                   onClick={() => requestSort('createdAt')}
-                  className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+                  className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
                 >
                   Created At
                   {sortConfig.key === 'createdAt' && (
@@ -592,7 +592,7 @@ const UserManagement = ({ country }: { country: string }) => {
           </thead>
           <tbody>
             {paginatedData.map((user, index) => (
-              <tr key={user.phoneNumber} className={`hover:bg-gray-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
+              <tr key={user.phoneNumber} className={`hover:bg-grey-50 ${user.isNewUser ? 'bg-yellow-100' : ''}`}>
                 <td className="py-2 px-4 border-b text-left">{((currentPage - 1) * pageSize) + index + 1}</td>
                 <td className="py-2 px-4 border-b text-left">{user.name}</td>
                 <td className="py-2 px-4 border-b text-left">{user.phoneNumber}</td>
@@ -676,7 +676,7 @@ const UserManagement = ({ country }: { country: string }) => {
           </Button>
         </div>
       )}
-      <div className="mt-2 text-sm text-gray-600">
+      <div className="mt-2 text-sm text-grey-600">
         Total Records: {sortedData.length}
       </div>
 

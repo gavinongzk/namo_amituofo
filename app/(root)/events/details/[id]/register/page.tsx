@@ -39,10 +39,10 @@ const getCachedEvent = unstable_cache(
 // Separate loading component for better UX
 const RegisterPageSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-24 md:h-32 bg-gray-200 rounded-md mb-2 md:mb-4" />
+    <div className="h-24 md:h-32 bg-grey-200 rounded-md mb-2 md:mb-4" />
     <div className="space-y-2 md:space-y-3">
-      <div className="h-3 md:h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 md:h-4 bg-gray-200 rounded w-1/2" />
+      <div className="h-3 md:h-4 bg-grey-200 rounded w-3/4" />
+      <div className="h-3 md:h-4 bg-grey-200 rounded w-1/2" />
     </div>
   </div>
 )
@@ -78,8 +78,8 @@ async function AsyncRegisterForm({
   if (!event) {
     return (
       <div className="text-center py-10">
-        <h3 className="text-2xl font-bold text-gray-900">活动未找到 / Event Not Found</h3>
-        <p className="mt-2 text-gray-600">抱歉，找不到该活动。/ Sorry, this event could not be found.</p>
+        <h3 className="text-2xl font-bold text-grey-900">活动未找到 / Event Not Found</h3>
+        <p className="mt-2 text-grey-600">抱歉，找不到该活动。/ Sorry, this event could not be found.</p>
       </div>
     )
   }
@@ -90,8 +90,8 @@ async function AsyncRegisterForm({
     if (role !== 'superadmin') {
       return (
         <div className="text-center py-10">
-          <h3 className="text-2xl font-bold text-gray-900">暂未开放 / Not Available</h3>
-          <p className="mt-2 text-gray-600">此活动尚未发布。/ This event has not been published yet.</p>
+          <h3 className="text-2xl font-bold text-grey-900">暂未开放 / Not Available</h3>
+          <p className="mt-2 text-grey-600">此活动尚未发布。/ This event has not been published yet.</p>
         </div>
       )
     }
@@ -109,7 +109,6 @@ export async function generateMetadata({
     id: string
   }
 }): Promise<Metadata> {
-  console.log('[page.tsx generateMetadata] Received params:', params); // Added log
   // Validate ObjectId format before calling getEventById
   if (!mongoose.Types.ObjectId.isValid(params.id)) {
     return {

@@ -1,8 +1,18 @@
 import { Metadata } from "next"
 
+const siteUrl = process.env.NEXT_PUBLIC_SERVER_URL || "https://reg.plb-sea.org"
+
 export const metadata: Metadata = {
   title: "Privacy Policy | 隐私政策 | Namo Amituofo",
   description: "Our simplified privacy policy on how we collect, use, and protect your personal data under Singapore's PDPA. 我们简化的隐私政策，说明我们如何根据新加坡PDPA收集、使用和保护您的个人数据。",
+  openGraph: {
+    title: "隐私政策 | Privacy Policy",
+    description: "PDPA-aligned privacy notice (English and 中文).",
+    url: `${siteUrl}/privacy-policy`,
+    siteName: "Namo Amituofo",
+    type: "website",
+    locale: "zh_CN",
+  },
 }
 
 export default function PrivacyPolicy() {
@@ -92,7 +102,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <div className="text-sm text-gray-600 mt-6">
+            <div className="text-sm text-grey-600 mt-6">
               <p>最后更新日期：2025年5月12日</p>
             </div>
           </section>
@@ -100,7 +110,7 @@ export default function PrivacyPolicy() {
       </section>
 
       {/* Page Break */}
-      <hr className="border-t-2 border-gray-300 my-16" />
+      <hr className="border-t-2 border-grey-300 my-16" />
 
       {/* English Version */}
       <section>
@@ -186,7 +196,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <div className="text-sm text-gray-600 mt-6">
+            <div className="text-sm text-grey-600 mt-6">
               <p>Last updated: May 12, 2025</p>
             </div>
           </section>

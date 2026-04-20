@@ -437,13 +437,13 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
                 <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-none overflow-y-auto">
                   {recentScans.length > 0 ? (
                     recentScans.map((scan, index) => (
-                      <div key={index} className="p-1.5 sm:p-2 bg-gray-50 rounded text-xs sm:text-sm">
+                      <div key={index} className="p-1.5 sm:p-2 bg-grey-50 rounded text-xs sm:text-sm">
                         <div className="font-medium truncate">{scan.name}</div>
-                        <div className="text-gray-500">Queue: {scan.queueNumber}</div>
+                        <div className="text-grey-500">Queue: {scan.queueNumber}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-gray-500 text-xs sm:text-sm italic">No recent scans</div>
+                    <div className="text-grey-500 text-xs sm:text-sm italic">No recent scans</div>
                   )}
                 </div>
               </div>
@@ -488,14 +488,14 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
               <h3 className={cn(
                 "text-lg font-semibold mb-4",
                 modalType === 'success' ? 'text-green-800' : 
-                modalType === 'error' ? 'text-red-800' : 'text-gray-900'
+                modalType === 'error' ? 'text-red-800' : 'text-grey-900'
               )}>
                 {modalTitle}
               </h3>
               <p className={cn(
                 "mb-4 whitespace-pre-line",
                 modalType === 'success' ? 'text-green-700' : 
-                modalType === 'error' ? 'text-red-700' : 'text-gray-700'
+                modalType === 'error' ? 'text-red-700' : 'text-grey-700'
               )}>
                 {modalMessage}
               </p>
@@ -503,7 +503,7 @@ const AttendanceClient: React.FC<AttendanceClientProps> = ({ event }) => {
                 <div className="flex justify-end">
                   <button 
                     onClick={() => setShowModal(false)} 
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 border border-grey-300 rounded-md hover:bg-grey-50"
                   >
                     Close / 关闭
                   </button>

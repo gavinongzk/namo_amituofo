@@ -110,8 +110,6 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
           };
         }));
 
-        console.log('Orders to upload:', orders);
-
         const response = await fetch('/api/reg/upload', {
           method: 'POST',
           headers: {
@@ -138,13 +136,13 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
     <div className="mb-4">
       <h2 className="text-3xl font-bold">Upload Orders</h2>
       <h4 className="font-semibold mb-2">Required Excel File Headers:</h4>
-      <table className="min-w-full border-collapse border border-gray-300 mb-4">
+      <table className="min-w-full border-collapse border border-grey-300 mb-4">
         <thead>
           <tr>
-            <th className="border border-gray-300 p-2">名字 / Name</th>
-            <th className="border border-gray-300 p-2">联系号码 Contact number</th>
+            <th className="border border-grey-300 p-2">名字 / Name</th>
+            <th className="border border-grey-300 p-2">联系号码 Contact number</th>
             {eventCategory === '念佛共修' && (
-              <th className="border border-gray-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</th>
+              <th className="border border-grey-300 p-2">请问要参加绕佛吗？Does the participant want to participate in walking and reciting section?</th>
             )}
           </tr>
         </thead>
@@ -176,14 +174,14 @@ const UploadOrders: React.FC<UploadOrdersProps> = ({ eventId }) => { // Update c
             <h3 className={cn(
               "text-lg font-semibold mb-4",
               modalType === 'success' ? 'text-green-800' : 
-              modalType === 'error' ? 'text-red-800' : 'text-gray-900'
+              modalType === 'error' ? 'text-red-800' : 'text-grey-900'
             )}>
               {modalTitle}
             </h3>
             <p className={cn(
               "mb-4 whitespace-pre-line",
               modalType === 'success' ? 'text-green-700' : 
-              modalType === 'error' ? 'text-red-700' : 'text-gray-700'
+              modalType === 'error' ? 'text-red-700' : 'text-grey-700'
             )}>
               {modalMessage}
             </p>

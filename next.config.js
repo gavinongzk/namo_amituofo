@@ -1,3 +1,7 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -28,12 +32,13 @@ const nextConfig = {
   // Optimize build performance
   experimental: {
     optimizePackageImports: [
-      '@radix-ui/react-icons', 
+      '@radix-ui/react-icons',
       'lucide-react',
       'chart.js',
+      'recharts',
       'framer-motion',
       'googleapis',
-      'jspdf'
+      'jspdf',
     ],
   },
   // Reduce bundle size
@@ -108,7 +113,7 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+module.exports = withBundleAnalyzer(nextConfig)
 
 
 // Temporarily disabled Sentry to debug build issues

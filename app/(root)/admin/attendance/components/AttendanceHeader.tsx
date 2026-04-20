@@ -34,7 +34,7 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
       {/* Queue Number Input */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-grey-700 mb-3">
           Quick Attendance / 快速出席
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -75,7 +75,7 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
         
         <Button
           onClick={onRefresh}
-          className="bg-gray-500 hover:bg-gray-600 text-white h-12 flex items-center justify-center gap-2"
+          className="bg-grey-500 hover:bg-grey-600 text-white h-12 flex items-center justify-center gap-2"
         >
           <span className="text-lg">🔄</span>
           Refresh 刷新

@@ -84,11 +84,11 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
   };
 
   const renderHeader = (label: string, key: keyof AttendanceItem) => (
-    <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100 whitespace-normal">
+    <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100 whitespace-normal">
       <Button
         variant="ghost"
         onClick={() => requestSort(key)}
-        className="hover:bg-gray-200 transition-colors duration-200 w-full text-left p-0"
+        className="hover:bg-grey-200 transition-colors duration-200 w-full text-left p-0"
       >
         <span className="block text-xs">{label}</span>
         {sortConfig.key === key && (
@@ -158,7 +158,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-grey-50 rounded-lg">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -194,7 +194,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
               </Button>
             </div>
 
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-grey-600">
               Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
             </span>
           </div>
@@ -215,17 +215,17 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 {renderHeader('Name 名字', 'name')}
                 {isSuperAdmin && renderHeader('Phone 电话', 'phoneNumber')}
                 {isSuperAdmin && renderHeader('Postal Code 邮区编号', 'postalCode')}
-                <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                   <span className="block text-xs">Remarks 备注</span>
                 </th>
-                <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                   <span className="block text-xs">Attendance 出席</span>
                 </th>
-                <th className="py-2 px-3 border-b border-r text-left font-semibold text-gray-700 bg-gray-100">
+                <th className="py-2 px-3 border-b border-r text-left font-semibold text-grey-700 bg-grey-100">
                   <span className="block text-xs">Cancelled 已取消</span>
                 </th>
                 {isSuperAdmin && onDeleteRegistration && (
-                  <th className="py-2 px-3 border-b text-left font-semibold text-gray-700 bg-gray-100">
+                  <th className="py-2 px-3 border-b text-left font-semibold text-grey-700 bg-grey-100">
                     <span className="block text-xs">Delete 删除</span>
                   </th>
                 )}
@@ -236,8 +236,8 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 <tr 
                   key={`${row.registrationId}_${row.groupId}`}
                   className={cn(
-                    "hover:bg-gray-50 transition-colors duration-150",
-                    row.cancelled ? 'bg-red-50 line-through text-gray-500' :
+                    "hover:bg-grey-50 transition-colors duration-150",
+                    row.cancelled ? 'bg-red-50 line-through text-grey-500' :
                     (isSuperAdmin && row.isDuplicate) ? 'bg-green-50' : ''
                   )}
                 >
@@ -268,7 +268,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-700">{row.remarks || '—'}</span>
+                      <span className="text-sm text-grey-700">{row.remarks || '—'}</span>
                     )}
                   </td>
                   <td className="py-3 px-4 border-b border-r">

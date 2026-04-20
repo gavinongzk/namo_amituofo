@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { formatBilingualDateTime } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2 } from "lucide-react"
+import { Calendar, Loader2, MapPin, Users } from "lucide-react"
 import { isBefore, parseISO } from 'date-fns';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
 import { Separator } from "@/components/ui/separator"
@@ -59,14 +58,12 @@ const SelectEventPage = () => {
         }
         
         const result = await response.json();
-        console.log('Fetched events:', result);
 
         if (Array.isArray(result.data)) {
           // Superadmins see all events (including drafts and expired). Others see only non-draft, non-expired events
           const source = result.data;
           const recentAndUpcomingEvents = source
             .sort((a: Event, b: Event) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
-          console.log('Processed events:', recentAndUpcomingEvents); // Add logging
           setEvents(recentAndUpcomingEvents);
         } else {
           console.error('Fetched data is not an array:', result);
@@ -207,7 +204,7 @@ const SelectEventPage = () => {
                 </span>
               </div>
             ) : events.length === 0 ? (
-              <div className="text-center p-6 text-gray-500">
+              <div className="text-center p-6 text-grey-500">
                 <span className="block md:inline">没有可用的活动</span>
                 <span className="hidden md:inline"> / </span>
                 <span className="block md:inline">No events available</span>
@@ -221,14 +218,14 @@ const SelectEventPage = () => {
                   <ScrollArea className="h-[300px]">
                     {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
                       <SelectGroup key={category}>
-                        <SelectLabel className={`px-2 py-1.5 rounded-md text-sm font-semibold mb-2 ${category === '──────────────' ? 'text-gray-400' : 'bg-gray-100'}`}>
+                        <SelectLabel className={`px-2 py-1.5 rounded-md text-sm font-semibold mb-2 ${category === '──────────────' ? 'text-grey-400' : 'bg-grey-100'}`}>
                           {category}
                         </SelectLabel>
                         {categoryEvents.map((event) => (
                           <SelectItem 
                             key={event._id} 
                             value={event._id} 
-                            className={`py-3 px-2 cursor-pointer ${category === '已过期活动 / Expired Events' ? 'text-gray-500 italic' : ''}`}
+                            className={`py-3 px-2 cursor-pointer ${category === '已过期活动 / Expired Events' ? 'text-grey-500 italic' : ''}`}
                           >
                             <div className="flex flex-col gap-1.5">
                               <span className="font-medium text-base">
@@ -236,9 +233,9 @@ const SelectEventPage = () => {
                                 {event.isDraft && <span className="ml-1.5 text-sm text-orange-600">(草稿/Draft)</span>}
                                 {category === '已过期活动 / Expired Events' && <span className="ml-1.5 text-sm">(已过期/Expired)</span>}
                               </span>
-                              <div className="flex items-center text-sm text-gray-500 gap-2">
+                              <div className="flex items-center text-sm text-grey-500 gap-2">
                                 <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.dateOnly}</span>
-                                <span className="text-gray-400">|</span>
+                                <span className="text-grey-400">|</span>
                                 <span>{formatBilingualDateTime(new Date(event.startDateTime)).combined.timeOnly}</span>
                               </div>
                             </div>
@@ -262,7 +259,7 @@ const SelectEventPage = () => {
                   ? selectedEvent.category.color 
                   : getCategoryColor(selectedEvent.category.name);
                 const colorParts = categoryColor.split(' ');
-                return colorParts[1] || 'text-gray-700';
+                return colorParts[1] || 'text-grey-700';
               })()}`}>
                 {selectedEvent.category.name}
               </CardDescription>
@@ -271,13 +268,13 @@ const SelectEventPage = () => {
               <div className="space-y-4 md:space-y-5">
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <Calendar className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">{formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.dateOnly}</span>
                   </div>
                 </div>
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <CalendarIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <Calendar className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">
                       {formatBilingualDateTime(new Date(selectedEvent.startDateTime)).combined.timeOnly} - 
                       {formatBilingualDateTime(new Date(selectedEvent.endDateTime)).combined.timeOnly}
@@ -289,7 +286,7 @@ const SelectEventPage = () => {
 
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <MapPinIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <MapPin className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg break-words">{selectedEvent.location}</span>
                   </div>
                 </div>
@@ -298,7 +295,7 @@ const SelectEventPage = () => {
 
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <Users className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">
                       <span className="inline-block mr-1">已报名</span>
                       <span className="inline-block">Registered:</span>
@@ -308,7 +305,7 @@ const SelectEventPage = () => {
                 </div>
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <Users className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">
                       <span className="inline-block mr-1">已出席</span>
                       <span className="inline-block">Attended:</span>
@@ -318,7 +315,7 @@ const SelectEventPage = () => {
                 </div>
                 <div className="flex items-start md:items-center flex-col md:flex-row">
                   <div className="flex items-center w-full md:w-auto">
-                    <UsersIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
+                    <Users className="h-5 w-5 mr-2 text-grey-500 flex-shrink-0" />
                     <span className="text-base md:text-lg">
                       <span className="inline-block mr-1">不能绕佛</span>
                       <span className="inline-block">Cannot Recite & Walk:</span>
@@ -334,8 +331,8 @@ const SelectEventPage = () => {
                   ? selectedEvent.category.color 
                   : getCategoryColor(selectedEvent.category.name);
                 const colorParts = categoryColor.split(' ');
-                const bgColor = colorParts[0] || 'bg-gray-200';
-                const textColor = colorParts[1] || 'text-gray-700';
+                const bgColor = colorParts[0] || 'bg-grey-200';
+                const textColor = colorParts[1] || 'text-grey-700';
                 return `${bgColor} ${textColor} border-current`;
               })()}`}>
                 {selectedEvent.category.name}
@@ -351,7 +348,7 @@ const SelectEventPage = () => {
             </CardFooter>
           </Card>
         ) : (
-          <Card className="mb-6 md:mb-8 text-center p-6 md:p-8 shadow-md bg-gray-50">
+          <Card className="mb-6 md:mb-8 text-center p-6 md:p-8 shadow-md bg-grey-50">
             <CardDescription className="text-sm md:text-base">
               <span className="block md:inline">选择一个活动以查看详情</span>
               <span className="hidden md:inline"> / </span>

@@ -24,7 +24,7 @@ export const AmitabhaEventExtras = () => {
 
       <Card className="p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100 space-y-6">
         <div className="text-center space-y-4">
-          <p className="text-gray-700">
+          <p className="text-grey-700">
             需要报名皈依？请在报名成功后，点击按钮前往皈依报名表单。
           </p>
         </div>

@@ -69,8 +69,6 @@ const CountrySelector = () => {
           }
         }
 
-        // Fallback to Singapore if all detection methods fail
-        console.log('All country detection methods failed, falling back to Singapore');
         setCountry('Singapore');
         try {
           setCookie('userCountry', 'Singapore');
@@ -81,7 +79,6 @@ const CountrySelector = () => {
       } catch (error) {
         // Fallback to Singapore if any error occurs
         console.error('Error detecting country:', error);
-        console.log('Error in country detection, falling back to Singapore');
         setCountry('Singapore');
         try {
           setCookie('userCountry', 'Singapore');

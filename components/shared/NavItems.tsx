@@ -57,7 +57,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
     `group flex flex-col items-start justify-center p-3 md:px-4 md:py-2 text-sm rounded-lg md:rounded-md transition-all duration-300 relative w-full md:w-auto
     ${pathname === href || (href === '/' && pathname === '/')
       ? 'bg-primary-50 text-primary-600 font-medium shadow-sm'
-      : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100 hover:text-primary-500'
+      : 'text-grey-600 hover:bg-grey-50 active:bg-grey-100 hover:text-primary-500'
     }`;
 
   const renderLoadingSpinner = (href: string) => {
@@ -117,7 +117,7 @@ const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClos
             onClick={() => handleClick(item.href)}
           >
             <span className="font-medium group-hover:text-primary-600 transition-colors">{item.title}</span>
-            <span className="text-xs mt-0.5 text-gray-500 group-hover:text-primary-500 transition-colors">{item.subtitle}</span>
+            <span className="text-xs mt-0.5 text-grey-500 group-hover:text-primary-500 transition-colors">{item.subtitle}</span>
             {renderLoadingSpinner(item.href)}
           </Link>
         </li>

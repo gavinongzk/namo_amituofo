@@ -74,8 +74,7 @@ export default function ClappingExerciseVolunteerPage() {
         throw new Error('Failed to submit volunteer registration')
       }
 
-      const result = await response.json()
-      console.log('Clapping exercise volunteer registration successful:', result)
+      await response.json()
       
       setIsSubmitted(true)
     } catch (error) {
@@ -94,10 +93,10 @@ export default function ClappingExerciseVolunteerPage() {
             <div className="mb-6">
               <div className="text-6xl mb-4">🪷</div>
               <h1 className="text-3xl font-bold text-orange-800 mb-4">感恩您的发心</h1>
-              <p className="text-lg text-gray-700 mb-6">
+              <p className="text-lg text-grey-700 mb-6">
                 您的拍手念佛健身操义工申请已成功提交！我们会尽快与您联系，安排义工服务事宜。
               </p>
-              <p className="text-gray-600">
+              <p className="text-grey-600">
                 南无阿弥陀佛 🙏
               </p>
             </div>
@@ -142,14 +141,14 @@ export default function ClappingExerciseVolunteerPage() {
                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                   <p className="font-semibold text-orange-700">活动类别 / Category:</p>
                 </div>
-                <p className="text-gray-700 ml-4">拍手念佛健身操义工招募 / Clapping Exercise Volunteer Recruitment</p>
+                <p className="text-grey-700 ml-4">拍手念佛健身操义工招募 / Clapping Exercise Volunteer Recruitment</p>
               </div>
               <div className="text-left space-y-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                   <p className="font-semibold text-orange-700">主办单位 / Organiser:</p>
                 </div>
-                <p className="text-gray-700 ml-4">净土宗弥陀寺（新加坡）</p>
+                <p className="text-grey-700 ml-4">净土宗弥陀寺（新加坡）</p>
               </div>
             </div>
           </div>
@@ -165,7 +164,7 @@ export default function ClappingExerciseVolunteerPage() {
               <h2 className="text-3xl font-bold text-orange-800 mb-4">
                 亲爱的义工菩萨们：
               </h2>
-              <p className="text-gray-700 leading-relaxed text-lg max-w-3xl mx-auto">
+              <p className="text-grey-700 leading-relaxed text-lg max-w-3xl mx-auto">
                 我们即将在 新加坡弥陀寺 长期举办 「拍手念佛健身操」。此活动结合健身运动与念佛，带来身心双重利益：
               </p>
             </div>
@@ -179,7 +178,7 @@ export default function ClappingExerciseVolunteerPage() {
                   </div>
                   <h3 className="text-xl font-semibold text-orange-700">活动安排</h3>
                 </div>
-                <ul className="space-y-3 text-gray-700">
+                <ul className="space-y-3 text-grey-700">
                   <li className="flex items-start">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                     <span>时间：每月两次 · 星期六，下午4:00pm – 5:00pm</span>
@@ -202,7 +201,7 @@ export default function ClappingExerciseVolunteerPage() {
                   </div>
                   <h3 className="text-xl font-semibold text-orange-700">义工服务内容</h3>
                 </div>
-                <ul className="space-y-3 text-gray-700">
+                <ul className="space-y-3 text-grey-700">
                   <li className="flex items-start">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                     <span>协助带领念佛健身操</span>
@@ -223,7 +222,7 @@ export default function ClappingExerciseVolunteerPage() {
                   </div>
                   <h3 className="text-xl font-semibold text-orange-700">健体益处</h3>
                 </div>
-                <ul className="space-y-3 text-gray-700">
+                <ul className="space-y-3 text-grey-700">
                   <li className="flex items-start">
                     <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                     <span>拍一拍，血脉畅通，活力满满</span>
@@ -246,7 +245,7 @@ export default function ClappingExerciseVolunteerPage() {
                   </div>
                   <h3 className="text-xl font-semibold text-orange-700">念佛功德</h3>
                 </div>
-                <ul className="space-y-3 text-gray-700">
+                <ul className="space-y-3 text-grey-700">
                   <li className="flex items-start">
                     <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                     <span>一声佛号，遍照光明，功德无量</span>
@@ -274,7 +273,7 @@ export default function ClappingExerciseVolunteerPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-orange-800 mb-4">节奏与佛号，身心共修</h3>
               </div>
-              <div className="space-y-3 text-gray-700 leading-relaxed text-center">
+              <div className="space-y-3 text-grey-700 leading-relaxed text-center">
                 <p className="text-lg">在轻快的节奏里，拍出健康，念出光明！</p>
                 <p className="text-lg">大家齐声念佛，共修共乐，身安心安，功德无边！</p>
               </div>
@@ -285,7 +284,7 @@ export default function ClappingExerciseVolunteerPage() {
                 <span className="text-white text-2xl">🙌</span>
               </div>
               <h3 className="text-2xl font-bold text-orange-800 mb-4">发心护持，成就无量功德</h3>
-              <div className="space-y-4 text-gray-700 leading-relaxed">
+              <div className="space-y-4 text-grey-700 leading-relaxed">
                 <p className="text-lg">您的双手，不只是拍手动作，更是播撒慈悲的种子！</p>
                 <p className="text-lg">欢迎一同发心，让念佛拍手操传递喜乐与慈悲！</p>
                 <div className="bg-white/50 p-6 rounded-xl my-6">
@@ -318,7 +317,7 @@ export default function ClappingExerciseVolunteerPage() {
             <h2 className="text-3xl font-bold text-orange-800 mb-2">
               义工申请表格
             </h2>
-            <p className="text-gray-600">请填写以下信息，我们会尽快与您联系</p>
+            <p className="text-grey-600">请填写以下信息，我们会尽快与您联系</p>
           </div>
           
           <Form {...form}>
@@ -329,7 +328,7 @@ export default function ClappingExerciseVolunteerPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">名字 *</FormLabel>
+                      <FormLabel className="text-grey-700 font-medium">名字 *</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="请输入您的姓名" 
@@ -347,7 +346,7 @@ export default function ClappingExerciseVolunteerPage() {
                   name="dharmaName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">净土宗皈依号</FormLabel>
+                      <FormLabel className="text-grey-700 font-medium">净土宗皈依号</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="如有皈依号请填写" 
@@ -366,7 +365,7 @@ export default function ClappingExerciseVolunteerPage() {
                 name="contactNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">联系号码 *</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">联系号码 *</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="请输入您的联系电话" 
@@ -384,7 +383,7 @@ export default function ClappingExerciseVolunteerPage() {
                 name="willingToParticipate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
+                    <FormLabel className="text-grey-700 font-medium">
                       请问您是否愿意参与「拍手念佛健身操」的义工服务？ *
                     </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -409,7 +408,7 @@ export default function ClappingExerciseVolunteerPage() {
                   name="participationFrequency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
+                      <FormLabel className="text-grey-700 font-medium">
                         请问您大概每月能参与的次数？ *
                       </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -436,7 +435,7 @@ export default function ClappingExerciseVolunteerPage() {
                   name="otherFrequency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">请注明其他参与频率</FormLabel>
+                      <FormLabel className="text-grey-700 font-medium">请注明其他参与频率</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="请详细说明您的参与频率" 
@@ -455,7 +454,7 @@ export default function ClappingExerciseVolunteerPage() {
                 name="inquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">询问事项</FormLabel>
+                    <FormLabel className="text-grey-700 font-medium">询问事项</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="如有任何疑问或需要了解的事项，请在此填写" 
@@ -497,8 +496,8 @@ export default function ClappingExerciseVolunteerPage() {
             <span className="text-white text-lg">🏛️</span>
           </div>
           <h3 className="text-xl font-semibold text-orange-700 mb-3">净土宗弥陀寺（新加坡）</h3>
-          <p className="text-gray-700 mb-2">Namo Amituofo Organization Ltd</p>
-          <div className="space-y-1 text-gray-600">
+          <p className="text-grey-700 mb-2">Namo Amituofo Organization Ltd</p>
+          <div className="space-y-1 text-grey-600">
             <p>📍 27, Lor 27, Geylang, S&apos;pore 388163</p>
             <p>📞 +65-8818 4848</p>
             <p>🚇 阿裕尼地铁站附近 / Near Aljunied MRT</p>

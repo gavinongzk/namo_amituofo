@@ -137,15 +137,12 @@ export default function RootLayout({
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
           registration.unregister();
-          console.log('Service worker unregistered');
         }
-        // Clear caches
         if ('caches' in window) {
           caches.keys().then(function(cacheNames) {
             cacheNames.forEach(function(cacheName) {
               if (cacheName.startsWith('namo-amituofo-')) {
                 caches.delete(cacheName);
-                console.log('Cache deleted:', cacheName);
               }
             });
           });
