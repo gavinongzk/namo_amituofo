@@ -62,8 +62,5 @@ export const createRegistrationFormSchema = (customFields: Array<{ id: string, t
 
   return z.object({
     groups: z.array(groupSchema),
-    pdpaConsent: z.boolean().refine(val => val === true, {
-      message: '请阅读并同意隐私政策 / Please read and agree to the Privacy Policy'
-    })
   });
 };

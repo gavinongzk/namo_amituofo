@@ -1,3 +1,5 @@
+import type { CustomField } from '@/types';
+
 export const eventDefaultValues = {
   title: '',
   description: '',
@@ -8,6 +10,8 @@ export const eventDefaultValues = {
   categoryId: '',
   maxSeats: 300,
   country: 'Singapore',
+  /** Opt-in: refuge question appears on registration only when admin checks “Include refuge question”. */
+  showRefugeQuestion: false,
   registrationSuccessMessage: `
     📣 通知 / Notice
     🪷 已收到您的报名 / Registration Received
@@ -119,3 +123,8 @@ export type CategoryName = keyof typeof categoryCustomFields;
 
 /** Categories that have the optional refuge question. Admin chooses per event whether to show or hide it. */
 export const REFUGE_QUESTION_CATEGORIES: CategoryName[] = ['特别节日法会', '念佛超荐法会'];
+
+/** Matches the “Would you like to take refuge?” radio in category templates (not e.g. 皈依名). */
+export function fieldLooksLikeRefugeQuestion(field: Pick<CustomField, 'label'>): boolean {
+  return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(field.label);
+}

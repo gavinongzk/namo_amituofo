@@ -18,7 +18,7 @@ import {
 } from '@/types'
 import type { Document } from 'mongoose';
 import { EVENT_CONFIG } from '@/lib/config/event.config';
-import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES } from '@/constants';
+import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES, fieldLooksLikeRefugeQuestion } from '@/constants';
 import type { CustomField, CustomFieldGroup } from '@/types';
 import AutoEnrollProfile from '@/lib/database/models/autoEnrollProfile.model';
 import { createOrder, getOrderCountByEvent, getTotalRegistrationsByEvent } from '@/lib/actions/order.actions';
@@ -31,10 +31,6 @@ const populateEvent = (query: any) => {
     .populate({ path: 'organizer', model: User, select: '_id' })
     .populate({ path: 'category', model: Category, select: '_id name color' })
 }
-
-const fieldLooksLikeRefugeQuestion = (field: CustomField): boolean => {
-  return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(field.label);
-};
 
 const getTemplateFieldsByCategory = (categoryName: string, showRefugeQuestion: boolean): CustomField[] => {
   const templateFields =
