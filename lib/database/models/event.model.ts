@@ -42,7 +42,7 @@ const EventSchema = new Schema({
   maxSeats: { type: Number, required: true },
   isDeleted: { type: Boolean, default: false },
   isDraft: { type: Boolean, default: true },
-  showRefugeQuestion: { type: Boolean, default: true }
+  showRefugeQuestion: { type: Boolean, default: false }
 })
 
 // Add indexes for better query performance

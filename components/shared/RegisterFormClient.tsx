@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { IEvent } from '@/lib/database/models/event.model'
 import { CreateOrderParams, CustomField, DuplicateRegistrationDetail } from "@/types"
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES } from '@/constants'
+import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES, fieldLooksLikeRefugeQuestion } from '@/constants'
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -24,7 +24,6 @@ import { validateSingaporePostalCode } from '@/lib/utils';
 import { toChineseOrdinal } from '@/lib/utils/chineseNumerals';
 import { clearAllClientCache, isClientSideError, getErrorMessage } from '@/lib/utils/cache';
 import QrCodeWithLogo from '@/components/shared/QrCodeWithLogo';
-import { PdpaConsentCheckbox } from './PdpaConsentCheckbox';
 import { createRegistrationFormSchema } from '@/lib/validator';
 
 const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
@@ -59,11 +58,6 @@ interface RegisterFormClientProps {
   initialOrderCount: number
   onRefresh: () => Promise<void>
 }
-
-const fieldLooksLikeRefugeQuestion = (field: CustomField): boolean => {
-  // Important: don't match "皈依名 / Dharma Name" (name field), only match the actual refuge question.
-  return /要皈依|皈依吗|take refuge|would you like to take refuge/i.test(field.label);
-};
 
 const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
   if (!phoneNumber || typeof phoneNumber !== 'string') return null;
@@ -272,7 +266,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
               : ''
         ])
       )),
-      pdpaConsent: false
     },
   });
 
@@ -1085,16 +1078,8 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                 </>
               )}
 
-              {/* Add PDPA consent checkbox before the submit button - only show when event is not full */}
               {!isFullyBooked && (
-                <>
-                  <PdpaConsentCheckbox 
-                    name="pdpaConsent"
-                    disabled={isSubmitting}
-                    className="mt-6"
-                  />
-
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl border border-green-200 p-4 sm:p-6 mt-6 sm:mt-8">
                     <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     </div>
                     <Button 
@@ -1112,7 +1097,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                       )}
                     </Button>
                   </div>
-                </>
               )}
             </form>
           </Form>

@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
-import { eventDefaultValues, categoryCustomFields, REFUGE_QUESTION_CATEGORIES } from "@/constants"
+import { eventDefaultValues, categoryCustomFields, REFUGE_QUESTION_CATEGORIES, fieldLooksLikeRefugeQuestion } from "@/constants"
 import { CategoryName } from "@/constants"
 import Dropdown from "./Dropdown"
 import { Textarea } from "@/components/ui/textarea"
@@ -85,7 +85,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
           ...eventDefaultValues,
           startDateTime: getNextSunday(13), // 1 PM
           endDateTime: getNextSunday(16), // 4 PM
-          showRefugeQuestion: true,
         }
   })
 
@@ -471,6 +470,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                   <ul className="list-disc pl-5 space-y-2">
                     {(() => {
                       const selectedCategoryId = form.watch('categoryId');
+                      const includeRefugeQuestion = form.watch('showRefugeQuestion') === true;
                       // Get the category name from the event's category if it exists
                       const categoryName = event?.category?.name || categories?.find((cat: ICategory) => cat._id === selectedCategoryId)?.name;
                       
@@ -481,6 +481,8 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                         !categoryCustomFields.default.find(defaultField => 
                           defaultField.label === field.label
                         )
+                      ).filter((field) =>
+                        fieldLooksLikeRefugeQuestion(field) ? includeRefugeQuestion : true
                       );
                       
                       return uniqueFields.map(field => (
@@ -507,16 +509,16 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mt-4">
                         <FormControl>
                           <Checkbox
-                            checked={field.value ?? true}
-                            onCheckedChange={field.onChange}
+                            checked={field.value === true}
+                            onCheckedChange={(v) => field.onChange(v === true)}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel className="cursor-pointer">
-                            包括皈依问题 / Include refuge question
+                            包括皈依问题（可选）/ Include refuge question (optional)
                           </FormLabel>
                           <FormDescription>
-                            若勾选，报名表单将显示“请问您要皈依吗？”若选择“是”，完成报名后系统将引导填写皈依报名表单。 / If checked, the registration form will show &quot;Would you like to take refuge?&quot; Choosing &quot;Yes&quot; will guide users to the refuge registration form after submission.
+                            默认不显示。仅当勾选时，报名表单才会出现“请问您要皈依吗？”；若选择“是”，完成报名后系统将引导填写皈依报名表单。 / Off by default. Only when checked will the registration form show &quot;Would you like to take refuge?&quot; Choosing &quot;Yes&quot; will guide users to the refuge registration form after submission.
                           </FormDescription>
                         </div>
                       </FormItem>
