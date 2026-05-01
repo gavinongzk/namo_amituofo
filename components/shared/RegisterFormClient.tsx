@@ -548,7 +548,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     }
   };
   const isFullyBooked = initialOrderCount >= event.maxSeats;
-  const seatsRemaining = Math.max(0, event.maxSeats - initialOrderCount);
 
   // Update the append function
   const handleAddPerson = () => {
@@ -765,17 +764,6 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
             <ChevronLeftIcon className="h-4 w-4 shrink-0" aria-hidden />
             返回活动详情 / Back to event details
           </Link>
-          {!isFullyBooked && event.maxSeats > 0 && (
-            <div
-              className="rounded-lg border border-primary-200 bg-primary-50/90 px-4 py-3 text-sm text-grey-800"
-              role="status"
-              aria-live="polite"
-            >
-              <span className="font-medium text-primary-900">名额 / Capacity: </span>
-              剩余 {seatsRemaining} 席 / {seatsRemaining} seat{seatsRemaining === 1 ? '' : 's'}{' '}
-              remaining（共 {event.maxSeats} / {event.maxSeats} total）
-            </div>
-          )}
         </div>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
