@@ -580,13 +580,12 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       try {
         const parsedData = JSON.parse(savedFormData as string);
 
-        const phoneFieldIds = new Set(customFields.filter(f => f.type === 'phone').map(f => f.id));
         const refugeFieldIds = new Set(
           customFields.filter(f => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)).map(f => f.id)
         );
 
         Object.entries(parsedData).forEach(([fieldId, saved]) => {
-          if (phoneFieldIds.has(fieldId) || refugeFieldIds.has(fieldId)) return;
+          if (refugeFieldIds.has(fieldId)) return;
 
           const currentField = customFields.find(f => f.id === fieldId);
           if (!currentField) return;
@@ -614,13 +613,12 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
   const saveFormData = (values: z.infer<typeof formSchema>) => {
     const firstPerson = values.groups[0];
-    const phoneFieldIds = new Set(customFields.filter(f => f.type === 'phone').map(f => f.id));
     const refugeFieldIds = new Set(
       customFields.filter(f => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)).map(f => f.id)
     );
     const fieldsToSave: Record<string, { value: string | boolean; type: string }> = {};
     Object.entries(firstPerson).forEach(([key, value]) => {
-      if (!phoneFieldIds.has(key) && !refugeFieldIds.has(key)) {
+      if (!refugeFieldIds.has(key)) {
         const field = customFields.find(f => f.id === key);
         if (field) {
           fieldsToSave[key] = { value, type: field.type };
