@@ -237,13 +237,14 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     detectCountry();
   }, [isLoaded, user]);
 
-  const rawCustomFields = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
-  // Filter out refuge question when admin disabled it (admin chooses per event for 特别节日法会 / 念佛超荐法会)
-  const customFields = (REFUGE_QUESTION_CATEGORIES.includes(event.category.name as CategoryName) && event.showRefugeQuestion === false)
-    ? rawCustomFields.filter((f) => !fieldLooksLikeRefugeQuestion(f))
-    : rawCustomFields;
+  const customFields = useMemo(() => {
+    const raw = (categoryCustomFields[event.category.name as CategoryName] || categoryCustomFields.default) as CustomField[];
+    return (REFUGE_QUESTION_CATEGORIES.includes(event.category.name as CategoryName) && event.showRefugeQuestion === false)
+      ? raw.filter((f) => !fieldLooksLikeRefugeQuestion(f))
+      : raw;
+  }, [event.category.name, event.showRefugeQuestion]);
 
-  const formSchema = createRegistrationFormSchema(customFields);
+  const formSchema = useMemo(() => createRegistrationFormSchema(customFields), [customFields]);
 
   // Helper function to get default country code
   const getDefaultCountry = (country: string | null) => {
@@ -636,7 +637,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
     () => debounce((values: z.infer<typeof formSchema>) => {
       saveFormData(values);
     }, 1000),
-    []
+    [customFields]
   );
 
   useEffect(() => {
