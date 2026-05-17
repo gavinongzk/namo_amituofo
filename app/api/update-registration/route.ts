@@ -128,9 +128,10 @@ export async function POST(req: Request) {
 
       // Handle field value updates
       if (fieldId && value !== undefined) {
-        // Format phone number if the field being updated is a phone number
+        // Check the actual field type from stored data to determine if it's a phone field
+        const targetField = foundGroup.fields.find((f: CustomField) => f.id === fieldId);
         let formattedValue = value;
-        if (fieldId.toLowerCase().includes('phone') && typeof value === 'string') {
+        if (targetField?.type === 'phone' && typeof value === 'string') {
           if (!isValidPhoneNumber(value)) {
             return NextResponse.json(
               { message: 'Invalid phone number format' },

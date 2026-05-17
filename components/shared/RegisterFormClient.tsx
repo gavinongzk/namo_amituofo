@@ -579,18 +579,30 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       try {
         const parsedData = JSON.parse(savedFormData as string);
 
-        // Never prefill the refuge question from cookies.
-        // Reason: the cookie is keyed only by field id (e.g. "4"), which can represent different questions across categories,
-        // and it can also override the intended default ("no") for the refuge question.
-        const refugeFieldId = customFields.find(
-          (f) => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)
-        )?.id;
-        
-        // Pre-fill first person's non-sensitive fields
-        Object.entries(parsedData).forEach(([fieldId, value]) => {
-          // Don't pre-fill sensitive info like phone numbers
-          if (!fieldId.includes('phone') && fieldId !== refugeFieldId) {
-            form.setValue(`groups.0.${fieldId}`, value as string | boolean);
+        const phoneFieldIds = new Set(customFields.filter(f => f.type === 'phone').map(f => f.id));
+        const refugeFieldIds = new Set(
+          customFields.filter(f => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)).map(f => f.id)
+        );
+
+        Object.entries(parsedData).forEach(([fieldId, saved]) => {
+          if (phoneFieldIds.has(fieldId) || refugeFieldIds.has(fieldId)) return;
+
+          const currentField = customFields.find(f => f.id === fieldId);
+          if (!currentField) return;
+
+          // New format stores {value, type}; old format stores the value directly
+          const isNewFormat = saved !== null && typeof saved === 'object' && 'type' in saved && 'value' in saved;
+          if (isNewFormat) {
+            const entry = saved as { value: string | boolean; type: string };
+            // Only restore if the saved type matches the current field type
+            if (entry.type === currentField.type) {
+              form.setValue(`groups.0.${fieldId}`, entry.value);
+            }
+          } else {
+            // Legacy cookie: only restore into text/postal fields to avoid cross-category pollution
+            if (currentField.type === 'text' || currentField.type === 'postal') {
+              form.setValue(`groups.0.${fieldId}`, saved as string | boolean);
+            }
           }
         });
       } catch (e) {
@@ -601,15 +613,21 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
 
   const saveFormData = (values: z.infer<typeof formSchema>) => {
     const firstPerson = values.groups[0];
-    const fieldsToSave = Object.entries(firstPerson).reduce((acc, [key, value]) => {
-      // Don't save sensitive info
-      if (!key.includes('phone')) {
-        acc[key] = value;
+    const phoneFieldIds = new Set(customFields.filter(f => f.type === 'phone').map(f => f.id));
+    const refugeFieldIds = new Set(
+      customFields.filter(f => f.type === 'radio' && fieldLooksLikeRefugeQuestion(f)).map(f => f.id)
+    );
+    const fieldsToSave: Record<string, { value: string | boolean; type: string }> = {};
+    Object.entries(firstPerson).forEach(([key, value]) => {
+      if (!phoneFieldIds.has(key) && !refugeFieldIds.has(key)) {
+        const field = customFields.find(f => f.id === key);
+        if (field) {
+          fieldsToSave[key] = { value, type: field.type };
+        }
       }
-      return acc;
-    }, {} as Record<string, string | boolean>);
+    });
 
-    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), { 
+    setCookie('lastUsedFields', JSON.stringify(fieldsToSave), {
       maxAge: 60 * 60 * 24 * 30 // 30 days
     });
   };
@@ -643,13 +661,20 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
   }, [fields.length]);
 
   useEffect(() => {
+    const phoneFieldId = customFields.find(f => f.type === 'phone')?.id;
+    const postalFieldId = customFields.find(f => f.type === 'postal')?.id;
+
     const subscription = form.watch((value, { name }) => {
-      // Watch for phone number changes
-      if (name?.includes('phone')) {
-        const personIndex = parseInt(name.split('.')[1]);
-        const phoneValue = value?.groups?.[personIndex]?.phone;
+      if (!name) return;
+      // name format: "groups.{index}.{fieldId}"
+      const parts = name.split('.');
+      if (parts.length < 3) return;
+      const personIndex = parseInt(parts[1]);
+      const fieldId = parts[2];
+
+      if (phoneFieldId && fieldId === phoneFieldId) {
+        const phoneValue = value?.groups?.[personIndex]?.[phoneFieldId];
         const detectedCountry = getCountryFromPhoneNumber(phoneValue);
-        
         if (detectedCountry) {
           setPhoneCountries(prev => ({
             ...prev,
@@ -658,16 +683,13 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
         }
       }
 
-      if (name?.includes('postal')) {
-        const postalField = customFields.find(f => f.type === 'postal')?.id;
-        if (postalField) {
-          debouncedSaveForm(form.getValues());
-        }
+      if (postalFieldId && fieldId === postalFieldId) {
+        debouncedSaveForm(form.getValues());
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form, debouncedSaveForm]);
+  }, [form, debouncedSaveForm, customFields]);
 
   return (
     <>
@@ -868,7 +890,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                   ...prev,
                                                   [personIndex]: false
                                                 }));
-                                                form.setValue(`groups.${personIndex}.phone`, userCountry === 'Malaysia' ? '+60' : '+65');
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, userCountry === 'Malaysia' ? '+60' : '+65');
                                               }}
                                               className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                             >
@@ -900,7 +922,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
                                                   ...prev,
                                                   [personIndex]: true
                                                 }));
-                                                form.setValue(`groups.${personIndex}.phone`, '');
+                                                form.setValue(`groups.${personIndex}.${customField.id}`, '');
                                               }}
                                               className="text-primary-500 hover:text-primary-600 hover:underline text-xs mt-1"
                                             >
