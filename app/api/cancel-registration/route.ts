@@ -124,18 +124,6 @@ export async function POST(req: NextRequest) {
 
     if (updatedGroup) {
       console.log(`Verified update - group.cancelled: ${updatedGroup.cancelled} (${typeof updatedGroup.cancelled})`);
-      
-      // Update event's max seats atomically
-      // Only update if the cancelled status actually changed
-      if (updatedGroup.cancelled === cancelledBoolean) {
-        const seatChange = cancelledBoolean ? 1 : -1;
-        await Event.findByIdAndUpdate(
-          eventId,
-          { $inc: { maxSeats: seatChange } },
-          { runValidators: true }
-        );
-        console.log(`Updated event maxSeats by ${seatChange}`);
-      }
     }
 
     // CRITICAL: Ensure cache is properly invalidated to prevent stale data
