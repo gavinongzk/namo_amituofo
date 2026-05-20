@@ -67,22 +67,11 @@ async function fixDataConsistency() {
         await order.save();
       }
 
-      // Calculate what maxSeats should be based on original capacity and cancellations
-      const originalMaxSeats = event.maxSeats + cancelledCount - uncancelledCount;
-      const expectedMaxSeats = originalMaxSeats + cancelledCount;
-
       console.log(`Event stats:`);
       console.log(`  - Uncancelled registrations: ${uncancelledCount}`);
       console.log(`  - Cancelled registrations: ${cancelledCount}`);
       console.log(`  - Current maxSeats: ${event.maxSeats}`);
-      console.log(`  - Expected maxSeats: ${expectedMaxSeats}`);
       console.log(`  - Duplicate queue numbers: ${duplicateQueueNumbers.size}`);
-
-      // Update maxSeats if it's incorrect
-      if (event.maxSeats !== expectedMaxSeats) {
-        console.log(`⚠️  Updating maxSeats from ${event.maxSeats} to ${expectedMaxSeats}`);
-        await Event.findByIdAndUpdate(event._id, { maxSeats: expectedMaxSeats });
-      }
 
       // Report duplicate queue numbers
       if (duplicateQueueNumbers.size > 0) {
