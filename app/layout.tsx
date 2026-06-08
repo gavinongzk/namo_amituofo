@@ -131,6 +131,26 @@ export default function RootLayout({
     }
   `;
 
+  // Prevent React DOM errors when mobile browsers auto-translate the page
+  const googleTranslateFix = `
+    (function () {
+      if (typeof Node === 'undefined' || !Node.prototype || window.__googleTranslateFixApplied) return;
+      var originalRemoveChild = Node.prototype.removeChild;
+      Node.prototype.removeChild = function (child) {
+        if (child.parentNode !== this) return child;
+        return originalRemoveChild.apply(this, arguments);
+      };
+      var originalInsertBefore = Node.prototype.insertBefore;
+      Node.prototype.insertBefore = function (newNode, referenceNode) {
+        if (referenceNode && referenceNode.parentNode !== this) {
+          return this.appendChild(newNode);
+        }
+        return originalInsertBefore.apply(this, arguments);
+      };
+      window.__googleTranslateFixApplied = true;
+    })();
+  `;
+
   // Script to unregister any existing service workers
   const unregisterServiceWorker = `
     if ('serviceWorker' in navigator) {
@@ -167,6 +187,11 @@ export default function RootLayout({
           {/* unregisterServiceWorker script moved below */}
         </head>
         <body className={poppins.variable}>
+          <Script
+            id="google-translate-fix"
+            strategy="beforeInteractive"
+            dangerouslySetInnerHTML={{ __html: googleTranslateFix }}
+          />
           <Script
             id="unregister-service-worker"
             strategy="afterInteractive"

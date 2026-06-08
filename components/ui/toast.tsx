@@ -15,8 +15,9 @@ const ToastViewport = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Viewport
     ref={ref}
+    translate="no"
     className={cn(
-      "fixed inset-x-0 top-4 z-[10000] flex max-h-screen w-full flex-col-reverse p-4 sm:inset-auto sm:bottom-4 sm:right-4 sm:top-auto sm:flex-col md:max-w-[480px]",
+      "notranslate fixed inset-x-0 top-4 z-[10000] flex max-h-screen w-full flex-col-reverse p-4 sm:inset-auto sm:bottom-4 sm:right-4 sm:top-auto sm:flex-col md:max-w-[480px]",
       className
     )}
     {...props}
@@ -48,7 +49,8 @@ const Toast = React.forwardRef<
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className)}
+      translate="no"
+      className={cn("notranslate", toastVariants({ variant }), className)}
       {...props}
     />
   )

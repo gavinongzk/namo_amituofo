@@ -57,7 +57,6 @@ const isValidPostalCode = async (code: string, country: string) => {
 interface RegisterFormClientProps {
   event: IEvent & { category: { name: CategoryName } }
   initialOrderCount: number
-  onRefresh: () => Promise<void>
 }
 
 const getCountryFromPhoneNumber = (phoneNumber: string | boolean | undefined) => {
@@ -79,7 +78,7 @@ const isGroupEmpty = (group: any, customFields: CustomField[]) => {
   return !nameValue && !phoneValue;
 };
 
-const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFormClientProps) => {
+const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -502,12 +501,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
       }
 
       const data = await response.json();
-      
-      // Refresh order count in background so users reach QR page sooner.
-      void onRefresh().catch((refreshError) => {
-        console.error('Error refreshing order count:', refreshError);
-      });
-      
+
       toast({
         title: "成功 / Success",
         description: "报名成功！/ Registration successful!",
@@ -776,7 +770,7 @@ const RegisterFormClient = ({ event, initialOrderCount, onRefresh }: RegisterFor
           outline: none;
         }
       `}</style>
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-3xl mx-auto space-y-4 notranslate" translate="no">
         <div className="flex flex-col gap-3">
           <Link
             href={`/events/details/${event._id}`}
