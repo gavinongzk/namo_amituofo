@@ -41,7 +41,6 @@ function RegisterFormWrapper({
       <RegisterFormClient 
         event={event} 
         initialOrderCount={initialOrderCount}
-        onRefresh={fetchOrderCount}
       />
     </Suspense>
   )
