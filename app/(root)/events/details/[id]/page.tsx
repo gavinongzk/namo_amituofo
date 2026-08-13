@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
 import { notFound } from 'next/navigation'; // Added for handling not found pages
 import { getEventById } from '@/lib/actions/event.actions';
-import { currentUser } from '@clerk/nextjs';
 import EventDetails from './EventDetails';
 
 // Implement ISR (Incremental Static Regeneration)
@@ -109,8 +108,6 @@ export default async function EventDetailsPage({ params }: { params: { id: strin
   if (!event) {
     notFound();
   }
-
-  const user = await currentUser();
 
   return <EventDetails event={event} />;
 }

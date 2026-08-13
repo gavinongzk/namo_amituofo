@@ -1,13 +1,32 @@
 import { authMiddleware } from "@clerk/nextjs";
-import { NextResponse } from 'next/server';
+import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 import { rateLimiterMiddleware } from './lib/middleware/rateLimiter';
 
-export default authMiddleware({
+// Guest event/register URLs must skip Clerk's 401 interstitial. Facebook/WhatsApp
+// in-app browsers block clerk.accounts.dev, so the handshake looks like "Page not found".
+// Keep /events/details/:id/update protected (admin).
+function shouldBypassClerkHandshake(pathname: string): boolean {
+  if (
+    pathname === '/api/createOrder' ||
+    pathname === '/api/check-phone-numbers'
+  ) {
+    return true;
+  }
+
+  return (
+    /^\/events\/details\/[^/]+$/.test(pathname) ||
+    /^\/events\/details\/[^/]+\/register$/.test(pathname)
+  );
+}
+
+const clerkAuth = authMiddleware({
   publicRoutes: [
     '/',
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/events/:id',
+    '/events/details/:id',
+    '/events/details/:id/register',
     '/api/webhook/clerk',
     '/api/events',
     '/api/events/selection',
@@ -41,6 +60,10 @@ export default authMiddleware({
     '/api/clapping-exercise-volunteer',
     '/api/debug-events',
     '/api/test-order',
+    '/api/createOrder',
+    '/api/check-phone-numbers',
+    '/events/details/:id',
+    '/events/details/:id/register',
   ],
   async beforeAuth(req) {
     // Apply rate limiting before authentication
@@ -109,6 +132,22 @@ export default authMiddleware({
     return NextResponse.next();
   }
 });
+
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+  const pathname = req.nextUrl.pathname;
+
+  if (shouldBypassClerkHandshake(pathname)) {
+    if (pathname.startsWith('/api/')) {
+      const rateLimitResult = await rateLimiterMiddleware(req, true, false);
+      if (rateLimitResult) {
+        return rateLimitResult;
+      }
+    }
+    return NextResponse.next();
+  }
+
+  return clerkAuth(req, event);
+}
 
 export const config = {
   matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
