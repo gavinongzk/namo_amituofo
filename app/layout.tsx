@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
-import { ClerkProvider } from '@clerk/nextjs'
+import RootClerkProvider from '@/components/providers/RootClerkProvider'
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
 import dynamic from 'next/dynamic'
 import Script from 'next/script'
@@ -172,7 +172,7 @@ export default function RootLayout({
   `;
 
   return (
-    <ClerkProvider>
+    <RootClerkProvider>
       <html lang="zh-Hans">
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -225,6 +225,6 @@ export default function RootLayout({
           )}
         </body>
       </html>
-    </ClerkProvider>
+    </RootClerkProvider>
   )
 }
