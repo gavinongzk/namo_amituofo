@@ -1,10 +1,10 @@
- "use client"
+'use client'
 
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { RefugeRegistrationForm } from '@/components/shared/RefugeRegistrationForm'
 
-export default function RefugeRegistrationPage() {
+function RefugeRegistrationPageInner() {
   const searchParams = useSearchParams()
 
   const initialValues = useMemo(() => {
@@ -27,6 +27,14 @@ export default function RefugeRegistrationPage() {
       initialValues={initialValues}
       autoFocusEnglishName={autoFocusEnglishName}
     />
+  )
+}
+
+export default function RefugeRegistrationPage() {
+  return (
+    <Suspense fallback={null}>
+      <RefugeRegistrationPageInner />
+    </Suspense>
   )
 }
 
