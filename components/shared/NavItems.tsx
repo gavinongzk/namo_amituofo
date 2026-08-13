@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import React from 'react';
-import { useUser } from '@clerk/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -10,12 +9,12 @@ import { Loader2 } from 'lucide-react';
 interface NavItemsProps {
   isSuperAdmin: boolean;
   isNormalAdmin: boolean;
+  isSignedIn?: boolean;
   onClose?: () => void;
   className?: string;
 }
 
-const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, onClose, className }) => {
-  const { isSignedIn } = useUser();
+const NavItems: React.FC<NavItemsProps> = ({ isSuperAdmin, isNormalAdmin, isSignedIn = false, onClose, className }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

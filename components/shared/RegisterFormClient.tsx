@@ -15,6 +15,8 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import { categoryCustomFields, CategoryName, REFUGE_QUESTION_CATEGORIES, fieldLooksLikeRefugeQuestion } from '@/constants'
 import { useUser } from '@clerk/nextjs';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
+import { useClerkEnabled } from '@/components/providers/ClerkEnabledContext';
+import { isValidPersonName, sanitizePersonName } from '@/lib/utils/nameValidation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { PlusIcon, Loader2Icon, RefreshCwIcon, ChevronLeftIcon } from 'lucide-react'
@@ -31,15 +33,8 @@ const getQuestionNumber = (personIndex: number, fieldIndex: number) => {
   return `${personIndex + 1}.${fieldIndex + 1}`;
 };
 
-const isValidName = (name: string) => {
-  // Regex to match letters (including Chinese), spaces, brackets, and common punctuation
-  const nameRegex = /^[\p{L}\p{N}\s\-.'()\[\]{}]+$/u;
-  return nameRegex.test(name);
-};
-const sanitizeName = (name: string) => {
-  // Remove emojis and other non-standard characters while keeping Chinese characters and brackets
-  return name.replace(/[^\p{L}\p{N}\s\-.'()\[\]{}]/gu, '');
-};
+const isValidName = isValidPersonName;
+const sanitizeName = sanitizePersonName;
 
 const isValidPostalCode = async (code: string, country: string) => {
   if (!code) return false;
@@ -78,12 +73,32 @@ const isGroupEmpty = (group: any, customFields: CustomField[]) => {
   return !nameValue && !phoneValue;
 };
 
-const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProps) => {
+const RegisterFormClient = (props: RegisterFormClientProps) => {
+  const clerkEnabled = useClerkEnabled();
+  if (!clerkEnabled) {
+    return <RegisterFormBody {...props} user={null} isLoaded />;
+  }
+  return <RegisterFormClientWithClerk {...props} />;
+};
+
+const RegisterFormClientWithClerk = (props: RegisterFormClientProps) => {
+  const { user, isLoaded } = useUser();
+  return <RegisterFormBody {...props} user={user} isLoaded={isLoaded} />;
+};
+
+const RegisterFormBody = ({
+  event,
+  initialOrderCount,
+  user,
+  isLoaded,
+}: RegisterFormClientProps & {
+  user: ReturnType<typeof useUser>['user'] | null
+  isLoaded: boolean
+}) => {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('');
-  const { user, isLoaded } = useUser();
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [duplicatePhoneNumbers, setDuplicatePhoneNumbers] = useState<DuplicateRegistrationDetail[]>([]);
@@ -181,12 +196,16 @@ const RegisterFormClient = ({ event, initialOrderCount }: RegisterFormClientProp
   };
 
   useEffect(() => {
-    const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
-    if (savedPostalCode) {
-      const postalField = customFields.find(f => f.type === 'postal')?.id;
-      if (postalField) {
-        form.setValue(`groups.0.${postalField}`, savedPostalCode);
+    try {
+      const savedPostalCode = getCookie('lastUsedPostal') || localStorage.getItem('lastUsedPostal');
+      if (savedPostalCode) {
+        const postalField = customFields.find(f => f.type === 'postal')?.id;
+        if (postalField) {
+          form.setValue(`groups.0.${postalField}`, savedPostalCode);
+        }
       }
+    } catch (error) {
+      console.error('Error reading saved postal code:', error);
     }
   }, []);
 

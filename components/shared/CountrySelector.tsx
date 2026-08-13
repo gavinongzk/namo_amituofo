@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { setCookie, getCookie } from 'cookies-next';
 import { getUserIpAddress } from '@/lib/utils';
+import { useClerkEnabled } from '@/components/providers/ClerkEnabledContext';
 
 const countryFlags: { [key: string]: string } = {
   'Singapore': '🇸🇬',
@@ -13,8 +14,26 @@ const countryFlags: { [key: string]: string } = {
 };
 
 const CountrySelector = () => {
-  const router = useRouter();
+  const clerkEnabled = useClerkEnabled();
+  if (!clerkEnabled) {
+    return <CountrySelectorBody user={null} isLoaded />;
+  }
+  return <CountrySelectorWithClerk />;
+};
+
+const CountrySelectorWithClerk = () => {
   const { user, isLoaded } = useUser();
+  return <CountrySelectorBody user={user} isLoaded={isLoaded} />;
+};
+
+const CountrySelectorBody = ({
+  user,
+  isLoaded,
+}: {
+  user: ReturnType<typeof useUser>['user'] | null
+  isLoaded: boolean
+}) => {
+  const router = useRouter();
   const [country, setCountry] = useState<string>('Singapore'); // Default to Singapore
 
   useEffect(() => {

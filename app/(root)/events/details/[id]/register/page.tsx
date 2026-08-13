@@ -6,7 +6,7 @@ import { unstable_cache } from 'next/cache'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next';
 import mongoose from 'mongoose'; // Added for ObjectId validation
-import { currentUser } from '@clerk/nextjs'
+import { getOptionalCurrentUser } from '@/lib/auth/getOptionalCurrentUser'
 
 // Implement ISR (Incremental Static Regeneration)
 export const revalidate = 300; // Revalidate every 5 minutes
@@ -51,7 +51,7 @@ export default async function RegisterPage({
 }: { 
   params: { id: string } 
 }) {
-  const user = await currentUser();
+  const user = await getOptionalCurrentUser();
   
   // Create a promise for the event data
   const eventPromise = getCachedEvent(params.id);

@@ -9,6 +9,7 @@ import NavWrapper from "./NavWrapper"
 import MobileNav from "./MobileNav"
 import CountrySelector from '@/components/shared/CountrySelector';
 import { Loader2, Search } from 'lucide-react';
+import { useClerkEnabled } from '@/components/providers/ClerkEnabledContext';
 
 const AdminLoginButton = () => (
   <Link 
@@ -28,6 +29,7 @@ const AdminLoginButton = () => (
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const clerkEnabled = useClerkEnabled();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -82,29 +84,38 @@ const Header = () => {
 
         {/* Right-side elements (Country, User/Admin, MobileNav) */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-          <SignedIn>
-            {/* Group CountrySelector and UserButton */}
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-              <CountrySelector />
-              <UserButton 
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
-                  }
-                }}
-              />
-            </div>
-          </SignedIn>
-          <SignedOut>
-            {/* Group CountrySelector and AdminLoginButton */}
+          {clerkEnabled ? (
+            <>
+              <SignedIn>
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                  <CountrySelector />
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
+                      }
+                    }}
+                  />
+                </div>
+              </SignedIn>
+              <SignedOut>
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                  <CountrySelector />
+                  <div className="hidden md:block">
+                    <AdminLoginButton />
+                  </div>
+                </div>
+              </SignedOut>
+            </>
+          ) : (
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
               <CountrySelector />
               <div className="hidden md:block">
                 <AdminLoginButton />
               </div>
             </div>
-          </SignedOut>
+          )}
 
           {/* MobileNav */}
           <MobileNav />

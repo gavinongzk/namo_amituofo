@@ -9,9 +9,10 @@ import Image from "next/image"
 import { Separator } from "../ui/separator"
 import NavWrapper from "./NavWrapper"
 import React, { useState, useEffect } from "react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
+import { useClerkEnabled } from '@/components/providers/ClerkEnabledContext';
 
 const AdminLoginButton = () => (
   <Link 
@@ -36,6 +37,7 @@ const AdminLoginButton = () => (
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const clerkEnabled = useClerkEnabled();
 
   // Close mobile nav when route changes
   useEffect(() => {
@@ -79,14 +81,23 @@ const MobileNav = () => {
             </div>
           </div>
           
-          <SignedOut>
+          {clerkEnabled ? (
+            <SignedOut>
+              <div className="mt-auto pt-4">
+                <Separator className="border border-grey-100" />
+                <div className="mt-4">
+                  <AdminLoginButton />
+                </div>
+              </div>
+            </SignedOut>
+          ) : (
             <div className="mt-auto pt-4">
               <Separator className="border border-grey-100" />
               <div className="mt-4">
                 <AdminLoginButton />
               </div>
             </div>
-          </SignedOut>
+          )}
         </SheetContent>
       </Sheet>
     </nav>

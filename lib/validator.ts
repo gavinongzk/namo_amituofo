@@ -1,4 +1,5 @@
 import * as z from "zod"
+import { isValidPersonName } from '@/lib/utils/nameValidation'
 
 const customFieldSchema = z.object({
   id: z.string(),
@@ -41,7 +42,7 @@ const createFieldValidation = (field: { type: string, label: string }) => {
     return z.string()
       .min(1, { message: "此栏位为必填 / This field is required" })
       .refine(
-        (value) => /^[\p{L}\p{N}\s\-.'()\[\]{}]+$/u.test(value),
+        (value) => isValidPersonName(value),
         { message: "名字只能包含字母、空格、连字符、撇号和句号 / Name can only contain letters, spaces, hyphens, apostrophes, and periods" }
       );
   } else {
